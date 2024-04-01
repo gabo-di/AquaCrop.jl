@@ -1,0 +1,13 @@
+name = "AquaCrop"
+uuid = "8f16cebd-c0b4-44a3-857f-c101f083256c"
+authors = ["Gabriel Diaz <gabriel.diaz.iturry@gmail.com>"]
+version = "0.0.1-DEV"
+
+[compat]
+julia = "1.9"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
