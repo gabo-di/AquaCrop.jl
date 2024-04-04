@@ -1,5 +1,13 @@
 module AquaCrop
+# ---- imports ----
+using ComponentArrays
 
-# Write your package code here.
+
+# ---- includes ----
+include("main.jl")
+include("FieldCrop.jl")
+
+# ---- exports ----
+
 
 end
