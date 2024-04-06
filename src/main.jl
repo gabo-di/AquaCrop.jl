@@ -215,7 +215,7 @@ creates a soil layer with a given soil class.
     "volume percentage of gravel"
     GravelVol::Float64=0.0
     "mm"
-    WaterContent::Float64=undef_double
+    WaterContent::Float64=0.0
 
     # salinity parameters (cells)
     "Macropores : from Saturation to Macro [vol%]"
@@ -240,69 +240,100 @@ creates a soil layer with a given soil class.
     CRb::Float64=undef_double
 end
 
+"""
+    shape = RepShapes()
+"""
+@kwdef mutable struct RepShapes <: AbstractParametersContainer
+    "Percentage soil fertility stress for calibration"
+    Stress::Int=50
+    "Shape factor for the response of Canopy Growth Coefficient to soil fertility stress"
+    ShapeCGC::Float64=2.16
+    "Shape factor for the response of Maximum Canopy Cover to soil fertility stress"
+    ShapeCCX::Float64=0.79
+    "Shape factor for the response of Crop Water Producitity to soil fertility stress"
+    ShapeWP::Float64=1.67
+    "Shape factor for the response of Decline of Canopy Cover to soil fertility stress"
+    ShapeCDecline::Float64=1.67
+    "Undocumented"
+    Calibrated::Bool=true
+end
+
+"""
+    assimilates = RepAssimilates()
+"""
+@kwdef mutable struct RepAssimilates <: AbstractParametersContainer
+    "Undocumented"
+    On::Bool=false
+    "Number of days at end of season during which assimilates are stored in root system"
+    Period::Int=0
+    "Percentage of assimilates, transferred to root system at last day of season"
+    Stored::Int=0
+    "Percentage of stored assimilates, transferred to above ground parts in next season"
+    Mobilized::Int=0
+end 
 
 """
     crop = RepCrop()
 """
 @kwdef mutable struct RepCrop <: AbstractParametersContainer
     "Undocumented"
-    subkind::Int=undef_int
+    subkind::Symbol=:Grain
     "Undocumented"
-    ModeCycle::Int=undef_int
+    ModeCycle::Symbol=:CalendarDays
     "1 = sown, 0 = transplanted, -9 = regrowth"
-    Planting::Int=undef_int
+    Planting::Symbol=:Seed
     "Undocumented"
-    pMethod::Int=undef_int
+    pMethod::Symbol=:FAOCorrection
     "soil water depletion fraction for no stomatal stress as defined (ETo = 5 mm/day)"
-    pdef::Float64=undef_double
+    pdef::Float64=0.5
     "actual p for no stomatal stress for ETo of the day"
     pActStom::Float64=undef_double
     "Undocumented"
-    KsShapeFactorLeaf::Float64=undef_double
+    KsShapeFactorLeaf::Float64=3.0
     "Undocumented"
-    KsShapeFactorStomata::Float64=undef_double
+    KsShapeFactorStomata::Float64=3.0
     "Undocumented"
-    KsShapeFactorSenescence::Float64=undef_double
+    KsShapeFactorSenescence::Float64=3.0
     "soil water depletion fraction for leaf expansion (ETo = 5 mm/day)"
-    pLeafDefUL::Float64=undef_double
+    pLeafDefUL::Float64=0.25
     "soil water depletion fraction for leaf expansion (ETo = 5 mm/day)"
-    pLeafDefLL::Float64=undef_double
+    pLeafDefLL::Float64=0.6
     "actual p for upper limit leaf expansion for ETo of the day"
     pLeafAct::Float64=undef_double
     "soil water depletion fraction for canopys senescence (ETo = 5 mm/day)"
-    pSenescence::Float64=undef_double
+    pSenescence::Float64=0.85
     "actual p for canopy senescence for ETo of the day"
     pSenAct::Float64=undef_double
     "soil water depletion fraction for failure of pollination"
-    pPollination::Float64=undef_double
+    pPollination::Float64=0.9
     "Undocumented"
-    SumEToDelaySenescence::Int=undef_int
+    SumEToDelaySenescence::Int=50
     "(SAT - [vol%]) at which deficient aeration"
-    AnaeroPoint::Int=undef_int
+    AnaeroPoint::Int=5
     "is reponse to soil fertility stress"
     StressResponse::RepShapes=RepShapes()
     "lower threshold for salinity stress (dS/m)"
-    ECemin::Int=undef_int
+    ECemin::Int=2
     "upper threshold for salinity stress (dS/m)"
-    ECemax::Int=undef_int
+    ECemax::Int=12
     "distortion canopy cover for calibration for simulation of effect of salinity stress (%)"
-    CCsaltDistortion::Int=undef_int
+    CCsaltDistortion::Int=25
     "Response of Ks stomata to ECsw for calibration: From 0 (none) to +200 (very strong)"
-    ResponseECsw::Int=undef_int
+    ResponseECsw::Int=100
     "Smax Top 1/4 root zone HOOGLAND"
-    SmaxTopQuarter::Float64=undef_double
+    SmaxTopQuarter::Float64=0.048
     "Smax Bottom 1/4 root zone HOOGLAND"
-    SmaxBotQuarter::Float64=undef_double
+    SmaxBotQuarter::Float64=0.012
     "Smax Top root zone HOOGLAND"
     SmaxTop::Float64=undef_double
     "Smax Bottom root zone HOOGLAND"
     SmaxBot::Float64=undef_double
     "Undocumented"
-    KcTop::Float64=undef_double
+    KcTop::Float64=1.1
     "Reduction Kc (%CCx/day) as result of ageing effects, nitrogen defficiency, etc."
-    KcDecline::Float64=undef_double
+    KcDecline::Float64=0.15
     "%"
-    CCEffectEvapLate::Int=undef_int
+    CCEffectEvapLate::Int=50
     "Daynummer: first day of croping period starting from sowing/transplanting"
     Day1::Int=undef_int
     "Daynummer: last day = harvest day"
@@ -314,35 +345,35 @@ end
     "rooting depth in meter"
     RootMax::Float64=1.0
     "10 times the root of the root function"
-    RootShape::Int=undef_int
+    RootShape::Int=15
     "Base Temperature (degC)"
-    Tbase::Float64=undef_double
+    Tbase::Float64=5.5
     "Upper temperature threshold (degC)"
-    Tupper::Float64=undef_double
+    Tupper::Float64=30.0
     "Minimum air temperature below which pollination starts to fail (cold stress) (degC)"
-    Tcold::Int=undef_int
+    Tcold::Int=8
     "Maximum air temperature above which pollination starts to fail (heat stress) (degC)"
-    Theat::Int=undef_int
+    Theat::Int=40
     "Minimum growing degrees required for full crop transpiration (degC - day)"
-    GDtranspLow::Float64=undef_double
+    GDtranspLow::Float64=11.1
     "Canopy cover per seedling (cm2)"
-    SizeSeedling::Float64=undef_double
+    SizeSeedling::Float64=6.5
     "Canopy cover of plant on 1st day (cm2) when regrowth"
-    SizePlant::Float64=undef_double
+    SizePlant::Float64=6.5
     "number of plants per hectare"
-    PlantingDens::Int=undef_int
+    PlantingDens::Int=185000
     "starting canopy size  (fraction canopy cover)"
-    CCo::Float64=undef_double
+    CCo::Float64=6.5/10000 * 185000/10000
     "starting canopy size for regrowth (fraction canopy cover)"
-    CCini::Float64=undef_double
+    CCini::Float64=6.5/10000 * 185000/10000
     "Canopy growth coefficient (increase of CC in fraction per day)"
-    CGC::Float64=undef_double
+    CGC::Float64=0.15
     "Canopy growth coefficient (increase of CC in fraction per growing-degree day)"
     GDDCGC::Float64=undef_double
     "expected maximum canopy cover  (fraction canopy cover)"
-    CCx::Float64=undef_double
+    CCx::Float64=0.8
     "Canopy Decline Coefficient (decrease of CC in fraction per day)"
-    CDC::Float64=undef_double
+    CDC::Float64=0.1275
     "Canopy Decline Coefficient (decrease of CC in fraction per growing-degree day)"
     GDDCDC::Float64=undef_double
     "maximum canopy cover given water stress"
@@ -352,25 +383,25 @@ end
     "initial canopy size after soil water stress"
     CCoAdjusted::Float64=undef_double
     "required for regrowth (if CCini > CCo)"
-    DaysToCCini::Int=undef_int
+    DaysToCCini::Int=0
     "given or calculated from GDD"
-    DaysToGermination::Int=undef_int
+    DaysToGermination::Int=5
     "given or calculated from GDD"
     DaysToFullCanopy::Int=undef_int
     "adjusted to soil fertility"
     DaysToFullCanopySF::Int=undef_int
     "given or calculated from GDD"
-    DaysToFlowering::Int=undef_int
+    DaysToFlowering::Int=70
     "given or calculated from GDD"
-    LengthFlowering::Int=undef_int
+    LengthFlowering::Int=10
     "given or calculated from GDD"
-    DaysToSenescence::Int=undef_int
+    DaysToSenescence::Int=110
     "given or calculated from GDD"
-    DaysToHarvest::Int=undef_int
+    DaysToHarvest::Int=125
     "given or calculated from GDD"
-    DaysToMaxRooting::Int=undef_int
+    DaysToMaxRooting::Int=100
     "given or calculated from GDD"
-    DaysToHIo::Int=undef_int
+    DaysToHIo::Int=50
     "required for regrowth (if CCini > CCo)"
     GDDaysToCCini::Int=undef_int
     "given or calculated from Calendar Days"
@@ -392,33 +423,33 @@ end
     "given or calculated from Calendar Days"
     GDDaysToHIo::Int=undef_int
     "(normalized) water productivity (gram/m2)"
-    WP::Float64=undef_double
+    WP::Float64=17.0
     "(normalized) water productivity during yield formation (Percent WP)"
-    WPy::Int=undef_int
+    WPy::Int=100
     "Crop performance under elevated atmospheric CO2 concentration (%)"
-    AdaptedToCO2::Int=undef_int
+    AdaptedToCO2::Int=100
     "HI harvest index (percentage)"
-    HI::Int=undef_int
+    HI::Int=50
     "average rate of change in harvest index (% increase per calendar day)"
     dHIdt::Float64=undef_double
     "possible increase (%) of HI due to water stress before flowering"
-    HIincrease::Int=undef_int
+    HIincrease::Int=5
     "coefficient describing impact of restricted vegetative growth at flowering on HI"
-    aCoeff::Float64=undef_double
+    aCoeff::Float64=10.0
     "coefficient describing impact of stomatal closure at flowering on HI"
-    bCoeff::Float64=undef_double
+    bCoeff::Float64=8.0
     "allowable maximum increase (%) of specified HI"
-    DHImax::Int=undef_int
+    DHImax::Int=15
     "linkage of determinancy with flowering"
-    DeterminancyLinked::Bool=missing
+    DeterminancyLinked::Bool=true
     "potential excess of fruits (%) ranging form"
-    fExcess::Int=undef_int
+    fExcess::Int=50
     "dry matter content (%) of fresh yield"
-    DryMatter::Int=undef_int
+    DryMatter::Int=25
     "minimum rooting depth in first year in meter (for perennial crops)"
-    RootMinYear1::Float64=undef_double
+    RootMinYear1::Float64=0.3
     "True = Sown, False = transplanted (for perennial crops)"
-    SownYear1::Bool=missing
+    SownYear1::Bool=true
     "number of years at which CCx declines to 90 % of its value due to self-thinning - Perennials"
     YearCCx::Int=undef_int
     "shape factor of the decline of CCx over the years due to self-thinning - Perennials"
@@ -427,37 +458,6 @@ end
     Assimilates::RepAssimilates=RepAssimilates()
 end 
 
-"""
-    shape = RepShapes()
-"""
-@kwdef mutable struct RepShapes <: AbstractParametersContainer
-    "Percentage soil fertility stress for calibration"
-    Stress::Int=undef_int
-    "Shape factor for the response of Canopy Growth Coefficient to soil fertility stress"
-    ShapeCGC::Float64=undef_double
-    "Shape factor for the response of Maximum Canopy Cover to soil fertility stress"
-    ShapeCCX::Float64=undef_double
-    "Shape factor for the response of Crop Water Producitity to soil fertility stress"
-    ShapeWP::Float64=undef_double
-    "Shape factor for the response of Decline of Canopy Cover to soil fertility stress"
-    ShapeCDecline::Float64=undef_double
-    "Undocumented"
-    Calibrated::Bool=missing
-end
-
-"""
-    assimilates = RepAssimilates()
-"""
-@kwdef mutable struct RepAssimilates <: AbstractParametersContainer
-    "Undocumented"
-    On::Bool=missing
-    "Number of days at end of season during which assimilates are stored in root system"
-    Period::Int=undef_int
-    "Percentage of assimilates, transferred to root system at last day of season"
-    Stored::Int=undef_int
-    "Percentage of stored assimilates, transferred to above ground parts in next season"
-    Mobilized::Int=undef_int
-end 
 
 """
     compartment = CompartmentIndividual()
@@ -476,7 +476,7 @@ end
     "Vol % at Field Capacity adjusted to Aquifer"
     FCadj::Float64=undef_double
     "number of days under anaerobic conditions"
-    DayAnaero::Int=undef_int
+    DayAnaero::Int=0
 
     # weighting factor 0 ... 1
     # Importance of compartment in calculation of
@@ -488,11 +488,57 @@ end
 
     # salinity factors
     "salt content in solution in cells (g/m2)"
-    Salt::Vector{Float64}=fill(undef_double, 11)
+    Salt::Vector{Float64}=zeros(Float64,11)
     "salt deposit in cells (g/m2)"
-    Depo::Vector{Float64}=fill(undef_double, 11)
+    Depo::Vector{Float64}=zeros(Float64,11)
 end 
 
+"""
+    iniswc = RepIniSWC()
+"""
+@kwdef mutable struct RepIniSWC <: AbstractParametersContainer
+    "at specific depths or for specific layers"
+    AtDepths::Bool=false
+    "number of depths or layers considered"
+    NrLoc::Int=undef_int
+    "depth or layer thickness [m]"
+    Loc::Vector{Float64}=fill(undef_double,max_No_compartments)
+    "soil water content (vol%)"
+    VolProc::Vector{Float64}=fill(undef_double,max_No_compartments)
+    "ECe in dS/m"
+    SaltECe::Vector{Float64}=zeros(undef_double,max_No_compartments)
+    "If iniSWC is at FC"
+    AtFC::Bool=true
+end
+
+"""
+    effectstress = RepEffectStress()
+"""
+@kwdef mutable struct RepEffectStress <: AbstractParametersContainer
+    "Reduction of CGC (%)"
+    RedCGC::Int=0 #TODO maybe from timetomaxcanopysf
+    "Reduction of CCx (%)"
+    RedCCX::Int=0 #TODO maybe from timetomaxcanopysf
+    "Reduction of WP (%)"
+    RedWP::Int=undef_int
+    "Average decrease of CCx in mid season (%/day)"
+    CDecline::Float64=undef_double
+    "Reduction of KsSto (%)"
+    RedKsSto::Int=undef_int
+end
+
+"""
+    storage = RepStorage()
+"""
+@kwdef mutable struct RepStorage <: AbstractParametersContainer 
+    "assimilates (ton/ha) stored in root systemn by CropString in Storage-Season"
+    Btotal::Float64=undef_double
+    "full name of crop file which stores Btotal during Storage-Season"
+    # OJO maybe it is Vector{String}
+    CropString::String=""
+    "season in which Btotal is stored"
+    Season::Int=undef_int
+end
 
 """
     simulation = RepSim()
@@ -507,7 +553,7 @@ end
     "dS/m"
     ThetaIni::Vector{Float64}=fill(undef_double,max_No_compartments)
     "dS/m"
-    ECeIni::Vector{Float64}=fill(undef_double,max_No_compartments)
+    ECeIni::Vector{Float64}=zeros(Float64,max_No_compartments)
     "Undocumented"
     SurfaceStorageIni::Float64=0.0
     "Undocumented"
@@ -515,17 +561,17 @@ end
     "Undocumented"
     CCini::Float64=undef_double
     "Undocumented"
-    Bini::Float64=undef_double
+    Bini::Float64=0
     "Undocumented"
     Zrini::Float64=undef_double
     "Undocumented"
-    LinkCropToSimPeriod::Bool=missing
+    LinkCropToSimPeriod::Bool=true
     "soil water and salts"
-    ResetIniSWC::Bool=missing
+    ResetIniSWC::Bool=true
     "Undocumented"
     InitialStep::Int=undef_int
     "soil evap is before late season stage limited due to sheltering effect of (partly) withered canopy cover"
-    EvapLimitON::Bool=missing
+    EvapLimitON::Bool=false
     "remaining water (mm) in surface soil layer for stage 1 evaporation [REW .. 0]"
     EvapWCsurf::Float64=undef_double
     "% extra to define upper limit of soil water content at start of stage 2 [100 .. 0]"
@@ -557,7 +603,7 @@ end
     "quality of irrigation water (dS/m)"
     IrriECw::Float64=undef_double
     "number of days under anaerobic conditions"
-    DayAnaero::Int=undef_int
+    DayAnaero::Int=0
     "effect of soil fertility and salinity stress on CC, WP and KsSto"
     EffectStress::RepEffectStress=RepEffectStress()
     "Undocumented"
@@ -569,7 +615,7 @@ end
     "Default length of cutting interval (days)"
     LengthCuttingInterval::Int=undef_int
     "year number for perennials (1 = 1st year, 2, 3, 4, max = 127)"
-    YearSeason::Int=undef_int
+    YearSeason::Int=1
     "adjusted relative cover of weeds with self thinning for perennials"
     RCadj::Int=undef_int
     "Undocumented"
@@ -580,53 +626,6 @@ end
     CropDay1Previous::Int=undef_int
 end
 
-
-"""
-    iniswc = RepIniSWC()
-"""
-@kwdef mutable struct RepIniSWC <: AbstractParametersContainer
-    "at specific depths or for specific layers"
-    AtDepths::Bool=missing
-    "number of depths or layers considered"
-    NrLoc::Int=undef_int
-    "depth or layer thickness [m]"
-    Loc::Vector{Float64}=fill(undef_double,max_No_compartments)
-    "soil water content (vol%)"
-    VolProc::Vector{Float64}=fill(undef_double,max_No_compartments)
-    "ECe in dS/m"
-    SaltECe::Vector{Float64}=fill(undef_double,max_No_compartments)
-    "If iniSWC is at FC"
-    AtFC::Bool=missing
-end
-
-"""
-    effectstress = RepEffectStress()
-"""
-@kwdef mutable struct RepEffectStress <: AbstractParametersContainer
-    "Reduction of CGC (%)"
-    RedCGC::Int=undef_int
-    "Reduction of CCx (%)"
-    RedCCX::Int=undef_int  
-    "Reduction of WP (%)"
-    RedWP::Int=undef_int
-    "Average decrease of CCx in mid season (%/day)"
-    CDecline::Float64=undef_double
-    "Reduction of KsSto (%)"
-    RedKsSto::Int=undef_int
-end
-
-"""
-    storage = RepStorage()
-"""
-@kwdef mutable struct RepStorage <: AbstractParametersContainer 
-    "assimilates (ton/ha) stored in root systemn by CropString in Storage-Season"
-    Btotal::Float64=undef_double
-    "full name of crop file which stores Btotal during Storage-Season"
-    # OJO maybe it is Vector{String}
-    CropString::String=""
-    "season in which Btotal is stored"
-    Season::Int=undef_int
-end
 
 """
     dayevent = RepDayEventInt()
@@ -676,8 +675,103 @@ end
     LengthSearchPeriod::Int=undef_int
 end
 
+"""
+    content = RepContent()
+"""
+@kwdef mutable struct RepContent <: AbstractParametersContainer
+    "at the beginning of the day"
+    BeginDay::Float64=undef_double
+    "at the end of the day"
+    EndDay::Float64=undef_double
+    "error on WaterContent or SaltContent over the day"
+    ErrorDay::Float64=undef_double
+end
 
+"""
+    cuttings = RepCuttings()
+"""
+@kwdef mutable struct RepCuttings <: AbstractParametersContainer
+    "Undocumented"
+    Considered::Bool=false
+    "Canopy cover (%) after cutting"
+    CCcut::Int=30
+    "first day after time window for generating cuttings (1 = start crop cycle)"
+    Day1::Int=1
+    "number of days of time window for generate cuttings (-9 is whole crop cycle)"
+    NrDays::Int=undef_int
+    "ture: generate cuttings; false : schedule for cuttings"
+    Generate::Bool=false
+    "time criterion for generating cuttings"
+    Criterion::Bool=:NA
+    "final harvest at crop maturity"
+    HarvestEnd::Bool=false
+    "first dayNr of list of specified cutting events (-9 = onset growing cycle)"
+    FirstDayNr::Int=undef_int
+end
 
+"""
+    management = RepManag()
+"""
+@kwdef mutable struct RepManag <: AbstractParametersContainer
+    "percent soil cover by mulch in growing period"
+    Mulch::Int=0
+    "percent soil cover by mulch before growing period"
+    SoilCoverBefore::Int=undef_int
+    "percent soil cover by mulch after growing period"
+    SoilCoverAfter::Int=undef_int
+    "effect Mulch on evaporation before and after growing period"
+    EffectMulchOffS::Int=undef_int
+    "effect Mulch on evaporation in growing period"
+    EffectMulchInS::Int=50
+    "Undocumented"
+    FertilityStress::Int=0
+    "meter;"
+    BundHeight::Float64=0
+    "surface runoff"
+    RunoffOn::Bool=true
+    "percent increase/decrease of CN"
+    CNcorrection::Int=0
+    "Relative weed cover in percentage at canopy closure"
+    WeedRC::Int=0
+    "Increase/Decrease of Relative weed cover in percentage during mid season"
+    WeedDeltaRC::Int=0
+    "Shape factor for crop canopy suppression"
+    WeedShape::Float64=-0.01
+    "replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials"
+    WeedAdj::Int=100
+    "Multiple cuttings"
+    Cuttings::RepCuttings=RepCuttings()
+end
+
+"""
+    summ = RepSum()
+"""
+@kwdef mutable struct RepSum <: AbstractParametersContainer
+    # Undocumented
+    Epot::Float64=undef_double
+    Tpot::Float64=undef_double
+    Rain::Float64=undef_double
+    Irrigation::Float64=undef_double
+    Infiltrated::Float64=undef_double
+    # mm
+    Runoff::Float64=undef_double
+    Drain::Float64=undef_double
+    Eact::Float64=undef_double
+    Tact::Float64=undef_double
+    TrW::Float64=undef_double
+    ECropCycle::Float64=undef_double
+    CRwater::Float64=undef_double
+    # ton/ha
+    Biomass::Float64=0
+    YieldPart::Float64=0
+    BiomassPot::Float64=0
+    BiomassUnlim::Float64=0
+    BiomassTot::Float64=0
+    # ton/ha
+    SaltIn::Float64=undef_double
+    SaltOut::Float64=undef_double
+    CRsalt::Float64=undef_double
+end
 
 
 
@@ -749,7 +843,7 @@ function initializesettings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     # note that we allready did the set of simulparam.ConstGwt=true like in initialsettings.f90:317
 
     # 2b. Soil profile and initial soil water content
-    # TODO save soil profile defaultcropsoil.f90:322
+    # TODO save soil profile defaultcropsoil.f90:322 maybe write a @show method?
     # OJO do not change soil.RootMax like in global.f90:4029 since it will be taken care later
 
     if usedefaultsoilfile
@@ -762,7 +856,80 @@ function initializesettings(usedefaultsoilfile, usedefaultcropfile, filepaths)
         determinate_coeffcapillaryrise!(soillayers[1])
     end
     
-    completeprofiledescription(soil)
+    simulation = RepSim()
+    totalwatercontent = RepContent()
+    completeprofiledescription!(soillayers, compartments, simulation, totalwatercontent)
+
+
+    # 3. Crop characteristics and cropping period
+    crop = RepCrop()
+    # TODO save crop profile defaultcropsoil.f90:284  maybe write a @show method?
+    soil.RootMax = rootmaxinsoilprofile(crop.RootMax, soillayers)
+
+    # determine miscellaneous
+    crop.Day1 = simulparam.CropDay1
+    management = RepManag()
+    completecropdescription!(crop, simulation, management)
+
+
+    # 4. Field Management
+    management.FertilityStress = 0
+    cropstressparameterssoilfertility!(crop.StressResponse, management.FertilityStress, simulation.EffectStress)
+
+    sumwabal = RepSum()
+    
+    # 5. Climate
+    #
+    # 5.6 Set Climate and Simulation Period
+    crop.DayN = crop.Day1 + crop.DaysToHarvest - 1
+    # adjusting simulation period
+    # call AdjustSimPeriod()
+    #
+    # ! 6. irrigation
+    # call NoIrrigation()
+    #
+    # ! 7. Off-season
+    # call NoManagementOffSeason()
+    #
+    # ! 8. Project and Multiple Project file
+    # call SetSimulation_MultipleRun(.false.) ! No sequence of simulation
+    #                                         ! runs in the project
+    # call SetSimulation_NrRuns(1)
+    # call SetSimulation_MultipleRunWithKeepSWC(.false.)
+    # call SetSimulation_MultipleRunConstZrx(real(undef_int, kind=dp))
+    # call SetMultipleProjectFile(GetProjectFile())
+    # call SetMultipleProjectFileFull(GetProjectFileFull())
+    # call SetMultipleProjectDescription(GetProjectDescription())
+    #
+    # ! 11. Onset
+    # call SetOnset_Criterion(Criterion_RainPeriod)
+    # call SetOnset_AirTCriterion(AirTCriterion_CumulGDD)
+    # call AdjustOnsetSearchPeriod()
+    #
+    # ! 12. Simulation run
+    # call SetETo(5.0_dp)
+    # call SetRain(0._dp)
+    # call SetIrrigation(0._dp)
+    # call SetSurfaceStorage(0._dp)
+    # call SetECstorage(0.0_dp)
+    # call SetDaySubmerged(0)
+    # SumWaBal_temp = GetSumWaBal()
+    # call GlobalZero(SumWaBal_temp)
+    # call SetSumWaBal(SumWaBal_temp)
+    # call SetDrain(0.0_dp) ! added 4.0
+    # call SetRunoff(0.0_dp)! added 4.0
+    # call SetInfiltrated(0.0_dp) ! added 4.0
+    # call SetCRwater(0._dp) ! added 4.0
+    # call SetCRsalt(0._dp) ! added 4.0
+    # call SetSimulation_ResetIniSWC(.true.)
+    # call SetSimulation_EvapLimitON(.false.)
+    # call SetMaxPlotNew(50)
+    # call SetMaxPlotTr(10_int8)
+    # call SetSimulation_InitialStep(10) ! Length of period (days) for displaying
+    #                                 ! intermediate results during simulation run
+    # call SetSimulation_LengthCuttingInterval(40) ! Default length of
+    #                                              ! cutting interval (days)
+
 
     return ComponentArray(
         :simulparam = simulparam,
@@ -775,12 +942,452 @@ function initializesettings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     )
 end #not end
 
+function cropstressparameterssoilfertility!(stressout::RepEffectStress, cropsresp::RepShapes, stresslevel)
+    pllactual = 1
 
-function completeprofiledescription(soil::RepSoil)  
-
+    # decline canopy growth coefficient (cgc)
+    pulactual = 0
+    ksi = ksany(stresslevel/100, pulactual, pllactual, cropsresp.ShapeCGC)
+    stressout.RedCGC = round(Int,(1-ksi)*100)      
+    # decline maximum canopy cover (ccx)
+    pulactual = 0
+    ksi = ksany(stresslevel/100, pulactual, pllactual, cropsresp.ShapeCCX)
+    stressout.RedCCX = round(Int, (1-ksi)*100)
+    # decline crop water productivity (wp)
+    pulactual = 0
+    ksi = ksany(stresslevel/100, pulactual, pllactual, cropsresp.ShapeWP)
+    stressout.RedWP = round(Int, (1-ksi)*100)
+    # decline canopy cover (cdecline)
+    pulactual = 0
+    ksi = ksany(stresslevel/100, pulactual, pllactual, cropsresp.ShapeCDecline)
+    stressout.CDecline = 1 - ksi
+    # inducing stomatal closure (kssto) not applicable
+    ksi = 1
+    stressout.RedKsSto = round(Int, (1-ksi)*100)
 end #not end
 
 
+"""
+    completecropdescription!(crop::RepCrop, simulation::RepSim, management::RepManag)
+"""
+function completecropdescription!(crop::RepCrop, simulation::RepSim, management::RepManag)
+    if ((crop.subkind == :Vegetative) |
+        (crop.subkind == :Forage)) 
+        if (crop.DaysToHIo > 0) 
+            if (crop.DaysToHIo > crop.DaysToHarvest)
+                crop.dHIdt = crop.HI/crop.DaysToHarvest
+            else
+                crop.dHIdt = crop.HI/crop.DaysToHIo
+            end 
+            if (crop.dHIdt > 100) 
+                crop.dHIdt = 100
+            end 
+        else
+            crop.dHIdt = 100
+        end 
+    else
+        #  grain or tuber crops
+        if (crop.DaysToHIo > 0) 
+            crop.dHIdt = crop.HI/crop.DaysToHIo
+        else
+            crop.dHIdt = undef_double
+        end
+    end
+
+    if (crop.ModeCycle == :CalendarDays) 
+        crop.DaysToCCini = timetoccini(crop.Planting, crop.PlantingDens, crop.SizeSeedling,
+                                       crop.SizePlant, crop.CCx, crop.CGC)
+        crop.DaysToFullCanopy = daystoreachccwithgivencgc(0.98*crop.CCx, crop.CCo, crop.CCx,
+                                                          crop.CGC, crop.DaysToGermination)
+        if (management.FertilityStress() != 0) 
+            fertstress = management.FertilityStress
+            daystofullcanopy, RedCGC_temp, RedCCX_temp, fertstress = timetomaxcanopysf(crop.CCo, crop.CGC, crop.CCx,
+                              crop.DaysToGermination,
+                              crop.DaysToFullCanopy,
+                              crop.DaysToSenescence,
+                              crop.DaysToFlowering,
+                              crop.LengthFlowering,
+                              crop.DeterminancyLinked,
+                              crop.DaysToFullCanopySF,
+                              simulation.EffectStress.RedCGC,
+                              simulation.EffectStress.RedCCX,
+                              management.FertilityStress
+                              )
+            management.FertilityStress = fertstress
+            simulation.EffectStress.RedCGC = RedCGC_temp
+            simulation.EffectStress.RedCCX = RedCCX_temp
+            crop.DaysToFullCanopySF = daystofullcanopy
+        else
+            crop.DaysToFullCanopySF = crop.DaysToFullCanopy 
+        end 
+    else
+        crop.GDDaysToCCini = timetoccini(crop.Planting, crop.PlantingDens, crop.SizeSeedling,
+                                         crop.SizePlant, crop.CCx, crop.GDDCGC)
+        crop.DaysToCCini = timetoccini(crop.Planting, crop.PlantingDens, crop.SizeSeedling,
+                                         crop.SizePlant, crop.CCx, crop.CGC)
+        crop.GDDaysToFullCanopy = daystoreachccwithgivencgc(0.98*crop.CCx, crop.CCo, crop.CCx,
+                                                          crop.GDDCGC, crop.GDDaysToGermination)
+    end 
+
+    cgcisgiven = true # required to adjust crop.daystofullcanopy (does not exist)
+    length123, stlength, length12, cgcval = determinelengthgrowthstages(crop.CCo, crop.CCx, 
+                                                            crop.CDC, crop.DaysToGermination,
+                                                            crop.DaysToHarvest, cgcisgiven,
+                                                            crop.DaysToCCini, crop.Planting,
+                                                            crop.DaysToSenescence, crop.Length,
+                                                            crop.DaysToFullCanopy, crop.CGC)
+    crop.DaysToSenescence = length123
+    crop.Length .= stlength
+    crop.DaysToFullCanopy = length12
+    crop.CGC = cgcval
+
+    crop.CCoAdjusted = crop.CCo
+    crop.CCxAdjusted = crop.CCx
+    crop.CCxWithered = crop.CCx
+end 
+
+
+"""
+    length123, stlength, length12, cgcval = determinelengthgrowthstages(ccoval, ccxval, cdcval, l0, totallength, 
+                                                                        cgcgiven, thedaystoccini, theplanting, 
+                                                                        length123, stlength, length12, cgcval)
+"""
+function determinelengthgrowthstages(ccoval, ccxval, cdcval, l0, totallength, 
+                                     cgcgiven, thedaystoccini, theplanting, 
+                                     length123, stlength, length12, cgcval)
+    #OJO this function might have problems
+    if (length123 < length12) 
+        length123 = length12
+    end 
+
+    # 1. Initial and 2. Crop Development stage
+    # CGC is given and Length12 is already adjusted to it
+    # OR Length12 is given and CGC has to be determined
+    if ((ccoval >= ccxval) | (length12 <= l0)) 
+        length12 = 0
+        stlength[1] = 0
+        stlength[2] = 0
+        cgcval = undef_int
+    else
+        if (!cgcgiven)  # length12 is given and cgc has to be determined
+            cgcval = log((0.25*ccxval/ccoval)/(1-0.98))/(length12-l0)
+            # check if cgc < maximum value (0.40) and adjust length12 if required
+            if (cgcval > 0.40) 
+                cgcval = 0.40
+                ccxval_scaled = 0.98*ccxval
+                length12 = daystoreachccwithgivencgc(ccxval_scaled , ccoval, 
+                                                             ccxval, cgcval, l0)
+                if (length123 < length12) 
+                    length123 = length12
+                end 
+            end 
+        end 
+        # find stlength[1]
+        cctoreach = 0.10
+        stlength[1] = daystoreachccwithgivencgc(cctoreach, ccoval, ccxval, 
+                                                                    cgcval, l0)
+        # find stlength[2]
+        stlength[2] = length12 - stlength[1]
+    end 
+    l12adj = length12
+
+    # adjust Initial and Crop Development stage, in case crop starts as regrowth
+    if (theplanting == :Regrowth) 
+        if (thedaystoccini == undef_int) 
+            # maximum canopy cover is already reached at start season
+            l12adj = 0
+            stlength[1] = 0
+            stlength[2] = 0
+        else
+            if (thedaystoccini == 0) 
+                # start at germination
+                l12adj = length12 - l0
+                stlength[1] = stlength[1] - l0
+            else
+                # start after germination
+                l12adj = length12 - (l0 + thedaystoccini)
+                stlength[1] = stlength[1] - (l0 + thedaystoccini)
+            end 
+            if (stlength[1] < 0) 
+                stlength[1] = 0
+            end
+            stlength[2] = l12adj - stlength[1]
+        end 
+    end 
+
+    # 3. Mid season stage
+    stlength[3] = length123 - l12adj
+
+    # 4. Late season stage
+    stlength[4] = lengthcanopydecline(ccxval, cdcval)
+
+    # final adjustment
+    if (stlength[1] > totallength) 
+        stlength[1] = totallength
+        stlength[2] = 0
+        stlength[3] = 0
+        stlength[4] = 0
+    else
+        if ((stlength[1]+stlength[2]) > totallength) 
+            stlength[2] = totallength - stlength[1]
+            stlength[3] = 0
+            stlength[4] = 0
+        else
+            if ((stlength[1]+stlength[2]+stlength[3]) > totallength) 
+                stlength[3] = totallength - stlength[1] - stlength[2]
+                stlength[4] = 0
+            elseif ((stlength[1]+stlength[2]+stlength[3]+stlength[4]) > totallength) 
+                stlength[4] = totallength - stlength[1] - stlength[2] - stlength[3]
+            end 
+        end 
+    end 
+
+    return length123, stlength, length12, cgcval
+end
+
+
+"""
+    nd = lengthcanopydecline(ccx, cdc)
+"""
+function lengthcanopydecline(ccx, cdc)
+    nd = 0
+    if (ccx > 0) 
+        if (cdc <= eps(1.0)) 
+            nd = undef_int
+        else
+            nd = round(Int, (((ccx+2.29)/(cdc*3.33))*log(1 + 1/0.05) + 0.50))
+                         # + 0.50 to guarantee that cc is zero
+        end 
+    end 
+    return nd
+end
+
+
+
+"""
+    l12sf, redcgc, redccx, classsf = timetomaxcanopysf(cco, cgc, ccx, l0, l12, l123, ltoflor, lflor, determinantcrop, l12sf, redcgc, redccx, classsf)
+"""
+function timetomaxcanopysf(cco, cgc, ccx, l0, l12, l123, ltoflor, lflor, determinantcrop, l12sf, redcgc, redccx, classsf)
+    if ((classsf == 0) | ((redccx == 0) & (redcgc == 0))) then
+        l12sf = l12
+    else
+        cctoreach = 0.98*(1-redccx/100)*ccx
+        l12sf = daystoreachccwithgivencgc(cctoreach, cco, ((1-redccx/100)*ccx), (cgc*(1-(redcgc)/100)), l0)
+        # determine l12sfmax
+        if (determinantcrop) then
+            l12sfmax = ltoflor + round(Int, lflor/2)
+        else
+            l12sfmax = l123
+        end
+        # check for l12sfmax
+        if (l12sf > l12sfmax) then
+            # full canopy cannot be reached in potential period for vegetative growth
+            # classsf := undef_int; ! switch to user defined soil fertility
+            # 1. increase cgc(soil fertility)
+            while ((l12sf > l12sfmax) & (redcgc > 0))
+                redcgc = redcgc - 1
+                l12sf = daystoreachccwithgivencgc(cctoreach, cco, ((1-redccx/100)*ccx), (cgc*(1-(redcgc)/100)), l0)
+            end
+            # 2. if not sufficient decrease ccx(soil fertility)
+            while ((l12sf > l12sfmax) & ( ((1-redccx/100)*ccx) > 0.10) & (redccx <= 50))
+                redccx = redccx + 1
+                cctoreach = 0.98*(1-redccx/100)*ccx
+                l12sf = daystoreachccwithgivencgc(cctoreach, cco, ((1-redccx/100)*ccx), (cgc*(1-(redcgc)/100)), l0)
+            end
+        end 
+    end 
+    return l12sf, redcgc, redccx, classsf
+end
+
+"""
+    daystoresult = daystoreachccwithgivencgc(cctoreach, ccoval, ccxval, cgcval, l0)
+"""
+function daystoreachccwithgivencgc(cctoreach, ccoval, ccxval, cgcval, l0)
+    cctoreach_local = cctoreach
+    if ((ccoval > cctoreach_local) | (ccoval >= ccxval)) 
+        l = 0
+    else
+        if (cctoreach_local > (0.98*ccxval)) 
+            cctoreach_local = 0.98*ccxval
+        end 
+        if (cctoreach_local <= ccxval/2) 
+            l = log(cctoreach_local/ccoval)/cgcval
+        else
+            l = log((0.25*ccxval*ccxval/ccoval)/(ccxval-cctoreach_local))/cgcval
+        end
+    end 
+    daystoresult = l0 + round(Int, l)
+    return daystoresult
+end
+
+"""
+    elapsedtime = timetoccini(theplantingtype, thecropplantingdens, 
+                          thesizeseedling, thesizeplant, thecropccx, thecropcgc)
+"""
+function timetoccini(theplantingtype, thecropplantingdens, 
+                          thesizeseedling, thesizeplant, thecropccx, thecropcgc)
+    if ((theplantingtype == plant_seed) | (theplantingtype == plant_transplant) |
+        (thesizeseedling >= thesizeplant))
+        elapsedtime = 0
+    else
+        thecropcco = (thecropplantingdens/10000) * (thesizeseedling/10000)
+        thecropccini = (thecropplantingdens/10000) * (thesizeplant/10000)
+        if (thecropccini >= (0.98*thecropccx)) then
+            elapsedtime = undef_int
+        else
+            elapsedtime = daystoreachccwithgivencgc(thecropccini, thecropcco, 
+                                                    thecropccx, thecropcgc, 0)
+        end 
+    end 
+    return elapsedtime
+end
+
+"""
+    zmax = rootmaxinsoilprofile(zmaxcrop, soillayers::Vector{SoilLayerIndividual})
+"""
+function rootmaxinsoilprofile(zmaxcrop, soillayers::Vector{SoilLayerIndividual})
+    nrsoillayers = length(soillayers)
+    zmax = zmaxcrop
+    zsoil = 0
+
+    layi = 0
+    while ((layi < nrsoillayers) & (zmax > 0))
+        layi = layi + 1
+
+        if ((soillayers[layi].Penetrability < 100) &
+            (round(Int, zsoil*1000) < round(Int, zmaxcrop*1000)) 
+            zmax = undef_double
+        end 
+
+        zsoil += soillayers[layi].Thickness
+    end 
+
+    if (zmax < 0) 
+        zmax = zradjustedtorestrictivelayers(zmaxcrop, soillayers)
+    end 
+
+    return zmax
+end
+
+"""
+    zrout = zradjustedtorestrictivelayers(zrin, soillayers::Vector{SoilLayerIndividual})
+"""
+function zradjustedtorestrictivelayers(zrin, soillayers::Vector{SoilLayerIndividual})
+    nrsoillayers = length(soillayers)
+
+    zrout = zrin
+
+    # initialize (layer 1)
+    layi = 1
+    zsoil = soillayers[layi].Thickness
+    zradj = 0
+    zrremain = zrin
+    deltaz = zsoil
+    theend = false
+
+    # check succesive layers
+    while !theend
+        zrtest = zradj + zrremain * (soillayers[layi].Penetrability/100)
+
+        if ((layi == nrsoillayers) |
+            (soillayers[layi].Penetrability == 0) |
+            (round(Int, ZrTest*10000) <= round(Int, Zsoil*10000))) 
+            # no root expansion in layer
+            zrout = zrtest
+            theend = true
+        else
+            zradj = zsoil
+            zrremain -= deltaz/(soillayers[layi].Penetrability/100)
+            layi += 1
+            zsoil += zsoil + soillayers[layi].Thickness
+            deltaz = soillayers[layi].Thickness
+        end
+    end 
+    return zrout
+end
+
+"""
+    completeprofiledescription!(soillayers::Vector{SoilLayerIndividual}, 
+            compartments::Vector{CompartmentIndividual}, simulation::RepSim, totalwatercontent::RepContent)  
+"""
+function completeprofiledescription!(soillayers::Vector{SoilLayerIndividual}, 
+            compartments::Vector{CompartmentIndividual}, simulation::RepSim, totalwatercontent::RepContent)  
+    nrcompartments = length(compartments)
+    nrsoillayers = length(soillayers)
+    designate_soillayer_to_compartments!(compartments, nrsoillayers)
+
+    for compi in 1:nrcompartments
+        compartments[compi].Theta = soillayers[compartments[compi].Layer].FC/100
+        compartments[compi].FCadj = soillayers[compartments[compi].Layer].FC 
+
+        simulation.ThetaIni[compi] = compartments[compi].Theta
+
+        soillayers[compartments[compi].Layer].WaterContent += 
+            simulation.ThetaIni[compi]*100 * 10*compartments[compi].Thickness
+    end
+
+    total = 0
+    for layeri in 1:nrsoillayers
+        total += soillayers[layeri].WaterContent
+    end 
+    totalwatercontent.BeginDay(total)
+
+    # initial soil water content and no salts
+    simulation.IniSWC.NrLoc = nrsoillayers
+
+    for layeri in 1:nrsoillayers
+        simulation.IniSWC.Loc[layeri] = soillayers[layeri].Thickness
+        simulation.IniSWC.VolProc[layeri] = soillayers[layeri].FC
+        simulation.IniSWC.SaltECe[layeri] = 0
+    end 
+    return nothing
+end 
+
+"""
+    designate_soillayer_to_compartments!(compartments::Vector{CompartmentIndividual}, nrsoillayers)
+"""
+function designate_soillayer_to_compartments!(compartments::Vector{CompartmentIndividual}, nrsoillayers)
+    nrcompartments = length(compartments)
+    depth = 0
+    depthi = 0
+    layeri = 1
+    compi = 1
+    
+    outer_loop = true
+    while outer_loop 
+        depth = depth + soillayers[layeri].Thickness
+        inner_loop = true
+        while inner_loop
+            depthi = depthi + compartments[compi].Thickness/2
+
+            if (depthi <= depth) then
+                compartments[compi].Layer = layeri
+                nextlayer = false
+                depthi = depthi + compartments[compi].Thickness/2 
+                compi = compi + 1
+                finished = (compi > nrcompartments)
+            else
+                depthi = depthi - compartments[compi].Thickness/2 
+                nextlayer = true
+                layeri = layeri + 1
+                finished = (layeri > nrsoillayers)
+            end 
+
+            if (finished | nextlayer) 
+                inner_loop = false
+            end
+        end
+
+        if (finished)
+            outer_loop = false
+        end
+    end
+
+    for i in compi:nrcompartments
+        compartments[i].Layer = nrsoillayers
+    end 
+    return nothing
+end 
 
 """
     soil, soillayers, compartments = loadprofile(filepath, simulparam::RepParam)
@@ -899,7 +1506,7 @@ end
 function determinenrandthicknesscompartments!(compartments::Vector{CompartmentIndividual}, soillayers::Vector{SoilLayerIndividual}, compdefthick)
     totaldepthl = 0
     for i in eachindex(soillayers)
-        totaldepthl += soillayer[i].Thickness
+        totaldepthl += soillayers[i].Thickness
     end 
     totaldepthc = 0
     nrcompartments = 0
