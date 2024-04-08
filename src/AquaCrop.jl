@@ -4,10 +4,12 @@ using ComponentArrays
 
 
 # ---- includes ----
-include("main.jl")
+include("types.jl")
+include("initialsettings.jl")
 include("FieldCrop.jl")
+include("main.jl")
 
 # ---- exports ----
-
+export starttheprogram
 
 end
