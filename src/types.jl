@@ -9,7 +9,7 @@ const undef_str = "" # value for 'undefined' string variables
 const undef_bool = false # value for 'undefined' bool variables
 const CO2Ref = 369.41 # reference CO2 in ppm by volume for year 2000 for Mauna Loa (Hawaii,USA)
 const EvapZmin = 15.0 # cm  minimum soil depth for water extraction by evaporation
-const eps =10E-08
+const epsilon =10E-08
 const ElapsedDays = [0.0, 31.0, 59.25, 
                     90.25, 120.25, 151.25, 
                     181.25, 212.25, 243.25, 
@@ -33,6 +33,9 @@ const NameMonth = ["January","February","March","April","May","June",
     AbstractParametersContainer
 """
 abstract type AbstractParametersContainer end
+
+Base.length(p::AbstractParametersContainer) = 1
+
 
 """
     pc = ParametersContainer(T)
@@ -65,11 +68,12 @@ gets the  parameterkey from parameterscontainer
 if  parameterkey does not exist returns missing. 
 """
 function getparameter(parameterscontainer::ParametersContainer, parameterkey::Symbol)
-    get(parameterscontainer, parameterkey, missing)
+    get(parameterscontainer.parameters, parameterkey, missing)
 end
 
 Base.getindex(parameterscontainer::ParametersContainer, parameterkey::Symbol) = getparameter(parameterscontainer, parameterkey)
 
+# Base.length(parameterscontainer::ParametersContainer) = length(parameterscontainer.parameters)
 
 """
     effectiverain = RepEffectiveRain()
@@ -96,7 +100,7 @@ contains the simulation parameters.
     "exponential decline with relative soil water [1 = small ... 8 = sharp]"
     EvapDeclineFactor::Int=4
     "Soil evaporation coefficients from wet bare soil"
-    KcWetBare::Int=1.10    
+    KcWetBare::Float64=1.10    
     "CC threshold below which HI no longer increase (% of 100)"
     PercCCxHIfinal::Int=5
     "starting depth of root sine function in % of Zmin (sowing depth)"
@@ -507,7 +511,7 @@ end
     "soil water content (vol%)"
     VolProc::Vector{Float64}=fill(undef_double,max_No_compartments)
     "ECe in dS/m"
-    SaltECe::Vector{Float64}=zeros(undef_double,max_No_compartments)
+    SaltECe::Vector{Float64}=zeros(Float64,max_No_compartments)
     "If iniSWC is at FC"
     AtFC::Bool=true
 end
@@ -570,7 +574,7 @@ end
     "soil water and salts"
     ResetIniSWC::Bool=true
     "Undocumented"
-    InitialStep::Int=10101010101010101010
+    InitialStep::Int=10
     "soil evap is before late season stage limited due to sheltering effect of (partly) withered canopy cover"
     EvapLimitON::Bool=false
     "remaining water (mm) in surface soil layer for stage 1 evaporation [REW .. 0]"
@@ -628,35 +632,6 @@ end
 end
 
 
-"""
-    dayevent = RepDayEventInt()
-"""
-@kwdef mutable struct RepDayEventInt <: AbstractParametersContainer
-    "Undocumented"
-    DayNr::Int=undef_int
-    "Undocumented"
-    param::Int=undef_int
-end
-
-"""
-    onset = RepOnset()
-"""
-@kwdef mutable struct RepOnset <: AbstractParametersContainer
-    "by rainfall or temperature criterion"
-    GenerateOn::Bool=undef_bool
-    "by temperature criterion"
-    GenerateTempOn::Bool=undef_bool
-    "Undocumented"
-    Criterion::Int=undef_int
-    "Undocumented"
-    AirTCriterion::Int=undef_int
-    "daynumber"
-    StartSearchDayNr::Int=undef_int
-    "daynumber"
-    StopSearchDayNr::Int=undef_int
-    "days"
-    LengthSearchPeriod::Int=undef_int
-end
 
 """
     endseason = RepEndSeason()
@@ -703,7 +678,7 @@ end
     "ture: generate cuttings; false : schedule for cuttings"
     Generate::Bool=false
     "time criterion for generating cuttings"
-    Criterion::Bool=:NA
+    Criterion::Symbol=:NA
     "final harvest at crop maturity"
     HarvestEnd::Bool=false
     "first dayNr of list of specified cutting events (-9 = onset growing cycle)"

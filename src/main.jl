@@ -4,7 +4,7 @@
 
 function starttheprogram(parentdir=nothing)
     if isnothing(parentdir)
-        parentdir = pwd()
+        parentdir = pwd()*"/"
     end
 
     filepaths, resultsparameters = initializetheprogram(parentdir) 
@@ -17,13 +17,14 @@ function starttheprogram(parentdir=nothing)
     for i in eachindex(projectfilenames)
         theprojectfile = projectfilenames[i]
         theprojecttype = getprojecttype(theprojectfile)
-        initializeproject(i, theprojectfile, theprojecttype, filepaths)
-        # runsimulation(theprojectfile, theprojecttype)
+        inse, projectinput = initializeproject(i, theprojectfile, theprojecttype, filepaths)
     end
 end # not end
 
 
-
+"""
+    inse, projectinput = initializeproject(i, theprojectfile, theprojecttype, filepaths)
+"""
 function initializeproject(i, theprojectfile, theprojecttype, filepaths)
     canselect = [true]
 
@@ -35,7 +36,7 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
         end 
     end 
 
-    if (theprojecttype != :typenone) & canselect
+    if (theprojecttype != :typenone) & canselect[1]
         inse = initializesettings(true, true, filepaths)
 
         if theprojecttype == :typepro
@@ -49,25 +50,62 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
             # 4. load project parameters
             if (canselect[1]) 
                 auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PP1"
-                # HERE
-                loadprogramparametersprojectplugin(inse[:simulparam], auxparfile)
-                call ComposeOutputFileName(GetProjectFile())
+                if isfile(auxparfile) 
+                    loadprogramparametersprojectplugin!(inse[:simulparam], auxparfile)
+                    println("Project loaded with its program parameters")
+                else
+                    # TODO Logging
+                    println("Project loaded with default parameters")
+                end
             else
-                WrongSimNr = 1
+                wrongsimnr = 1
             end 
 
         elseif theprojecttype == :typeprm
-            # something else
+            # 2. Assign multiple project file and read its contents
+            projectinput = initializeprojectinput(testfile)
+
+            # 2bis. Get number of Simulation Runs
+            totalsimruns = length(projectinput)
+
+            # 3. Check if Environment and Simulation Files exist for all runs
+            canselect[1] = true
+            simnr = 0
+            fileok = RepFileOK()
+            while (canselect[1] & (simnr < totalsimruns))
+                simnr += simnr + 1
+                checkfilesinproject!(fileok, canselect, projectinput[simnr])
+                if (! canselect[1]) 
+                    wrongsimnr = simnr
+                end
+            end 
+
+            # 4. load project parameters
+            if (canselect[1]) 
+                auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PPn"
+                if isfile(auxparfile)
+                    loadprogramparametersprojectplugin!(inse[:simulparam], auxparfile)
+                    inse[:simulation].MultipleRuns = true
+                    inse[:simulation].NrRuns = totalsimruns
+                    runwithkeepswc, constzrxforrun = checkforkeepswc(projectinput, filepaths, inse)
+                    inse[:simulation].MultipleRunWithKeepSWC = runwithkeepswc
+                    inse[:simulation].MultipleRunConstZrx = constzrxforrun
+                    println("Project loaded with its program parameters")
+                else
+                    # TODO Logging
+                    println("Project loaded with default parameters")
+                end
+            end 
         end
     
     else
         # TODO better logging
-        if canselect
+        if canselect[1]
             error("bad projecttype for "*theprojectfile)
         else
             error("did not find the file "*theprojectfile)
         end
     end
-    return 
-end # not end
+    return  inse, projectinput
+end
 
