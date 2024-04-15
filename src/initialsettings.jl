@@ -30,7 +30,7 @@ function checkforkeepswc(projectinput::Vector{ProjectInputType}, filepaths, inse
         soillayers = inse[:soillayers]
         compartments = inse[:compartments]
     else
-        soil, soillayers, compartments = loadprofile(projectinput[1].Soil_Directory*filename)
+        soil, soillayers, compartments = loadprofile(filepaths[:prog]*projectinput[1].Soil_Directory*filename, inse[:simulparam])
     end 
 
     thenrsoillayers = length(soillayers)
@@ -54,7 +54,7 @@ function checkforkeepswc(projectinput::Vector{ProjectInputType}, filepaths, inse
         runi = 1
         while (runi <= totalnrofruns)
             # Obtain maximum rooting depth from the crop file
-            fullfilename = projectinput[runi].Crop_Directory*projectinput[runi].Crop_Filename
+            fullfilename = filepaths[:prog]*projectinput[runi].Crop_Directory*projectinput[runi].Crop_Filename
 
             open(fullfilename, "r") do file
                 readline(file) # description
@@ -64,11 +64,11 @@ function checkforkeepswc(projectinput::Vector{ProjectInputType}, filepaths, inse
                 end 
                 zrni = parse(Float64,strip(readline(file))[1:6])
                 zrxi = parse(Float64,strip(readline(file))[1:6])
-            end
-                zrsoili = rootmaxinsoilprofile(zmaxcrop, soillayers)
+                zrsoili = rootmaxinsoilprofile(zrxi, soillayers)
                 if (zrsoili > constzrxforrun) 
                     constzrxforrun = zrsoili
                 end 
+            end
             runi = runi + 1
         end 
     end 
@@ -134,23 +134,23 @@ function loadprogramparametersprojectplugin!(simulparam::RepParam, auxparfile)
             simulparam.EffectiveRain.method = :Percentage
         end 
 
-        simulparam.EffectiveRain_PercentEffRain = parse(Float64,strip(readline(file))[1:6]) # IF Method is Percentage
-        simulparam.EffectiveRain_ShowersInDecade = parse(Float64,strip(readline(file))[1:6])# For estimation of surface run-off
-        simulparam.EffectiveRain_RootNrEvap = parse(Float64,strip(readline(file))[1:6]) # For reduction of soil evaporation
+        simulparam.EffectiveRain.PercentEffRain = parse(Float64,strip(readline(file))[1:6]) # IF Method is Percentage
+        simulparam.EffectiveRain.ShowersInDecade = parse(Float64,strip(readline(file))[1:6])# For estimation of surface run-off
+        simulparam.EffectiveRain.RootNrEvap = parse(Float64,strip(readline(file))[1:6]) # For reduction of soil evaporation
     end
     return nothing
 end
 
 """
-    checkfilesinproject!(fileok::RepFileOK, allok, input::ProjectInputType)
+    checkfilesinproject!(fileok::RepFileOK, allok, input::ProjectInputType, parentdir)
 """
-function checkfilesinproject!(fileok::RepFileOK, allok, input::ProjectInputType)
+function checkfilesinproject!(fileok::RepFileOK, allok, input::ProjectInputType, parentdir)
     allok[1] = true
 
     function check_file(directory, filename)
         # sets allok to false if expected file does not exist.
         if (filename != "(None)") 
-            if !isfile(directory*filename) 
+            if !isfile(parentdir*directory*filename) 
                 allok[1] = false
                 fileok_tmp = false
             else
@@ -161,7 +161,6 @@ function checkfilesinproject!(fileok::RepFileOK, allok, input::ProjectInputType)
         end 
         return fileok_tmp
     end
-
     # Check the 14 files
     fileok_tmp = check_file(input.Climate_Directory, input.Climate_Filename)
     fileok.Climate_Filename = fileok_tmp
@@ -223,71 +222,71 @@ function initializeprojectinput(filename)
             # 1. Climate
             self.Climate_Info = strip(readline(file))
             self.Climate_Filename = strip(readline(file))
-            self.Climate_Directory = strip(readline(file))
+            self.Climate_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 1.1 Temperature
             self.Temperature_Info = strip(readline(file))
             self.Temperature_Filename = strip(readline(file))
-            self.Temperature_Directory = strip(readline(file))
+            self.Temperature_Directory = replace(strip(readline(file)),"'"=>"","."=>"")
 
             # 1.2 ETo
             self.ETo_Info = strip(readline(file))
             self.ETo_Filename = strip(readline(file))
-            self.ETo_Directory = strip(readline(file))
+            self.ETo_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 1.3 Rain
             self.Rain_Info = strip(readline(file))
             self.Rain_Filename = strip(readline(file))
-            self.Rain_Directory = strip(readline(file))
+            self.Rain_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 1.4 CO2
             self.CO2_Info = strip(readline(file))
             self.CO2_Filename = strip(readline(file))
-            self.CO2_Directory = strip(readline(file))
+            self.CO2_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 2. Calendar
             self.Calendar_Info = strip(readline(file))
             self.Calendar_Filename = strip(readline(file))
-            self.Calendar_Directory = strip(readline(file))
+            self.Calendar_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 3. Crop
             self.Crop_Info = strip(readline(file))
             self.Crop_Filename = strip(readline(file))
-            self.Crop_Directory = strip(readline(file))
+            self.Crop_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             self.Irrigation_Info = strip(readline(file))
             self.Irrigation_Filename = strip(readline(file))
-            self.Irrigation_Directory = strip(readline(file))
+            self.Irrigation_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 5. Field Management
             self.Management_Info = strip(readline(file))
             self.Management_Filename = strip(readline(file))
-            self.Management_Directory = strip(readline(file))
+            self.Management_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 6. Soil Profile
             self.Soil_Info = strip(readline(file))
             self.Soil_Filename = strip(readline(file))
-            self.Soil_Directory = strip(readline(file))
+            self.Soil_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 7. GroundWater
             self.GroundWater_Info = strip(readline(file))
             self.GroundWater_Filename = strip(readline(file))
-            self.GroundWater_Directory = strip(readline(file))
+            self.GroundWater_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 8. Initial conditions
             self.SWCIni_Info = strip(readline(file))
             self.SWCIni_Filename = strip(readline(file))
-            self.SWCIni_Directory = strip(readline(file))
+            self.SWCIni_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 9. Off-season conditions
             self.OffSeason_Info = strip(readline(file))
             self.OffSeason_Filename = strip(readline(file))
-            self.OffSeason_Directory = strip(readline(file))
+            self.OffSeason_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             # 10. Field data
             self.Observations_Info = strip(readline(file))
             self.Observations_Filename = strip(readline(file))
-            self.Observations_Directory = strip(readline(file))
+            self.Observations_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
 
             push!(projectinput, self)
         end
@@ -319,7 +318,7 @@ function initializesettings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     else
         soil = RepSoil()
         soillayers = [SoilLayerIndividual()]
-        compartments = fill(CompartmentIndividual(Thickness=simulparam.CompDefThick), max_No_compartments)
+        compartments = CompartmentIndividual[CompartmentIndividual(Thickness=simulparam.CompDefThick) for _ in 1:max_No_compartments]
         determinate_soilclass!(soillayers[1])
         determinate_coeffcapillaryrise!(soillayers[1])
     end
@@ -354,8 +353,8 @@ function initializesettings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     simulation.ToDayNr = crop.DayN
 
     # 6. irrigation
-    irribeforeseason = fill(RepDayEventInt(), 5)
-    irriafterseason = fill(RepDayEventInt(), 5)
+    irribeforeseason = RepDayEventInt[RepDayEventInt() for _ in 1:5]
+    irriafterseason = RepDayEventInt[RepDayEventInt() for _ in 1:5]
     irriecw = RepIrriECw()
 
     #  11. Onset
@@ -372,24 +371,26 @@ function initializesettings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(floatparameters, :runoff, 0.0)
     setparameter!(floatparameters, :infiltrated, 0.0)
     setparameter!(floatparameters, :crwater, 0.0)
-    setparameter!(floatparameters, :crsalti, 0.0)
+    setparameter!(floatparameters, :crsalt, 0.0)
+    setparameter!(floatparameters, :eciaqua, undef_double) #undef_int
 
     symbolparameters = ParametersContainer(Symbol)
-    setparameter!(symbolparameters, :mode, :NoIrri)
-    setparameter!(symbolparameters, :method, :MSprinkler)
-    setparameter!(symbolparameters, :timemode, :AllRAW)
-    setparameter!(symbolparameters, :depthmode, :ToFC)
+    setparameter!(symbolparameters, :irrimode, :NoIrri) # 0
+    setparameter!(symbolparameters, :irrimethod, :MSprinkler) # 4
+    setparameter!(symbolparameters, :timemode, :AllRAW) # 2
+    setparameter!(symbolparameters, :depthmode, :ToFC) # 0
 
     integerparameters = ParametersContainer(Int)
     setparameter!(integerparameters, :iniperctaw, 50)
     setparameter!(integerparameters, :daysubmerged, 0)
     setparameter!(integerparameters, :maxplotnew, 50)
     setparameter!(integerparameters, :maxplottr, 10)
+    setparameter!(integerparameters, :ziaqua, undef_int)
 
     boolparameters = ParametersContainer(Bool)
     setparameter!(boolparameters, :preday, false)
 
-
+    # @infiltrate
 
     return ComponentArray(
         simulparam = simulparam,
@@ -943,7 +944,7 @@ function loadprofile(filepath, simulparam::RepParam)
             soillayer.CRa = cra_temp
             crb_temp = parse(Float64,popfirst!(splitedline))
             soillayer.CRb = crb_temp
-            description_temp = join(splitedline," ") 
+            description_temp = popfirst!(splitedline)  #join(splitedline," ") 
             soillayer.Description = description_temp
             gravelv_temp = from_gravelmass_to_gravelvol(SAT_temp, gravelm_temp)
             soillayer.GravelVol = gravelv_temp
@@ -991,7 +992,7 @@ function loadprofileprocessing!(soil::RepSoil, soillayers::Vector{SoilLayerIndiv
         Macro = round(Int, soillayer.FC)
         soillayer.Macro = Macro
         ul = soillayer.SAT/100 * sc/(sc + 2) # m3/m3
-        soillayer.UL
+        soillayer.UL = ul
         dx = ul / sc
         soillayer.Dx = dx
 
@@ -1279,11 +1280,11 @@ sets the default directories for the input files.
 """
 function defaultfilepaths(parentdir::AbstractString)
     return ComponentArray(
-    outp=parentdir*"OUTP/",
-    simul=parentdir*"SIMUL/",
-    list=parentdir*"LIST/",
-    param=parentdir*"PARAM/",
-    prog=parentdir*"")
+    outp=parentdir*"/OUTP/",
+    simul=parentdir*"/SIMUL/",
+    list=parentdir*"/LIST/",
+    param=parentdir*"/PARAM/",
+    prog=parentdir)
 end
 
 """

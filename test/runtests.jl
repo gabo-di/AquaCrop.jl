@@ -1,6 +1,3 @@
-using AquaCrop
-using Test
+using SafeTestsets
 
-@testset "AquaCrop.jl" begin
-    # Write your tests here.
-end
+@safetestset "Initial Settings" begin include("initialsettings_tests.jl") end

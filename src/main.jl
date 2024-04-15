@@ -4,11 +4,12 @@
 
 function starttheprogram(parentdir=nothing)
     if isnothing(parentdir)
-        parentdir = pwd()*"/"
+        parentdir = pwd()
     end
 
     filepaths, resultsparameters = initializetheprogram(parentdir) 
     projectfilenames = initializeprojectfilename(filepaths)
+    # @infiltrate
 
     nprojects = length(projectfilenames)
     # TODO write some messages if nprojects==0 like in startunit.F90:957
@@ -17,13 +18,13 @@ function starttheprogram(parentdir=nothing)
     for i in eachindex(projectfilenames)
         theprojectfile = projectfilenames[i]
         theprojecttype = getprojecttype(theprojectfile)
-        inse, projectinput = initializeproject(i, theprojectfile, theprojecttype, filepaths)
+        inse, projectinput, fileok = initializeproject(i, theprojectfile, theprojecttype, filepaths)
     end
 end # not end
 
 
 """
-    inse, projectinput = initializeproject(i, theprojectfile, theprojecttype, filepaths)
+    inse, projectinput, fileok = initializeproject(i, theprojectfile, theprojecttype, filepaths)
 """
 function initializeproject(i, theprojectfile, theprojecttype, filepaths)
     canselect = [true]
@@ -45,7 +46,7 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
 
             # 3. Check if Environment and Simulation Files exist
             fileok = RepFileOK()
-            checkfilesinproject!(fileok, canselect, projectinput[1])
+            checkfilesinproject!(fileok, canselect, projectinput[1], filepaths[:prog])
 
             # 4. load project parameters
             if (canselect[1]) 
@@ -74,7 +75,7 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
             fileok = RepFileOK()
             while (canselect[1] & (simnr < totalsimruns))
                 simnr += simnr + 1
-                checkfilesinproject!(fileok, canselect, projectinput[simnr])
+                checkfilesinproject!(fileok, canselect, projectinput[simnr], filepaths[:prog])
                 if (! canselect[1]) 
                     wrongsimnr = simnr
                 end
@@ -85,7 +86,7 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
                 auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PPn"
                 if isfile(auxparfile)
                     loadprogramparametersprojectplugin!(inse[:simulparam], auxparfile)
-                    inse[:simulation].MultipleRuns = true
+                    inse[:simulation].MultipleRun = true
                     inse[:simulation].NrRuns = totalsimruns
                     runwithkeepswc, constzrxforrun = checkforkeepswc(projectinput, filepaths, inse)
                     inse[:simulation].MultipleRunWithKeepSWC = runwithkeepswc
@@ -106,6 +107,7 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
             error("did not find the file "*theprojectfile)
         end
     end
-    return  inse, projectinput
+    # @infiltrate
+    return  inse, projectinput, fileok
 end
 

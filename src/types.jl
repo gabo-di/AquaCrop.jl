@@ -36,6 +36,23 @@ abstract type AbstractParametersContainer end
 
 Base.length(p::AbstractParametersContainer) = 1
 
+function _isapprox(a, b; kwargs...) 
+   for field in fieldnames(typeof(a))
+       if isapprox(getfield(a,field), getfield(b,field); kwargs...)
+            continue
+        else
+            println("\n\n\n")
+            println(field)
+            println("\n\n\n")
+            return false
+        end
+    end
+    return true
+end
+
+Base.isapprox(a::T, b::T; kwargs...) where {T<:AbstractParametersContainer} = _isapprox(a, b, kwargs...)
+
+Base.isapprox(a::Vector{T}, b::Vector{T}; kwargs...) where {T<:AbstractParametersContainer} = all([_isapprox(aa,bb;kwargs...) for (aa,bb) in zip(a,b)])
 
 """
     pc = ParametersContainer(T)
@@ -88,6 +105,7 @@ Base.getindex(parameterscontainer::ParametersContainer, parameterkey::Symbol) = 
     "Root for reduction in soil evaporation"
     RootNrEvap::Int=5
 end
+
 
 """
     simulparams = RepParams()
@@ -146,7 +164,7 @@ contains the simulation parameters.
     "Default thickness of soil compartments [m]"
     CompDefThick::Float64=0.10
     "First day after sowing/transplanting (DAP = 1)"
-    CropDay1::Int=51
+    CropDay1::Int=81
     "Default base and upper temperature (degC) assigned to crop"
     Tbase::Float64=10.0
     "Default base and upper temperature (degC) assigned to crop"
@@ -159,7 +177,7 @@ contains the simulation parameters.
     # Showers parameters (10-day or monthly rainfall) IN SHOWERS.PAR
     "10-day or Monthly rainfall --> Runoff estimate"
     ShowersInDecade::Vector{Int}=fill(undef_int,12)
-    "10-day or Monthly rainfall --> Effective rainfall"
+    "10-day or Monthly rainfall --> Effective rainfall" #Note that in fortran code printing simulparam.effectiverain gives an error, we have to use getsimulparam_effectiverain_(etc)
     EffectiveRain::RepEffectiveRain=RepEffectiveRain()
 
     # Salinity
@@ -181,6 +199,7 @@ contains the simulation parameters.
     IniAbstract::Int=5
 end
 
+
 """
     soil = RepSoil()
 """
@@ -192,6 +211,7 @@ end
     "maximum rooting depth in soil profile for selected crop"
     RootMax::Float64=undef_double
 end
+
 
 """
     soillayer = SoilLayerIndividual()
@@ -245,6 +265,7 @@ creates a soil layer with a given soil class.
     CRb::Float64=undef_double
 end
 
+
 """
     shape = RepShapes()
 """
@@ -263,6 +284,7 @@ end
     Calibrated::Bool=true
 end
 
+
 """
     assimilates = RepAssimilates()
 """
@@ -276,6 +298,7 @@ end
     "Percentage of stored assimilates, transferred to above ground parts in next season"
     Mobilized::Int=0
 end 
+
 
 """
     crop = RepCrop()
@@ -498,6 +521,8 @@ end
     Depo::Vector{Float64}=zeros(Float64,11)
 end 
 
+Base.isapprox(a::CompartmentIndividual, b::CompartmentIndividual; kwargs... ) = _isapprox(a, b; kwargs...) 
+
 """
     iniswc = RepIniSWC()
 """
@@ -511,10 +536,11 @@ end
     "soil water content (vol%)"
     VolProc::Vector{Float64}=fill(undef_double,max_No_compartments)
     "ECe in dS/m"
-    SaltECe::Vector{Float64}=zeros(Float64,max_No_compartments)
+    SaltECe::Vector{Float64}=fill(undef_double,max_No_compartments)
     "If iniSWC is at FC"
     AtFC::Bool=true
 end
+
 
 """
     effectstress = RepEffectStress()
@@ -532,6 +558,7 @@ end
     RedKsSto::Int=undef_int
 end
 
+
 """
     storage = RepStorage()
 """
@@ -544,6 +571,7 @@ end
     "season in which Btotal is stored"
     Season::Int=undef_int
 end
+
 
 """
     simulation = RepSim()
@@ -633,6 +661,7 @@ end
 
 
 
+
 """
     endseason = RepEndSeason()
 """
@@ -651,6 +680,7 @@ end
     LengthSearchPeriod::Int=undef_int
 end
 
+
 """
     content = RepContent()
 """
@@ -662,6 +692,7 @@ end
     "error on WaterContent or SaltContent over the day"
     ErrorDay::Float64=undef_double
 end
+
 
 """
     cuttings = RepCuttings()
@@ -684,6 +715,7 @@ end
     "first dayNr of list of specified cutting events (-9 = onset growing cycle)"
     FirstDayNr::Int=undef_int
 end
+
 
 """
     management = RepManag()
@@ -715,7 +747,7 @@ end
     WeedShape::Float64=-0.01
     "replacement (%) by weeds of the self-thinned part of the Canopy Cover - only for perennials"
     WeedAdj::Int=100
-    "Multiple cuttings"
+    "Multiple cuttings" #Note that in fortran code printin management.cuttins gives an error, we have to use getmanagement_cuttings_(etc)
     Cuttings::RepCuttings=RepCuttings()
 end
 
