@@ -380,7 +380,8 @@ function declare_initial_variables()
 end
 
 @testset "Initialize Settings" begin
-    parentdir = "/Users/gabriel/Desktop/AquaCrop/AquaCrop.jl/test/testcase/"
+    # parentdir = "/Users/gabriel/Desktop/AquaCrop/AquaCrop.jl/test/testcase/"
+    parentdir = pwd()*"/testcase"
     filepaths, resultsparameters = AquaCrop.initializetheprogram(parentdir)
     projectfilenames = AquaCrop.initializeprojectfilename(filepaths)
     inse = AquaCrop.initializesettings(true, true, filepaths)
@@ -405,7 +406,8 @@ end
 
 
 @testset "Initialize Project" begin
-    parentdir = "/Users/gabriel/Desktop/AquaCrop/AquaCrop.jl/test/testcase/"
+    # parentdir = "/Users/gabriel/Desktop/AquaCrop/AquaCrop.jl/test/testcase/"
+    parentdir = pwd()*"/testcase"
     filepaths, resultsparameters = AquaCrop.initializetheprogram(parentdir)
     projectfilenames = AquaCrop.initializeprojectfilename(filepaths)
     i = 1
