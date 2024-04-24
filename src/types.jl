@@ -111,6 +111,9 @@ end
     simulparams = RepParams()
 
 contains the simulation parameters.
+
+set from
+initialsettings.f90:216
 """
 @kwdef mutable struct RepParam <: AbstractParametersContainer
     #  DEFAULT.PAR
@@ -202,6 +205,9 @@ end
 
 """
     soil = RepSoil()
+
+set from
+defaultcropsoil.f90:289
 """
 @kwdef mutable struct RepSoil <: AbstractParametersContainer
     "(* Readily evaporable water mm *)"
@@ -217,6 +223,9 @@ end
     soillayer = SoilLayerIndividual()
 
 creates a soil layer with a given soil class.
+
+set from
+defaultcropsoil.f90:289
 """
 @kwdef mutable struct SoilLayerIndividual <: AbstractParametersContainer
     "Undocumented"
@@ -302,6 +311,9 @@ end
 
 """
     crop = RepCrop()
+
+set from 
+defaultcropsoil.f90:140
 """
 @kwdef mutable struct RepCrop <: AbstractParametersContainer
     "Undocumented"
@@ -575,6 +587,9 @@ end
 
 """
     simulation = RepSim()
+
+set from
+global.f90:7694
 """
 @kwdef mutable struct RepSim <: AbstractParametersContainer
     "daynumber"
@@ -719,6 +734,9 @@ end
 
 """
     management = RepManag()
+
+set from
+global.f90:3311
 """
 @kwdef mutable struct RepManag <: AbstractParametersContainer
     "percent soil cover by mulch in growing period"
@@ -753,6 +771,9 @@ end
 
 """
     summ = RepSum()
+
+set from
+global.f90:7153
 """
 @kwdef mutable struct RepSum <: AbstractParametersContainer
     # Undocumented
@@ -783,6 +804,9 @@ end
 
 """
     a = RepDayEventInt()
+
+set from
+global.f90:2838
 """
 @kwdef mutable struct RepDayEventInt <: AbstractParametersContainer
     "Undocumented"
@@ -793,6 +817,9 @@ end
 
 """
     irriecw = RepIrriECw()
+
+set from
+global.f90:2838
 """
 @kwdef mutable struct RepIrriECw <: AbstractParametersContainer
     "Undocumented"
@@ -803,6 +830,9 @@ end
 
 """
     onset = RepOnset()
+
+set from
+initialsettings.f90:464
 """
 @kwdef mutable struct RepOnset <: AbstractParametersContainer
     "by rainfall or temperature criterion"

@@ -1,5 +1,14 @@
 
 """
+    loadsimulationproject!()
+"""
+function loadsimulationproject!()
+end #not end
+
+
+
+
+"""
    runwithkeepswc, constzrxforrun = checkforkeepswc(projectinput::Vector{ProjectInputType}, filepaths, inse)
 """
 function checkforkeepswc(projectinput::Vector{ProjectInputType}, filepaths, inse)
@@ -299,6 +308,8 @@ end
     inse = initializesettings(usedefaultsoilfile, usedefaultcropfile, filepaths)
 
 gets the initial settings.
+
+initialsettings.f90:201
 """
 function initializesettings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     # 1. Program settings
@@ -390,7 +401,6 @@ function initializesettings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     boolparameters = ParametersContainer(Bool)
     setparameter!(boolparameters, :preday, false)
 
-    # @infiltrate
 
     return ComponentArray(
         simulparam = simulparam,
@@ -416,6 +426,8 @@ end
 
 """
     cropstressparameterssoilfertility!(stressout::RepEffectStress, cropsresp::RepShapes, stresslevel)
+
+global.f90:1231
 """
 function cropstressparameterssoilfertility!(stressout::RepEffectStress, cropsresp::RepShapes, stresslevel)
     pllactual = 1
@@ -443,6 +455,8 @@ end
 
 """
     ksval = ksany(wrel, pulactual, pllactual, shapefactor)
+
+global.f90:2611
 """
 function ksany(wrel, pulactual, pllactual, shapefactor)
     pulactual_local = pulactual
@@ -476,6 +490,8 @@ end
 
 """
     completecropdescription!(crop::RepCrop, simulation::RepSim, management::RepManag)
+
+globa.f90:5624
 """
 function completecropdescription!(crop::RepCrop, simulation::RepSim, management::RepManag)
     if ((crop.subkind == :Vegetative) |
@@ -558,6 +574,8 @@ end
     length123, stlength, length12, cgcval = determinelengthgrowthstages(ccoval, ccxval, cdcval, l0, totallength, 
                                                                         cgcgiven, thedaystoccini, theplanting, 
                                                                         length123, stlength, length12, cgcval)
+
+global.f90:1644
 """
 function determinelengthgrowthstages(ccoval, ccxval, cdcval, l0, totallength, 
                                      cgcgiven, thedaystoccini, theplanting, 
@@ -655,6 +673,8 @@ end
 
 """
     nd = lengthcanopydecline(ccx, cdc)
+
+global.f90:1839
 """
 function lengthcanopydecline(ccx, cdc)
     nd = 0
@@ -673,6 +693,8 @@ end
 
 """
     l12sf, redcgc, redccx, classsf = timetomaxcanopysf(cco, cgc, ccx, l0, l12, l123, ltoflor, lflor, determinantcrop, l12sf, redcgc, redccx, classsf)
+
+global.f90:2090
 """
 function timetomaxcanopysf(cco, cgc, ccx, l0, l12, l123, ltoflor, lflor, determinantcrop, l12sf, redcgc, redccx, classsf)
     if ((classsf == 0) | ((redccx == 0) & (redcgc == 0))) 
@@ -708,6 +730,8 @@ end
 
 """
     daystoresult = daystoreachccwithgivencgc(cctoreach, ccoval, ccxval, cgcval, l0)
+
+global.f90:1809
 """
 function daystoreachccwithgivencgc(cctoreach, ccoval, ccxval, cgcval, l0)
     cctoreach_local = cctoreach
@@ -730,6 +754,8 @@ end
 """
     elapsedtime = timetoccini(theplantingtype, thecropplantingdens, 
                           thesizeseedling, thesizeplant, thecropccx, thecropcgc)
+
+global.f90:1754
 """
 function timetoccini(theplantingtype, thecropplantingdens, 
                           thesizeseedling, thesizeplant, thecropccx, thecropcgc)
@@ -751,6 +777,8 @@ end
 
 """
     zmax = rootmaxinsoilprofile(zmaxcrop, soillayers::Vector{SoilLayerIndividual})
+
+global.f90:1092
 """
 function rootmaxinsoilprofile(zmaxcrop, soillayers::Vector{SoilLayerIndividual})
     nrsoillayers = length(soillayers)
@@ -778,6 +806,8 @@ end
 
 """
     zrout = zradjustedtorestrictivelayers(zrin, soillayers::Vector{SoilLayerIndividual})
+
+global.f90:1126
 """
 function zradjustedtorestrictivelayers(zrin, soillayers::Vector{SoilLayerIndividual})
     nrsoillayers = length(soillayers)
@@ -816,11 +846,15 @@ end
 """
     completeprofiledescription!(soillayers::Vector{SoilLayerIndividual}, 
             compartments::Vector{CompartmentIndividual}, simulation::RepSim, totalwatercontent::RepContent)  
+
+global.f90:7561
 """
 function completeprofiledescription!(soillayers::Vector{SoilLayerIndividual}, 
             compartments::Vector{CompartmentIndividual}, simulation::RepSim, totalwatercontent::RepContent)  
     nrcompartments = length(compartments)
     nrsoillayers = length(soillayers)
+
+    # global.f90:7443
     designate_soillayer_to_compartments!(compartments, soillayers)
 
     for compi in 1:nrcompartments
@@ -839,6 +873,7 @@ function completeprofiledescription!(soillayers::Vector{SoilLayerIndividual},
     end 
     totalwatercontent.BeginDay = total
 
+    # global.f90:1168
     # initial soil water content and no salts
     simulation.IniSWC.NrLoc = nrsoillayers
 
@@ -852,6 +887,8 @@ end
 
 """
     designate_soillayer_to_compartments!(compartments::Vector{CompartmentIndividual}, soillayers::Vector{SoilLayerIndividual})
+
+global.f90:7393
 """
 function designate_soillayer_to_compartments!(compartments::Vector{CompartmentIndividual}, soillayers::Vector{SoilLayerIndividual})
     nrsoillayers = length(soillayers)
@@ -902,6 +939,8 @@ end
     soil, soillayers, compartments = loadprofile(filepath, simulparam::RepParam)
 
 loads data from filepath.
+
+global.f90:7590
 """
 function loadprofile(filepath, simulparam::RepParam)
     # note that we only consider version 7.1 parsing style
@@ -962,11 +1001,13 @@ end
         compartments::Vector{CompartmentIndividual}, simulparam::RepParam)
 
 loads some data.
+
+global.f90:7684
 """
 function loadprofileprocessing!(soil::RepSoil, soillayers::Vector{SoilLayerIndividual},
         compartments::Vector{CompartmentIndividual}, simulparam::RepParam)
 
-    # OJO set simulation parameters from global.f90:7691 done with @kwdef
+    # OJO set simulation parameters from global.f90:7694 done with @kwdef
 
     for i in eachindex(soillayers)
         soillayer = soillayers[i]
@@ -1011,6 +1052,8 @@ end
 
 """
     determinenrandthicknesscompartments!(compartments::Vector{CompartmentIndividual}, soillayers::Vector{SoilLayerIndividual}, compdefthick)
+
+global.f90:4063
 """
 function determinenrandthicknesscompartments!(compartments::Vector{CompartmentIndividual}, soillayers::Vector{SoilLayerIndividual}, compdefthick)
     totaldepthl = 0
@@ -1043,6 +1086,8 @@ end
     calculate_saltmobility!(soillayer::SoilLayerIndividual, saltdiffusion)
 
 sets the salt mobility
+
+global.f90:7500
 """
 function calculate_saltmobility!(soillayer::SoilLayerIndividual, saltdiffusion)
     Macro = soillayer.Macro
@@ -1100,6 +1145,8 @@ end
 
 """
     tau = taufromksat(ksat)
+
+global.f90:1889
 """
 function taufromksat(ksat)
     if (abs(ksat) < eps(1.0)) 
@@ -1122,6 +1169,8 @@ end
     gravelvol = from_gravelmass_to_gravelvol(porositypercent, gravelmasspercent)
 
 calculates the gravel volume of soil layer.
+
+global.f90:1521
 """
 function from_gravelmass_to_gravelvol(porositypercent, gravelmasspercent)
     mineralbd = 2.65 # mg/m3
@@ -1139,6 +1188,8 @@ end
     determinate_soilclass!(soillayer::SoilLayerIndividual)
 
 sets the soil class of soillayer considering its own data.
+
+global.f90:1909
 """
 function determinate_soilclass!(soillayer::SoilLayerIndividual) 
     satvolpro = soillayer.SAT
@@ -1179,6 +1230,8 @@ end
     determinate_coeffcapillaryrise!(soillayer::SoilLayerIndividual)
 
 sets the coefficients for capillary rise of soillayer considering its own data.
+
+global.f90:4034
 """
 function determinate_coeffcapillaryrise!(soillayer::SoilLayerIndividual)
     soilclass = soillayer.SoilClass
@@ -1213,6 +1266,8 @@ end
     pt = getprojecttype(theprojectfile)
 
 gets the project type for a given file.
+
+startunit.f90:322
 """
 function getprojecttype(theprojectfile)
     if endswith(theprojectfile, "PRO")
@@ -1230,6 +1285,8 @@ end
     projectfilenames = initializeprojectfilename(filepaths)
 
 Gets all the names of the projects files.
+
+startunit.f90:441
 """
 function initializeprojectfilename(filepaths)
     projectfilenames = String[]
@@ -1261,6 +1318,8 @@ end
     filepaths, resultsparameters = initializetheprogram(parentdir)
     
 Gets the file paths and the simulation parameters.
+
+startunit.f90:417
 """
 function initializetheprogram(parentdir)
     filepaths = defaultfilepaths(parentdir)
@@ -1277,6 +1336,8 @@ end
     fl = defaultfilepaths(parentdir::AbstractString)
 
 sets the default directories for the input files.
+
+startunit.f90:420
 """
 function defaultfilepaths(parentdir::AbstractString)
     return ComponentArray(
@@ -1291,8 +1352,11 @@ end
     resultsparameters = getresultsparameters(path::String)
 
 gets all the results parameters in filepaths[:simul].
+
+startunit.f90:426
 """
 function getresultsparameters(path::String)
+    #startunit.f90:282
     aggregationresultsparameters = ParametersContainer(Symbol)
     filename = path*"AggregationResults.SIM"
     if isfile(filename) 
@@ -1310,6 +1374,7 @@ function getresultsparameters(path::String)
         end
     end
 
+    #startunit.f90:188
     dailyresultsparameters = ParametersContainer(Bool)
     filename = path*"DailyResults.SIM"
     if isfile(filename) 
@@ -1344,6 +1409,7 @@ function getresultsparameters(path::String)
         end
     end
 
+    #startunit.f90:248
     particularresultsparameters = ParametersContainer(Bool)
     filename = path*"ParticularResults.SIM"
     if isfile(filename) 

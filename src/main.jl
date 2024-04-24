@@ -2,6 +2,13 @@
 
 # setup
 
+"""
+    starttheprogram(dir::Union{String,Nothing}=nothing)
+
+starts the program
+
+startunit.f90:931
+"""
 function starttheprogram(parentdir=nothing)
     if isnothing(parentdir)
         parentdir = pwd()
@@ -9,7 +16,6 @@ function starttheprogram(parentdir=nothing)
 
     filepaths, resultsparameters = initializetheprogram(parentdir) 
     projectfilenames = initializeprojectfilename(filepaths)
-    # @infiltrate
 
     nprojects = length(projectfilenames)
     # TODO write some messages if nprojects==0 like in startunit.F90:957
@@ -25,6 +31,8 @@ end # not end
 
 """
     inse, projectinput, fileok = initializeproject(i, theprojectfile, theprojecttype, filepaths)
+
+startunit.f90:535
 """
 function initializeproject(i, theprojectfile, theprojecttype, filepaths)
     canselect = [true]
@@ -107,7 +115,6 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
             error("did not find the file "*theprojectfile)
         end
     end
-    # @infiltrate
     return  inse, projectinput, fileok
 end
 
