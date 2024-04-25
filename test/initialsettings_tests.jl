@@ -71,7 +71,7 @@ function declare_initial_variables()
         RootMax=1
     )
 
-    soillayers = AquaCrop.SoilLayerIndividual[
+    soil_layers = AquaCrop.SoilLayerIndividual[
         AquaCrop.SoilLayerIndividual(
         Description="Loamy",
         Thickness=4,
@@ -152,7 +152,7 @@ function declare_initial_variables()
         IniAbstract=5
     )
 
-    totalwatercontent = AquaCrop.RepContent(
+    total_water_content = AquaCrop.RepContent(
         BeginDay=360,
         EndDay=AquaCrop.undef_double, #0,
         ErrorDay=AquaCrop.undef_double, #0
@@ -312,7 +312,7 @@ function declare_initial_variables()
         CRsalt=0.0
     )
 
-    irribeforeseason = AquaCrop.RepDayEventInt[
+    irri_before_season = AquaCrop.RepDayEventInt[
         AquaCrop.RepDayEventInt(
             DayNr=0,
             param=0
@@ -320,7 +320,7 @@ function declare_initial_variables()
         for _ in 1:5
     ]
 
-    irriafterseason = AquaCrop.RepDayEventInt[
+    irri_after_season = AquaCrop.RepDayEventInt[
         AquaCrop.RepDayEventInt(
             DayNr=0,
             param=0
@@ -328,7 +328,7 @@ function declare_initial_variables()
         for _ in 1:5
     ]
 
-    irriecw = AquaCrop.RepIrriECw(
+    irri_ecw = AquaCrop.RepIrriECw(
         PreSeason=0.0,
         PostSeason=0.0
     )
@@ -363,43 +363,42 @@ function declare_initial_variables()
     return ComponentArray(
         simulparam=simulparam,
         soil=soil,
-        soillayers=soillayers,
+        soil_layers=soil_layers,
         compartments=compartments,
         simulation=simulation,
-        totalwatercontent=totalwatercontent,
+        total_water_content=total_water_content,
         crop=crop,
         management=management,
         sumwabal=sumwabal,
-        irribeforeseason=irribeforeseason,
-        irriafterseason=irriafterseason,
-        irriecw=irriecw,
+        irri_before_season=irri_before_season,
+        irri_after_season=irri_after_season,
+        irri_ecw=irri_ecw,
         onset=onset,
         fileok=fileok
     )
-
 end
 
 @testset "Initialize Settings" begin
     # parentdir = "/Users/gabriel/Desktop/AquaCrop/AquaCrop.jl/test/testcase/"
     parentdir = pwd()*"/testcase"
-    filepaths, resultsparameters = AquaCrop.initializetheprogram(parentdir)
-    projectfilenames = AquaCrop.initializeprojectfilename(filepaths)
-    inse = AquaCrop.initializesettings(true, true, filepaths)
+    filepaths, results_parameters = AquaCrop.initialize_the_program(parentdir)
+    project_filenames = AquaCrop.initialize_project_filename(filepaths)
+    inse = AquaCrop.initialize_settings(true, true, filepaths)
 
     ini = declare_initial_variables()
 
     @test isapprox(inse[:simulparam], ini[:simulparam])
     @test isapprox(inse[:soil], ini[:soil])
-    @test isapprox(inse[:soillayers], ini[:soillayers])
+    @test isapprox(inse[:soil_layers], ini[:soil_layers])
     @test isapprox(inse[:compartments], ini[:compartments])
     @test isapprox(inse[:simulation], ini[:simulation])
-    @test isapprox(inse[:totalwatercontent], ini[:totalwatercontent])
+    @test isapprox(inse[:total_water_content], ini[:total_water_content])
     @test isapprox(inse[:crop], ini[:crop])
     @test isapprox(inse[:management], ini[:management])
     @test isapprox(inse[:sumwabal], ini[:sumwabal])
-    @test isapprox(inse[:irribeforeseason], ini[:irribeforeseason])
-    @test isapprox(inse[:irriafterseason], ini[:irriafterseason])
-    @test isapprox(inse[:irriecw], ini[:irriecw])
+    @test isapprox(inse[:irri_before_season], ini[:irri_before_season])
+    @test isapprox(inse[:irri_after_season], ini[:irri_after_season])
+    @test isapprox(inse[:irri_ecw], ini[:irri_ecw])
     @test isapprox(inse[:onset], ini[:onset])
 end
 
@@ -408,12 +407,12 @@ end
 @testset "Initialize Project" begin
     # parentdir = "/Users/gabriel/Desktop/AquaCrop/AquaCrop.jl/test/testcase/"
     parentdir = pwd()*"/testcase"
-    filepaths, resultsparameters = AquaCrop.initializetheprogram(parentdir)
-    projectfilenames = AquaCrop.initializeprojectfilename(filepaths)
+    filepaths, results_parameters = AquaCrop.initialize_the_program(parentdir)
+    project_filenames = AquaCrop.initialize_project_filename(filepaths)
     i = 1
-    theprojectfile = projectfilenames[i]
-    theprojecttype = AquaCrop.getprojecttype(theprojectfile)
-    inse, projectinput, fileok = AquaCrop.initializeproject(i, theprojectfile, theprojecttype, filepaths)
+    theprojectfile = project_filenames[i]
+    theprojecttype = AquaCrop.get_project_type(theprojectfile)
+    inse, projectinput, fileok = AquaCrop.initialize_project(i, theprojectfile, theprojecttype, filepaths)
 
 
     ini = declare_initial_variables()

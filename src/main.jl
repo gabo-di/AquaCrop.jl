@@ -3,38 +3,38 @@
 # setup
 
 """
-    starttheprogram(dir::Union{String,Nothing}=nothing)
+    start_the_program(dir::Union{String,Nothing}=nothing)
 
 starts the program
 
 startunit.f90:931
 """
-function starttheprogram(parentdir=nothing)
+function start_the_program(parentdir=nothing)
     if isnothing(parentdir)
         parentdir = pwd()
     end
 
-    filepaths, resultsparameters = initializetheprogram(parentdir) 
-    projectfilenames = initializeprojectfilename(filepaths)
+    filepaths, resultsparameters = initialize_the_program(parentdir) 
+    project_filenames = initialize_project_filename(filepaths)
 
-    nprojects = length(projectfilenames)
+    nprojects = length(project_filenames)
     # TODO write some messages if nprojects==0 like in startunit.F90:957
     # and then early return
 
-    for i in eachindex(projectfilenames)
-        theprojectfile = projectfilenames[i]
-        theprojecttype = getprojecttype(theprojectfile)
-        inse, projectinput, fileok = initializeproject(i, theprojectfile, theprojecttype, filepaths)
+    for i in eachindex(project_filenames)
+        theprojectfile = project_filenames[i]
+        theprojecttype = get_project_type(theprojectfile)
+        inse, projectinput, fileok = initialize_project(i, theprojectfile, theprojecttype, filepaths)
     end
 end # not end
 
 
 """
-    inse, projectinput, fileok = initializeproject(i, theprojectfile, theprojecttype, filepaths)
+    inse, projectinput, fileok = initialize_project(i, theprojectfile, theprojecttype, filepaths)
 
 startunit.f90:535
 """
-function initializeproject(i, theprojectfile, theprojecttype, filepaths)
+function initialize_project(i, theprojectfile, theprojecttype, filepaths)
     canselect = [true]
 
     # check if project file exists
@@ -46,21 +46,21 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
     end 
 
     if (theprojecttype != :typenone) & canselect[1]
-        inse = initializesettings(true, true, filepaths)
+        inse = initialize_settings(true, true, filepaths)
 
         if theprojecttype == :typepro
             # 2. Assign single project file and read its contents
-            projectinput = initializeprojectinput(testfile)
+            projectinput = initialize_project_input(testfile)
 
             # 3. Check if Environment and Simulation Files exist
             fileok = RepFileOK()
-            checkfilesinproject!(fileok, canselect, projectinput[1], filepaths[:prog])
+            check_files_in_project!(fileok, canselect, projectinput[1], filepaths[:prog])
 
             # 4. load project parameters
             if (canselect[1]) 
                 auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PP1"
                 if isfile(auxparfile) 
-                    loadprogramparametersprojectplugin!(inse[:simulparam], auxparfile)
+                    load_program_parameters_project_plugin!(inse[:simulparam], auxparfile)
                     println("Project loaded with its program parameters")
                 else
                     # TODO Logging
@@ -72,7 +72,7 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
 
         elseif theprojecttype == :typeprm
             # 2. Assign multiple project file and read its contents
-            projectinput = initializeprojectinput(testfile)
+            projectinput = initialize_project_input(testfile)
 
             # 2bis. Get number of Simulation Runs
             totalsimruns = length(projectinput)
@@ -83,7 +83,7 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
             fileok = RepFileOK()
             while (canselect[1] & (simnr < totalsimruns))
                 simnr += simnr + 1
-                checkfilesinproject!(fileok, canselect, projectinput[simnr], filepaths[:prog])
+                check_files_in_project!(fileok, canselect, projectinput[simnr], filepaths[:prog])
                 if (! canselect[1]) 
                     wrongsimnr = simnr
                 end
@@ -93,10 +93,10 @@ function initializeproject(i, theprojectfile, theprojecttype, filepaths)
             if (canselect[1]) 
                 auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PPn"
                 if isfile(auxparfile)
-                    loadprogramparametersprojectplugin!(inse[:simulparam], auxparfile)
+                    load_program_parameters_project_plugin!(inse[:simulparam], auxparfile)
                     inse[:simulation].MultipleRun = true
                     inse[:simulation].NrRuns = totalsimruns
-                    runwithkeepswc, constzrxforrun = checkforkeepswc(projectinput, filepaths, inse)
+                    runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput, filepaths, inse)
                     inse[:simulation].MultipleRunWithKeepSWC = runwithkeepswc
                     inse[:simulation].MultipleRunConstZrx = constzrxforrun
                     println("Project loaded with its program parameters")
