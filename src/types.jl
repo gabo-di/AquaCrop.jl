@@ -94,6 +94,9 @@ Base.getindex(parameterscontainer::ParametersContainer, parameterkey::Symbol) = 
 
 """
     effectiverain = RepEffectiveRain()
+
+set from
+initialsettings.f90:244
 """
 @kwdef mutable struct RepEffectiveRain <: AbstractParametersContainer
     "Undocumented"
@@ -277,6 +280,9 @@ end
 
 """
     shape = RepShapes()
+
+set from
+defaultcropsoil.f90:175
 """
 @kwdef mutable struct RepShapes <: AbstractParametersContainer
     "Percentage soil fertility stress for calibration"
@@ -296,6 +302,9 @@ end
 
 """
     assimilates = RepAssimilates()
+
+set from
+defaultcropsoil.f90:274
 """
 @kwdef mutable struct RepAssimilates <: AbstractParametersContainer
     "Undocumented"
@@ -711,6 +720,9 @@ end
 
 """
     cuttings = RepCuttings()
+
+set from
+global.f90:3338
 """
 @kwdef mutable struct RepCuttings <: AbstractParametersContainer
     "Undocumented"
