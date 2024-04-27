@@ -361,6 +361,7 @@ function declare_initial_variables()
     )
     projectinput = AquaCrop.ProjectInputType[
         AquaCrop.ProjectInputType(
+            ParentDir=pwd()*"/testcase",
             VersionNr=7.1,
             Description="Ottawa (Canada)",
             Simulation_YearSeason=1,
@@ -433,7 +434,6 @@ function declare_initial_variables()
 end
 
 @testset "Initialize Settings" begin
-    # parentdir = "/Users/gabriel/Desktop/AquaCrop/AquaCrop.jl/test/testcase/"
     parentdir = pwd()*"/testcase"
     filepaths, results_parameters = AquaCrop.initialize_the_program(parentdir)
     project_filenames = AquaCrop.initialize_project_filename(filepaths)
@@ -459,7 +459,6 @@ end
 
 
 @testset "Initialize Project" begin
-    # parentdir = "/Users/gabriel/Desktop/AquaCrop/AquaCrop.jl/test/testcase/"
     parentdir = pwd()*"/testcase"
     filepaths, results_parameters = AquaCrop.initialize_the_program(parentdir)
     project_filenames = AquaCrop.initialize_project_filename(filepaths)

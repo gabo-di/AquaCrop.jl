@@ -25,6 +25,7 @@ function start_the_program(parentdir=nothing)
         theprojectfile = project_filenames[i]
         theprojecttype = get_project_type(theprojectfile)
         inse, projectinput, fileok = initialize_project(i, theprojectfile, theprojecttype, filepaths)
+        run_simulation(inse, projectinput)
     end
 end # not end
 
@@ -50,11 +51,11 @@ function initialize_project(i, theprojectfile, theprojecttype, filepaths)
 
         if theprojecttype == :typepro
             # 2. Assign single project file and read its contents
-            projectinput = initialize_project_input(testfile)
+            projectinput = initialize_project_input(testfile, filepaths[:prog])
 
             # 3. Check if Environment and Simulation Files exist
             fileok = RepFileOK()
-            check_files_in_project!(fileok, canselect, projectinput[1], filepaths[:prog])
+            check_files_in_project!(fileok, canselect, projectinput[1])
 
             # 4. load project parameters
             if (canselect[1]) 
@@ -72,7 +73,7 @@ function initialize_project(i, theprojectfile, theprojecttype, filepaths)
 
         elseif theprojecttype == :typeprm
             # 2. Assign multiple project file and read its contents
-            projectinput = initialize_project_input(testfile)
+            projectinput = initialize_project_input(testfile, filepaths[:prog])
 
             # 2bis. Get number of Simulation Runs
             totalsimruns = length(projectinput)
@@ -83,7 +84,7 @@ function initialize_project(i, theprojectfile, theprojecttype, filepaths)
             fileok = RepFileOK()
             while (canselect[1] & (simnr < totalsimruns))
                 simnr += simnr + 1
-                check_files_in_project!(fileok, canselect, projectinput[simnr], filepaths[:prog])
+                check_files_in_project!(fileok, canselect, projectinput[simnr]) 
                 if (! canselect[1]) 
                     wrongsimnr = simnr
                 end

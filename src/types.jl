@@ -869,6 +869,8 @@ end
 Container for project file input data.
 """
 @kwdef mutable struct ProjectInputType <: AbstractParametersContainer
+    "The directory where we are working"
+    ParentDir::String=undef_str
     "AquaCrop version number (common for all runs)"
     VersionNr::Float64=undef_double
     "Project description (common for all runs)"

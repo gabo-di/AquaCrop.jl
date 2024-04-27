@@ -1,13 +1,3 @@
-
-"""
-    load_simulation_project!()
-"""
-function load_simulation_project!()
-end #not end
-
-
-
-
 """
    runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, inse)
 
@@ -43,8 +33,6 @@ function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, i
     else
         soil, soil_layers, compartments = load_profile(filepaths[:prog]*projectinput[1].Soil_Directory*filename, inse[:simulparam])
     end 
-
-    thenrsoil_layers = length(soil_layers)
 
     # 3. Check if runs with KeepSWC exist
     runi = 1
@@ -155,12 +143,13 @@ function load_program_parameters_project_plugin!(simulparam::RepParam, auxparfil
 end
 
 """
-    check_files_in_project!(fileok::RepFileOK, allok, input::ProjectInputType, parentdir)
+    check_files_in_project!(fileok::RepFileOK, allok, input::ProjectInputType)
 
 global.f90:7195
 """
-function check_files_in_project!(fileok::RepFileOK, allok, input::ProjectInputType, parentdir)
+function check_files_in_project!(fileok::RepFileOK, allok, input::ProjectInputType)
     allok[1] = true
+    parentdir = input.ParentDir
 
     function check_file(directory, filename)
         # sets allok to false if expected file does not exist.
@@ -215,11 +204,11 @@ end
 
 
 """
-    projectinput = initialize_project_input(filename)
+    projectinput = initialize_project_input(filename, parentdir)
 
 project_input.f90:152
 """
-function initialize_project_input(filename)
+function initialize_project_input(filename, parentdir)
     projectinput = ProjectInputType[]
 
     # project_input.f90:225
@@ -228,6 +217,7 @@ function initialize_project_input(filename)
         versionnr = parse(Float64,strip(readline(file))[1:4])
         while !eof(file)
             self = ProjectInputType()
+            self.ParentDir = parentdir
             self.Description = description
             self.VersionNr = versionnr
 
