@@ -359,6 +359,59 @@ function declare_initial_variables()
         OffSeason_Filename=true,
         Observations_Filename=true
     )
+    projectinput = AquaCrop.ProjectInputType[
+        AquaCrop.ProjectInputType(
+            VersionNr=7.1,
+            Description="Ottawa (Canada)",
+            Simulation_YearSeason=1,
+            Simulation_DayNr1=41414,
+            Simulation_DayNrN=41577,
+            Crop_Day1=41414,
+            Crop_DayN=41577,
+            Climate_Info="-- 1. Climate (CLI) file",
+            Climate_Filename="Ottawa.CLI",
+            Climate_Directory="/DATA/",
+            Temperature_Info="1.1 Temperature (Tnx or TMP) file",
+            Temperature_Filename="Ottawa.Tnx",
+            Temperature_Directory="/DATA/",
+            ETo_Info="1.2 Reference ET (ETo) file",
+            ETo_Filename="Ottawa.ETo",
+            ETo_Directory="/DATA/",
+            Rain_Info="1.3 Rain (PLU) file",
+            Rain_Filename="Ottawa.PLU",
+            Rain_Directory="/DATA/",
+            CO2_Info="1.4 Atmospheric CO2 concentration (CO2) file",
+            CO2_Filename="MaunaLoa.CO2",
+            CO2_Directory="/SIMUL/",
+            Calendar_Info="-- 2. Calendar (CAL) file",
+            Calendar_Filename="21May.CAL",
+            Calendar_Directory="/DATA/",
+            Crop_Info="-- 3. Crop (CRO) file",
+            Crop_Filename="AlfOttawaGDD.CRO",
+            Crop_Directory="/DATA/",
+            Irrigation_Info="-- 4. Irrigation management (IRR) file",
+            Irrigation_Filename="(None)",
+            Irrigation_Directory="(None)",
+            Management_Info="-- 5. Field management (MAN) file",
+            Management_Filename="Ottawa.MAN",
+            Management_Directory="/DATA/",
+            GroundWater_Info="-- 7. Groundwater table (GWT) file",
+            GroundWater_Filename="(None)",
+            GroundWater_Directory="(None)",
+            Soil_Info="-- 6. Soil profile (SOL) file",
+            Soil_Filename="Ottawa.SOL",
+            Soil_Directory="/DATA/",
+            SWCIni_Info="-- 8. Initial conditions (SW0) file",
+            SWCIni_Filename="(None)",
+            SWCIni_Directory="(None)",
+            OffSeason_Info="-- 9. Off-season conditions (OFF) file",
+            OffSeason_Filename="(None)",
+            OffSeason_Directory="(None)",
+            Observations_Info="-- 10. Field data (OBS) file",
+            Observations_Filename="Ottawa.OBS",
+            Observations_Directory="/OBS/"
+        )
+    ]
 
     return ComponentArray(
         simulparam=simulparam,
@@ -374,7 +427,8 @@ function declare_initial_variables()
         irri_after_season=irri_after_season,
         irri_ecw=irri_ecw,
         onset=onset,
-        fileok=fileok
+        fileok=fileok,
+        projectinput=projectinput            
     )
 end
 
@@ -427,6 +481,8 @@ end
     @test isapprox(inse[:simulation], ini[:simulation])
     @test isapprox(inse[:simulparam], ini[:simulparam])
     @test isapprox(fileok, ini[:fileok])
+    @test isequal(length(projectinput),3)
+    @test isapprox(projectinput[1], ini[:projectinput][1])
 end
 
 
