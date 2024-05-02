@@ -359,6 +359,7 @@ function declare_initial_variables()
         OffSeason_Filename=true,
         Observations_Filename=true
     )
+
     projectinput = AquaCrop.ProjectInputType[
         AquaCrop.ProjectInputType(
             ParentDir=pwd()*"/testcase",

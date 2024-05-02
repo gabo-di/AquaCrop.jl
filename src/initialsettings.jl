@@ -371,6 +371,14 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     #  11. Onset
     onset = RepOnset()
 
+    # 11.1 Records
+    rain_record = RepClim()
+    temperature_record = RepClim()
+    eto_record = RepClim()
+
+    perennial_period = RepPerennialPeriod()
+    crop_file_set = RepCropFileSet()
+
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
     setparameter!(float_parameters, :eto, 5.0)
@@ -400,7 +408,17 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
+    setparameter!(bool_parameters, :temperature_file_exists, undef_bool)
 
+    array_parameters = ParametersContainer(Vector{Float64})
+    setparameter!(array_parameters, :Tmin, Float64[])
+    setparameter!(array_parameters, :Tmax, Float64[])
+
+    string_parameters = ParametersContainer(String)
+    setparameter!(string_parameters, :clim_file, undef_str)
+    setparameter!(string_parameters, :temperature_file, undef_str)
+    setparameter!(string_parameters, :eto_file, undef_str)
+    setparameter!(string_parameters, :rain_file, undef_str)
 
     return ComponentArray(
         simulparam = simulparam,
@@ -416,10 +434,17 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
         irri_after_season = irri_after_season,
         irri_ecw = irri_ecw,
         onset = onset,
+        rain_record = rain_record,
+        eto_record = eto_record,
+        temperature_record = temperature_record,
+        perennial_period = perennial_period,
+        crop_file_set = crop_file_set,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,
         bool_parameters = bool_parameters,
+        array_parameters = array_parameters,
+        string_parameters = string_parameters,
     )
 end
 
