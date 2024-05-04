@@ -77,9 +77,6 @@ function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, i
     return runwithkeepswc, constzrxforrun
 end 
 
-
-
-
 """
     load_program_parameters_project_plugin!(simulparam::RepParam, auxparfile)
 
@@ -315,8 +312,6 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     # 1. Program settings
     simulparam = RepParam()
 
-
-
     # TODO 2a. Ground water table initialsettings.f90:311
     # note that we allready did the set of simulparam.ConstGwt=true like in initialsettings.f90:317
 
@@ -375,6 +370,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     rain_record = RepClim()
     temperature_record = RepClim()
     eto_record = RepClim()
+    clim_record = RepClim()
 
     perennial_period = RepPerennialPeriod()
     crop_file_set = RepCropFileSet()
@@ -416,9 +412,19 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
 
     string_parameters = ParametersContainer(String)
     setparameter!(string_parameters, :clim_file, undef_str)
-    setparameter!(string_parameters, :temperature_file, undef_str)
-    setparameter!(string_parameters, :eto_file, undef_str)
-    setparameter!(string_parameters, :rain_file, undef_str)
+    setparameter!(string_parameters, :climate_file,   "(None)")
+    setparameter!(string_parameters, :temperature_file,  "(None)")
+    setparameter!(string_parameters, :eto_file,  "(None)")
+    setparameter!(string_parameters, :rain_file,  "(None)")
+    setparameter!(string_parameters, :groundwater_file, "(None)")
+    if usedefaultsoilfile
+        setparameter!(string_parameters, :prof_file, "DEFAULT.SOL")
+    end
+    setparameter!(string_parameters, :crop_file, "DEFAULT.CRO")
+    setparameter!(string_parameters, :man_file, "(None)")
+    setparameter!(string_parameters, :CO2_file, "MaunaLoa.CO2")
+    setparameter!(string_parameters, :irri_file, "(None)")
+
 
     return ComponentArray(
         simulparam = simulparam,
@@ -436,6 +442,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
         onset = onset,
         rain_record = rain_record,
         eto_record = eto_record,
+        clim_record = clim_record,
         temperature_record = temperature_record,
         perennial_period = perennial_period,
         crop_file_set = crop_file_set,
@@ -447,7 +454,6 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
         string_parameters = string_parameters,
     )
 end
-
 
 """
     crop_stress_parameters_soil_fertility!(stressout::RepEffectStress, cropsresp::RepShapes, stresslevel)
@@ -516,7 +522,7 @@ end
 """
     complete_crop_description!(crop::RepCrop, simulation::RepSim, management::RepManag)
 
-globa.f90:5624
+global.f90:5624
 """
 function complete_crop_description!(crop::RepCrop, simulation::RepSim, management::RepManag)
     if ((crop.subkind == :Vegetative) |

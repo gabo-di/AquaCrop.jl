@@ -98,43 +98,25 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
         # adjust length of season
         inse[:crop].DaysToHarvest = inse[:crop].DayN - inse[:crop].Day1 + 1
         adjust_crop_file_parameters!(inse)
-
-        Crop_DaysToSenescence_temp = GetCrop_DaysToSenescence()
-        Crop_DaysToHarvest_temp = GetCrop_DaysToHarvest()
-        Crop_GDDaysToSenescence_temp = GetCrop_GDDaysToSenescence()
-        Crop_GDDaysToHarvest_temp = GetCrop_GDDaysToHarvest()
-        call AdjustCropFileParameters(GetCropFileSet(),&
-              GetCrop_DaysToHarvest(), GetCrop_Day1(), &
-              GetCrop_ModeCycle(), GetCrop_Tbase(), GetCrop_Tupper(),&
-              Crop_DaysToSenescence_temp, Crop_DaysToHarvest_temp,&
-              Crop_GDDaysToSenescence_temp, Crop_GDDaysToHarvest_temp)
-        call SetCrop_DaysToSenescence(Crop_DaysToSenescence_temp)
-        call SetCrop_DaysToHarvest(Crop_DaysToHarvest_temp)
-        call SetCrop_GDDaysToSenescence(Crop_GDDaysToSenescence_temp)
-        call SetCrop_GDDaysToHarvest(Crop_GDDaysToHarvest_temp)
+    end 
+    
+    adjust_calendar_crop!(inse)
+    complete_crop_description!(inse[:crop], inse[:simulation], inse[:management])
+    # Onset.Off := true;
+    clim_file = inse[:string_parameters][:clim_file]
+    if clim_file=="(None)" 
+        # adjusting Crop.Day1 and Crop.DayN to ClimFile
+        adjust_crop_year_to_climfile!(inse[:crop], clim_file, inse[:clim_record])
+    else
+        inse[:crop].DayN = inse[:crop].Day1 + inse[:crop].DaysToHarvest - 1
     end 
 
-    call AdjustCalendarCrop(GetCrop_Day1())
-    call CompleteCropDescription
-    # Onset.Off := true;
-    if (GetClimFile() == '(None)') then
-        Crop_Day1_temp = GetCrop_Day1()
-        Crop_DayN_temp = GetCrop_DayN()
-        call AdjustCropYearToClimFile(Crop_Day1_temp, Crop_DayN_temp)
-        # adjusting Crop.Day1 and Crop.DayN to ClimFile
-        call SetCrop_Day1(Crop_Day1_temp)
-        call SetCrop_DayN(Crop_DayN_temp)
-    else
-        call SetCrop_DayN(GetCrop_Day1() + GetCrop_DaysToHarvest() - 1)
-    end if
-
     # adjusting ClimRecord.'TO' for undefined year with 365 days
-    if ((GetClimFile() /= '(None)') .and. (GetClimRecord_FromY() == 1901) &
-        .and. (GetClimRecord_NrObs() == 365)) then
-        call AdjustClimRecordTo(GetCrop_DayN())
-    end if
+    if (clim_file != "(None)") & (inse[:clim_record].FromY == 1901) & (inse[:clim_record].NrObs==365) 
+        adjust_climrecord_to!(inse[:clim_record], inse[:crop].DayN)
+    end 
     # adjusting simulation period
-    call AdjustSimPeriod
+    adjust_simperiod!()
 
     # 4. Irrigation
     call SetIrriFile(ProjectInput(NrRun)%Irrigation_Filename)
@@ -481,6 +463,7 @@ function set_clim_data!(inse, projectinput::ProjectInputType)
     clim_record = inse[:clim_record]
     eto_record = inse[:eto_record]
     rain_record = inse[:rain_record]
+    clim_file = inse[:string_parameters][:clim_file]
     eto_file = projectinput.ETo_Filename
     rain_file = projectinput.Rain_Filename
     temperature_file = projectinput.Temperature_Filename
@@ -1168,7 +1151,7 @@ function adjust_crop_file_parameters!(inse)
         else
             tmin_tmp = simulparam.Tmin 
             tmax_tmp = simulparam.Tmax 
-            l123 = sum_calendar_days(gdd123, thecropday1, thetbase, thetupper, tmin_tmp, tmax_tmp)
+            l123 = sum_calendar_days(gdd123, thecropday1, thetbase, thetupper, tmin_tmp, tmax_tmp, inse)
         end 
     else
         l123 = lseasondays - crop_file_set.DaysFromSenescenceToEnd
@@ -1182,7 +1165,7 @@ function adjust_crop_file_parameters!(inse)
     crop.GDDaysToHarvest = gdd1234
 
     return nothing
-end #not end
+end 
 
 """
     gdd1234 = growing_degree_days(inse, tdaymin, tdaymax)
@@ -1257,7 +1240,7 @@ function growing_degree_days(inse, tdaymin, tdaymax)
                         gddays = undef_int
                     end 
                 elseif temperature_record.Datatype == :Decadely
-                    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri)
+                    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
                     i = 1
                     while (tmin_dataset[i].DayNr != daynri)
                         i = i+1
@@ -1272,7 +1255,7 @@ function growing_degree_days(inse, tdaymin, tdaymax)
                     daynri = daynri + 1
                     while ((remainingdays > 0) & ((daynri < temperature_record.ToDayNr) |  adjustdaynri))
                         if (daynri > tmin_dataset[31].DayNr)
-                            get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri)
+                            get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
                         end
                         i = 1
                         while (tmin_dataset[i].DayNr != daynri)
@@ -1290,7 +1273,7 @@ function growing_degree_days(inse, tdaymin, tdaymax)
                     end 
 
                 elseif temperature_record.Datatype == :Monthly
-                    get_monthly_temperature_dataset!(daynri, tmin_dataset, tmax_dataset)
+                    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
                     i = 1
                     while (tmin_dataset[i].DayNr != daynri)
                         i = i+1
@@ -1303,7 +1286,7 @@ function growing_degree_days(inse, tdaymin, tdaymax)
                     daynri = daynri + 1
                     while((remainingdays > 0) & ((daynri < temperature_record.ToDayNr) | adjustdaynri))
                         if (daynri > tmin_dataset[31].DayNr) 
-                            get_monthly_temperature_dataset!(daynri, tmin_dataset, tmax_dataset)
+                            get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
                         end
                         i = 1
                         while (tmin_dataset[i].DayNr != daynri)
@@ -1326,7 +1309,7 @@ function growing_degree_days(inse, tdaymin, tdaymax)
         gddays = undef_int
     end
     return round(Int, gddays)
-end #not end
+end 
 
 """
     dgrd = degrees_day(tbase, tupper, tdaymin, tdaymax, gddselectedmethod)
@@ -1395,11 +1378,11 @@ end
 
 
 """
-    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri)
+    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record::RepClim)
 
 tempprocessing.f90:362
 """
-function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri)
+function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record::RepClim)
     dayi, monthi, yeari = determine_day_nr(darnri)
     if (dayi > 20) 
         deci = 3
@@ -1420,7 +1403,7 @@ function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri)
         dayn = 10
         ni = 10
     end 
-    get_set_of_three(dayn, deci, monthi, yeari, c1min, c1max, c2min, c2max, c3min, c3max)
+    c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three(dayn, deci, monthi, yeari, temperature_file, temperature_record)
     dnr = determine_day_nr(dayi, monthi, yeari)
 
     ulmin, llmin, midmin = get_parameters(c1min, c2min, c3min)
@@ -1459,7 +1442,7 @@ function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri)
     end 
 
     return nothing
-end #not end
+end
 
 """
     ul, ll, mid = get_parameters(c1, c2, c3)
@@ -1475,145 +1458,967 @@ function get_parameters(c1, c2, c3)
 end 
 
 """
-
+    c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three(dayn, deci, monthi, yeari, temperature_file, temperature_record::RepClim)
 
 tempprocessing.f90:439
 """
-function get_set_of_three(dayn, deci, monthi, yeari, c1min, c1max, c2min, c2max, c3min, c3max)
-        integer(int32), intent(in) :: DayN
-        integer(int32), intent(in) :: Deci
-        integer(int32), intent(in) :: Monthi
-        integer(int32), intent(in) :: Yeari
-        real(dp), intent(inout) :: C1Min
-        real(dp), intent(inout) :: C1Max
-        real(dp), intent(inout) :: C2Min
-        real(dp), intent(inout) :: C2Max
-        real(dp), intent(inout) :: C3Min
-        real(dp), intent(inout) :: C3Max
+function get_set_of_three(dayn, deci, monthi, yeari, temperature_file, temperature_record::RepClim)
+    # 1 = previous decade, 2 = Actual decade, 3 = Next decade;
+    open(temperature_file, "r") do file
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
 
-        integer(int32) :: fhandle
-        integer(int32) :: DecFile, Mfile, Yfile, Nri, Obsi, rc
-        logical :: OK3
-        character(len=255) :: StringREAD
-
-        # 1 = previous decade, 2 = Actual decade, 3 = Next decade;
-        open(newunit=fhandle, file=trim(GetTemperatureFilefull()), &
-                     status='old', action='read', iostat=rc)
-        read(fhandle, *, iostat=rc) ! description
-        read(fhandle, *, iostat=rc) ! time step
-        read(fhandle, *, iostat=rc) ! day
-        read(fhandle, *, iostat=rc) ! month
-        read(fhandle, *, iostat=rc) ! year
-        read(fhandle, *, iostat=rc)
-        read(fhandle, *, iostat=rc)
-        read(fhandle, *, iostat=rc)
-
-        if (GetTemperatureRecord_FromD() > 20) then
-            DecFile = 3
-        elseif (GetTemperatureRecord_FromD() > 10) then
-            DecFile = 2
+        if temperature_record.FromD>20
+            decfile=3
+        elseif temperature_record.FromD>10
+            decfile=2
         else
-            DecFile = 1
-        end if
-        Mfile = GetTemperatureRecord_FromM()
-        if (GetTemperatureRecord_FromY() == 1901) then
-            Yfile = Yeari
+            decfile=1
+        end
+        mfile = temperature_record.FromM
+        if temperature_record.FromY==1901
+            yfile = yeari
         else
-            Yfile = GetTemperatureRecord_FromY()
-        end if
-        OK3 = .false.
+            yfile = temperature_record.FromY
+        end
+        ok3 = false
+        
+        if temperature_record.NrObs<=2
+            splitedline = split(readline(file))
+            c1min = parse(Float64, popfirst!(splitedline))
+            c1max = parse(Float64, popfirst!(splitedline))
+            if temperature_record.NrObs==0
+                c2min = c1min
+                c2max = c1max #OJO in the original code says c2max = c2max but makes not much sense
+                c3min = c1min
+                c3max = c1max
+            elseif temperature_record.NrObs==1
+                decfile += 1
+                if decfile>3
+                    decfile, mfile, yfile = adjust_decade_month_and_year(decfile, mfile, yfile)
+                end
+                splitedline = split(readline(file))
+                c3min = parse(Float64, popfirst!(splitedline))
+                c3max = parse(Float64, popfirst!(splitedline))
+                if (deci == decfile) 
+                    c2min = c3min
+                    c2max = c3max
+                    c3min = c2min+(c2min-c1min)/4
+                    c3max = c2max+(c2max-c1max)/4
+                else
+                    c2min = c1min
+                    c2max = c1max
+                    c1min = c2min + (c2min-c3min)/4
+                    c1max = c2max + (c2max-c3max)/4
+                end 
+            end
+            ok3 = true
+        end
+    
+        if !ok3 & deci==decfile & monthi==mfile & yeari==yfile
+            splitedline = split(readline(file))
+            c1min = parse(Float64, popfirst!(splitedline))
+            c1max = parse(Float64, popfirst!(splitedline))
+            c2min = c1min
+            c2max = c1max
+            splitedline = split(readline(file))
+            c3min = parse(Float64, popfirst!(splitedline))
+            c3max = parse(Float64, popfirst!(splitedline))
+            c1min = c2min + (c2min-c3min)/4
+            c1max = c2max + (c2max-c3max)/4
+            ok3 = true
+        end 
 
-        if (GetTemperatureRecord_NrObs() <= 2) then
-            read(fhandle, '(a)', iostat=rc) StringREAD
-            call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-            select case (GetTemperatureRecord_NrObs())
-            case (0)
-                C2Min = C1Min
-                C2Max = C2Max
-                C3Min = C1Min
-                C3Max = C1Max
-            case (1)
-                DecFile = DecFile + 1
-                if (DecFile > 3) then
-                    call AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
-                end if
-                read(fhandle, '(a)', iostat=rc) StringREAD
-                call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
-                if (Deci == DecFile) then
-                    C2Min = C3Min
-                    C2Max = C3Max
-                    C3Min = C2Min+(C2Min-C1Min)/4._dp
-                    C3Max = C2Max+(C2Max-C1Max)/4._dp
+        if !ok3 & dayn==temperature_record.ToD & monthi==temperature_record.ToM
+            if temperature_record.FromY==1901 | yeari==temperature_record.ToY
+                for Nri in 1:(temperature_record.NrObs-2)
+                    readline(file)
+                end 
+                splitedline = split(readline(file))
+                c1min = parse(Float64, popfirst!(splitedline))
+                c1max = parse(Float64, popfirst!(splitedline))
+                splitedline = split(readline(file))
+                c2min = parse(Float64, popfirst!(splitedline))
+                c2max = parse(Float64, popfirst!(splitedline))
+                c3min = c2min+(c2min-c1min)/4
+                c3max = c2max+(c2max-c1max)/4
+                ok3 = true
+            end 
+        end 
+
+        if !ok3 
+            obsi = 1
+            while !ok3
+                if (decix==decfile & monthi==mfile & yeari == yfile) 
+                    ok3 = true
+                else
+                    decfile = decfile + 1
+                    if decfile>3 
+                        decfile, mfile, yfile = adjust_decade_month_and_year(decfile, mfile, yfile)
+                    end
+                    obsi = obsi + 1
+                end
+            end
+            if temperature_record.FromD>20
+                decfile = 3
+            elseif temperature_record.FromD>10
+                decfile = 2
+            else
+                decfile = 1
+            end
+            for nri in 1:(obsi-2)
+                readline(file)
+            end 
+            splitedline = split(readline(file))
+            c1min = parse(Float64, popfirst!(splitedline))
+            c1max = parse(Float64, popfirst!(splitedline))
+            splitedline = split(readline(file))
+            c2min = parse(Float64, popfirst!(splitedline))
+            c2max = parse(Float64, popfirst!(splitedline))
+            splitedline = split(readline(file))
+            c3min = parse(Float64, popfirst!(splitedline))
+            c3max = parse(Float64, popfirst!(splitedline))
+        end 
+    end 
+
+    return c1min, c1max, c2min, c2max, c3min, c3max
+end 
+
+""" 
+    decfile, mfile, yfile = adjust_decade_month_and_year(decfile, mfile, yfile)
+
+tempprocessing.f90:293
+"""
+function adjust_decade_month_and_year(decfile, mfile, yfile)
+    decfile = 1
+    mfile = mfile + 1
+    if (mfile > 12) 
+        mfile = 1
+        yfile = yfile + 1
+    end 
+    return decfile, mfile, yfile
+end
+
+
+"""
+    mfile, yfile = adjust_month_and_year(mfile, yfile)
+
+tempprocessing.f90:284
+"""
+function adjust_month_and_year(mfile, yfile)
+    mfile = mfile - 12
+    yfile = yfile + 1
+    return mfile, yfile
+end
+
+"""
+    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record::RepClim)
+
+tempprocessing.f90:596
+"""
+function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record::RepClim)
+    dayi, monthi, yeari = determine_date(daynri)
+    c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months(monthi, yeari, temperature_file, temperature_record)
+
+    dayi = 1
+    dnr = dete(dayi, monthi, yeari)
+    dayn = DaysInMonth[monthi]
+    if ((monthi == 2) & isleapyear(yeari)) 
+        dayn = dayn + 1
+    end 
+
+    aover3min, bover2min, cmin = get_interpolation_parameters(c1min, c2min, c3min)
+    aover3max, bover2max, cmax = get_interpolation_parameters(c1max, c2max, c3max)
+    for dayi in 1:dayn
+        t2 = t1 + 1
+        tmin_dataset[dayi].DayNr = dnr+dayi-1
+        tmax_dataset[dayi].DayNr = dnr+dayi-1
+        tmin_dataset[dayi].Param = aover3min*(t2*t2*t2-t1*t1*t1) + bover2min*(t2*t2-t1*t1) + cmin*(t2-t1)
+        tmax_dataset[dayi].Param = aover3max*(t2*t2*t2-t1*t1*t1) + bover2max*(t2*t2-t1*t1) + cmax*(t2-t1)
+        t1 = t2
+    end 
+    for dayi in (dayn+1):31
+        tmin_dataset[dayi].DayNr = dnr+dayn-1 #OJO maybe is dayi
+        tmax_dataset[dayi].DayNr = dnr+dayn-1 #OJO maybe is dayi
+        tmin_dataset[dayi].Param = 0
+        tmax_dataset[dayi].Param = 0
+    end 
+    return nothing
+end 
+
+"""
+    c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months(monthi, yeari, temperature_file, temperature_record::RepClim)
+
+tempprocessing.f90:645
+"""
+function get_set_of_three_months(monthi, yeari, temperature_file, temperature_record::RepClim)
+    n1 = 30
+    n2 = 30
+    n3 = 30
+
+    # 1. Prepare record
+    open(temperature_file, "r") do file
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+
+        mfile = temperature_record.FromM
+        if temperature_record.FromY==1901
+            yfile = yeari
+        else
+            yfile = temperature_record.FromY
+        end
+        ok3 = false
+
+        # 2. IF 3 or less records
+        if temperature_record.NrObs<=3
+            c1min, c1max = read_month(readline(file))
+            x1 = n1
+            if temperature_record.NrObs==0
+                t1 = x1
+                x2 = x1 + n1
+                c2min = c1min
+                c2max = c1max
+                x3 = x2 + n1
+                c3min = c1min
+                c3max = c1max
+            elseif temperature_record.NrObs==1
+                t1 = x1
+                mfile = mfile + 1
+                if mfile>12 
+                    mfile, yfile = adjust_month_and_year(mfile, yfile)
+                end 
+                c3min, c3max = read_month(readline(file))
+                if monthi==mfile 
+                    c2min = c3min
+                    c2max = c3max
+                    x2 = x1 + n3
+                    x3 = x2 + n3
                 else
                     C2Min = C1Min
                     C2Max = C1Max
-                    C1Min = C2Min + (C2Min-C3Min)/4._dp
-                    C1Max = C2Max + (C2Max-C3Max)/4._dp
-                end if
-            end select
-            OK3 = .true.
-        end if
+                    X2 = X1 + n1
+                    X3 = X2 + n3
+               end 
+            elseif temperature_record.NrObs==2
+                if monthi==mfile 
+                    t1 = 0
+                end 
+                mfile = mfile + 1
+                if mfile>12 
+                    mfile, yfile = adjust_month_and_year(mfile, yfile)
+                end
+                c2min, c2max = read_month(readline(file))
+                x2 = x1 + n2
+                if monthi==mfile 
+                    t1 = x1
+                end 
+                mfile = mfile + 1
+                if mfile>12 
+                    mfile, yfile = adjust_month_and_year(mfile, yfile)
+                end
+                c3min, c3max = read_month(readline(file))
+                x3 = x2 + n3
+                if monthi==mfile 
+                    t1 = x2
+                end 
+            end
+            ok3 = true
+        end 
 
-       if ((.not. OK3) .and. ((Deci == DecFile) .and. (Monthi == Mfile) &
-            .and. (Yeari == Yfile))) then
-            read(fhandle, '(a)', iostat=rc) StringREAD
-            call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-            C2Min = C1Min
-            C2Max = C1Max
-            read(fhandle, '(a)', iostat=rc) StringREAD
-            call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
-            C1Min = C2Min + (C2Min-C3Min)/4._dp
-            C1Max = C2Max + (C2Max-C3Max)/4._dp
-            OK3 = .true.
-        end if
+        # 3. If first observation
+        if !ok3 & monthi==mfile & yeari==yfile
+            t1 = 0
+            c1min, c1max = read_month(readline(file))
+            x1 = n1
+            mfile = mfile + 1
+            if mfile>12 
+                mfile, yfile = adjust_month_and_year(mfile, yfile)
+            end 
+            c2min, c2max = read_month(readline(file))
+            x2 = x1 + n2
+            mfile = mfile + 1
+            if mfile>12 
+                mfile, yfile = adjust_month_and_year(mfile, yfile)
+            end 
+            c3min, c3max = read_month(readline(file))
+            x3 = x2 + n3
+            ok3 = true
+        end 
 
-        if ((.not. OK3) .and. ((DayN == GetTemperatureRecord_ToD()) &
-             .and. (Monthi == GetTemperatureRecord_ToM()))) then
-            if ((GetTemperatureRecord_FromY() == 1901) .or. &
-                (Yeari == GetTemperatureRecord_ToY())) then
-                do Nri = 1, (GetTemperatureRecord_NrObs()-2)
-                     read(fhandle, *, iostat=rc)
-                end do
-                read(fhandle, '(a)', iostat=rc) StringREAD
-                call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-                read(fhandle, '(a)', iostat=rc) StringREAD
-                call SplitStringInTwoParams(StringREAD, C2Min, C2Max)
-                C3Min = C2Min+(C2Min-C1Min)/4._dp
-                C3Max = C2Max+(C2Max-C1Max)/4._dp
-                OK3 = .true.
-            end if
-        end if
+        # 4. If last observation
+        if !ok3 & monthi==temperature_record.ToM
+            if temperature_record.FromY==1901 | yeari==temperature_record.ToY
+                for nri in 1:(temperature_record.NrObs-3)
+                    read(fhandle, *, iostat=rc)
+                    mfile = mfile + 1
+                    if mfile>12 
+                        mfile, yfile = adjust_month_and_year(mfile, yfile)
+                    end 
+                end 
+                c1min, c1max = read_month(readline(file))
+                x1 = n1
+                mfile = mfile + 1
+                if mfile>12 
+                    mfile, yfile = adjust_month_and_year(mfile, yfile)
+                end 
+                c2min, c2max = read_month(readline(file))
+                x2 = x1 + n2
+                t1 = x2
+                mfile = mfile + 1
+                if mfile>12 
+                    mfile, yfile = adjust_month_and_year(mfile, yfile)
+                end 
+                c3min, c3max = read_month(readline(file))
+                x3 = x2 + n3
+                ok3 = true
+            end 
+        end 
 
-        if (.not. OK3) then
-            Obsi = 1
-            do while (.not. OK3)
-                if ((Deci == DecFile) .and. (Monthi == Mfile) &
-                    .and. (Yeari == Yfile)) then
-                    OK3 = .true.
+        # 5. IF not previous cases
+        if !ok3
+            obsi = 1
+            while !ok3
+                if ((monthi==mfile) & (yeari==yfile)) 
+                   ok3 = true
                 else
-                    DecFile = DecFile + 1
-                    if (DecFile > 3) then
-                        call AdjustDecadeMONTHandYEAR(DecFile, Mfile, Yfile)
-                    end if
-                    Obsi = Obsi + 1
-                end if
-            end do
-            if (GetTemperatureRecord_FromD() > 20) then
-                DecFile = 3
-            elseif (GetTemperatureRecord_FromD() > 10) then
-                DecFile = 2
+                   mfile = mfile + 1
+                   if mfile>12 
+                       mfile, yfile = adjust_month_and_year(mfile, yfile)
+                   end 
+                  obsi = obsi + 1
+                end 
+            end 
+            mfile = temperature_record.FromM 
+            for nri in 1:(obsi-2)
+                readline(file)
+                mfile = mfile + 1
+                if (mfile > 12) then
+                    mfile, yfile = adjust_month_and_year(mfile, yfile)
+                end
+            end
+            c1min, c1max = read_month(readline(file))
+            x1 = n1
+            t1 = x1
+            mfile = mfile + 1
+            if mfile>12 
+                mfile, yfile = adjust_month_and_year(mfile, yfile)
+            end 
+            c2min, c2max = read_month(readline(file))
+            x2 = x1 + n2
+            mfile = mfile + 1
+            if mfile>12 
+                mfile, yfile = adjust_month_and_year(mfile, yfile)
+            end
+            c3min, c3max = read_month(readline(file))
+            x3 = x2 + n3
+        end 
+    end
+
+    return c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1
+end 
+
+"""
+    cimin, cimax = read_month(stringline)
+
+tempprocessing.f90:837
+"""
+function read_month(stringline)
+    ni = 30
+    splitedline = split(stringline)
+    cimin = parse(Int, strip(popfirst!(splitedline))) * ni
+    cimax = parse(Int, strip(popfirst!(splitedline))) * ni
+
+    return cimin, cimax
+end
+
+"""
+     aover3, bover2, c = get_interpolation_parameters(c1, c2, c3)
+
+tempprocessing.f90:854
+"""
+function get_interpolation_parameters(c1, c2, c3)
+    # n1=n2=n3=30 --> better parabola
+    aover3 = (c1-2*c2+c3)/(6*30*30*30)
+    bover2 = (-6*c1+9*c2-3*c3)/(6*30*30)
+    c = (11*c1-7*c2+2*c3)/(6*30)
+    return aover3, bover2, c
+end
+
+
+"""
+    nrcdays = sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tdaymax, inse)
+
+tempprocessing.f90:1035
+"""
+function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tdaymax, inse)
+    temperature_file = inse[:string_parameters][:temperature_file]
+    temperature_file_exists = inse[:bool_parameters][:temperature_file_exists]
+    temperature_record = inse[:temperature_record]
+    simulparam = inse[:simulparam]
+    Tmin = inse[:array_parameters][:Tmin]
+    Tmax = inse[:array_parameters][:Tmax]
+
+    tmin_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
+    tmax_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
+
+    tdaymin_loc = tdaymin
+    tdaymax_loc = tdaymax
+
+    nrcdays = 0
+    if valgddays>0 
+        if temperature_file=="(None)"
+            # given average Tmin and Tmax
+            daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
+            if abs(daygdd) < eps())
+                nrcdays = undef_int
             else
-                DecFile = 1
-            end if
-            do Nri = 1, (Obsi-2)
-                read(fhandle, *, iostat=rc)
-            end do
-            read(fhandle, '(a)', iostat=rc) StringREAD
-            call SplitStringInTwoParams(StringREAD, C1Min, C1Max)
-            read(fhandle, '(a)', iostat=rc) StringREAD
-            call SplitStringInTwoParams(StringREAD, C2Min, C2Max)
-            read(fhandle, '(a)', iostat=rc) StringREAD
-            call SplitStringInTwoParams(StringREAD, C3Min, C3Max)
-        end if
-        close(fhandle)
-end #not end
+                nrcdays = round(Int, valgddays/daygdd)
+            end 
+        else
+            daynri = firstdaycrop
+            if full_undefined_record(temp)
+                adjustdaynri = true
+                daynri = set_daynr_to_yundef(daynri)
+            else
+                adjustdaynri = false
+            end 
+
+            if temperature_file_exists & temperature_record.ToDayNr>daynri & temperature_record.FromDayNr<=daynri
+                remaininggddays = valgddays
+                if temperature_record.Datatype==:Daily
+                    # Tmin and Tmax arrays contain the TemperatureFilefull data
+                    i = daynri - temperature_record.FromDayNr + 1
+                    tdaymin_loc = Tmin[i]
+                    tdaymax_loc = Tmax[i]
+
+                    daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
+                    nrcdays = nrcdays + 1
+                    remaininggddays = remaininggddays - daygdd
+                    daynri = daynri + 1
+
+                    while ((remaininggddays > 0) & ((daynri < temperature_record.ToDayNr) | adjustdaynri))
+                        i = i + 1
+                        if i==length(Tmin) 
+                            i = 1
+                        end 
+                        tdaymin_loc = Tmin[i]
+                        tdaymax_loc = Tmax[i]
+
+                        daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
+                        nrcdays = nrcdays + 1
+                        remaininggddays = remaininggddays - daygdd
+                        daynri = daynri + 1
+                    end 
+
+                    if RemainingGDDays>0 
+                        nrcdays = undef_int
+                    end 
+                elseif temperature_record.Datatype==:Decadely
+                    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                    i = 1
+                    while tmin_dataset[i].DayNr != daynri
+                        i = i+1
+                    end 
+                    tdaymin_loc = tmin_dataset[i].Param
+                    tdaymax_loc = tmax_dataset[i].Param
+                    daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
+                    nrcdays = nrcdays + 1
+                    remaininggddays = remaininggddays - daygdd
+                    daynri = daynri + 1
+                    while (remaininggddays>0 & (daynri<temperature_record.ToDayNr | adjustdaynri))
+                        if daynri>tmin_dataset[31].DayNr 
+                            get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                        end
+                        i = 1
+                        while tmin_dataset[i].DayNr != daynri
+                            i = i+1
+                        end 
+                        tdaymin_loc = tmin_dataset[i].Param
+                        tdaymax_loc = tmax_dataset[i].Param
+                        daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
+                        nrcdays = nrcdays + 1
+                        remaininggddays = remaininggddays - daygdd
+                        daynri = daynri + 1
+                    end 
+                    if remaininggddays>0 
+                        nrcdays = undef_int
+                    end 
+                elseif  temperature_record.Datatype==:Monthly
+                    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                    i = 1
+                    while tmin_dataset[i].DayNr != daynri
+                        i = i+1
+                    end 
+                    tdaymin_loc = tmin_dataset[i].Param
+                    tdaymax_loc = tmax_dataset[i].Param
+                    daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
+                    nrcdays = nrcdays + 1
+                    remaininggddays = remaininggddays - daygdd
+                    daynri = daynri + 1
+                    while (remaininggddays>0 & (daynri<temperature_record.ToDayNr | adjustdaynri)
+                        if daynri>tmin_dataset[31].DayNr 
+                            get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                        end
+                        i = 1
+                        while tmin_dataset[i].DayNr != daynri
+                            i = i+1
+                        end 
+                        tdaymin_loc = tmin_dataset[i].Param
+                        tdaymax_loc = tmax_dataset[i].Param
+                        daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
+                        nrcdays = nrcdays + 1
+                        remaininggddays = remaininggddays - daygdd
+                        daynri = daynri + 1
+                    end 
+                    if remaininggddays>0 
+                        nrcdays = undef_int
+                    end 
+                end 
+            else
+                nrcdays = undef_int
+            end
+        end
+    end
+    return nrcdays
+end 
+
+"""
+    adjust_calendar_crop!(inse)
+
+tempprocessing.f90:1467
+"""
+function adjust_calendar_crop!(inse)
+    crop = inse[:crop]
+    cgcisgiven = true
+
+    if crop.ModeCycle==:GDDays
+        crop.GDDaysToFullCanopy = crop.GDDaysToGermination +
+                round(Int, log((0.25*crop.CCx**2/crop.CCo)/(crop.CCx-0.98*crop.CCx))/crop.GDDCGC)
+        if crop.GDDaysToFullCanopy>crop.GDDaysToHarvest 
+            crop.GDDaysToFullCanopy = crop.GDDaysToHarvest
+        end 
+        adjust_calendar_days!(inse, cgcisgiven)
+    end 
+    return nothing
+end 
+
+
+"""
+    adjust_calendar_days!(inse, iscgcgiven)
+
+tempprocessing.f90:1327
+"""
+function adjust_calendar_days!(inse, iscgcgiven)
+    crop = inse[:crop]
+    simulparam = inse[:simulparam]
+    plantdaynr = crop.Day1
+    infocroptype = crop.subkind
+    tbase = crop.Tbase
+    tupper = crop.Tupper
+    notempfiletmin = simulparam.Tmin
+    notempfiletmax = simulparam.Tmax
+    gddl0 = crop.GDDaysToGermination
+    gddl12 = crop.GDDaysToFullCanopy
+    gddflor = crop.DaysToFlowering
+    gddlengthflor = crop.GDDLengthFlowering
+    gddl123 = crop.GDDaysToSenescence
+    gddharvest = crop.GDDaysToHarvest
+    gddlzmax = crop.GDDaysToMaxRooting
+    gddhimax = crop.GDDaysToHIo
+    gddcgc = crop.GDDCGC
+    gddcdc = crop.GDDCDC
+    cco = crop.CCo
+    ccx = crop.CCx
+    hindex = crop.HI
+    thedaystoccini = crop.DaysToCCini
+    thegddaystoccini = crop.GDDaysToCCini
+    theplanting = crop.Planting
+    d0 = crop.DaysToGermination
+    d12 = crop.DaysToFullCanopy
+    dflor = crop.DaysToFlowering
+    lengthflor = crop.LengthFlowering
+    d123 = crop.DaysToSenescence
+    dharvest = crop.DaysToHarvest
+    dlzmax = crop.DaysToMaxRooting
+    lhimax = crop.DaysToHIo
+    stlength = crop.Length
+    cgc = crop.CGC
+    cdc = crop.CDC
+    dhidt = crop.dHIdt
+    notempfiletmax = simulparam.Tmax
+    notempfiletmin = simulparam.Tmin
+
+    tmp_notempfiletmin = notempfiletmin
+    tmp_notempfiletmax = notempfiletmax
+
+    succes = true
+    if thedaystoccini==0 
+        # planting/sowing
+        d0 = sum_calendar_days(gddl0, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, inse)
+        d12 = sum_calendar_days(gddl12, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, inse)
+    else
+        # regrowth
+        if thedaystoccini>0 
+           # ccini < ccx
+           extragddays = gddl12 - gddl0 - thegddaystoccini
+           extradays = sum_calendar_days(extragddays, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, inse)
+           d12 = d0 + thedaystoccini + extradays
+        end 
+    end 
+
+    if infocroptype!=:Forage 
+        d123 = sum_calendar_days(gddl123, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+        dharvest = sum_calendar_days(gddharvest, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+    end 
+
+    dlzmax = sum_calendar_days(gddlzmax, plantdaynr, base, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+    if infocroptype==:Grain | infocroptype==:Tuber
+        dflor = sum_calendar_days(gddflor, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+        if dflor!=undef_int 
+            if infocroptype==subkind_grain 
+                lengthflor = sum_calendar_days(gddlengthflor, (plantdaynr+dflor), tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+            else
+                lengthflor = 0
+            end 
+            lhimax = sum_calendar_days(gddhimax, (plantdaynr+dflor), tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+            if (lengthflor==undef_int | lhimax==undef_int) 
+                succes = false
+            end 
+        else
+            lengthflor = undef_int
+            lhimax = undef_int
+            succes = false
+        end 
+    elseif infocroptype==:Vegetative | infocroptype==:Forage
+        lhimax = sum_calendar_days(gddhimax, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+    end 
+    if (d0==undef_int | d12 == undef_int | d123==undef_int | dharvest==undef_int | dlzmax==undef_int) 
+        succes = false
+    end 
+
+    if succes 
+        cgc = gddl12/d12 * gddcgc
+        cdc = gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+        stlength, d123, d12, cgc = determine_length_growth_stages(cco, ccx, cdc, d0, dharvest, iscgcgiven, thedaystoccini, theplanting, d123, d12, cgc)
+        if (infocroptype==:Grain | infocroptype==:Tuber) 
+            dhidt = hindex/lhimax
+        end 
+        if (infocroptype==subkind_vegetative | infocroptype==subkind_forage) 
+            if (lhimax > 0) 
+                if (lhimax > dharvest) 
+                    dhidt = hindex/dharvest
+                else
+                    dhidt = hindex/lhimax
+                end 
+                if (dhidt > 100) 
+                    dhidt = 100 # 100 is maximum tempdhidt (see setdhidt)
+                    lhimax = 0
+                end 
+            else
+                dhidt = 100 # 100 is maximum tempdhidt (see setdhidt)
+                lhimax = 0
+            end 
+        end 
+    end 
+    return nothing
+end 
+
+
+"""
+    cdc = gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, notempfiletmin, notempfiletmax, inse)
+
+tempprocessing.f90:1545
+"""
+function gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, notempfiletmin, notempfiletmax, inse)
+    gddi = length_canopy_decline(ccx, gddcdc)
+    if (gddl123+gddi)<=gddharvest 
+        cci = 0 # full decline
+    else
+        # partly decline
+        if gddl123<gddharvest 
+            gddi = gddharvest - gddl123
+        else
+            gddi = 5
+        end 
+        # cc at time ti
+        cci = ccx * (1 - 0.05 * exp(gddi*gddcdc*3.33/(ccx+2.29))-1) 
+    end 
+    ti = sum_calendar_days(gddi, (plantdaynr+d123), tbase, tupper, notempfiletmin, notempfiletmax, inse)
+    if ti>0 
+        cdc = ((ccx+2.29)/ti * log(1 + (1-cci/ccx)/0.05))/3.33
+    else
+        cdc = undef_int
+    end 
+    return cdc
+end 
+
+
+"""
+    lcd = length_canopy_decline(ccx, cdc)
+
+global.f90:1839
+"""
+function length_canopy_decline(ccx, cdc)
+    lcd = 0
+    if ccx>0 
+        if cdc<=eps() 
+            lcd = undef_int
+        else
+            lcd = round(Int,(((ccx+2.29)/(cdc*3.33))*log(1 + 1/0.05) + 0.50))
+                         # + 0.50 to guarantee that cc is zero
+        end 
+    end 
+    return lcd
+end
+
+"""
+    stlength, length123, length12, cgcval = determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength, cgcgiven, thedaystoccini, theplanting, length123, length12, cgcval)
+
+global.f90:1644
+"""
+function determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength, cgcgiven, thedaystoccini, theplanting, length123, length12, cgcval)
+    stlength = zeros(Int, 4)
+    if length123<length12 
+        length123 = length12
+    end 
+
+    # 1. Initial and 2. Crop Development stage
+    # CGC is given and Length12 is already adjusted to it
+    # OR Length12 is given and CGC has to be determined
+    if (ccoval>=ccxval | length12<=l0) 
+        length12 = 0
+        stlength[1] = 0
+        stlength[2] = 0
+        cgcval = undef_int
+    else
+        if !cgcgiven  # length12 is given and cgc has to be determined
+            cgcval = log((0.25*ccxval/ccoval)/(1-0.98))/(length12-l0)
+            # check if cgc < maximum value (0.40) and adjust length12 if required
+            if cgcval>0.40 
+                cgcval = 0.40
+                ccxval_scaled = 0.98*ccxval
+                length12 = days_to_reach_cc_with_given_cgc(ccxval_scaled , ccoval, ccxval, cgcval, l0)
+                if length123<length12 
+                    length123 = length12
+                end 
+            end 
+        end 
+        # find StLength[1]
+        cctoreach = 0.10
+        stlength[1] = days_to_reach_cc_with_given_cgc(cctoreach, ccoval, ccxval, cgcval, l0)
+        # find stlength[2]
+        stlength[2] = length12 - stlength[1]
+    end 
+    l12adj = length12
+
+    # adjust Initial and Crop Development stage, in case crop starts as regrowth
+    if theplanting==:Regrowth 
+        if thedaystoccini==undef_int 
+            # maximum canopy cover is already reached at start season
+            l12adj = 0
+            stlength[1] = 0
+            stlength[2] = 0
+        else
+            if thedaystoccini==0 
+                # start at germination
+                l12adj = length12 - l0
+                stlength[1] = stlength[1] - l0
+            else
+                # start after germination
+                l12adj = length12 - (l0 + thedaystoccini)
+                stlength[1] = stlength[1] - (l0 + thedaystoccini)
+            end
+            if stlength[1]<0 
+                stlength[1] = 0
+            end 
+            stlength[2] = l12adj - stlength[1]
+        end 
+    end 
+
+    # 3. Mid season stage
+    stlength[3] = length123 - l12adj
+
+    # 4. Late season stage
+    stlength[4] = length_canopy_decline(ccxval, cdcval)
+
+    # final adjustment
+    if stlength[1]>totallength 
+        stlength[1] = totallength
+        stlength[2] = 0
+        stlength[3) = 0
+        stlength[4] = 0
+    else
+        if ((stlength[1]+stlength[2])>totallength) 
+            stlength[2] = totallength - stlength[1]
+            stlength[3] = 0
+            stlength[4] = 0
+        else
+            if ((stlength[1]+stlength[2]+stlength[3])>totallength) 
+                stlength[3] = totallength - stlength[1] - stlength[2]
+                stlength[4] = 0
+            elseif ((stlength[1]+stlength[2]+stlength[3]+stlength[4])>totallength) 
+                stlength[4] = totallength - stlength[1] - stlength[2] - stlength[3]
+            end 
+        end 
+    end 
+    return stlength, length123, length12, cgcval 
+end 
+
+"""
+    days = days_to_reach_cc_with_given_cgc(cctoreach, ccoval, ccxval, cgcval, l0)
+
+global.f90:1809
+"""
+function days_to_reach_cc_with_given_cgc(cctoreach, ccoval, ccxval, cgcval, l0)
+    cctoreach_local = cctoreach
+    if (ccoval>cctoreach_local | ccoval>=ccxval) 
+        l = 0
+    else
+        if cctoreach_local>(0.98*ccxval) 
+            cctoreach_local = 0.98*ccxval
+        end 
+        if cctoreach_local<=ccxval/2) 
+            l = log(cctoreach_local/ccoval)/cgcval
+        else
+            l = log((0.25*ccxval*ccxval/ccoval)/(ccxval-cctoreach_local))/cgcval
+        end 
+    end 
+    return l0 + round(Int, l)
+end 
+
+"""
+    adjust_crop_year_to_climfile!(crop::RepCrop, clim_file, clim_record)
+
+global.f90:6447
+"""
+function adjust_crop_year_to_climfile!(crop::RepCrop, clim_file, clim_record)
+    cday1 = crop.Day1
+    cdayn = crop.DayN
+    dayi, monthi, yeari = determine_date(cday1)
+    if clim_file=="(None)" 
+        yeari = 1901  # yeari = 1901 if undefined year
+    else
+        yeari = clim_record.FromY # yeari = 1901 if undefined year
+    end 
+    cday1 = determine_day_nr(dayi, monthi, yeari)
+
+    # This function determines Crop.DayN and the string
+    cdayn = cday1 + crop.DaysToHarvest - 1
+    if cdayn<cday1 
+        cdayn = cday1
+    end
+
+    crop.Day1 = cday1
+    crop.DayN = cdayn
+    return nothing
+end 
+
+"""
+    adjust_climrecord_to!(clim_record::RepClim, cdayn)
+
+global.f90:6163
+"""
+function adjust_climrecord_to!(clim_record::RepClim, cdayn)
+    dayi, monthi, yeari = determine_date(cdayn)
+    clim_record.ToD = 31
+    clim_record.ToM = 12
+    clim_record.ToY = yeari
+    clim_record.ToDayNr = determine_day_nr(31, 12, yeari)
+    return nothing
+end
+
+"""
+    adjust_simperiod!(inse)
+
+global.f90:4692
+"""
+function adjust_simperiod!(inse)
+    simulation = inse[:simulation]
+    crop = inse[:crop]
+    clim_file = inse[:string_parameters][:clim_file]
+    clim_record = inse[:clim_record]
+    simulparam = inse[:simulparam]
+    groundwater_file = inse[:string_parameters][:groundwater_file]
+
+
+    inisimfromdaynr = simulation.FromDayNr
+    if simulation.LinkCropToSimPeriod
+        determine_linked_simday1!(simulation, crop, clim_record, clim_file)
+        if (crop.Day1==simulation.FromDayNr) 
+            simulation.ToDayNr = crop.DayN
+        else
+            simulation.ToDayNr = simulation.FromDayNr + 30
+        end 
+        if (clim_file != "(None)") 
+            if (simulation.ToDayNr>clim_record.ToDayNr) 
+                simulation.ToDayNr = clim_record.ToDayNr
+            end 
+            if (simulation.ToDayNr<clim_record.FromDayNr) 
+                simulation.ToDayNr = clim_record.FromDayNr
+            end 
+        end 
+    else 
+        if (simulation.FromDayNr>crop.Day1) 
+            simulation.FromDayNr = crop.Day1
+        end 
+        simulation.ToDayNr = crop.DayN
+        if (clim_file != "(None)") & (simulation.FromDayNr<=clim_record.FromDayNr | simulation.FromDayNr>=clim_record.ToDayNr) 
+            simulation.FromDayNr = clim_record.FromDayNr
+            simulation.ToDayNr = simulation.FromDayNr + 30
+       end 
+    end 
+
+    # adjust initial depth and quality of the groundwater when required
+    if (!simulparam.ConstGwt & (inisimfromdaynr != simulation.FromDayNr)) 
+        if (groundwater_file != "(None)") 
+            fullfilename = GetPathNameProg() * "GroundWater.AqC"
+        else
+            fullfilename = GetGroundWaterFileFull()
+        end 
+        # initialize ZiAqua and ECiAqua
+        ZiAqua_tmp = GetZiAqua()
+        ECiAqua_tmp = GetECiAqua()
+        call LoadGroundWater(FullFileName, GetSimulation_FromDayNr(), &
+                 ZiAqua_tmp, ECiAqua_tmp)
+        call SetZiAqua(ZiAqua_tmp)
+        call SetECiAqua(ECiAqua_tmp)
+        Compartment_temp = GetCompartment()
+        call CalculateAdjustedFC((GetZiAqua()/100._dp), Compartment_temp)
+        call SetCompartment(Compartment_temp)
+        if (GetSimulation_IniSWC_AtFC()) then
+            call ResetSWCToFC
+        end 
+    end 
+
+    return nothing
+end #notend
+
+"""
+    determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_record::RepClim, clim_file)
+
+global.f90:4677
+"""
+function determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_record::RepClim, clim_file)
+    simday1 = crop.Day1
+    if clim_file != "(None)" 
+        if (simday1<clim_record.FromDayNr | simday1>clim_record.ToDayNr) 
+            simulation.LinkCropToSimPeriod = false
+            simday1 = clim_record.FromDayNr
+        end 
+    end
+    simulation.FromDayNr = simday1
+    return nothing
+end
+
