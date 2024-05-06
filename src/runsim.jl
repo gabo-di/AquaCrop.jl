@@ -116,7 +116,7 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
         adjust_climrecord_to!(inse[:clim_record], inse[:crop].DayN)
     end 
     # adjusting simulation period
-    adjust_simperiod!()
+    adjust_simperiod!(inse, projectinput)
 
     # 4. Irrigation
     call SetIrriFile(ProjectInput(NrRun)%Irrigation_Filename)
@@ -2340,11 +2340,11 @@ function adjust_climrecord_to!(clim_record::RepClim, cdayn)
 end
 
 """
-    adjust_simperiod!(inse)
+    adjust_simperiod!(inse, projectinput::ProjectInputType)
 
 global.f90:4692
 """
-function adjust_simperiod!(inse)
+function adjust_simperiod!(inse, projectinput::ProjectInputType)
     simulation = inse[:simulation]
     crop = inse[:crop]
     clim_file = inse[:string_parameters][:clim_file]
@@ -2383,27 +2383,20 @@ function adjust_simperiod!(inse)
     # adjust initial depth and quality of the groundwater when required
     if (!simulparam.ConstGwt & (inisimfromdaynr != simulation.FromDayNr)) 
         if (groundwater_file != "(None)") 
-            fullfilename = GetPathNameProg() * "GroundWater.AqC"
+            fullfilename = projectinput.ParentDir * "/GroundWater.AqC"
         else
-            fullfilename = GetGroundWaterFileFull()
+            fullfilename = groundwater_file
         end 
         # initialize ZiAqua and ECiAqua
-        ZiAqua_tmp = GetZiAqua()
-        ECiAqua_tmp = GetECiAqua()
-        call LoadGroundWater(FullFileName, GetSimulation_FromDayNr(), &
-                 ZiAqua_tmp, ECiAqua_tmp)
-        call SetZiAqua(ZiAqua_tmp)
-        call SetECiAqua(ECiAqua_tmp)
-        Compartment_temp = GetCompartment()
-        call CalculateAdjustedFC((GetZiAqua()/100._dp), Compartment_temp)
-        call SetCompartment(Compartment_temp)
-        if (GetSimulation_IniSWC_AtFC()) then
-            call ResetSWCToFC
+        load_groundwater!(inse, fullname)
+        calculate_adjusted_fc!(inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua]/100)
+        if inse[:simulation].IniSWC.AtFC 
+            reset_swc_to_fc!(inse[:simulation], inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua])
         end 
     end 
 
     return nothing
-end #notend
+end 
 
 """
     determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_record::RepClim, clim_file)
@@ -2422,3 +2415,264 @@ function determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_recor
     return nothing
 end
 
+"""
+    load_groundwater!(inse, fullname)
+
+global.f90:5981
+"""
+function load_groundwater!(inse, fullname)
+    simulparam = inse[:simulparam]
+    atdaynr = simulation.FromDayNr
+
+    atdaynr_local = atdaynr
+    # initialize
+    theend = false
+    year1gwt = 1901
+    daynr1 = 1
+    daynr2 = 1
+
+    if isfile(fullname)
+        open(fullname, "r") do file
+            readline(file)
+            readline(file)
+
+            # mode groundwater table
+            i = parse(Int, strip(readline(file)))
+            if i==0
+                # no groundwater table
+                zcm = undef_int
+                ecdsm = undef_double 
+                simulparam.ConstGwt = true
+                theend = true
+            elseif i==1
+                # constant groundwater table
+                simulparam.ConstGwt = true
+            else
+                simulparam.ConstGwt = false 
+            end
+
+            # first day of observations (only for variable groundwater table)
+            if !simulparam.ConstGwt 
+                dayi = parse(Int, strip(readline(file)))
+                monthi = parse(Int, strip(readline(file)))
+                year1gwt = parse(Int, strip(readline(file)))
+                daynr1gwt = determine_day_nr(dayi, monthi, year1gwt)
+            end 
+
+            # single observation (Constant Gwt) or first observation (Variable Gwt)
+            if i>0 
+                # groundwater table is present
+                readline(file)
+                readline(file)
+                readline(file)
+                splitedline = split(readline(file))
+                daydouble = parse(Float64, popfirst!(splitedline))
+                z2 = parse(Float64, popfirst!(splitedline))
+                ec2 = parse(Float64, popfirst!(splitedline))
+                if (i==1 | eof(file)) 
+                    # Constant groundwater table or single observation
+                    Zcm = round(Int,100*z2)
+                    ecdsm = ec2
+                    theend = true
+                else
+                    daynr2 = daynr1gwt + round(Int, daydouble) - 1
+                end 
+            end 
+
+            # other observations
+            if !theend 
+                # variable groundwater table with more than 1 observation
+                # adjust AtDayNr
+                dayi, monthi, yeari = determine_date(atdaynr_local)
+                if (yeari==1901 & (Year1Gwt != 1901)) 
+                    # Make AtDayNr defined
+                    atdaynr_local = determine_day_nr(dayi, monthi, year1gwt)
+                end 
+                if ((yeari != 1901) & Year1Gwt==1901) 
+                    # Make AtDayNr undefined
+                    atdaynr_local = determine_day_nr(dayi, monthi, year1gwt)
+                end 
+                # get observation at AtDayNr
+                if year1gwt != 1901 
+                    # year is defined
+                    if atdaynr_local<=daynr2 
+                        zcm = round(Int,100*z2)
+                        ecdsm = ec2
+                    else
+                        while !theend
+                            daynr1 = daynr2
+                            z1 = z2
+                            ec1 = ec2
+                            splitedline = split(readline(file))
+                            daydouble = parse(Float64, popfirst!(splitedline))
+                            z2 = parse(Float64, popfirst!(splitedline))
+                            ec2 = parse(Float64, popfirst!(splitedline))
+                            daynr2 = daynr1gwt + round(Int, daydouble) - 1
+                            if (atdaynr_local <= daynr2) 
+                                zcm, ecdsm =  find_values(atdaynr_local, daynr1, daynr2, z1, ec1, z2, ec2)
+                                theend = true
+                            end 
+                            if (eof(file) & !theend)
+                                zcm = round(Int,100*z2)
+                                ecdsm = ec2
+                                theend = true
+                            end 
+                        end 
+                    end 
+                else
+                    # year is undefined
+                    if (atdaynr_local <= daynr2) 
+                        daynr2 = daynr2 + 365
+                        atdaynr_local = atdaynr_local + 365
+                        while !eof(file)
+                            splitedline = split(readline(file))
+                            daydouble = parse(Float64, popfirst!(splitedline))
+                            z1 = parse(Float64, popfirst!(splitedline))
+                            ec1 = parse(Float64, popfirst!(splitedline))
+                            daynr1 = daynr1gwt + round(Int, daydouble) - 1
+                        end 
+                        zcm, ecdsm =  find_values(atdaynr_local, daynr1, daynr2, z1, ec1, z2, ec2)
+                    else
+                        daynrn = daynr2 + 365
+                        zn = z2
+                        ecn = ec2
+                        while !theend
+                            daynr1 = daynr2
+                            z1 = z2
+                            ec1 = ec2
+                            splitedline = split(readline(file))
+                            daydouble = parse(Float64, popfirst!(splitedline))
+                            z2 = parse(Float64, popfirst!(splitedline))
+                            ec2 = parse(Float64, popfirst!(splitedline))
+                            daynr2 = daynr1gwt + round(Int, daydouble) - 1
+                            if (atdaynr_local <= daynr2) 
+                                zcm, ecdsm =  find_values(atdaynr_local, daynr1, daynr2, z1, ec1, z2, ec2)
+                                theend = true
+                            end 
+                            if (eof(file) & !theend)
+                                zcm, ecdsm =  find_values(atdaynr_local, daynr2, daynrn, z2, ec2, zn, ecn)
+                                theend = true
+                            end 
+                        end 
+                    end 
+                end 
+                # variable groundwater table with more than 1 observation
+            end 
+            inse[:integer_parameters][:ziaqua] = zcm
+            inse[:float_parameters][:eciaqua] = ecdsm
+        end 
+    end
+
+    return nothing 
+end 
+
+"""
+    zcn, ecdsm = find_values(atdaynr, daynr1, daynr2, z1, ec1, z2, ec2)
+
+global.f90:6140
+"""
+function find_values(atdaynr, daynr1, daynr2, z1, ec1, z2, ec2)
+        zcm = round(int, 100 * (z1 + (z2-z1) * (atdaynr-daynr1)/(daynr2-daynr1)))
+        ecdsm = ec1 + (ec2-ec1) * (atdaynr-daynr1)/(daynr2-daynr1)
+        return zcm, ecdsm
+end 
+
+
+"""
+    calculate_adjusted_fc!(compartadj::Vector{CompartmentIndividual}, soil_layers::Vector{SoilLayerIndividual}, depthaquifer)
+
+global.f90:4141
+"""
+function calculate_adjusted_fc!(compartadj::Vector{CompartmentIndividual}, soil_layers::Vector{SoilLayerIndividual}, depthaquifer)
+    depth = 0
+    for compi in eachindex(compartadj)
+        depth = depth + compartadj[compi].Thickness
+    end 
+
+    compi = length(compartadj)
+
+    while compi>=1
+        zi = depth - compartadj[compi].Thickness/2
+        xmax = no_adjustment(soil_layers[compartadj[compi].Layer].FC)
+
+        if (depthaquifer<0 | (depthaquifer - zi)>=xmax) 
+            for ic in 1:compi
+                compartadj[ic].FCadj = soil_layers[compartadj[ic].Layer].FC
+            end 
+            compi = 0
+        else
+            if (soil_layers[compartadj[compi].Layer].FC>=soil_layers[compartadj[compi].Layer].SAT)
+                compartadj[compi].FCadj = soil_layers[compartadj[compi].Layer].FC
+            else
+                if (zi >= depthaquifer) 
+                    compartadj[compi].FCadj = soil_layers[compartadj[compi].Layer].SAT
+                else
+                    deltav = soil_layers[compartadj[compi].Layer].SAT - soil_layers[compartadj[compi].Layer].FC
+                    deltafc = (deltav/(xmax**2)) * (zi - (depthaquifer - xmax))**2
+                    compartadj[compi].FCadj = soil_layers[compartadj[compi].Layer].FC + deltafc
+                end 
+            end 
+            depth = depth - compartadj[compi].Thickness
+            compi = compi - 1
+        end 
+    end 
+
+    return nothing
+end
+
+"""
+    nadj = no_adjustment(fcvolpr)
+
+global.f90:4195
+"""
+function no_adjustment(fcvolpr)
+    if fcvolpr<=10
+        nadj = 1
+    else
+        if fcvolpr>=30 
+            nadj = 2
+        else
+            pf = 2 + 0.3 * (fcvolpr-10)/20
+            nadj = (exp(pf*log(10)))/100
+        end 
+    end 
+    return nadj
+end 
+
+
+"""
+    reset_swc_to_fc!(simulation::RepSim, compartments::Vector{CompartmentIndividual},
+                     soil_layers::Vector{SoilLayerIndividual}, ziaqua)
+
+global.f90:4758
+"""
+function reset_swc_to_fc!(simulation::RepSim, compartments::Vector{CompartmentIndividual},
+                           soil_layers::Vector{SoilLayerIndividual}, ziaqua)
+    simulation.IniSWC.AtDepths = false
+    if ziaqua<0  # no ground water table
+        simulation.IniSWC.NrLoc = length(soil_layers)
+        for layeri = 1:simulation.IniSWC.NrLoc 
+            simulation.IniSWC.Loc[layeri] = soil_layers[layeri].Thickness
+            simulation.IniSWC.VolProc[layeri] = soil_layers[layeri].FC
+            simulation.IniSWC.SaltECe[layeri] = 0 
+        end 
+    else
+        simulation.IniSWC.NrLoc = length(compartments)
+        for loci = 1:simulation.IniSWC.NrLoc 
+            simulation.IniSWC.Loc[loci] = compartments[loci].Thickness
+            simulation.IniSWC.VolProc[loci] = compartments[loci].FCadj
+            simulation.IniSWC.SaltECe[loci] = 0 
+        end 
+    end 
+    for compi in eachindex(compartments) 
+        compartments[compi].Theta = compartments[compi].FCadj/100
+        simulation.ThetaIni[compi] = compartments[compi].Theta
+        for celli in 1:soil_layers[compartments[compi].Layer].SCP1
+            # salinity in cells
+            compartments[compi].Salt[celli] = 0
+            compartments[compi].Depo[celli] = 0
+        end 
+    end 
+
+    return nothing
+end 
