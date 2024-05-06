@@ -119,16 +119,14 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
     adjust_simperiod!(inse, projectinput)
 
     # 4. Irrigation
-    call SetIrriFile(ProjectInput(NrRun)%Irrigation_Filename)
-    if (GetIrriFile() == '(None)') then
-        call SetIrriFileFull(GetIrriFile())
-        call NoIrrigation
-        # IrriDescription := 'Rainfed cropping';
+    if projectinput.Irrigation_Filename == "(None)" 
+        irri_file = projectinput.Irrigation_Filename
+        no_irrigation!(inse)
     else
-        call SetIrriFileFull(ProjectInput(NrRun)%Irrigation_Directory &
-                             // GetIrriFile())
-        call LoadIrriScheduleInfo(GetIrriFileFull())
-    end if
+        irri_file = projectinput.ParentDir * projectinput.Irrigation_Directory * projectinput.Irrigation_Filename
+        load_irri_schedule_info!(inse, fullname)
+    end 
+    setparameter!(inse[:string_parameters], :irri_file, irri_file)
 
     # 5. Field Management
     call SetManFile(ProjectInput(NrRun)%Management_Filename)
@@ -2673,6 +2671,105 @@ function reset_swc_to_fc!(simulation::RepSim, compartments::Vector{CompartmentIn
             compartments[compi].Depo[celli] = 0
         end 
     end 
+
+    return nothing
+end 
+
+"""
+    no_irrigation!(inse)
+
+global.f90:2838
+"""
+function no_irrigation!(inse)
+    inse[:symbol_parameters][:irrimode] = :NoIrri
+    inse[:symbol_parameters][:irrimethod] = :MSprinkler
+    inse[:simulation].IrriECw = 0
+    inse[:symbol_parameters][:timemode] = :AllRAW
+    inse[:symbol_parameters][:depthmode] = :ToFC
+
+    for nri = 1:5
+        inse[:irri_before_season][nri].DayNr = 0
+        inse[:irri_before_season][nri].Param = 0
+        inse[:irri_after_season][nri].DayNr = 0
+        inse[:irri_after_season][nri].Param = 0
+    end 
+    inse[:irri_ecw].PreSeason = 0 
+    inse[:irri_ecw].PostSeason = 0 
+
+    return nothing
+end 
+
+"""
+    load_irri_schedule_info!(inse, fullname)
+
+global.f90:2860
+"""
+function load_irri_schedule_info!(inse, fullname)
+    open(fullname, "r") do file
+        readline(file)
+        readline(file)
+
+        # irrigation method
+        i = parse(Int, strip(readline(file)))
+        if i==1
+            inse[:symbol_parameters][:irrimethod] = MSprinkler
+        elseif i==2
+            inse[:symbol_parameters][:irrimethod] = MBasin
+        elseif i==3
+            inse[:symbol_parameters][:irrimethod] = MBorder
+        elseif i==4
+            inse[:symbol_parameters][:irrimethod] = MFurrow 
+        else
+            inse[:symbol_parameters][:irrimethod] = MDrip 
+        end
+        # fraction of soil surface wetted
+        inse[:simulparam].IrriFwInSeason = parse(Int, strip(readline(file)))
+
+        # irrigation mode and parameters
+        i = parse(Int, strip(readline(file)))
+        if i==0
+            inse[:symbol_parameters][:irrimode] = :NoIrri
+        elseif i==1
+            inse[:symbol_parameters][:irrimode] = :Manual
+        elseif i==2
+            inse[:symbol_parameters][:irrimode] = :Generate
+        else
+            inse[:symbol_parameters][:irrimode] = :Inet
+        end 
+
+        # 1. Irrigation schedule
+        if i == 1
+            inse[:integer_parameters][:irri_first_daynr] = parse(Int, strip(readline(file)))
+        end 
+
+
+        # 2. Generate
+        if inse[:symbol_parameters][:irrimode] == :Generate 
+            i = parse(Int, strip(readline(file)))
+            if i==1
+                inse[:symbol_parameters][:timemode] = :FixInt
+            elseif i==2
+                inse[:symbol_parameters][:timemode] = :AllDepl
+            elseif i==3
+                inse[:symbol_parameters][:timemode] = :AllRAW
+            elseif i==4
+                inse[:symbol_parameters][:timemode] = :WaterBetweenBunds
+            else
+                inse[:symbol_parameters][:timemode] = :AllRAW
+            end
+            i = parse(Int, strip(readline(file)))
+            if i==1
+                inse[:symbol_parameters][:depthmode] = :ToFc
+            else
+                inse[:symbol_parameters][:depthmode] = :FixDepth
+            end 
+        end 
+
+        # 3. Net irrigation requirement
+        if inse[:symbol_parameters][:irrimode] == :Inet 
+            inse[:simulparam].PercRAW = parse(Int, strip(readline(file)))
+        end 
+    end
 
     return nothing
 end 

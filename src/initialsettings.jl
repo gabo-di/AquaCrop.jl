@@ -400,6 +400,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(integer_parameters, :daysubmerged, 0)
     setparameter!(integer_parameters, :maxplotnew, 50)
     setparameter!(integer_parameters, :maxplottr, 10)
+    setparameter!(integer_parameters, :irri_first_daynr, undef_int)
     setparameter!(integer_parameters, :ziaqua, undef_int)
 
     bool_parameters = ParametersContainer(Bool)

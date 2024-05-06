@@ -1,4 +1,4 @@
-# constants
+# constantstype
 
 const equiv = 0.64 # conversion factor: 1 dS/m = 0.64 g/l
 const max_SoilLayers = 5
@@ -825,7 +825,7 @@ global.f90:2838
     "Undocumented"
     DayNr::Int=0
     "Undocumented"
-    param::Int=0
+    Param::Int=0
 end
 
 """
