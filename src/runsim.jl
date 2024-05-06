@@ -130,29 +130,32 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
 
     # 5. Field Management
     call SetManFile(ProjectInput(NrRun)%Management_Filename)
-    if (GetManFile() == '(None)') then
-        call SetManFileFull(GetManFile())
-        call SetManDescription('No specific field management')
+    if projectinput.Management_Filename == "(None)" 
+        man_file = projectinput.Management_Filename
     else
-        call SetManFileFull(ProjectInput(NrRun)%Management_Directory &
-                            // GetManFile())
-        call LoadManagement(GetManFilefull())
+        man_file = projectinput.ParentDir * projectinput.Management_Directory * projectinput.Management_Filename
+        load_management!(inse, man_file)
         # reset canopy development to soil fertility
-        FertStress = GetManagement_FertilityStress()
-        Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
-        RedCGC_temp = GetSimulation_EffectStress_RedCGC()
-        RedCCX_temp = GetSimulation_EffectStress_RedCCX()
-        call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(),&
-               GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(),&
-               GetCrop_DaysToSenescence(), GetCrop_DaysToFlowering(),&
-               GetCrop_LengthFlowering(), GetCrop_DeterminancyLinked(),&
-               Crop_DaysToFullCanopySF_temp, RedCGC_temp,&
-               RedCCX_temp, FertStress)
-        call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
-        call SetManagement_FertilityStress(FertStress)
-        call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
-        call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
-    end if
+        daystofullcanopy, RedCGC_temp, RedCCX_temp, fertstress = time_to_max_canopy_sf(
+                              inse[:crop].CCo, 
+                              inse[:crop].CGC,
+                              inse[:crop].CCx,
+                              inse[:crop].DaysToGermination,
+                              inse[:crop].DaysToFullCanopy,
+                              inse[:crop].DaysToSenescence,
+                              inse[:crop].DaysToFlowering,
+                              inse[:crop].LengthFlowering,
+                              inse[:crop].DeterminancyLinked,
+                              inse[:crop].DaysToFullCanopySF, 
+                              inse[:simulation].EffectStress.RedCGC,
+                              inse[:simulation].EffectStress.RedCCX,
+                              inse[:management].FertilityStress)
+        management.FertilityStress = fertstress
+        simulation.EffectStress.RedCGC = RedCGC_temp
+        simulation.EffectStress.RedCCX = RedCCX_temp
+        crop.DaysToFullCanopySF = daystofullcanopy
+    end 
+    setparameter!(inse[:string_parameters], :man_file, man_file)
 
     # 6. Soil Profile
     call SetProfFile(ProjectInput(NrRun)%Soil_Filename)
@@ -2771,5 +2774,103 @@ function load_irri_schedule_info!(inse, fullname)
         end 
     end
 
+    return nothing
+end 
+
+"""
+    load_management!(inse, fullname)
+
+global.f90:3350
+"""
+function load_management!(inse, fullname)
+    management = inse[:management]
+    crop = inse[:crop]
+    simulation = inse[:simulation]
+    open(fullname, "r") do file
+        readline(file)
+        readline(file)
+        # mulches
+        management.Mulch = parse(Int, strip(readline(file)))
+        management.EffectMulchInS = parse(Int, strip(readline(file)))
+        # soil fertility
+        management.FertilityStress = parse(Int, strip(readline(file)))
+        EffectStress_temp = GetSimulation_EffectStress()
+        crop_stress_parameters_soil_fertility!(simulation.EffectStress, crop.StressResponse, management.FertilityStress)
+        # soil bunds
+        management.BundHeight = parse(Float64, strip(readline(file)))
+        simulation.SurfaceStorageIni = 0
+        simulation.ECStorageIni = 0
+        # surface run-off
+        i = parse(Int, strip(readline(file)))
+        if i==1 
+            management.RunoffOn = false # prevention of surface runoff
+        else
+            management.RunoffOn = true # surface runoff is not prevented
+        end 
+        management.CNcorrection = parse(Int, strip(readline(file)))
+        # weed infestation
+        management.WeedRC = parse(Int, strip(readline(file)))# relative cover of weeds (%)
+        management.WeedDeltaRC = parse(Int, strip(readline(file)))
+        # shape factor of the CC expansion
+        # function in a weed infested field
+        management.WeedShape = parse(Float64, strip(readline(file)))
+        management.WeedAdj = parse(Int, strip(readline(file)))
+        # multiple cuttings
+        read(fhandle, *) i  # Consider multiple cuttings: True or False
+        i = parse(Int, strip(readline(file)))
+        if i==0 
+            management.Cuttings.Considered = false
+        else
+            management.Cuttings.Considered = true 
+        end 
+        # Canopy cover (%) after cutting
+        management.Cuttings.CCcut = parse(Int, strip(readline(file)))
+        # Next line is expected to be present in the input file, however
+        # A PARAMETER THAT IS NO LONGER USED since AquaCrop version 7.1
+        readline(file)
+        # Considered first day when generating cuttings
+        # (1 = start of growth cycle)
+        management.Cuttings.Day1 = parse(Int, strip(readline(file)))
+        # Considered number owhen generating cuttings
+        # (-9 = total growth cycle)
+        management.Cuttings.NrDays = parse(Int, strip(readline(file)))
+        i = parse(Int, strip(readline(file)))
+        if i==1 
+            management.Cuttings.Generate = true
+        else
+            management.Cuttings.Generate =false 
+        end
+        # Time criterion for generating cuttings
+        i = parse(Int, strip(readline(file)))
+        if i==0
+            # not applicable
+            management.Cuttings.Criterion = :NA
+        elseif i==1
+            # interval in days
+            management.Cuttings.Criterion = :IntDay
+        elseif i==2
+            # interval in Growing Degree Days
+            management.Cuttings.Criterion = :IntGDD
+        elseif i==3
+            # produced dry above ground biomass (ton/ha)
+            management.Cuttings.Criterion = :DryB
+        elseif i==4
+            # produced dry yield (ton/ha)
+            management.Cuttings.Criterion = :DryY
+        elseif i==5
+            # produced fresh yield (ton/ha)
+            management.Cuttings.Criterion = :FreshY
+        end 
+        # final harvest at crop maturity:
+        i = parse(Int, strip(readline(file)))
+        if i==1 
+            management.Cuttings.HarvestEnd = true
+        else
+            management.Cuttings.HarvestEnd = false
+        end 
+        # dayNr for Day 1 of list of cuttings
+        # (-9 = Day1 is start growing cycle)
+        management.Cuttings.FirstDayNr = parse(Int, strip(readline(file)))
+    end
     return nothing
 end 
