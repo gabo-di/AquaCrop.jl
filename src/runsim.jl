@@ -129,7 +129,6 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
     setparameter!(inse[:string_parameters], :irri_file, irri_file)
 
     # 5. Field Management
-    call SetManFile(ProjectInput(NrRun)%Management_Filename)
     if projectinput.Management_Filename == "(None)" 
         man_file = projectinput.Management_Filename
     else
@@ -159,37 +158,34 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
 
     # 6. Soil Profile
     call SetProfFile(ProjectInput(NrRun)%Soil_Filename)
-    if (GetProfFile() == '(External)') then
-        call SetProfFilefull(GetProfFile())
-    elseif (GetProfFile() == '(None)') then
-        call SetProfFilefull(GetPathNameSimul() // 'DEFAULT.SOL')
+    if projectinput.Soil_Filename=="(External)"
+        prof_file = projectinput.Soil_Filename
+    elseif projectinput.Soil_Filename=="(None)"
+        prof_file = projectinput.ParentDir * "DEFAULT.SOL"
     else
-        call SetProfFilefull(ProjectInput(NrRun)%Soil_Directory &
-                             // GetProfFile())
-    end if
+        # The load of profile is delayed to check if soil water profile need to be
+        # reset (see 8.)
+        prof_file = projectinput.ParentDir * projectinput.Soil_Directory * projectinput.Soil_Filename
+    end 
+    setparameter!(inse[:string_parameters], :prof_file, prof_file)
 
-    # The load of profile is delayed to check if soil water profile need to be
-    # reset (see 8.)
 
     # 7. Groundwater
-    call SetGroundWaterFile(ProjectInput(NrRun)%GroundWater_Filename)
-    if (GetGroundWaterFile() == '(None)') then
-        call SetGroundWaterFilefull(GetGroundWaterFile())
-        call SetGroundWaterDescription('no shallow groundwater table')
+    if projectinput.GroundWater_Filename=="(None)"
+        groundwater_file = projectinput.GroundWater_Filename
     else
-        call SetGroundWaterFilefull(ProjectInput(NrRun)%GroundWater_Directory &
-                                    // GetGroundWaterFile())
         # Loading the groundwater is done after loading the soil profile (see
         # 9.)
-    end if
+        groundwater_file = projectinput.ParentDir * projectinput.GroundWater_Directory * projectinput.GroundWater_Filename
+    end 
+    setparameter!(inse[:string_parameters], :groundwater_file, groundwater_file)
 
     # 8. Set simulation period
-    call SetSimulation_FromDayNr(ProjectInput(NrRun)%Simulation_DayNr1)
-    call SetSimulation_ToDayNr(ProjectInput(NrRun)%Simulation_DayNrN)
-    if ((GetCrop_Day1() /= GetSimulation_FromDayNr()) .or. &
-        (GetCrop_DayN() /= GetSimulation_ToDayNr())) then
-        call SetSimulation_LinkCropToSimPeriod(.false.)
-    end if
+    inse[:simulation].FromDayNr = projectinput.Simulation_DayNr1
+    inse[:simulation].ToDayNr = projectinput.Simulation_DayNrN
+    if (inse[:crop].Day1 != inse[:simulation].FromDayNr) | (inse[:crop].DayN != inse[:simulatio].ToDayNr)
+        inse[:simulation].LinkCropToSimPeriod = false
+    end 
 
     # 9. Initial conditions
     if (ProjectInput(NrRun)%SWCIni_Filename == 'KeepSWC') then
