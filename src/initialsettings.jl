@@ -324,7 +324,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     else
         soil = RepSoil()
         soil_layers = [SoilLayerIndividual()]
-        compartments = CompartmentIndividual[CompartmentIndividual(Thickness=simulparam.CompDefThick) for _ in 1:max_No_compartments]
+        compartments = CompartmentIndividual[CompartmentIndividual(Thickness=simulparam.CompDefThick) for _ in 1:max_no_compartments]
         determinate_soilclass!(soil_layers[1])
         determinate_coeffcapillaryrise!(soil_layers[1])
     end
@@ -1106,7 +1106,7 @@ function determine_nrand_thickness_compartments!(compartments::Vector{Compartmen
         end 
         totaldepthc += compartment.Thickness
         push!(compartments, compartment)
-        if ((nrcompartments == max_No_compartments) | (abs(totaldepthc - totaldepthl) < 0.0001))
+        if ((nrcompartments == max_no_compartments) | (abs(totaldepthc - totaldepthl) < 0.0001))
             loopi = false
         end
     end

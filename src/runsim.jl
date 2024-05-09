@@ -188,50 +188,49 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
     end 
 
     # 9. Initial conditions
-    if (ProjectInput(NrRun)%SWCIni_Filename == 'KeepSWC') then
+    if projectinput.SWCIni_Filename=="KeepSWC"
         # No load of soil file (which reset thickness compartments and Soil
         # water content to FC)
-        call SetSWCIniFile('KeepSWC')
-        call SetSWCIniDescription('Keep soil water profile of previous run')
+        swcini_file = projectinput.SWCIni_Filename
     else
         # start with load and complete profile description (see 5.) which reset
         # SWC to FC by default
-        if (GetProfFile() == '(External)') then
-            call LoadProfileProcessing(ProjectInput(NrRun)%VersionNr)
+        if prof_file=="(External)"
+            load_profile_processing!(inse[:soil], inse[:soil_layers], inse[:compartments], inse[:simulparam])
         else
-            call LoadProfile(GetProfFilefull())
-        end if
-        call CompleteProfileDescription
+            soil, soil_layers, compartments = load_profile(prof_file, inse[:simulparam])
+            inse[:soil] = soil
+            inse[:soil_layers] = soil_layers
+            inse[:compartments] = compartments
+        end 
+        complete_profile_description!(inse[:soil_layers], inse[:compartments], inse[:simulation], inse[:total_water_content]) 
 
         # Adjust size of compartments if required
-        TotDepth = 0._dp
-        do i = 1, GetNrCompartments()
-            TotDepth = TotDepth + GetCompartment_Thickness(i)
-        end do
-        if (GetSimulation_MultipleRunWithKeepSWC()) then
-        # Project with a sequence of simulation runs and KeepSWC
-            if (roundc(GetSimulation_MultipleRunConstZrx()*1000._dp, mold=1) > &
-                roundc(TotDepth*1000._dp, mold=1)) then
+        totdepth = 0
+        for i in eachindex(inse[:compartments]) 
+            totdepth = totdepth + inse[:compartments][i].Thickness
+        end 
+        if inse[:simulation].MultipleRunWithKeepSWX
+            # Project with a sequence of simulation runs and KeepSWC
+            if round(Int, inse.[:simulation].MultipleRunConstZrx*1000)>round(Int, totdepth*1000) 
+                adjust_size_compartments!()
                 call AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx())
-            end if
+            end 
         else
-            if (roundc(GetCrop_RootMax()*1000._dp, mold=1) > &
-                roundc(TotDepth*1000._dp, mold=1)) then
-                if (roundc(GetSoil_RootMax()*1000._dp, mold=1) == &
-                    roundc(GetCrop_RootMax()*1000._dp, mold=1)) then
-                    call AdjustSizeCompartments(&
-                            real(GetCrop_RootMax(), kind=dp))
+            if round(Int, inse[:crop].RootMax*1000)>round(Int, totdepth*1000)
+                if round(Int, inse[:soil].RootMax*1000)==round(Int, inse[:crop].RootMax*1000)
                     # no restrictive soil layer
+                    adjust_size_compartments!()
+                    call AdjustSizeCompartments(real(GetCrop_RootMax(), kind=dp))
                 else
                     # restrictive soil layer
-                    if (roundc(GetSoil_RootMax()*1000._dp, mold=1) > &
-                        roundc(TotDepth*1000._dp, mold=1)) then
-                        call AdjustSizeCompartments(&
-                            real(GetSoil_RootMax(), kind=dp))
-                    end if
-                end if
-            end if
-        end if
+                    if round(Int, inse[:soil].RootMax*1000)>round(Int, totdepth*1000)
+                        adjust_size_compartments!()
+                        call AdjustSizeCompartments(real(GetSoil_RootMax(), kind=dp))
+                    end 
+                end 
+            end 
+        end 
 
         call SetSWCIniFile(ProjectInput(NrRun)%SWCIni_Filename)
         if (GetSWCIniFile() == '(None)') then
@@ -2254,7 +2253,7 @@ function determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength,
     if stlength[1]>totallength 
         stlength[1] = totallength
         stlength[2] = 0
-        stlength[3) = 0
+        stlength[3] = 0
         stlength[4] = 0
     else
         if ((stlength[1]+stlength[2])>totallength) 
@@ -2868,5 +2867,312 @@ function load_management!(inse, fullname)
         # (-9 = Day1 is start growing cycle)
         management.Cuttings.FirstDayNr = parse(Int, strip(readline(file)))
     end
+    return nothing
+end 
+
+"""
+global.f90:6563
+"""
+function adjust_size_compartments!(inse, cropzx)
+    compartments = inse[:compartments]
+    simulparam = inse[:simulparam]
+
+    # 1. Save intial soil water profile (required when initial soil
+    # water profile is NOT reset at start simulation - see 7.)
+    # 2. Actual total depth of compartments
+    prevnrcomp = length(compartments)
+    prevthickcomp = Float64[]
+    prevvolprcomp = Float64[]
+    totdepth = 0
+    for compi in eachindex(compartments)
+        push!(prevthickcomp, compartments[compi].Thickness)
+        push!(prevvolprcomp, compartments[compi].Theta * 100)
+        totdepth += compartments[compi].Thickness
+    end
+
+    # 3. Increase number of compartments (if less than 12)
+    if (length(compartments) < max_no_compartments) 
+        logi = true
+        while logi
+            if (cropzx-totdepthc)>simulparam.CompDefThick
+                push!(compartments, CompartmentIndividual(Thickness=simulparam.CompDefThick)
+            else
+                push!(compartments, CompartmentIndividual(Thickness=cropzx-totdepthc)
+            end 
+            totdepth += compartments[end].Thickness
+            if (length(compartments)==max_no_compartments | (totdepthc+0.00001)>=cropzx) 
+                logi = false
+            end
+        end 
+    end 
+
+    # 4. Adjust size of compartments (if total depth of compartments < rooting depth)
+    if (totdepthc+0.00001)<cropzx
+        fadd = (cropzx/0.1 - 12)/78
+        totdepthc = 0
+        for i in eachindex(new_compartments)
+            compartments[i].Thickness = 0.1 * (1 + i*fadd)
+            totdepthc += compartments[i].Thickness
+        end 
+        if totdepthc<cropzx 
+            logi = true
+            while logi
+                compartments[12].Thickness += 0.05
+                totdepthc += 0.05
+                if totdepthc>=cropzx 
+                    logi = false
+                end
+            end 
+        else
+            while (totdepthc - 0.04999999)>=cropzx
+                compartments[12].Thickness -= 0.05
+                totdepthc = totdepthc - 0.05
+            end 
+        end 
+    end 
+    # 5. Adjust soil water content and theta initial
+    adjust_theta_initial!()
+    call AdjustThetaInitial(PrevNrComp, PrevThickComp, &
+                            PrevVolPrComp, PrevECdSComp)
+    return nothing
+end #notend
+
+"""
+global.f90:5852
+"""
+function adjust_theta_initial!(prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
+    compartments
+    soil_layers
+
+    # 1. Actual total depth of compartments
+    totdepthc = 0
+    for compi in eachindex(compartments)
+        totdepthc += compartments[compi].Thickness
+    end 
+
+    # 2. Stretch thickness of bottom soil layer if required
+    totdepthl = 0
+    for layeri in eachindex(soil_layers)
+        totdepthl += soil_layers[layeri].Thickness
+    end 
+    if totdepthc>totdepthl 
+        soil_layers[end].Thickness += (totdepthc - totdepthl)
+    end 
+
+    # 3. Assign a soil layer to each soil compartment
+    designate_soillayer_to_compartments!(compartments, soil_layers)
+
+    # 4. Adjust initial Soil Water Content of soil compartments
+    if (GetSimulation_ResetIniSWC()) then
+        if (GetSimulation_IniSWC_AtDepths()) then
+            Compartment_temp = GetCompartment()
+            call TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(), &
+                                               GetSimulation_IniSWC_Loc(), &
+                                               GetSimulation_IniSWC_VolProc(), &
+                                               GetSimulation_IniSWC_SaltECe(), &
+                                               GetNrCompartments(), &
+                                               Compartment_temp)
+            call SetCompartment(Compartment_temp)
+        else
+            Compartment_temp = GetCompartment()
+            call TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(), &
+                                               GetSimulation_IniSWC_Loc(), &
+                                               GetSimulation_IniSWC_VolProc(), &
+                                               GetSimulation_IniSWC_SaltECe(), &
+                                               GetNrCompartments(), &
+                                               Compartment_temp)
+            call SetCompartment(Compartment_temp)
+        end if
+    else
+        Compartment_temp = GetCompartment()
+        call TranslateIniLayersToSWProfile(PrevNrComp, PrevThickComp, &
+                                           PrevVolPrComp, PrevECdSComp, &
+                                           GetNrCompartments(), &
+                                           Compartment_temp)
+        call SetCompartment(Compartment_temp)
+    end if
+
+    # 5. Adjust watercontent in soil layers and determine ThetaIni
+    Total = 0._dp
+    do layeri = 1, GetSoil_NrSoilLayers()
+        call SetSoilLayer_WaterContent(layeri, 0._dp)
+    end do
+    do compi = 1, GetNrCompartments()
+        call SetSimulation_ThetaIni_i(compi, GetCompartment_Theta(compi))
+        call SetSoilLayer_WaterContent(GetCompartment_Layer(compi), &
+                         GetSoilLayer_WaterContent(GetCompartment_Layer(compi)) &
+                            + GetSimulation_ThetaIni_i(compi)*100._dp*10._dp &
+                                * GetCompartment_Thickness(compi))
+    end do
+    do layeri = 1, GetSoil_NrSoilLayers()
+        Total = Total + GetSoilLayer_WaterContent(layeri)
+    end do
+    call SetTotalWaterContent_BeginDay(Total)
+
+    return nothing
+end #notend
+
+"""
+    translate_inipoints_to_swprofile!(inse, nrloc, locdepth, locvolpr, locecds)
+
+global.f90:6258
+"""
+function translate_inipoints_to_swprofile!(inse, nrloc, locdepth, locvolpr, locecds)
+    soil_layers = inse[:soil_layers]
+    compartments = inse[:compartments]
+    simulparam = inse[:simulparam]
+
+    totd = 0
+    for compi in eachindex(compartments)
+        compartments[compi].Theta = 0
+        compartments[compi].WFactor = 0 # used for salt in (10*volsat*dz * ec)
+        totd += compartments[compi].thickness
+    end 
+    compi = 0
+    depthi = 0
+    addcomp = true
+    th2 = locvolpr[1]
+    ec2 = locecds[1]
+    d2 = 0
+    loci = 0
+    while (compi<nrcomp) | (compi==nrcomp & addcomp==false)
+        # upper and lower boundaries location
+        d1 = d2
+        th1 = th2
+        ec1 = ec2
+        if loci<nrloc 
+            loci += 1
+            d2 = locdepth[loci]
+            th2 = locvolpr[loci]
+            ec2 = locecds[loci]
+        else
+            d2 = totd
+        end 
+        # transfer water to compartment (swc in mm) and salt in (10*volsat*dz * ec)
+        theend = false
+        dtopcomp = d1  # depthi is the bottom depth
+        thbotcomp = th1
+        ecbotcomp = ec1
+        while !theend
+            thtopcomp = thbotcomp
+            ectopcomp = ecbotcomp
+            if (addcomp) then
+                compi = compi + 1
+                depthi = depthi + compartments[compi].Thickness
+            end 
+            if depthi<d2 
+                thbotcomp = th1 + (th2-th1)*(depthi-d1)/(d2-d1)
+                compartments[compi].Theta = compartments[compi].Theta + 10*(depthi-dtopcomp)*(thtopcomp+thbotcomp)/2
+                ecbotcomp = ec1 + (ec2-ec1)*(depthi-d1)/(d2-d1)
+                compartments[compi].WFactor = compartments[compi].WFactor + 10*(depthi-dtopcomp)*soil_layers[compartments[compi].Layer].SAT*(ectopcomp+ecbotcomp)/2
+                addcomp = true
+                dtopcomp = depthi
+                if compi==nrcomp 
+                    theend = true
+                end 
+            else
+                thbotcomp = th2
+                ecbotcomp = ec2
+                compartments[compi].Theta = compartments[compi].Theta + 10*(d2-dtopcomp)*(thtopcomp+thbotcomp)/2
+                compartments[compi].WFactor = compartments[compi].WFactor + (10*(d2-dtopcomp)*soil_layers[compartments[compi].Layer].SAT*(ectopcomp+ecbotcomp)/2
+                if abs(depthi - d2)<eps()
+                    addcomp = true
+                else
+                    addcomp = false
+                end 
+                theend = true
+            end 
+        end 
+    end 
+
+    for compi in eachindex(compartments)
+        # from mm(water) to theta and final check
+        compartments[compi].Theta = compartments[compi].Theta/(1000*compartments[compi].Thickness)
+        if (compartments[compi].Theta>soil_layers[compartments[compi].Layer].SAT/100 
+            compartments[compi].Theta = soil_layers[compartments[compi].Layer].SAT/100
+        end 
+        if compartments[compi].Theta<0 
+            compartments[compi].Theta=0
+        end 
+        # from (10*VolSat*dZ * EC) to ECe and distribution in cellls
+        compartments[compi].WFactor = compartments[compi].WFactor/(10*compartments[compi].Thickness*soil_layers[compartments[compi].Layer].SAT)
+
+        determine_salt_content!(compartments[compi], soil_layers, simulparam)
+    end 
+
+    return nothing
+end 
+
+"""
+    determine_salt_content!(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepSim)
+
+global.f90:4258
+"""
+function determine_salt_content!(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepSim)
+    ece = compartment.WFactor
+    totsalt = ece*equiv*soil_layers[compartment.Layer].SAT*10*compartment.Thickness
+    celn = active_cells(compartment, soil_layers)
+    sat = soil_layers[compartment.Layer].SAT/100  # m3/m3
+    ul = soil_layers[compartment.Layer].UL # m3/m3   ! Upper limit of SC salt cel
+    dx = soil_layers[compartment.Layer].Dx  # m3/m3  ! Size of salts cel (expect last one)
+    mm1 = dx*1000*compartment.Thickness * (1-soil_layers[compartment.Layer].GravelVol/100) # g/l ! volume [mm]=[l/m2] of cells
+    mmn = (sat-ul)*1000*compartment.Thickness * (1-soil_layers[compartment.Layer].GravelVol/100) # g/l ! volume [mm]=[l/m2] of last cell
+    sumdf = 0
+    for i in 1:soil_layers[compartment.Layer].SCP1
+        compartment.Salt[i] = 0
+        compartment.Depo[i] = 0
+    end 
+    for i in 1:celn
+        sumdf += soil_layers[compartment.Layer].SaltMobility[i]
+    end 
+    for i in 1:celn
+        compartment.Salt[i] = totsalt * soil_layers[compartment.Layer].SaltMobility[i]/sumdf
+        mm = mm1
+        if i==soil_layers[compartment.Layer].SCP1 
+            mm = mmn
+        end
+        salt_solution_deposit!(compartment, simulparam, i, mm)
+    end 
+
+    return nothing
+end 
+
+"""
+    celi = active_cells(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual})
+
+globa.f90:4241
+"""
+function active_cells(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual})
+    if compartment.Theta<=soil_layers[compartment.Layer].UL 
+        celi = 1
+        while (compartment.Theta>(soil_layers[compartment.Layer].Dx * celi)
+            celi = celi + 1
+        end 
+    else
+        celi = soil_layers[compartment.Layer].SCP1
+    end 
+    return celi
+end 
+
+"""
+    salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepSim, i, mm)
+
+global.f90:2572
+"""
+function salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepSim, i, mm) # mm = l/m2, SaltSol/Saltdepo = g/m2
+    saltsolution = compartment.Salt[i]
+    saltdeposit = compartment.Depo[i]
+
+    saltsolution = saltsolution + saltdeposit
+    if saltsolution>simulparam.SaltSolub*mm 
+        saltdeposit = saltsolution - simulparam.SaltSolub * mm
+        saltsolution = simulparam.SaltSolub * mm
+    else
+        saltdeposit = 0
+    end 
+
+    compartment.Salt[i] = saltsolution
+    compartment.Depo[i] = saltdeposit
+
     return nothing
 end 

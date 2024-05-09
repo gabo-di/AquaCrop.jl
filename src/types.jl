@@ -2,7 +2,7 @@
 
 const equiv = 0.64 # conversion factor: 1 dS/m = 0.64 g/l
 const max_SoilLayers = 5
-const max_No_compartments = 12
+const max_no_compartments = 12
 const undef_double = -9.9 # value for 'undefined' real(dp) variables
 const undef_int = -9 # value for 'undefined' int32 variables
 const undef_str = "" # value for 'undefined' string variables
@@ -554,11 +554,11 @@ Base.isapprox(a::CompartmentIndividual, b::CompartmentIndividual; kwargs... ) = 
     "number of depths or layers considered"
     NrLoc::Int=undef_int
     "depth or layer thickness [m]"
-    Loc::Vector{Float64}=fill(undef_double,max_No_compartments)
+    Loc::Vector{Float64}=fill(undef_double,max_no_compartments)
     "soil water content (vol%)"
-    VolProc::Vector{Float64}=fill(undef_double,max_No_compartments)
+    VolProc::Vector{Float64}=fill(undef_double,max_no_compartments)
     "ECe in dS/m"
-    SaltECe::Vector{Float64}=fill(undef_double,max_No_compartments)
+    SaltECe::Vector{Float64}=fill(undef_double,max_no_compartments)
     "If iniSWC is at FC"
     AtFC::Bool=true
 end
@@ -609,9 +609,9 @@ global.f90:7694
     "Undocumented"
     IniSWC::RepIniSWC=RepIniSWC()
     "dS/m"
-    ThetaIni::Vector{Float64}=fill(undef_double,max_No_compartments)
+    ThetaIni::Vector{Float64}=fill(undef_double,max_no_compartments)
     "dS/m"
-    ECeIni::Vector{Float64}=zeros(Float64,max_No_compartments)
+    ECeIni::Vector{Float64}=zeros(Float64,max_no_compartments)
     "Undocumented"
     SurfaceStorageIni::Float64=0.0
     "Undocumented"
