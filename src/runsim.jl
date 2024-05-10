@@ -267,25 +267,16 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
 
     # 10. load the groundwater file if it exists (only possible for Version 4.0
     # and higher)
-    if ((roundc(10*ProjectInput(NrRun)%VersionNr, mold=1) >= 40) .and. &
-        (GetGroundWaterFile() /= '(None)')) then
-          # the groundwater file is only available in Version 4.0 or higher
-        ZiAqua_temp = GetZiAqua()
-        ECiAqua_temp = GetECiAqua()
-        call LoadGroundWater(GetGroundWaterFilefull(),&
-                GetSimulation_FromDayNr(), ZiAqua_temp, ECiAqua_temp)
-        call SetZiAqua(ZiAqua_temp)
-        call SetECiAqua(ECiAqua_temp)
+    if groundwater_file != "(None)"
+        load_groundwater!(inse, groundwater_file)
     else
-        call SetZiAqua(undef_int)
-        call SetECiAqua(real(undef_int, kind=dp))
-        call SetSimulParam_ConstGwt(.true.)
-    end 
-    Compartment_temp = GetCompartment()
-    call CalculateAdjustedFC((GetZiAqua()/100._dp), Compartment_temp)
-    call SetCompartment(Compartment_temp)
-    if (GetSimulation_IniSWC_AtFC() .and. (GetSWCIniFile() /= 'KeepSWC')) then
-        call ResetSWCToFC()
+        setparameter(inse[:integer_parameters],:ziaqua, undef_double)
+        setparameter(inse[:float_parameters],:eciaqua, undef_int)
+        inse[:simulparam].ConstGwt = true
+    end
+    calculate_adjusted_fc!(inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua]/100)
+    if inse[:simulation].IniSWC.AtFC & (swcini_file != "KeepSWC")
+        reset_swc_to_fc!(inse[:simulation], inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua])
     end 
 
     # 11. Off-season conditions
