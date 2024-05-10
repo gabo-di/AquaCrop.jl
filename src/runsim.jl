@@ -236,8 +236,6 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
         end 
         setparameter!(inse[:string_parameters], :swcini_file, swcini_file)
 
-        Compartment_temp = GetCompartment()
-
         if inse[:simulation].IniSWC.AtDepths
             translate_inipoints_to_swprofile!(inse, inse[:simulation].IniSWC.NrLoc, inse[:simulation].IniSWC.Loc, inse[:simulation].IniSWC.VolProc, inse[:simulation].IniSWC.SaltECe)
         else
@@ -264,8 +262,8 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
     if groundwater_file != "(None)"
         load_groundwater!(inse, groundwater_file)
     else
-        setparameter(inse[:integer_parameters],:ziaqua, undef_double)
-        setparameter(inse[:float_parameters],:eciaqua, undef_int)
+        setparameter!(inse[:integer_parameters],:ziaqua, undef_double)
+        setparameter!(inse[:float_parameters],:eciaqua, undef_int)
         inse[:simulparam].ConstGwt = true
     end
     calculate_adjusted_fc!(inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua]/100)
@@ -283,23 +281,15 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
     setparameter!(inse[:string_parameters], :offseason_file, offseason_file)
 
     # 12. Field data
-    call SetObservationsFile(ProjectInput(NrRun)%Observations_Filename)
-    if (GetObservationsFile() == '(None)') then
-        call SetObservationsFileFull(GetObservationsFile())
-        call SetObservationsDescription('No field observations')
+    if projectinput.Observations_Filename=="(None)"
+        observations_file = projectinput.Observations_Filename
     else
-        call SetObservationsFileFull(ProjectInput(NrRun)%Observations_Directory &
-                                     // GetObservationsFile())
-        observations_descr = GetObservationsDescription()
-        call GetFileDescription(GetObservationsFileFull(), observations_descr)
-        call SetObservationsDescription(observations_descr)
-    end 
-
-
+        observations_file = projectinput.ParentDir * projectinput.OffSeason_Directory * projectinput.Observations_Filename
+    end
+    setparameter!(inse[:string_parameters], :observations_file, observations_file)
 
     return nothing
-end #not end
-
+end 
 
 """
     read_temperature_file!(array_parameters::ParametersContainer{T}, temperature_file) where T
@@ -3319,4 +3309,4 @@ function load_offseason!(inse, fullname)
         end
     end
     return nothing
-end #notend
+end 
