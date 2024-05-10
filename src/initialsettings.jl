@@ -425,6 +425,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(string_parameters, :man_file, "(None)")
     setparameter!(string_parameters, :CO2_file, "MaunaLoa.CO2")
     setparameter!(string_parameters, :irri_file, "(None)")
+    setparameter!(string_parameters, :offseason_file, "(None)")
 
 
     return ComponentArray(

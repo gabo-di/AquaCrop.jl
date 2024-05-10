@@ -157,7 +157,6 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
     setparameter!(inse[:string_parameters], :man_file, man_file)
 
     # 6. Soil Profile
-    call SetProfFile(ProjectInput(NrRun)%Soil_Filename)
     if projectinput.Soil_Filename=="(External)"
         prof_file = projectinput.Soil_Filename
     elseif projectinput.Soil_Filename=="(None)"
@@ -213,15 +212,13 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
         if inse[:simulation].MultipleRunWithKeepSWX
             # Project with a sequence of simulation runs and KeepSWC
             if round(Int, inse.[:simulation].MultipleRunConstZrx*1000)>round(Int, totdepth*1000) 
-                adjust_size_compartments!()
-                call AdjustSizeCompartments(GetSimulation_MultipleRunConstZrx())
+                adjust_size_compartments!(inse, inse[:simulation].MultipleRunConstZrx)
             end 
         else
             if round(Int, inse[:crop].RootMax*1000)>round(Int, totdepth*1000)
                 if round(Int, inse[:soil].RootMax*1000)==round(Int, inse[:crop].RootMax*1000)
                     # no restrictive soil layer
-                    adjust_size_compartments!()
-                    call AdjustSizeCompartments(real(GetCrop_RootMax(), kind=dp))
+                    adjust_size_compartments!(inse, inse[:crop].RootMax)
                 else
                     # restrictive soil layer
                     if round(Int, inse[:soil].RootMax*1000)>round(Int, totdepth*1000)
@@ -241,15 +238,12 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
 
         Compartment_temp = GetCompartment()
 
-        select case (GetSimulation_IniSWC_AtDepths())
-        case (.true.)
         if inse[:simulation].IniSWC.AtDepths
             translate_inipoints_to_swprofile!(inse, inse[:simulation].IniSWC.NrLoc, inse[:simulation].IniSWC.Loc, inse[:simulation].IniSWC.VolProc, inse[:simulation].IniSWC.SaltECe)
         else
             translate_inilayers_to_swprofile!(inse, inse[:simulation].IniSWC.NrLoc, inse[:simulation].IniSWC.Loc, inse[:simulation].IniSWC.VolProc, inse[:simulation].IniSWC.SaltECe)
         end
 
-        if (GetSimulation_ResetIniSWC()) then
         if inse[:simulation].ResetIniSWC
             # to reset SWC and SALT at end of simulation run
             for i in eachindex(inse[:compartments])
@@ -280,15 +274,13 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
     end 
 
     # 11. Off-season conditions
-    call SetOffSeasonFile(ProjectInput(NrRun)%OffSeason_Filename)
-    if (GetOffSeasonFile() == '(None)') then
-        call SetOffSeasonFileFull(GetOffSeasonFile())
-        call SetOffSeasonDescription('No specific off-season conditions')
+    if projectinput.OffSeason_Filename=="(None)"
+        offseason_file = projectinput.OffSeason_Filename
     else
-        call SetOffSeasonFileFull(ProjectInput(NrRun)%OffSeason_Directory &
-                                  // GetOffSeasonFile())
-        call LoadOffSeason(GetOffSeasonFilefull())
+        offseason_file = projectinput.ParentDir * projectinput.OffSeason_Directory * projectinput.OffSeason_Filename
+        load_offseason!(inse, offseason_file)
     end 
+    setparameter!(inse[:string_parameters], :offseason_file, offseason_file)
 
     # 12. Field data
     call SetObservationsFile(ProjectInput(NrRun)%Observations_Filename)
@@ -3263,3 +3255,68 @@ function ececomp(compartment::CompartmentIndividual, inse)
     end
     return totsalt / equiv # ds/m
 end 
+
+"""
+    load_offseason!(inse, fullname)
+
+global.f90:5769
+"""
+function load_offseason!(inse, fullname)
+    management = inse[:management]
+    irri_before_season = inse[:irri_before_season]
+    irri_after_season = inse[:irri_after_season]
+    irri_ecw = inse[:irri_ecw]
+
+    if isfile(fullname)
+        open(fullname, "r") do file
+            readline(file)
+            readline(file)
+            management.SoilCoverBefore = parse(Int, strip(readline(file)))
+            management.SoilCoverAfter = parse(Int, strip(readline(file)))
+            management.EffectMulchOffS = parse(Int, strip(readline(file)))
+
+            # irrigation events - initialise
+            for nri in 1:5
+                irri_before_season.DayNr[nri] = 0
+                irri_before_season.Param[nri] = 0
+                irri_after_season.DayNr[nri] = 0
+                irri_after_season.Param[nri] = 0
+            end
+            # number of irrigation events BEFORE growing period
+            nrevents1 = parse(Int, strip(readline(file)))
+            # irrigation water quality BEFORE growing period
+            irri_ecw.PreSeason = parse(Float64, strip(readline(file)))
+            # number of irrigation events AFTER growing period
+            nrevents2 = parse(Int, strip(readline(file)))
+            # irrigation water quality AFTER growing period
+            irri_ecw.PostSeason = parse(Float64, strip(readline(file)))
+
+            # percentage of soil surface wetted
+            simulation.IrriFwOffSeason = parse(Int, strip(readline(file)))
+
+            # irrigation events - get events before and after season
+            if nrevents1>0 | nrevents2>0 
+                for _ in 1:3
+                    readline(file)
+                end
+            end 
+            if nrevents1>0 
+                for nri in 1:nrevents1
+                    # events BEFORE growing period
+                    splitedline = split(readline(file))
+                    irri_before_season.DayNr[nri] = parse(Int, popfirst!(splitedline))
+                    irri_before_season.Param[nri] = parse(Int, popfirst!(splitedline))
+                end 
+            end 
+            if nrevents2>0 
+                for nri in 2:nrevents1
+                    # events AFTER growing period
+                    splitedline = split(readline(file))
+                    irri_after_season.DayNr[nri] = parse(Int, popfirst!(splitedline))
+                    irri_after_season.Param[nri] = parse(Int, popfirst!(splitedline))
+                end 
+            end 
+        end
+    end
+    return nothing
+end #notend
