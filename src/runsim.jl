@@ -225,58 +225,43 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
                 else
                     # restrictive soil layer
                     if round(Int, inse[:soil].RootMax*1000)>round(Int, totdepth*1000)
-                        adjust_size_compartments!()
-                        call AdjustSizeCompartments(real(GetSoil_RootMax(), kind=dp))
+                        adjust_size_compartments!(inse, inse[:soil].RootMax)
                     end 
                 end 
-            end 
+            end
         end 
 
-        call SetSWCIniFile(ProjectInput(NrRun)%SWCIni_Filename)
-        if (GetSWCIniFile() == '(None)') then
-            call SetSWCiniFileFull(GetSWCiniFile()) # no file
-            call SetSWCiniDescription(&
-                     'Soil water profile at Field Capacity')
+        if projectinput.SWCIni_Filename=="(None)"
+            swcini_file = projectinput.SWCIni_Filename
         else
-            call SetSWCiniFileFull(ProjectInput(NrRun)%SWCIni_Directory &
-                                   // GetSWCIniFile())
-            SurfaceStorage_temp = GetSurfaceStorage()
-            call LoadInitialConditions(GetSWCiniFileFull(),&
-                  SurfaceStorage_temp)
-            call SetSurfaceStorage(SurfaceStorage_temp)
-        end if
+            swcini_file = projectinput.ParentDir * projectinput.SWCIni_Directory * projectinput.SWCIni_Filename
+            load_initial_conditions!(inse, swcini_file)
+        end 
+        setparameter!(inse[:string_parameters], :swcini_file, swcini_file)
 
         Compartment_temp = GetCompartment()
 
         select case (GetSimulation_IniSWC_AtDepths())
         case (.true.)
-            call TranslateIniPointsToSWProfile(&
-               GetSimulation_IniSWC_NrLoc(), &
-               GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
-               GetSimulation_IniSWC_SaltECe(), GetNrCompartments(), &
-               Compartment_temp)
-        case default
-            call TranslateIniLayersToSWProfile(&
-               GetSimulation_IniSWC_NrLoc(),&
-               GetSimulation_IniSWC_Loc(), GetSimulation_IniSWC_VolProc(), &
-               GetSimulation_IniSWC_SaltECe(), GetNrCompartments(),&
-               Compartment_temp)
-        end select
-        call SetCompartment(Compartment_temp)
+        if inse[:simulation].IniSWC.AtDepths
+            translate_inipoints_to_swprofile!(inse, inse[:simulation].IniSWC.NrLoc, inse[:simulation].IniSWC.Loc, inse[:simulation].IniSWC.VolProc, inse[:simulation].IniSWC.SaltECe)
+        else
+            translate_inilayers_to_swprofile!(inse, inse[:simulation].IniSWC.NrLoc, inse[:simulation].IniSWC.Loc, inse[:simulation].IniSWC.VolProc, inse[:simulation].IniSWC.SaltECe)
+        end
 
         if (GetSimulation_ResetIniSWC()) then
-             # to reset SWC and SALT at end of simulation run
-            do i = 1, GetNrCompartments()
-                 call SetSimulation_ThetaIni_i(i, GetCompartment_Theta(i))
-                 call SetSimulation_ECeIni_i(i, &
-                          ECeComp(GetCompartment_i(i)))
-            end do
+        if inse[:simulation].ResetIniSWC
+            # to reset SWC and SALT at end of simulation run
+            for i in eachindex(inse[:compartments])
+                inse[:simulation].ThetaIni[i] = inse[:compartments][i].Theta
+                inse[:simulation].ECeIni[i] = ececomp(inse[:compartments][i], inse)
+            end 
             # ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN -
             # CHECK LATER
-            if (GetManagement_BundHeight() >= 0.01_dp) then
-                 call SetSimulation_SurfaceStorageIni(GetSurfaceStorage())
-                 call SetSimulation_ECStorageIni(GetECStorage())
-             end 
+            if inse[:management].BundHeight>=0.01
+                inse[:simulation].SurfaceStorageIni = inse[:float_parameters][:surfacestorage]
+                inse[:simulation].ECStorageIni = inse[:float_parameters][:ecstorage]
+            end 
         end 
     end 
 
@@ -2869,8 +2854,10 @@ function load_management!(inse, fullname)
     end
     return nothing
 end 
-
+    
 """
+    adjust_size_compartments!(inse, cropzx)
+
 global.f90:6563
 """
 function adjust_size_compartments!(inse, cropzx)
@@ -2931,18 +2918,19 @@ function adjust_size_compartments!(inse, cropzx)
         end 
     end 
     # 5. Adjust soil water content and theta initial
-    adjust_theta_initial!()
-    call AdjustThetaInitial(PrevNrComp, PrevThickComp, &
-                            PrevVolPrComp, PrevECdSComp)
+    adjust_theta_initial!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
     return nothing
-end #notend
+end 
 
 """
+    adjust_theta_initial!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
+
 global.f90:5852
 """
-function adjust_theta_initial!(prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
-    compartments
-    soil_layers
+function adjust_theta_initial!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
+    compartments = inse[:compartments]
+    soil_layers = inse[:soil_layers]
+    simulation = inse[:simulation]
 
     # 1. Actual total depth of compartments
     totdepthc = 0
@@ -2963,54 +2951,32 @@ function adjust_theta_initial!(prevnrcomp, prevthickcomp, prevvolprcomp, prevecd
     designate_soillayer_to_compartments!(compartments, soil_layers)
 
     # 4. Adjust initial Soil Water Content of soil compartments
-    if (GetSimulation_ResetIniSWC()) then
-        if (GetSimulation_IniSWC_AtDepths()) then
-            Compartment_temp = GetCompartment()
-            call TranslateIniPointsToSWProfile(GetSimulation_IniSWC_NrLoc(), &
-                                               GetSimulation_IniSWC_Loc(), &
-                                               GetSimulation_IniSWC_VolProc(), &
-                                               GetSimulation_IniSWC_SaltECe(), &
-                                               GetNrCompartments(), &
-                                               Compartment_temp)
-            call SetCompartment(Compartment_temp)
+    if simulation.ResetIniSWC 
+        if simulation.IniSWC.AtDepths 
+            translate_inipoints_to_swprofile!(inse, simulation.IniSWC.NrLoc, simulation.IniSWC.Loc, simulation.IniSWC.VolProc, simulation.IniSWC.SaltECe)
         else
-            Compartment_temp = GetCompartment()
-            call TranslateIniLayersToSWProfile(GetSimulation_IniSWC_NrLoc(), &
-                                               GetSimulation_IniSWC_Loc(), &
-                                               GetSimulation_IniSWC_VolProc(), &
-                                               GetSimulation_IniSWC_SaltECe(), &
-                                               GetNrCompartments(), &
-                                               Compartment_temp)
-            call SetCompartment(Compartment_temp)
-        end if
+            translate_inilayers_to_swprofile!(inse, simulation.IniSWC.NrLoc, simulation.IniSWC.Loc, simulation.IniSWC.VolProc, simulation.IniSWC.SaltECe)
+        end 
     else
-        Compartment_temp = GetCompartment()
-        call TranslateIniLayersToSWProfile(PrevNrComp, PrevThickComp, &
-                                           PrevVolPrComp, PrevECdSComp, &
-                                           GetNrCompartments(), &
-                                           Compartment_temp)
-        call SetCompartment(Compartment_temp)
-    end if
+        translate_inilayers_to_swprofile!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp) 
+    end 
 
     # 5. Adjust watercontent in soil layers and determine ThetaIni
-    Total = 0._dp
-    do layeri = 1, GetSoil_NrSoilLayers()
-        call SetSoilLayer_WaterContent(layeri, 0._dp)
-    end do
-    do compi = 1, GetNrCompartments()
-        call SetSimulation_ThetaIni_i(compi, GetCompartment_Theta(compi))
-        call SetSoilLayer_WaterContent(GetCompartment_Layer(compi), &
-                         GetSoilLayer_WaterContent(GetCompartment_Layer(compi)) &
-                            + GetSimulation_ThetaIni_i(compi)*100._dp*10._dp &
-                                * GetCompartment_Thickness(compi))
-    end do
-    do layeri = 1, GetSoil_NrSoilLayers()
-        Total = Total + GetSoilLayer_WaterContent(layeri)
-    end do
-    call SetTotalWaterContent_BeginDay(Total)
+    for layeri in eachindex(soil_layers)
+        soil_layers[layeri].WaterContent = 0
+    end 
+    for compi in eachindex(compartments)
+        simulation.ThetaIni[compi] = compartments[compi].Theta
+        soil_layers[compartments[compi].Layer].WaterContent += simulation.ThetaIni[compi]*100*10*compartments[compi].Thickness
+    end 
+    Total = 0
+    for layeri in eachindex(soil_layers)
+        total += soil_layers[layeri].WaterContent
+    end 
+    inse[:total_water_content].BeginDay = total
 
     return nothing
-end #notend
+end 
 
 """
     translate_inipoints_to_swprofile!(inse, nrloc, locdepth, locvolpr, locecds)
@@ -3175,4 +3141,134 @@ function salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::
     compartment.Depo[i] = saltdeposit
 
     return nothing
+end 
+
+"""
+    translate_inilayers_to_swprofile!(inse, nrlay, laythickness, layvolpr, layecds)
+
+global.f90:6179
+"""
+function translate_inilayers_to_swprofile!(inse, nrlay, laythickness, layvolpr, layecds)
+    compartments = inse[:compartments]
+    soil_layers = inse[:soil_layers]
+    simulparam = inse[:simulparam]
+
+    # from specific layers to Compartments
+    for compi in eachindex(compartments)
+        compartments[compi].Theta = 0
+        compartments[compi].WFactor = 0  # used for ECe in this procedure
+    end 
+    compi = 0
+    sdcomp = 0
+    layeri = 1
+    sdlay = laythickness[1]
+    goon = true
+    while compi < nrcomp
+        fracc = 0
+        compi = compi + 1
+        sdcomp = sdcomp + compartments[compi].Thickness
+        if SDLay>=SDComp 
+            compartments[compi].Theta = compartments[compi].Theta + (1-fracc)*layvolpr[layeri]/100
+            compartments[compi].WFactor = compartments[compi].WFactor + (1._dp-FracC)*layecds[layeri]
+        else
+            # go to next layer
+            while ((sdlay<sdcomp) & goon)
+                # finish handling previous layer
+                fracc = (sdlay - (sdcomp-compartments[compi].Thickness))/(compartments[compi].Thickness) - fracc
+                compartments[compi].Theta = compartments[compi].Theta + fracc*layvolpr(layeri)/100
+                compartments[compi].WFactor = compartments[compi].WFactor + fracc*layecds[layeri]
+                fracc = (sdlay - (sdcomp-compartments[compi].Thickness))/(compartments[compi].Thickness)
+                # add next layer
+                if layeri<nrlay 
+                    layeri = layeri + 1
+                    sdlay = sdlay + laythickness[layeri]
+                else
+                    goon = false
+                end 
+            end 
+            compartments[compi].Theta = compartments[compi].Theta + (1-fracc)*layvolpr[layeri]/100
+            compartments[compi].WFactor = compartments[compi].WFactor + (1-fracc)*layecds[layeri]
+        end 
+        # next Compartment
+    end 
+    if  !goon
+        for i in (compi+1):length(compartments)
+            compartments[i].Theta = layvolpr[nrlay]/100
+            compartments[i].WFactor = layecds[nrlay]
+        end 
+    end 
+
+    # final check of SWC
+    for compi in eachindex(compartments)
+        if (compartments[compi].Theta > soil_layers[compartments[compi].Layer]/100) 
+            compartments[compi].Theta = soil_layers[compartments[compi].Layer]/100
+        end 
+        # salt distribution in cellls
+        determine_salt_content!(compartments[compi], soil_layers, simulparam)
+    end 
+
+    return nothing
+end 
+
+"""
+     load_initial_conditions!(inse, swcinifilefull)
+
+global.f90:6486
+"""
+function load_initial_conditions!(inse, swcinifilefull)
+    simulation = inse[:simulation]
+    # IniSWCRead attribute of the function was removed to fix a
+    # bug occurring when the function was called in TempProcessing.pas
+    # Keep in mind that this could affect the graphical interface
+    open(swcinifilefull, "r") do file
+        readline(file)
+        simulation.CCini = parse(Float64, sptrip(readline(file)) 
+        simulation.Bini = parse(Float64, sptrip(readline(file)) 
+        simulation.Zrini = parse(Float64, sptrip(readline(file)) 
+        setparameter!(inse[:float_parameters][:surfacestorage], parse(Float64, sptrip(readline(file))))
+        simulation.ECStorageIni = parse(Float64, sptrip(readline(file))
+        i = parse(Int, strip(readline(file)))
+        if i==1
+            simulation.IniSWC.AtDepths = true
+        else
+            simulation.IniSWC.AtDepths = false 
+        end
+        simulation.IniSWC.NrLoc = parse(Int, strip(readline(file)))
+        readline(file)
+        readline(file)
+        readline(file)
+        for i in 1:simulation.IniSWC.NrLoc
+            splitedline = split(readline(file))
+            simulation.IniSWC.Loc[i] =parse(Float64,  popfirst!(splitedline))
+            simulation.IniSWC.VolProc[i] = parse(Float64,  popfirst!(splitedline))
+            simulation.IniSWC.SaltECe[i] = parse(Float64,  popfirst!(splitedline))
+        end
+    end
+    simulation.IniSWC.AtFC = false
+
+    return nothing
+end 
+
+"""
+    ece = ececomp(compartment::CompartmentIndividual, inse)
+
+global.f90:2523
+"""
+function ececomp(compartment::CompartmentIndividual, inse)
+    soil_layers = inse[:soil_layers]
+    simulparam = inse[:simulparam]
+
+    volsat = soil_layers[compartment.Layer].SAT
+    totsalt = 0
+    for i in 1:soil_layers[compartment.Layer].SCP1
+        totsalt = totsalt + compartment.Salt[i] + compartment.Depo[i] # g/m2
+    end 
+
+    denominator = volSAT*10 * compartment.Thickness * (1 - soil_layers[compartment.Layer].GravelVol/100
+    totsalt = totsalt / denominator  # g/l
+
+    if totsalt>simulparam.SaltSolub
+        totsalt = simulparam.SaltSolub
+    end
+    return totsalt / equiv # ds/m
 end 
