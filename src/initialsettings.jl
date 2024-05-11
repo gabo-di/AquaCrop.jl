@@ -899,10 +899,10 @@ function complete_profile_description!(soil_layers::Vector{SoilLayerIndividual},
     designate_soillayer_to_compartments!(compartments, soil_layers)
 
     for compi in 1:nrcompartments
-        compartments[compi].theta = soil_layers[compartments[compi].Layer].FC/100
+        compartments[compi].Theta = soil_layers[compartments[compi].Layer].FC/100
         compartments[compi].FCadj = soil_layers[compartments[compi].Layer].FC 
 
-        simulation.ThetaIni[compi] = compartments[compi].theta
+        simulation.ThetaIni[compi] = compartments[compi].Theta
 
         soil_layers[compartments[compi].Layer].WaterContent += 
             simulation.ThetaIni[compi]*100 * 10*compartments[compi].Thickness

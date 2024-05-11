@@ -516,9 +516,9 @@ end
     "meter"
     Thickness::Float64=undef_double
     "m3/m3"
-    theta::Float64=undef_double
+    Theta::Float64=undef_double
     "mm/day"
-    fluxout::Float64=undef_double
+    Fluxout::Float64=undef_double
     "Undocumented"
     Layer::Int=undef_int
     "Maximum root extraction m3/m3.day"

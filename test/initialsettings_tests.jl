@@ -99,8 +99,8 @@ function declare_initial_variables()
     compartments = AquaCrop.CompartmentIndividual[
         AquaCrop.CompartmentIndividual(
             Thickness=0.10000000000000001,
-            theta=0.29999999999999999,
-            fluxout=AquaCrop.undef_double,#0,
+            Theta=0.29999999999999999,
+            Fluxout=AquaCrop.undef_double,#0,
             Layer=1,
             Smax=AquaCrop.undef_double,#0,
             FCadj=30,
@@ -315,7 +315,7 @@ function declare_initial_variables()
     irri_before_season = AquaCrop.RepDayEventInt[
         AquaCrop.RepDayEventInt(
             DayNr=0,
-            param=0
+            Param=0
         )
         for _ in 1:5
     ]
@@ -323,7 +323,7 @@ function declare_initial_variables()
     irri_after_season = AquaCrop.RepDayEventInt[
         AquaCrop.RepDayEventInt(
             DayNr=0,
-            param=0
+            Param=0
         )
         for _ in 1:5
     ]

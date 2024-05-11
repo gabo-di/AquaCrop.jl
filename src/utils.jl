@@ -23,7 +23,9 @@ function determine_date(day_nr)
     monthi = 1
 
     while (monthi < 12)
-        if (sum_day_month <= ElapsedDays[monthi+1]) break
+        if (sum_day_month <= ElapsedDays[monthi+1])
+            break
+        end
         monthi = monthi + 1
     end 
     dayi = round(Int, sum_day_month - ElapsedDays[monthi] + 0.25 + 0.06)

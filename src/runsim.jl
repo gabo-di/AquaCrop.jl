@@ -188,7 +188,7 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
     # 8. Set simulation period
     inse[:simulation].FromDayNr = projectinput.Simulation_DayNr1
     inse[:simulation].ToDayNr = projectinput.Simulation_DayNrN
-    if (inse[:crop].Day1 != inse[:simulation].FromDayNr) | (inse[:crop].DayN != inse[:simulatio].ToDayNr)
+    if (inse[:crop].Day1 != inse[:simulation].FromDayNr) | (inse[:crop].DayN != inse[:simulation].ToDayNr)
         inse[:simulation].LinkCropToSimPeriod = false
     end 
 
@@ -217,7 +217,7 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
         end 
         if inse[:simulation].MultipleRunWithKeepSWX
             # Project with a sequence of simulation runs and KeepSWC
-            if round(Int, inse.[:simulation].MultipleRunConstZrx*1000)>round(Int, totdepth*1000) 
+            if round(Int, inse[:simulation].MultipleRunConstZrx*1000)>round(Int, totdepth*1000) 
                 adjust_size_compartments!(inse, inse[:simulation].MultipleRunConstZrx)
             end 
         else
@@ -373,8 +373,8 @@ global.f90:8223
 function complete_climate_description!(record::RepClim)
     record.FromDayNr = determine_day_nr(record.FromD, record.FromM, record.FromY)
     if record.Datatype == :Daily
-        record.ToDayNr = record.FromDayNr + record%NrObs - 1
-        record.ToD, record.ToM, record.ToY = determine_date(redord.ToDayNr)
+        record.ToDayNr = record.FromDayNr + record.NrObs - 1
+        record.ToD, record.ToM, record.ToY = determine_date(record.ToDayNr)
     elseif record.Datatype == :Decadely
         deci = round(Int, (record.FromD+9)/10) + record.NrObs - 1
         record.ToM = record.FromM
@@ -421,6 +421,7 @@ global.f90:4295
 """
 function set_clim_data!(inse, projectinput::ProjectInputType)
     clim_record = inse[:clim_record]
+    temperature_record = inse[:temperature_record]
     eto_record = inse[:eto_record]
     rain_record = inse[:rain_record]
     clim_file = inse[:string_parameters][:clim_file]
@@ -536,7 +537,7 @@ function set_clim_data!(inse, projectinput::ProjectInputType)
                 clim_record.FromDayNr = determine_day_nr(clim_record.FromD, clim_record.FromM, clim_record.FromY)
                 if (clim_record.FromDayNr < temperature_record.FromDayNr) & (temperature_record.FromY < temperature_record.ToY)
                     clim_record.FromY = temperature_record.FromY + 1
-                    clim_record.FromDayNr = determine_day_nr(clim_record.FromD, clim_record.FromM, clim_record.FromY
+                    clim_record.FromDayNr = determine_day_nr(clim_record.FromD, clim_record.FromM, clim_record.FromY)
                 end 
                 if full_undefined_record(clim_record)
                     clim_record.ToY = temperature_record.ToY
@@ -551,7 +552,7 @@ function set_clim_data!(inse, projectinput::ProjectInputType)
                 temperature_record.FromDayNr = determine_day_nr(temperature_record.FromD, temperature_record.FromM, temperature_record.FromY)
                 if (temperature_record.FromDayNr < clim_record.FromDayNr) & (clim_record.FromY < clim_record.ToY)
                     temperature_record.FromY = clim_record.FromY + 1
-                    temperature_record.FromDayNr = determine_day_nr(temperature_record.FromD, temperature_record.FromM, temperature_record.FromY
+                    temperature_record.FromDayNr = determine_day_nr(temperature_record.FromD, temperature_record.FromM, temperature_record.FromY)
                 end 
                 if full_undefined_record(temperature_record)
                     temperature_record.ToY = clim_record.ToY
@@ -863,7 +864,7 @@ function load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_fi
         # year in meter (for regrowth)
         crop.RootMinYear1 = parse(Float64, strip(readline(file)))
 
-        xx = parse(Int, strip(readline(file))
+        xx = parse(Int, strip(readline(file)))
         if xx==1
             # crop is sown in 1 st year
             # (for perennials)
@@ -875,7 +876,7 @@ function load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_fi
         end
 
         # transfer of assimilates
-        xx = parse(Int, strip(readline(file))
+        xx = parse(Int, strip(readline(file)))
         if xx==1
             # Transfer of assimilates from
             # above ground parts to root
@@ -1168,7 +1169,7 @@ function growing_degree_days(inse, tdaymin, tdaymax)
                 adjustdaynri = false
             end 
 
-            if (temperature_file_exists & temperature_record.ToDayNr>daynri & temperature_record.FromDayNr<=daynri
+            if (temperature_file_exists & temperature_record.ToDayNr>daynri & temperature_record.FromDayNr<=daynri)
                 remainingdays = valperiod
                 if temperature_record.Datatype == :Daily
                     # Tmin and Tmax arrays contain the TemperatureFilefull data
@@ -1181,7 +1182,7 @@ function growing_degree_days(inse, tdaymin, tdaymax)
                     remainingdays = remainingdays - 1
                     daynri = daynri + 1
 
-                    while ((remainingdays > 0) & ((daynri < temperature_record.ToDayNr) | AdjustDayNri))
+                    while ((remainingdays > 0) & ((daynri < temperature_record.ToDayNr) | adjustdaynri))
                         i = i + 1
                         if (i == length(Tmin)) 
                             i = 1
@@ -1280,10 +1281,10 @@ function degrees_day(tbase, tupper, tdaymin, tdaymax, gddselectedmethod)
     if gddselectedmethod==1
         # method 1. - no adjustemnt of tmax, tmin before calculation of taverage
         tavg = (tdaymax+tdaymin)/2
-        if (tavg > tupper) then
+        if (tavg > tupper) 
             tavg = tupper
         end 
-        if (tavg < tbase) then
+        if (tavg < tbase) 
             tavg = tbase
         end
     elseif gddselectedmethod==2
@@ -1317,7 +1318,7 @@ function degrees_day(tbase, tupper, tdaymin, tdaymax, gddselectedmethod)
             tstarmin = tupper
         end 
         tavg = (tstarmax+tstarmin)/2
-        if (tavg < tbase) then
+        if (tavg < tbase) 
             tavg = tbase
         end 
     end 
@@ -1343,7 +1344,7 @@ end
 tempprocessing.f90:362
 """
 function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record::RepClim)
-    dayi, monthi, yeari = determine_day_nr(darnri)
+    dayi, monthi, yeari = determine_date(daynri)
     if (dayi > 20) 
         deci = 3
         dayi = 21
@@ -1382,7 +1383,7 @@ function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, tem
 
     ulmax, llmax, midmax = get_parameters(c1max, c2max, c3max)
     for nri in 1:ni
-        tmax_dataset[nri]%DayNr = dnr+nri-1
+        tmax_dataset[nri].DayNr = dnr+nri-1
         if (nri <= (ni/2+0.01)) 
             tmax_dataset[nri].Param = (2*ulmax + (midmax-ulmax)*(2*nri-1)/(ni/2))/2
         else
@@ -1394,11 +1395,11 @@ function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, tem
         end 
     end 
 
-    for nri = (ni+1), 31
-        tmin_dataset[Nri].DayNr = dnr+ni-1
-        tmin_dataset[Nri].Param = 0
-        tmax_dataset[Nri].DayNr = dnr+ni-1
-        tmax_dataset[Nri].Param = 0
+    for nri in (ni+1):31
+        tmin_dataset[nri].DayNr = dnr+ni-1
+        tmin_dataset[nri].Param = 0
+        tmax_dataset[nri].DayNr = dnr+ni-1
+        tmax_dataset[nri].Param = 0
     end 
 
     return nothing
@@ -1666,10 +1667,10 @@ function get_set_of_three_months(monthi, yeari, temperature_file, temperature_re
                     x2 = x1 + n3
                     x3 = x2 + n3
                 else
-                    C2Min = C1Min
-                    C2Max = C1Max
-                    X2 = X1 + n1
-                    X3 = X2 + n3
+                    c2min = c1min
+                    c2max = c1max
+                    x2 = x1 + n1
+                    x3 = x2 + n3
                end 
             elseif temperature_record.NrObs==2
                 if monthi==mfile 
@@ -1721,7 +1722,7 @@ function get_set_of_three_months(monthi, yeari, temperature_file, temperature_re
         if !ok3 & monthi==temperature_record.ToM
             if temperature_record.FromY==1901 | yeari==temperature_record.ToY
                 for nri in 1:(temperature_record.NrObs-3)
-                    read(fhandle, *, iostat=rc)
+                    readline(file)
                     mfile = mfile + 1
                     if mfile>12 
                         mfile, yfile = adjust_month_and_year(mfile, yfile)
@@ -1764,7 +1765,7 @@ function get_set_of_three_months(monthi, yeari, temperature_file, temperature_re
             for nri in 1:(obsi-2)
                 readline(file)
                 mfile = mfile + 1
-                if (mfile > 12) then
+                if (mfile > 12) 
                     mfile, yfile = adjust_month_and_year(mfile, yfile)
                 end
             end
@@ -1841,14 +1842,14 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
         if temperature_file=="(None)"
             # given average Tmin and Tmax
             daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
-            if abs(daygdd) < eps())
+            if abs(daygdd) < eps()
                 nrcdays = undef_int
             else
                 nrcdays = round(Int, valgddays/daygdd)
             end 
         else
             daynri = firstdaycrop
-            if full_undefined_record(temp)
+            if full_undefined_record(temperature_record)
                 adjustdaynri = true
                 daynri = set_daynr_to_yundef(daynri)
             else
@@ -1882,7 +1883,7 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                         daynri = daynri + 1
                     end 
 
-                    if RemainingGDDays>0 
+                    if remaininggddays>0 
                         nrcdays = undef_int
                     end 
                 elseif temperature_record.Datatype==:Decadely
@@ -1927,7 +1928,7 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                     nrcdays = nrcdays + 1
                     remaininggddays = remaininggddays - daygdd
                     daynri = daynri + 1
-                    while (remaininggddays>0 & (daynri<temperature_record.ToDayNr | adjustdaynri)
+                    while remaininggddays>0 & (daynri<temperature_record.ToDayNr | adjustdaynri)
                         if daynri>tmin_dataset[31].DayNr 
                             get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
                         end
@@ -1965,7 +1966,7 @@ function adjust_calendar_crop!(inse)
 
     if crop.ModeCycle==:GDDays
         crop.GDDaysToFullCanopy = crop.GDDaysToGermination +
-                round(Int, log((0.25*crop.CCx**2/crop.CCo)/(crop.CCx-0.98*crop.CCx))/crop.GDDCGC)
+                round(Int, log((0.25*crop.CCx^2/crop.CCo)/(crop.CCx-0.98*crop.CCx))/crop.GDDCGC)
         if crop.GDDaysToFullCanopy>crop.GDDaysToHarvest 
             crop.GDDaysToFullCanopy = crop.GDDaysToHarvest
         end 
@@ -2047,7 +2048,7 @@ function adjust_calendar_days!(inse, iscgcgiven)
     if infocroptype==:Grain | infocroptype==:Tuber
         dflor = sum_calendar_days(gddflor, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
         if dflor!=undef_int 
-            if infocroptype==subkind_grain 
+            if infocroptype==:Grain 
                 lengthflor = sum_calendar_days(gddlengthflor, (plantdaynr+dflor), tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
             else
                 lengthflor = 0
@@ -2075,7 +2076,7 @@ function adjust_calendar_days!(inse, iscgcgiven)
         if (infocroptype==:Grain | infocroptype==:Tuber) 
             dhidt = hindex/lhimax
         end 
-        if (infocroptype==subkind_vegetative | infocroptype==subkind_forage) 
+        if (infocroptype==:Vegetative | infocroptype==:Forage) 
             if (lhimax > 0) 
                 if (lhimax > dharvest) 
                     dhidt = hindex/dharvest
@@ -2123,25 +2124,6 @@ function gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase
     end 
     return cdc
 end 
-
-
-"""
-    lcd = length_canopy_decline(ccx, cdc)
-
-global.f90:1839
-"""
-function length_canopy_decline(ccx, cdc)
-    lcd = 0
-    if ccx>0 
-        if cdc<=eps() 
-            lcd = undef_int
-        else
-            lcd = round(Int,(((ccx+2.29)/(cdc*3.33))*log(1 + 1/0.05) + 0.50))
-                         # + 0.50 to guarantee that cc is zero
-        end 
-    end 
-    return lcd
-end
 
 """
     stlength, length123, length12, cgcval = determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength, cgcgiven, thedaystoccini, theplanting, length123, length12, cgcval)
@@ -2236,27 +2218,6 @@ function determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength,
     return stlength, length123, length12, cgcval 
 end 
 
-"""
-    days = days_to_reach_cc_with_given_cgc(cctoreach, ccoval, ccxval, cgcval, l0)
-
-global.f90:1809
-"""
-function days_to_reach_cc_with_given_cgc(cctoreach, ccoval, ccxval, cgcval, l0)
-    cctoreach_local = cctoreach
-    if (ccoval>cctoreach_local | ccoval>=ccxval) 
-        l = 0
-    else
-        if cctoreach_local>(0.98*ccxval) 
-            cctoreach_local = 0.98*ccxval
-        end 
-        if cctoreach_local<=ccxval/2) 
-            l = log(cctoreach_local/ccoval)/cgcval
-        else
-            l = log((0.25*ccxval*ccxval/ccoval)/(ccxval-cctoreach_local))/cgcval
-        end 
-    end 
-    return l0 + round(Int, l)
-end 
 
 """
     adjust_crop_year_to_climfile!(crop::RepCrop, clim_file, clim_record)
@@ -2382,6 +2343,7 @@ global.f90:5981
 """
 function load_groundwater!(inse, fullname)
     simulparam = inse[:simulparam]
+    simulation = inse[:simulation]
     atdaynr = simulation.FromDayNr
 
     atdaynr_local = atdaynr
@@ -2444,11 +2406,11 @@ function load_groundwater!(inse, fullname)
                 # variable groundwater table with more than 1 observation
                 # adjust AtDayNr
                 dayi, monthi, yeari = determine_date(atdaynr_local)
-                if (yeari==1901 & (Year1Gwt != 1901)) 
+                if (yeari==1901 & (year1gwt != 1901)) 
                     # Make AtDayNr defined
                     atdaynr_local = determine_day_nr(dayi, monthi, year1gwt)
                 end 
-                if ((yeari != 1901) & Year1Gwt==1901) 
+                if ((yeari != 1901) & year1gwt==1901) 
                     # Make AtDayNr undefined
                     atdaynr_local = determine_day_nr(dayi, monthi, year1gwt)
                 end 
@@ -2532,7 +2494,7 @@ end
 global.f90:6140
 """
 function find_values(atdaynr, daynr1, daynr2, z1, ec1, z2, ec2)
-        zcm = round(int, 100 * (z1 + (z2-z1) * (atdaynr-daynr1)/(daynr2-daynr1)))
+        zcm = round(Int, 100 * (z1 + (z2-z1) * (atdaynr-daynr1)/(daynr2-daynr1)))
         ecdsm = ec1 + (ec2-ec1) * (atdaynr-daynr1)/(daynr2-daynr1)
         return zcm, ecdsm
 end 
@@ -2568,7 +2530,7 @@ function calculate_adjusted_fc!(compartadj::Vector{CompartmentIndividual}, soil_
                     compartadj[compi].FCadj = soil_layers[compartadj[compi].Layer].SAT
                 else
                     deltav = soil_layers[compartadj[compi].Layer].SAT - soil_layers[compartadj[compi].Layer].FC
-                    deltafc = (deltav/(xmax**2)) * (zi - (depthaquifer - xmax))**2
+                    deltafc = (deltav/(xmax^2)) * (zi - (depthaquifer - xmax))^2
                     compartadj[compi].FCadj = soil_layers[compartadj[compi].Layer].FC + deltafc
                 end 
             end 
@@ -2674,15 +2636,15 @@ function load_irri_schedule_info!(inse, fullname)
         # irrigation method
         i = parse(Int, strip(readline(file)))
         if i==1
-            inse[:symbol_parameters][:irrimethod] = MSprinkler
+            inse[:symbol_parameters][:irrimethod] = :MSprinkler
         elseif i==2
-            inse[:symbol_parameters][:irrimethod] = MBasin
+            inse[:symbol_parameters][:irrimethod] = :MBasin
         elseif i==3
-            inse[:symbol_parameters][:irrimethod] = MBorder
+            inse[:symbol_parameters][:irrimethod] = :MBorder
         elseif i==4
-            inse[:symbol_parameters][:irrimethod] = MFurrow 
+            inse[:symbol_parameters][:irrimethod] = :MFurrow 
         else
-            inse[:symbol_parameters][:irrimethod] = MDrip 
+            inse[:symbol_parameters][:irrimethod] = :MDrip 
         end
         # fraction of soil surface wetted
         inse[:simulparam].IrriFwInSeason = parse(Int, strip(readline(file)))
@@ -2753,7 +2715,6 @@ function load_management!(inse, fullname)
         management.EffectMulchInS = parse(Int, strip(readline(file)))
         # soil fertility
         management.FertilityStress = parse(Int, strip(readline(file)))
-        EffectStress_temp = GetSimulation_EffectStress()
         crop_stress_parameters_soil_fertility!(simulation.EffectStress, crop.StressResponse, management.FertilityStress)
         # soil bunds
         management.BundHeight = parse(Float64, strip(readline(file)))
@@ -2775,7 +2736,6 @@ function load_management!(inse, fullname)
         management.WeedShape = parse(Float64, strip(readline(file)))
         management.WeedAdj = parse(Int, strip(readline(file)))
         # multiple cuttings
-        read(fhandle, *) i  # Consider multiple cuttings: True or False
         i = parse(Int, strip(readline(file)))
         if i==0 
             management.Cuttings.Considered = false
@@ -2849,11 +2809,11 @@ function adjust_size_compartments!(inse, cropzx)
     prevnrcomp = length(compartments)
     prevthickcomp = Float64[]
     prevvolprcomp = Float64[]
-    totdepth = 0
+    totdepthc = 0
     for compi in eachindex(compartments)
         push!(prevthickcomp, compartments[compi].Thickness)
         push!(prevvolprcomp, compartments[compi].Theta * 100)
-        totdepth += compartments[compi].Thickness
+        totdepthc += compartments[compi].Thickness
     end
 
     # 3. Increase number of compartments (if less than 12)
@@ -2861,11 +2821,11 @@ function adjust_size_compartments!(inse, cropzx)
         logi = true
         while logi
             if (cropzx-totdepthc)>simulparam.CompDefThick
-                push!(compartments, CompartmentIndividual(Thickness=simulparam.CompDefThick)
+                push!(compartments, CompartmentIndividual(Thickness=simulparam.CompDefThick))
             else
-                push!(compartments, CompartmentIndividual(Thickness=cropzx-totdepthc)
+                push!(compartments, CompartmentIndividual(Thickness=cropzx-totdepthc))
             end 
-            totdepth += compartments[end].Thickness
+            totdepthc += compartments[end].Thickness
             if (length(compartments)==max_no_compartments | (totdepthc+0.00001)>=cropzx) 
                 logi = false
             end
@@ -2876,7 +2836,7 @@ function adjust_size_compartments!(inse, cropzx)
     if (totdepthc+0.00001)<cropzx
         fadd = (cropzx/0.1 - 12)/78
         totdepthc = 0
-        for i in eachindex(new_compartments)
+        for i in eachindex(compartments)
             compartments[i].Thickness = 0.1 * (1 + i*fadd)
             totdepthc += compartments[i].Thickness
         end 
@@ -2948,7 +2908,7 @@ function adjust_theta_initial!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, p
         simulation.ThetaIni[compi] = compartments[compi].Theta
         soil_layers[compartments[compi].Layer].WaterContent += simulation.ThetaIni[compi]*100*10*compartments[compi].Thickness
     end 
-    Total = 0
+    total = 0
     for layeri in eachindex(soil_layers)
         total += soil_layers[layeri].WaterContent
     end 
@@ -2966,12 +2926,13 @@ function translate_inipoints_to_swprofile!(inse, nrloc, locdepth, locvolpr, loce
     soil_layers = inse[:soil_layers]
     compartments = inse[:compartments]
     simulparam = inse[:simulparam]
+    nrcomp = length(compartments)
 
     totd = 0
     for compi in eachindex(compartments)
         compartments[compi].Theta = 0
         compartments[compi].WFactor = 0 # used for salt in (10*volsat*dz * ec)
-        totd += compartments[compi].thickness
+        totd += compartments[compi].Thickness
     end 
     compi = 0
     depthi = 0
@@ -3001,7 +2962,7 @@ function translate_inipoints_to_swprofile!(inse, nrloc, locdepth, locvolpr, loce
         while !theend
             thtopcomp = thbotcomp
             ectopcomp = ecbotcomp
-            if (addcomp) then
+            if (addcomp) 
                 compi = compi + 1
                 depthi = depthi + compartments[compi].Thickness
             end 
@@ -3019,7 +2980,7 @@ function translate_inipoints_to_swprofile!(inse, nrloc, locdepth, locvolpr, loce
                 thbotcomp = th2
                 ecbotcomp = ec2
                 compartments[compi].Theta = compartments[compi].Theta + 10*(d2-dtopcomp)*(thtopcomp+thbotcomp)/2
-                compartments[compi].WFactor = compartments[compi].WFactor + (10*(d2-dtopcomp)*soil_layers[compartments[compi].Layer].SAT*(ectopcomp+ecbotcomp)/2
+                compartments[compi].WFactor = compartments[compi].WFactor + (10*(d2-dtopcomp)*soil_layers[compartments[compi].Layer].SAT*(ectopcomp+ecbotcomp)/2)
                 if abs(depthi - d2)<eps()
                     addcomp = true
                 else
@@ -3033,7 +2994,7 @@ function translate_inipoints_to_swprofile!(inse, nrloc, locdepth, locvolpr, loce
     for compi in eachindex(compartments)
         # from mm(water) to theta and final check
         compartments[compi].Theta = compartments[compi].Theta/(1000*compartments[compi].Thickness)
-        if (compartments[compi].Theta>soil_layers[compartments[compi].Layer].SAT/100 
+        if (compartments[compi].Theta>soil_layers[compartments[compi].Layer].SAT/100)
             compartments[compi].Theta = soil_layers[compartments[compi].Layer].SAT/100
         end 
         if compartments[compi].Theta<0 
@@ -3090,7 +3051,7 @@ globa.f90:4241
 function active_cells(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual})
     if compartment.Theta<=soil_layers[compartment.Layer].UL 
         celi = 1
-        while (compartment.Theta>(soil_layers[compartment.Layer].Dx * celi)
+        while (compartment.Theta>(soil_layers[compartment.Layer].Dx * celi))
             celi = celi + 1
         end 
     else
@@ -3100,11 +3061,11 @@ function active_cells(compartment::CompartmentIndividual, soil_layers::Vector{So
 end 
 
 """
-    salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepSim, i, mm)
+    salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepParam, i, mm)
 
 global.f90:2572
 """
-function salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepSim, i, mm) # mm = l/m2, SaltSol/Saltdepo = g/m2
+function salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepParam, i, mm) # mm = l/m2, SaltSol/Saltdepo = g/m2
     saltsolution = compartment.Salt[i]
     saltdeposit = compartment.Depo[i]
 
@@ -3131,6 +3092,7 @@ function translate_inilayers_to_swprofile!(inse, nrlay, laythickness, layvolpr, 
     compartments = inse[:compartments]
     soil_layers = inse[:soil_layers]
     simulparam = inse[:simulparam]
+    nrcomp = length(compartments)
 
     # from specific layers to Compartments
     for compi in eachindex(compartments)
@@ -3146,9 +3108,9 @@ function translate_inilayers_to_swprofile!(inse, nrlay, laythickness, layvolpr, 
         fracc = 0
         compi = compi + 1
         sdcomp = sdcomp + compartments[compi].Thickness
-        if SDLay>=SDComp 
+        if sdlay>=sdcomp 
             compartments[compi].Theta = compartments[compi].Theta + (1-fracc)*layvolpr[layeri]/100
-            compartments[compi].WFactor = compartments[compi].WFactor + (1._dp-FracC)*layecds[layeri]
+            compartments[compi].WFactor = compartments[compi].WFactor + (1-fracc)*layecds[layeri]
         else
             # go to next layer
             while ((sdlay<sdcomp) & goon)
@@ -3201,11 +3163,11 @@ function load_initial_conditions!(inse, swcinifilefull)
     # Keep in mind that this could affect the graphical interface
     open(swcinifilefull, "r") do file
         readline(file)
-        simulation.CCini = parse(Float64, sptrip(readline(file)) 
-        simulation.Bini = parse(Float64, sptrip(readline(file)) 
-        simulation.Zrini = parse(Float64, sptrip(readline(file)) 
-        setparameter!(inse[:float_parameters][:surfacestorage], parse(Float64, sptrip(readline(file))))
-        simulation.ECStorageIni = parse(Float64, sptrip(readline(file))
+        simulation.CCini = parse(Float64, strip(readline(file))) 
+        simulation.Bini = parse(Float64, strip(readline(file))) 
+        simulation.Zrini = parse(Float64, strip(readline(file))) 
+        setparameter!(inse[:float_parameters], :surfacestorage, parse(Float64, strip(readline(file))))
+        simulation.ECStorageIni = parse(Float64, strip(readline(file)))
         i = parse(Int, strip(readline(file)))
         if i==1
             simulation.IniSWC.AtDepths = true
@@ -3243,7 +3205,7 @@ function ececomp(compartment::CompartmentIndividual, inse)
         totsalt = totsalt + compartment.Salt[i] + compartment.Depo[i] # g/m2
     end 
 
-    denominator = volSAT*10 * compartment.Thickness * (1 - soil_layers[compartment.Layer].GravelVol/100
+    denominator = volsat*10 * compartment.Thickness * (1 - soil_layers[compartment.Layer].GravelVol/100)
     totsalt = totsalt / denominator  # g/l
 
     if totsalt>simulparam.SaltSolub
@@ -3259,6 +3221,7 @@ global.f90:5769
 """
 function load_offseason!(inse, fullname)
     management = inse[:management]
+    simulation = inse[:management]
     irri_before_season = inse[:irri_before_season]
     irri_after_season = inse[:irri_after_season]
     irri_ecw = inse[:irri_ecw]
@@ -3327,6 +3290,7 @@ function adjust_compartments!(inse)
     crop = inse[:crop]
     soil = inse[:soil]
     soil_layers = inse[:soil_layers]
+    compartments = inse[:compartments]
     ziaqua = inse[:integer_parameters][:ziaqua]
     # Adjust size of compartments if required
     totdepth = 0
@@ -3382,8 +3346,8 @@ end
 """
     initialize_simulation_run_part1!(inse)
 
+run.f90:4754
 
-"""
 function initialize_simulation_run_part1!(inse)
     # Part1 (before reading the climate) of the initialization of a run
     # Initializes parameters and states
@@ -3622,3 +3586,4 @@ function initialize_simulation_run_part1!(inse)
     call DetermineDate(GetSimulation_FromDayNr(), Day1, Month1, Year1) # start simulation run
     call SetNoYear((Year1 == 1901));  # for output file
 end #notend
+"""
