@@ -350,6 +350,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     crop_stress_parameters_soil_fertility!(simulation.EffectStress, crop.StressResponse, management.FertilityStress) 
 
     sumwabal = RepSum()
+    previoussum = RepSum()
     
     # 5. Climate
     # 5.6 Set Climate and Simulation Period
@@ -388,6 +389,12 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(float_parameters, :crwater, 0.0)
     setparameter!(float_parameters, :crsalt, 0.0)
     setparameter!(float_parameters, :eciaqua, undef_double) #undef_int
+    setparameter!(float_parameters, :sumeto, undef_double)
+    setparameter!(float_parameters, :sumgdd, undef_double)
+    setparameter!(float_parameters, :previoussumeto, undef_double)
+    setparameter!(float_parameters, :previoussumgdd, undef_double)
+    setparameter!(float_parameters, :previousbmob, undef_double)
+    setparameter!(float_parameters, :previousbsto, undef_double)
 
     symbol_parameters = ParametersContainer(Symbol)
     setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
@@ -438,6 +445,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
         crop = crop,
         management = management,
         sumwabal = sumwabal,
+        previoussum = previoussum,
         irri_before_season = irri_before_season,
         irri_after_season = irri_after_season,
         irri_ecw = irri_ecw,
