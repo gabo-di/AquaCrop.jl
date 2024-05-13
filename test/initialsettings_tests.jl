@@ -9,21 +9,21 @@ include("checkpoints.jl")
     project_filenames = AquaCrop.initialize_project_filename(filepaths)
     inse = AquaCrop.initialize_settings(true, true, filepaths)
 
-    ini = checkpoint1()
+    inse_0 = checkpoint1()
 
-    @test isapprox(inse[:simulparam], ini[:simulparam])
-    @test isapprox(inse[:soil], ini[:soil])
-    @test isapprox(inse[:soil_layers], ini[:soil_layers])
-    @test isapprox(inse[:compartments], ini[:compartments])
-    @test isapprox(inse[:simulation], ini[:simulation])
-    @test isapprox(inse[:total_water_content], ini[:total_water_content])
-    @test isapprox(inse[:crop], ini[:crop])
-    @test isapprox(inse[:management], ini[:management])
-    @test isapprox(inse[:sumwabal], ini[:sumwabal])
-    @test isapprox(inse[:irri_before_season], ini[:irri_before_season])
-    @test isapprox(inse[:irri_after_season], ini[:irri_after_season])
-    @test isapprox(inse[:irri_ecw], ini[:irri_ecw])
-    @test isapprox(inse[:onset], ini[:onset])
+    @test isapprox(inse[:simulparam], inse_0[:simulparam])
+    @test isapprox(inse[:soil], inse_0[:soil])
+    @test isapprox(inse[:soil_layers], inse_0[:soil_layers])
+    @test isapprox(inse[:compartments], inse_0[:compartments])
+    @test isapprox(inse[:simulation], inse_0[:simulation])
+    @test isapprox(inse[:total_water_content], inse_0[:total_water_content])
+    @test isapprox(inse[:crop], inse_0[:crop])
+    @test isapprox(inse[:management], inse_0[:management])
+    @test isapprox(inse[:sumwabal], inse_0[:sumwabal])
+    @test isapprox(inse[:irri_before_season], inse_0[:irri_before_season])
+    @test isapprox(inse[:irri_after_season], inse_0[:irri_after_season])
+    @test isapprox(inse[:irri_ecw], inse_0[:irri_ecw])
+    @test isapprox(inse[:onset], inse_0[:onset])
 end
 
 
@@ -38,18 +38,15 @@ end
     inse, projectinput, fileok = AquaCrop.initialize_project(i, theprojectfile, theprojecttype, filepaths)
 
 
-    ini = checkpoint2()
-    # this is incorrect in fortran code, they forget to set the temperature in line startuni.f90:864
-    # it should be: call SetSimulParam_Tmin(Tmin_temp)
-    # ini[:simulparam].Tmin = 0 
+    inse_0, projectinput_0, fileok_0 = checkpoint2()
 
-    @test isapprox(inse[:simulation], ini[:simulation])
-    @test isapprox(inse[:simulparam], ini[:simulparam])
-    @test isapprox(fileok, ini[:fileok])
-    @test isequal(length(projectinput),length(ini[:projectinput]))
-    @test isapprox(projectinput[1], ini[:projectinput][1])
-    @test isapprox(projectinput[2], ini[:projectinput][2])
-    @test isapprox(projectinput[3], ini[:projectinput][3])
+    @test isapprox(inse[:simulation], inse_0[:simulation])
+    @test isapprox(inse[:simulparam], inse_0[:simulparam])
+    @test isapprox(fileok, fileok_0)
+    @test isequal(length(projectinput),length(projectinput_0))
+    @test isapprox(projectinput[1], projectinput_0[1]) 
+    @test isapprox(projectinput[2], projectinput_0[2]) 
+    @test isapprox(projectinput[3], projectinput_0[3]) 
 end
 
 

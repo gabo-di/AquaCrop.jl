@@ -745,7 +745,7 @@ function load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_fi
         crop.ECemin = parse(Int, strip(readline(file)))
         # lower threhsold ECe
         crop.ECemax = parse(Int, strip(readline(file)))
-        readline(fhandle)
+        readline(file)
 
         crop.CCsaltDistortion = parse(Int, strip(readline(file)))
         crop.ResponseECsw = parse(Int, strip(readline(file)))
@@ -1035,7 +1035,7 @@ function adjust_year_perennials!(crop::RepCrop, theyearseason)
     thesizeplant = crop.SizePlant
 
     if (theyearseason == 1) 
-        if (sown1styear == true)  ! planting
+        if (sown1styear == true)  # planting
             typeofplanting = :Seed
         else
             typeofplanting = :Transplant
