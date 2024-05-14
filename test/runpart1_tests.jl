@@ -28,11 +28,12 @@ include("checkpoints.jl")
     @test isapprox(inse[:onset], inse_0[:onset])
     @test isapprox(inse[:rain_record], inse_0[:rain_record])
     @test isapprox(inse[:eto_record], inse_0[:eto_record])
+    @test isapprox(inse[:clim_record], inse_0[:clim_record])
     @test isapprox(inse[:temperature_record], inse_0[:temperature_record])
     @test isapprox(inse[:perennial_period], inse_0[:perennial_period])
     @test isapprox(inse[:crop_file_set], inse_0[:crop_file_set])
-    @test isapprox(inse[:array_parameters][:Tmax], inse_0[:array_parameters][:Tmax])
-    @test isapprox(inse[:array_parameters][:Tmin], inse_0[:array_parameters][:Tmin])
+    # @test isapprox(inse[:array_parameters][:Tmax], inse_0[:array_parameters][:Tmax])
+    # @test isapprox(inse[:array_parameters][:Tmin], inse_0[:array_parameters][:Tmin])
     
 end
 

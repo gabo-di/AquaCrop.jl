@@ -1069,7 +1069,7 @@ end
     "days"
     EndLengthSearchPeriod::Int=undef_int
     "degC or degree-days"
-    EndThresholdValue::Int=undef_int
+    EndThresholdValue::Float64=undef_double
     "number of successive days"
     EndPeriodValue::Int=undef_int
     "number of occurrences (1,2 or 3)"
@@ -1091,6 +1091,6 @@ end
     "Undocumented"
     GDDaysFromSenescenceToEnd::Int=undef_int
     "given or calculated from Calendar Days"
-    DDaysToHarvest::Int=undef_int
+    GDDaysToHarvest::Int=undef_int
 end
 

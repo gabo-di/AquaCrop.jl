@@ -445,7 +445,7 @@ function checkpoint1()
         EndStartSearchDayNr=AquaCrop.undef_int,
         EndStopSearchDayNr=AquaCrop.undef_int,
         EndLengthSearchPeriod=AquaCrop.undef_int,
-        EndThresholdValue=AquaCrop.undef_int,
+        EndThresholdValue=AquaCrop.undef_double,
         EndPeriodValue=AquaCrop.undef_int,
         EndOccurrence=AquaCrop.undef_int,
         GeneratedDayNrOnset=AquaCrop.undef_int,
@@ -456,8 +456,64 @@ function checkpoint1()
         DaysFromSenescenceToEnd=AquaCrop.undef_int,
         DaysToHarvest=AquaCrop.undef_int,
         GDDaysFromSenescenceToEnd=AquaCrop.undef_int,
-        DDaysToHarvest=AquaCrop.undef_int
+        GDDaysToHarvest=AquaCrop.undef_int
     )
+
+    float_parameters = AquaCrop.ParametersContainer(Float64)
+    AquaCrop.setparameter!(float_parameters, :eto, 5.0)
+    AquaCrop.setparameter!(float_parameters, :rain, 0.0)
+    AquaCrop.setparameter!(float_parameters, :irrigation, 0.0)
+    AquaCrop.setparameter!(float_parameters, :surfacestorage, 0.0)
+    AquaCrop.setparameter!(float_parameters, :ecstorage, 0.0)
+    AquaCrop.setparameter!(float_parameters, :drain, 0.0)
+    AquaCrop.setparameter!(float_parameters, :runoff, 0.0)
+    AquaCrop.setparameter!(float_parameters, :infiltrated, 0.0)
+    AquaCrop.setparameter!(float_parameters, :crwater, 0.0)
+    AquaCrop.setparameter!(float_parameters, :crsalt, 0.0)
+    AquaCrop.setparameter!(float_parameters, :eciaqua, AquaCrop.undef_double) #undef_int
+    AquaCrop.setparameter!(float_parameters, :sumeto, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :sumgdd, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :previoussumeto, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :previoussumgdd, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :previousbmob, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :previousbsto, AquaCrop.undef_double)
+
+    symbol_parameters = AquaCrop.ParametersContainer(Symbol)
+    AquaCrop.setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
+    AquaCrop.setparameter!(symbol_parameters, :irrimethod, :MSprinkler) # 4
+    AquaCrop.setparameter!(symbol_parameters, :timemode, :AllRAW) # 2
+    AquaCrop.setparameter!(symbol_parameters, :depthmode, :ToFC) # 0
+
+    integer_parameters = AquaCrop.ParametersContainer(Int)
+    AquaCrop.setparameter!(integer_parameters, :iniperctaw, 50)
+    AquaCrop.setparameter!(integer_parameters, :daysubmerged, 0)
+    AquaCrop.setparameter!(integer_parameters, :maxplotnew, 50)
+    AquaCrop.setparameter!(integer_parameters, :maxplottr, 10)
+    AquaCrop.setparameter!(integer_parameters, :irri_first_daynr, AquaCrop.undef_int)
+    AquaCrop.setparameter!(integer_parameters, :ziaqua, AquaCrop.undef_int)
+
+    bool_parameters = AquaCrop.ParametersContainer(Bool)
+    AquaCrop.setparameter!(bool_parameters, :preday, false)
+    AquaCrop.setparameter!(bool_parameters, :temperature_file_exists, AquaCrop.undef_bool)
+
+    array_parameters = AquaCrop.ParametersContainer(Vector{Float64})
+    AquaCrop.setparameter!(array_parameters, :Tmin, Float64[])
+    AquaCrop.setparameter!(array_parameters, :Tmax, Float64[])
+
+    string_parameters = AquaCrop.ParametersContainer(String)
+    AquaCrop.setparameter!(string_parameters, :clim_file, AquaCrop.undef_str)
+    AquaCrop.setparameter!(string_parameters, :climate_file,   "(None)")
+    AquaCrop.setparameter!(string_parameters, :temperature_file,  "(None)")
+    AquaCrop.setparameter!(string_parameters, :eto_file,  "(None)")
+    AquaCrop.setparameter!(string_parameters, :rain_file,  "(None)")
+    AquaCrop.setparameter!(string_parameters, :groundwater_file, "(None)")
+    AquaCrop.setparameter!(string_parameters, :prof_file, "DEFAULT.SOL")
+    AquaCrop.setparameter!(string_parameters, :crop_file, "DEFAULT.CRO")
+    AquaCrop.setparameter!(string_parameters, :man_file, "(None)")
+    AquaCrop.setparameter!(string_parameters, :CO2_file, "MaunaLoa.CO2")
+    AquaCrop.setparameter!(string_parameters, :irri_file, "(None)")
+    AquaCrop.setparameter!(string_parameters, :offseason_file, "(None)")
+
 
     return ComponentArray(
         simulparam=simulparam,
@@ -479,7 +535,13 @@ function checkpoint1()
         clim_record=clim_record,
         temperature_record=temperature_record,
         perennial_period=perennial_period,
-        crop_file_set=crop_file_set    
+        crop_file_set=crop_file_set, 
+        float_parameters = float_parameters,
+        symbol_parameters = symbol_parameters,
+        integer_parameters = integer_parameters,
+        bool_parameters = bool_parameters,
+        array_parameters = array_parameters,
+        string_parameters = string_parameters,
     )
 end
 
@@ -492,7 +554,7 @@ function checkpoint2()
     inse[:simulation].MultipleRunConstZrx = 3
     # this is incorrect in fortran code, they forget to set the temperature in line startuni.f90:864
     # it should be: call SetSimulParam_Tmin(Tmin_temp)
-    # inse[:simulparam].Tmin = 0 
+    inse[:simulparam].Tmin = 0 
 
     fileok = AquaCrop.RepFileOK(
         Climate_Filename=true,
@@ -676,7 +738,7 @@ function checkpoint2()
 end
 
 function checkpoint3()
-    inse = checkpoint2()
+    inse, projectinput, fileok = checkpoint2()
 
     inse[:soil].REW = 7
     inse[:soil].CNValue = 46
@@ -685,27 +747,27 @@ function checkpoint3()
 
     soil_layers = AquaCrop.SoilLayerIndividual[
         AquaCrop.SoilLayerIndividual(
-        Description="sandy",
-        Thickness=3.0000000447034836,
-        SAT=46,
-        FC=29,
-        WP=13,
-        tau=1,
-        InfRate=1200,
-        Penetrability=100,
-        GravelMass=0,
-        GravelVol=0,
-        WaterContent=870.00001296401012,
-        Macro=29,
-        SaltMobility=[0.99999999999999989, 0.99999999999999989, 1, 1, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double], # [0.030653430031715494, 0.99999999999999989, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-        SC=1,
-        SCP1=2,
-        UL=0.15333333333333332,
-        Dx=0.15333333333333332,
-        SoilClass=2,
-        CRa=-0.3906,
-        CRb=1.2556389999999999
-    )
+            Description="sandy",
+            Thickness=3.0000000447034836,
+            SAT=46,
+            FC=29,
+            WP=13,
+            tau=1,
+            InfRate=1200,
+            Penetrability=100,
+            GravelMass=0,
+            GravelVol=0,
+            WaterContent=870.00001296401012,
+            Macro=29,
+            SaltMobility=[0.99999999999999989, 0.99999999999999989, 1, 1, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double], # [0.030653430031715494, 0.99999999999999989, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            SC=1,
+            SCP1=2,
+            UL=0.15333333333333332,
+            Dx=0.15333333333333332,
+            SoilClass=2,
+            CRa=-0.3906,
+            CRb=1.2556389999999999
+        )
     ]
     inse[:soil_layers] = soil_layers
 
@@ -1024,7 +1086,7 @@ function checkpoint3()
 
 
     clim_record = AquaCrop.RepClim(
-        Datatype=:Daily, #0
+        Datatype=AquaCrop.undef_symbol, #0 note that this is 0 from undefined and not from actuall setting it
         FromD=1,
         FromM=1,
         FromY=2014,
@@ -1062,8 +1124,8 @@ function checkpoint3()
         OnsetCriterion=:GDDPeriod, #2
         OnsetFirstDay=1,
         OnsetFirstMonth=4,
-        OnsetStartSearchDayNr=0,
-        OnsetStopSearchDayNr=0,
+        OnsetStartSearchDayNr=AquaCrop.undef_int, #0,
+        OnsetStopSearchDayNr=AquaCrop.undef_int, #0,
         OnsetLengthSearchPeriod=120,
         OnsetThresholdValue=20,
         OnsetPeriodValue=8,
@@ -1073,14 +1135,14 @@ function checkpoint3()
         EndLastDay=31,
         EndLastMonth=10,
         ExtraYears=0,
-        EndStartSearchDayNr=0,
-        EndStopSearchDayNr=0,
+        EndStartSearchDayNr=AquaCrop.undef_int, #0,
+        EndStopSearchDayNr=AquaCrop.undef_int, #0,
         EndLengthSearchPeriod=60,
         EndThresholdValue=10,
         EndPeriodValue=8,
         EndOccurrence=1,
-        GeneratedDayNrOnset=0,
-        GeneratedDayNrEnd=0
+        GeneratedDayNrOnset=AquaCrop.undef_int, #0,
+        GeneratedDayNrEnd=AquaCrop.undef_int, #0
     )
     inse[:perennial_period] = perennial_period
 
@@ -1089,7 +1151,7 @@ function checkpoint3()
         DaysFromSenescenceToEnd=0,
         DaysToHarvest=180,
         GDDaysFromSenescenceToEnd=0,
-        DDaysToHarvest=1920
+        GDDaysToHarvest=1920
     )
     inse[:crop_file_set] = crop_file_set
 

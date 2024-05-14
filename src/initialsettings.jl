@@ -845,6 +845,14 @@ function root_max_in_soil_profile(zmaxcrop, soil_layers::Vector{SoilLayerIndivid
     return zmax
 end
 
+function root_max_in_soil_profile(z, v::Vector{AbstractParametersContainer})
+    zmax = z
+    if eltype(v)<:SoilLayerIndividual
+        zmax = root_max_in_soil_profile(z, SoilLayerIndividual[v for v in v])
+    end
+    return zmax
+end
+
 """
     zrout = zr_adjusted_to_restrictive_layers(zrin, soil_layers::Vector{SoilLayerIndividual})
 
@@ -926,6 +934,12 @@ function complete_profile_description!(soil_layers::Vector{SoilLayerIndividual},
     return nothing
 end 
 
+function complete_profile_description!(soil_layers::Vector{AbstractParametersContainer}, 
+            compartments::Vector{AbstractParametersContainer}, simulation::RepSim, total_water_content::RepContent)  
+    complete_profile_description!(SoilLayerIndividual[s for s in soil_layers], CompartmentIndividual[c for c in compartments], simulation, total_water_content)
+    return nothing
+end
+
 """
     designate_soillayer_to_compartments!(compartments::Vector{CompartmentIndividual}, soil_layers::Vector{SoilLayerIndividual})
 
@@ -975,6 +989,13 @@ function designate_soillayer_to_compartments!(compartments::Vector{CompartmentIn
     end 
     return nothing
 end 
+
+function designate_soillayer_to_compartments!(compartments::Vector{AbstractParametersContainer}, 
+    soil_layers::Vector{AbstractParametersContainer})  
+    designate_soillayer_to_compartments!( CompartmentIndividual[c for c in compartments], SoilLayerIndividual[s for s in soil_layers])
+    return nothing
+end
+
 
 """
     soil, soil_layers, compartments = load_profile(filepath, simulparam::RepParam)
