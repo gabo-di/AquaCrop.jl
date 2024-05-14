@@ -208,6 +208,7 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
             inse[:soil_layers] = soil_layers
             inse[:compartments] = compartments
         end 
+        inse[:soil].RootMax = root_max_in_soil_profile(inse[:crop].RootMax, inse[:soil_layers])
         complete_profile_description!(inse[:soil_layers], inse[:compartments], inse[:simulation], inse[:total_water_content]) 
 
         # Adjust size of compartments if required
@@ -2771,7 +2772,7 @@ function adjust_size_compartments!(inse, cropzx)
         fadd = (cropzx/0.1 - 12)/78
         totdepthc = 0
         for i in eachindex(compartments)
-            compartments[i].Thickness = 0.1 * (1 + i*fadd)
+            compartments[i].Thickness = round(Int, 20*0.1 * (1 + i*fadd))*0.05
             totdepthc += compartments[i].Thickness
         end 
         if totdepthc<cropzx 

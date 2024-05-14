@@ -552,9 +552,9 @@ function checkpoint2()
     inse[:simulation].NrRuns = 3
     inse[:simulation].MultipleRunWithKeepSWC = true
     inse[:simulation].MultipleRunConstZrx = 3
-    # this is incorrect in fortran code, they forget to set the temperature in line startuni.f90:864
+    # OJO this is incorrect in fortran code, they forget to set the temperature in line startuni.f90:864
     # it should be: call SetSimulParam_Tmin(Tmin_temp)
-    inse[:simulparam].Tmin = 0 
+    # inse[:simulparam].Tmin = 0 
 
     fileok = AquaCrop.RepFileOK(
         Climate_Filename=true,
@@ -742,7 +742,7 @@ function checkpoint3()
 
     inse[:soil].REW = 7
     inse[:soil].CNValue = 46
-    inse[:soil].RootMax = 1
+    inse[:soil].RootMax = 3
 
 
     soil_layers = AquaCrop.SoilLayerIndividual[
@@ -759,7 +759,8 @@ function checkpoint3()
             GravelVol=0,
             WaterContent=870.00001296401012,
             Macro=29,
-            SaltMobility=[0.99999999999999989, 0.99999999999999989, 1, 1, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double], # [0.030653430031715494, 0.99999999999999989, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            #OJO note that the last two positions of "1" are set to undef since they seem to be a byproduct from default loading, key variable seems to be SCP1 as length of actuall stuff
+            SaltMobility=[0.99999999999999989, 1, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double], # [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
             SC=1,
             SCP1=2,
             UL=0.15333333333333332,
@@ -781,7 +782,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -793,7 +794,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -805,7 +806,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -817,7 +818,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -829,7 +830,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -841,7 +842,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -853,7 +854,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -865,7 +866,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -877,7 +878,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -889,7 +890,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -901,7 +902,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         ),
@@ -913,7 +914,7 @@ function checkpoint3()
             Smax=AquaCrop.undef_double,#0,
             FCadj=29,
             DayAnaero=0,
-            WFactor=AquaCrop.undef_double, #0,
+            WFactor=0,
             Salt=zeros(Float64, 11),
             Depo=zeros(Float64, 11),
         )
@@ -929,6 +930,7 @@ function checkpoint3()
     inse[:simulation].EffectStress.RedCGC = 24
     inse[:simulation].EffectStress.RedCCX = 40
     inse[:simulation].EffectStress.RedWP = 52
+    inse[:simulation].EffectStress.CDecline = 0.04188660705779268
 
 
     inse[:total_water_content].BeginDay = 870.00001296401012

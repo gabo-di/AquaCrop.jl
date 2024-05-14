@@ -514,7 +514,7 @@ function ks_any(wrel, pulactual, pllactual, shapefactor)
         ksval = 0
     else
         if (round(Int,10*shapefactor) == 0)  # straight line
-            ksval = 1 - (exp(prelativellul*0.01)-1.)/(exp(0.01)-1)
+            ksval = 1 - (exp(prelativellul*0.01)-1)/(exp(0.01)-1)
         else
             ksval = 1 - (exp(prelativellul*shapefactor)-1)/(exp(shapefactor)-1)
         end 
@@ -1180,7 +1180,7 @@ function calculate_salt_mobility!(soillayer::SoilLayerIndividual, saltdiffusion)
 
     # 3. calculate mobility for cells = 1 to Macro
     for i in 1:CelMax-1
-        xi = i *1 / (CelMax-1)
+        xi = i/(CelMax-1)
         if (Mix > 0) 
             if (Mix < 0.5) 
                 yi = exp(log(a)+xi*log(b))
@@ -1202,6 +1202,7 @@ function calculate_salt_mobility!(soillayer::SoilLayerIndividual, saltdiffusion)
     for i in CelMax:soillayer.SCP1 
         Mobil[i] = 1
     end 
+
     return nothing
 end 
 

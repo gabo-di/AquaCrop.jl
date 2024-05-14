@@ -1,7 +1,6 @@
 module AquaCrop
 # ---- imports ----
 using ComponentArrays
-using Infiltrator
 
 
 # ---- includes ----
