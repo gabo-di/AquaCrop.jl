@@ -4,9 +4,10 @@ using ComponentArrays
 
 
 # ---- includes ----
-include("utils.jl")
 include("types.jl")
+include("utils.jl")
 include("initialsettings.jl")
+include("runsim.jl")
 include("FieldCrop.jl")
 include("main.jl")
 

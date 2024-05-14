@@ -1,12 +1,13 @@
-# constants
+# constantstype
 
 const equiv = 0.64 # conversion factor: 1 dS/m = 0.64 g/l
 const max_SoilLayers = 5
-const max_No_compartments = 12
+const max_no_compartments = 12
 const undef_double = -9.9 # value for 'undefined' real(dp) variables
 const undef_int = -9 # value for 'undefined' int32 variables
 const undef_str = "" # value for 'undefined' string variables
 const undef_bool = false # value for 'undefined' bool variables
+const undef_symbol = :undef_symbol # value for 'undefined' symbol variables
 const CO2Ref = 369.41 # reference CO2 in ppm by volume for year 2000 for Mauna Loa (Hawaii,USA)
 const EvapZmin = 15.0 # cm  minimum soil depth for water extraction by evaporation
 const epsilon =10E-08
@@ -37,8 +38,8 @@ abstract type AbstractParametersContainer end
 Base.length(p::AbstractParametersContainer) = 1
 
 function _isapprox(a, b; kwargs...) 
-   for field in fieldnames(typeof(a))
-       if isapprox(getfield(a,field), getfield(b,field); kwargs...)
+    for field in fieldnames(typeof(a))
+        if isapprox(getfield(a,field), getfield(b,field); kwargs...)
             continue
         else
             println("\n\n\n")
@@ -94,6 +95,9 @@ Base.getindex(parameterscontainer::ParametersContainer, parameterkey::Symbol) = 
 
 """
     effectiverain = RepEffectiveRain()
+
+set from
+initialsettings.f90:244
 """
 @kwdef mutable struct RepEffectiveRain <: AbstractParametersContainer
     "Undocumented"
@@ -111,6 +115,9 @@ end
     simulparams = RepParams()
 
 contains the simulation parameters.
+
+set from
+initialsettings.f90:216
 """
 @kwdef mutable struct RepParam <: AbstractParametersContainer
     #  DEFAULT.PAR
@@ -202,6 +209,9 @@ end
 
 """
     soil = RepSoil()
+
+set from
+defaultcropsoil.f90:289
 """
 @kwdef mutable struct RepSoil <: AbstractParametersContainer
     "(* Readily evaporable water mm *)"
@@ -217,6 +227,9 @@ end
     soillayer = SoilLayerIndividual()
 
 creates a soil layer with a given soil class.
+
+set from
+defaultcropsoil.f90:289
 """
 @kwdef mutable struct SoilLayerIndividual <: AbstractParametersContainer
     "Undocumented"
@@ -268,6 +281,9 @@ end
 
 """
     shape = RepShapes()
+
+set from
+defaultcropsoil.f90:175
 """
 @kwdef mutable struct RepShapes <: AbstractParametersContainer
     "Percentage soil fertility stress for calibration"
@@ -287,6 +303,9 @@ end
 
 """
     assimilates = RepAssimilates()
+
+set from
+defaultcropsoil.f90:274
 """
 @kwdef mutable struct RepAssimilates <: AbstractParametersContainer
     "Undocumented"
@@ -302,6 +321,9 @@ end
 
 """
     crop = RepCrop()
+
+set from 
+defaultcropsoil.f90:140
 """
 @kwdef mutable struct RepCrop <: AbstractParametersContainer
     "Undocumented"
@@ -494,9 +516,9 @@ end
     "meter"
     Thickness::Float64=undef_double
     "m3/m3"
-    theta::Float64=undef_double
+    Theta::Float64=undef_double
     "mm/day"
-    fluxout::Float64=undef_double
+    Fluxout::Float64=undef_double
     "Undocumented"
     Layer::Int=undef_int
     "Maximum root extraction m3/m3.day"
@@ -532,11 +554,11 @@ Base.isapprox(a::CompartmentIndividual, b::CompartmentIndividual; kwargs... ) = 
     "number of depths or layers considered"
     NrLoc::Int=undef_int
     "depth or layer thickness [m]"
-    Loc::Vector{Float64}=fill(undef_double,max_No_compartments)
+    Loc::Vector{Float64}=fill(undef_double,max_no_compartments)
     "soil water content (vol%)"
-    VolProc::Vector{Float64}=fill(undef_double,max_No_compartments)
+    VolProc::Vector{Float64}=fill(undef_double,max_no_compartments)
     "ECe in dS/m"
-    SaltECe::Vector{Float64}=fill(undef_double,max_No_compartments)
+    SaltECe::Vector{Float64}=fill(undef_double,max_no_compartments)
     "If iniSWC is at FC"
     AtFC::Bool=true
 end
@@ -575,6 +597,9 @@ end
 
 """
     simulation = RepSim()
+
+set from
+global.f90:7694
 """
 @kwdef mutable struct RepSim <: AbstractParametersContainer
     "daynumber"
@@ -584,9 +609,9 @@ end
     "Undocumented"
     IniSWC::RepIniSWC=RepIniSWC()
     "dS/m"
-    ThetaIni::Vector{Float64}=fill(undef_double,max_No_compartments)
+    ThetaIni::Vector{Float64}=fill(undef_double,max_no_compartments)
     "dS/m"
-    ECeIni::Vector{Float64}=zeros(Float64,max_No_compartments)
+    ECeIni::Vector{Float64}=zeros(Float64,max_no_compartments)
     "Undocumented"
     SurfaceStorageIni::Float64=0.0
     "Undocumented"
@@ -696,6 +721,9 @@ end
 
 """
     cuttings = RepCuttings()
+
+set from
+global.f90:3338
 """
 @kwdef mutable struct RepCuttings <: AbstractParametersContainer
     "Undocumented"
@@ -719,6 +747,9 @@ end
 
 """
     management = RepManag()
+
+set from
+global.f90:3311
 """
 @kwdef mutable struct RepManag <: AbstractParametersContainer
     "percent soil cover by mulch in growing period"
@@ -753,6 +784,9 @@ end
 
 """
     summ = RepSum()
+
+set from
+global.f90:7153
 """
 @kwdef mutable struct RepSum <: AbstractParametersContainer
     # Undocumented
@@ -783,16 +817,33 @@ end
 
 """
     a = RepDayEventInt()
+
+set from
+global.f90:2838
 """
 @kwdef mutable struct RepDayEventInt <: AbstractParametersContainer
     "Undocumented"
     DayNr::Int=0
     "Undocumented"
-    param::Int=0
+    Param::Int=0
 end
 
 """
+    a = RepDayEventDbl()
+"""
+@kwdef mutable struct RepDayEventDbl <: AbstractParametersContainer
+    "Undocumented"
+    DayNr::Int=undef_int
+    "Undocumented"
+    Param::Float64=undef_double
+end
+
+
+"""
     irriecw = RepIrriECw()
+
+set from
+global.f90:2838
 """
 @kwdef mutable struct RepIrriECw <: AbstractParametersContainer
     "Undocumented"
@@ -803,6 +854,9 @@ end
 
 """
     onset = RepOnset()
+
+set from
+initialsettings.f90:464
 """
 @kwdef mutable struct RepOnset <: AbstractParametersContainer
     "by rainfall or temperature criterion"
@@ -827,6 +881,8 @@ end
 Container for project file input data.
 """
 @kwdef mutable struct ProjectInputType <: AbstractParametersContainer
+    "The directory where we are working"
+    ParentDir::String=undef_str
     "AquaCrop version number (common for all runs)"
     VersionNr::Float64=undef_double
     "Project description (common for all runs)"
@@ -945,5 +1001,96 @@ end
     SWCIni_Filename::Bool=undef_bool
     OffSeason_Filename::Bool=undef_bool
     Observations_Filename::Bool=undef_bool
+end
+
+
+"""
+    record_clim = RepClim()
+"""
+@kwdef mutable struct RepClim <: AbstractParametersContainer
+    "Undocumented"
+    Datatype::Symbol=undef_symbol
+    "D = day or decade, Y=1901 is not linked to specific year"
+    FromD::Int=undef_int
+    FromM::Int=undef_int
+    FromY::Int=undef_int
+    "Undocumented"
+    ToD::Int=undef_int
+    ToM::Int=undef_int
+    ToY::Int=undef_int
+    "daynumber"
+    FromDayNr::Int=undef_int
+    ToDayNr::Int=undef_int
+    "Undocumented"
+    FromString::String=undef_str
+    ToString::String=undef_str
+    "number of observations"
+    NrObs::Int=undef_int
+end
+
+"""
+    perennial_period = RepPerennialPeriod()
+"""
+@kwdef mutable struct RepPerennialPeriod <: AbstractParametersContainer
+    "onset is generated by air temperature criterion"
+    GenerateOnset::Bool=undef_bool
+    "another doscstring"
+    OnsetCriterion::Symbol=undef_symbol
+    "Undocumented"
+    OnsetFirstDay::Int=undef_int
+    "Undocumented"
+    OnsetFirstMonth::Int=undef_int
+    "daynumber"
+    OnsetStartSearchDayNr::Int=undef_int
+    "daynumber"
+    OnsetStopSearchDayNr::Int=undef_int
+    "days"
+    OnsetLengthSearchPeriod::Int=undef_int
+    "degC or degree-days"
+    OnsetThresholdValue::Float64=undef_double
+    "number of successive days"
+    OnsetPeriodValue::Int=undef_int
+    "number of occurrences (1,2 or 3)"
+    OnsetOccurrence::Int=undef_int
+    "end is generate by air temperature criterion"
+    GenerateEnd::Bool=undef_bool
+    "Undocumented"
+    EndCriterion::Symbol=undef_symbol
+    "Undocumented"
+    EndLastDay::Int=undef_int
+    "Undocumented"
+    EndLastMonth::Int=undef_int
+    "number of years to add to the onset year"
+    ExtraYears::Int=undef_int
+    "daynumber"
+    EndStartSearchDayNr::Int=undef_int
+    "daynumber"
+    EndStopSearchDayNr::Int=undef_int
+    "days"
+    EndLengthSearchPeriod::Int=undef_int
+    "degC or degree-days"
+    EndThresholdValue::Float64=undef_double
+    "number of successive days"
+    EndPeriodValue::Int=undef_int
+    "number of occurrences (1,2 or 3)"
+    EndOccurrence::Int=undef_int
+    "Undocumented"
+    GeneratedDayNrOnset::Int=undef_int
+    "Undocumented"
+    GeneratedDayNrEnd::Int=undef_int
+end
+
+"""
+    crop_file_set = RepCropFileSet()
+"""
+@kwdef mutable struct RepCropFileSet <: AbstractParametersContainer
+    "Undocumented"
+    DaysFromSenescenceToEnd::Int=undef_int
+    "given or calculated from GDD"
+    DaysToHarvest::Int=undef_int
+    "Undocumented"
+    GDDaysFromSenescenceToEnd::Int=undef_int
+    "given or calculated from Calendar Days"
+    GDDaysToHarvest::Int=undef_int
 end
 
