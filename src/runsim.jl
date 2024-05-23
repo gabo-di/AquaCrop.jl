@@ -1,14 +1,14 @@
 """
-    run_simulation!(inse, projectinput::Vector{ProjectInputType})
+    run_simulation!(gvars, projectinput::Vector{ProjectInputType})
 
 run.f90:7779
 """
-function run_simulation!(inse, projectinput::Vector{ProjectInputType})
+function run_simulation!(gvars, projectinput::Vector{ProjectInputType})
     # maybe set outputfilesa run.f90:7786
-    nrruns = inse[:simulation].NrRuns 
+    nrruns = gvars[:simulation].NrRuns 
 
     for nrrun in 1:nrruns
-        initialize_run_part_1!(inse, projectinput[nrrun])
+        initialize_run_part_1!(gvars, projectinput[nrrun])
 
     end
 
@@ -16,76 +16,76 @@ function run_simulation!(inse, projectinput::Vector{ProjectInputType})
 end #not end
 
 """
-    initialize_run_part_1!(inse, projectinput::ProjectInputType)
+    initialize_run_part_1!(gvars, projectinput::ProjectInputType)
 
 run.f90:6590
 """
-function initialize_run_part_1!(inse, projectinput::ProjectInputType)
-    load_simulation_project!(inse, projectinput)
-    adjust_compartments!(inse) #TODO check if neccesary
+function initialize_run_part_1!(gvars, projectinput::ProjectInputType)
+    load_simulation_project!(gvars, projectinput)
+    adjust_compartments!(gvars) #TODO check if neccesary
     # reset sumwabal and previoussum
-    inse[:sumwabal] = RepSum() 
-    reset_previous_sum!(inse)
+    gvars[:sumwabal] = RepSum() 
+    reset_previous_sum!(gvars)
 
-    initialize_simulation_run_part1!(inse, projectinput)
+    initialize_simulation_run_part1!(gvars, projectinput)
 
     return nothing
 end #not end
 
 """
-    initialize_simulation_run_part1!(inse, projectinput)
+    initialize_simulation_run_part1!(gvars, projectinput)
 
 run.f90:4754
 """
-function initialize_simulation_run_part1!(inse, projectinput::ProjectInputType)
+function initialize_simulation_run_part1!(gvars, projectinput::ProjectInputType)
     # Part1 (before reading the climate) of the initialization of a run
     # Initializes parameters and states
 
     # 1. Adjustments at start
     # 1.1 Adjust soil water and salt content if water table IN soil profile
-    if check_for_watertable_in_profile(inse[:compartments], inse[:integer_parameters][:ziaqua]/100)
-        adjust_for_watertable!(inse)
+    if check_for_watertable_in_profile(gvars[:compartments], gvars[:integer_parameters][:ziaqua]/100)
+        adjust_for_watertable!(gvars)
     end 
-    if !inse[:simulparam].ConstGwt
-        get_gwt_set!(inse, projectinput.ParentDir, inse[:simulation].FromDayNr)
+    if !gvars[:simulparam].ConstGwt
+        get_gwt_set!(gvars, projectinput.ParentDir, gvars[:simulation].FromDayNr)
     end 
 
     # 1.2 Check if FromDayNr simulation needs to be adjusted
     # from previous run if Keep initial SWC
-    if (projectinput.SWCIni_Filename=="KeepSWC") & (inse[:integer_parameters][:nextsim_from_daynr] != undef_int) 
+    if (projectinput.SWCIni_Filename=="KeepSWC") & (gvars[:integer_parameters][:nextsim_from_daynr] != undef_int) 
         # assign the adjusted DayNr defined in previous run
-        if inse[:integer_parameters][:nextsim_from_daynr] <= inse[:crop].Day1
-            inse[:simulation].FromDayNr = inse[:integer_parameters][:nextsim_from_daynr]
+        if gvars[:integer_parameters][:nextsim_from_daynr] <= gvars[:crop].Day1
+            gvars[:simulation].FromDayNr = gvars[:integer_parameters][:nextsim_from_daynr]
         end 
     end 
-    setparameter!(inse[:integer_parameters], :nextsim_from_daynr, undef_int)
+    setparameter!(gvars[:integer_parameters], :nextsim_from_daynr, undef_int)
 
     # 2. initial settings for Crop
-    inse[:crop].pActStom = inse[:crop].pdef
-    inse[:crop].pSenAct = inse[:crop].pSenescence
-    inse[:crop].pLeafAct = inse[:crop].pLeafDefUL
-    setparameter!(inse[:bool_parameters], :evapo_entire_soil_surface, true)
-    inse[:simulation].EvapLimitON = false
-    inse[:simulation].EvapWCsurf = 0
-    inse[:simulation].EvapZ = EvapZmin/100
-    inse[:simulation].SumEToStress = 0
+    gvars[:crop].pActStom = gvars[:crop].pdef
+    gvars[:crop].pSenAct = gvars[:crop].pSenescence
+    gvars[:crop].pLeafAct = gvars[:crop].pLeafDefUL
+    setparameter!(gvars[:bool_parameters], :evapo_entire_soil_surface, true)
+    gvars[:simulation].EvapLimitON = false
+    gvars[:simulation].EvapWCsurf = 0
+    gvars[:simulation].EvapZ = EvapZmin/100
+    gvars[:simulation].SumEToStress = 0
     # for calculation Maximum Biomass
     # unlimited soil fertility
-    setparameter!(inse[:float_parameters], :ccxwitheredtpotnos, 0)
+    setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, 0)
     # days of anaerobic conditions in
     # global root zone
-    inse[:simulation].DayAnaero = 0
+    gvars[:simulation].DayAnaero = 0
     
 
     # germination
-    if (inse[:crop].Planting == :Seed) & (inse[:simulation].FromDayNr<=inse[:crop].Day1)
-        inse[:simulation].Germinate = false
+    if (gvars[:crop].Planting == :Seed) & (gvars[:simulation].FromDayNr<=gvars[:crop].Day1)
+        gvars[:simulation].Germinate = false
     else
-        inse[:simulation].Germinate = true 
-        inse[:simulation].ProtectedSeedling = false
+        gvars[:simulation].Germinate = true 
+        gvars[:simulation].ProtectedSeedling = false
     end
     # delayed germination
-    inse[:simulation].DelayedDays = 0
+    gvars[:simulation].DelayedDays = 0
 
     # 3. create temperature file covering crop cycle
     if (GetTemperatureFile() /= '(None)') then
@@ -297,15 +297,15 @@ function check_for_watertable_in_profile(profilecomp::Vector{CompartmentIndividu
 end 
 
 """
-    adjust_for_watertable!(inse)
+    adjust_for_watertable!(gvars)
 
 run.f90:3423
 """
-function adjust_for_watertable!(inse)
-    compartments = inse[:compartments]
-    ziaqua = inse[:integer_parameters][:ziaqua]
-    soil_layers = inse[:soil_layers]
-    simulparam = inse[:simulparam]
+function adjust_for_watertable!(gvars)
+    compartments = gvars[:compartments]
+    ziaqua = gvars[:integer_parameters][:ziaqua]
+    soil_layers = gvars[:soil_layers]
+    simulparam = gvars[:simulparam]
 
     ztot = 0
     for compi in eachindex(compartments)
@@ -322,16 +322,16 @@ function adjust_for_watertable!(inse)
 end 
 
 """
-    get_gwt_set!(inse, parentdir, daynrin)
+    get_gwt_set!(gvars, parentdir, daynrin)
 
 run.f90:3526
 """
-function get_gwt_set!(inse, parentdir, daynrin)
-    gwt = inse[:gwtable]
-    simulation = inse[:simulation]
+function get_gwt_set!(gvars, parentdir, daynrin)
+    gwt = gvars[:gwtable]
+    simulation = gvars[:simulation]
     # FileNameFull
-    if inse[:string_parameters][:groundwater_file] != "(None)"
-        filenamefull = inse[:string_parameters][:groundwater_file]
+    if gvars[:string_parameters][:groundwater_file] != "(None)"
+        filenamefull = gvars[:string_parameters][:groundwater_file]
     else
         filenamefull = parentdir * "GroundWater.AqC"
     end 

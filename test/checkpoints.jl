@@ -546,15 +546,15 @@ function checkpoint1()
 end
 
 function checkpoint2()
-    inse = checkpoint1()    
+    gvars = checkpoint1()    
 
-    inse[:simulation].MultipleRun = true
-    inse[:simulation].NrRuns = 3
-    inse[:simulation].MultipleRunWithKeepSWC = true
-    inse[:simulation].MultipleRunConstZrx = 3
+    gvars[:simulation].MultipleRun = true
+    gvars[:simulation].NrRuns = 3
+    gvars[:simulation].MultipleRunWithKeepSWC = true
+    gvars[:simulation].MultipleRunConstZrx = 3
     # OJO this is incorrect in fortran code, they forget to set the temperature in line startuni.f90:864
     # it should be: call SetSimulParam_Tmin(Tmin_temp)
-    # inse[:simulparam].Tmin = 0 
+    # gvars[:simulparam].Tmin = 0 
 
     fileok = AquaCrop.RepFileOK(
         Climate_Filename=true,
@@ -734,15 +734,15 @@ function checkpoint2()
         )
     ]
 
-    return inse, projectinput, fileok
+    return gvars, projectinput, fileok
 end
 
 function checkpoint3()
-    inse, projectinput, fileok = checkpoint2()
+    gvars, projectinput, fileok = checkpoint2()
 
-    inse[:soil].REW = 7
-    inse[:soil].CNValue = 46
-    inse[:soil].RootMax = 3
+    gvars[:soil].REW = 7
+    gvars[:soil].CNValue = 46
+    gvars[:soil].RootMax = 3
 
 
     soil_layers = AquaCrop.SoilLayerIndividual[
@@ -770,7 +770,7 @@ function checkpoint3()
             CRb=1.2556389999999999
         )
     ]
-    inse[:soil_layers] = soil_layers
+    gvars[:soil_layers] = soil_layers
 
 
     compartments = AquaCrop.CompartmentIndividual[
@@ -919,21 +919,21 @@ function checkpoint3()
             Depo=zeros(Float64, 11),
         )
     ]
-    inse[:compartments] = compartments
+    gvars[:compartments] = compartments
 
 
-    inse[:simulation].FromDayNr = 41414
-    inse[:simulation].ToDayNr = 41577
-    inse[:simulation].IniSWC.Loc[1] = 3.0000000447034836
-    inse[:simulation].IniSWC.VolProc[1] = 29
-    inse[:simulation].ThetaIni = [0.29 for _ in 1:12]
-    inse[:simulation].EffectStress.RedCGC = 24
-    inse[:simulation].EffectStress.RedCCX = 40
-    inse[:simulation].EffectStress.RedWP = 52
-    inse[:simulation].EffectStress.CDecline = 0.04188660705779268
+    gvars[:simulation].FromDayNr = 41414
+    gvars[:simulation].ToDayNr = 41577
+    gvars[:simulation].IniSWC.Loc[1] = 3.0000000447034836
+    gvars[:simulation].IniSWC.VolProc[1] = 29
+    gvars[:simulation].ThetaIni = [0.29 for _ in 1:12]
+    gvars[:simulation].EffectStress.RedCGC = 24
+    gvars[:simulation].EffectStress.RedCCX = 40
+    gvars[:simulation].EffectStress.RedWP = 52
+    gvars[:simulation].EffectStress.CDecline = 0.04188660705779268
 
 
-    inse[:total_water_content].BeginDay = 870.00001296401012
+    gvars[:total_water_content].BeginDay = 870.00001296401012
 
 
     crop = AquaCrop.RepCrop(
@@ -1040,17 +1040,17 @@ function checkpoint3()
             Mobilized=60
         )
     )
-    inse[:crop] = crop
+    gvars[:crop] = crop
 
     
-    inse[:management].FertilityStress = 50
-    inse[:management].WeedShape = 100
-    inse[:management].Cuttings.Considered = true
-    inse[:management].Cuttings.CCcut = 25
-    inse[:management].Cuttings.FirstDayNr = 41274
+    gvars[:management].FertilityStress = 50
+    gvars[:management].WeedShape = 100
+    gvars[:management].Cuttings.Considered = true
+    gvars[:management].Cuttings.CCcut = 25
+    gvars[:management].Cuttings.FirstDayNr = 41274
 
-    inse[:onset].StartSearchDayNr = 41274
-    inse[:onset].StopSearchDayNr = 41273
+    gvars[:onset].StartSearchDayNr = 41274
+    gvars[:onset].StopSearchDayNr = 41273
 
 
     rain_record = AquaCrop.RepClim(
@@ -1067,7 +1067,7 @@ function checkpoint3()
         ToString="",
         NrObs=1096
     )
-    inse[:rain_record] = rain_record
+    gvars[:rain_record] = rain_record
 
 
     eto_record = AquaCrop.RepClim(
@@ -1084,7 +1084,7 @@ function checkpoint3()
         ToString="",
         NrObs=1096
     )
-    inse[:eto_record] = eto_record
+    gvars[:eto_record] = eto_record
 
 
     clim_record = AquaCrop.RepClim(
@@ -1101,7 +1101,7 @@ function checkpoint3()
         ToString="",
         NrObs=1096
     )
-    inse[:clim_record] = clim_record
+    gvars[:clim_record] = clim_record
 
 
     temperature_record = AquaCrop.RepClim(
@@ -1118,7 +1118,7 @@ function checkpoint3()
         ToString="",
         NrObs=1096
     )
-    inse[:temperature_record] = temperature_record
+    gvars[:temperature_record] = temperature_record
 
 
     perennial_period = AquaCrop.RepPerennialPeriod( 
@@ -1146,7 +1146,7 @@ function checkpoint3()
         GeneratedDayNrOnset=AquaCrop.undef_int, #0,
         GeneratedDayNrEnd=AquaCrop.undef_int, #0
     )
-    inse[:perennial_period] = perennial_period
+    gvars[:perennial_period] = perennial_period
 
 
     crop_file_set = AquaCrop.RepCropFileSet(
@@ -1155,9 +1155,9 @@ function checkpoint3()
         GDDaysFromSenescenceToEnd=0,
         GDDaysToHarvest=1920
     )
-    inse[:crop_file_set] = crop_file_set
+    gvars[:crop_file_set] = crop_file_set
 
-    return inse
+    return gvars
 end
 
 

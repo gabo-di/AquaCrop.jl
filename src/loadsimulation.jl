@@ -1,132 +1,132 @@
 """
-    load_simulation_project!(inse, projectinput::ProjectInputType) 
+    load_simulation_project!(gvars, projectinput::ProjectInputType) 
 
 tempprocessing.f90:1932
 """
-function load_simulation_project!(inse, projectinput::ProjectInputType) 
+function load_simulation_project!(gvars, projectinput::ProjectInputType) 
     # 0. Year of cultivation and Simulation and Cropping period
-    inse[:simulation].YearSeason = projectinput.Simulation_YearSeason
-    inse[:crop].Day1 = projectinput.Crop_Day1
-    inse[:crop].DayN = projectinput.Crop_DayN
+    gvars[:simulation].YearSeason = projectinput.Simulation_YearSeason
+    gvars[:crop].Day1 = projectinput.Crop_Day1
+    gvars[:crop].DayN = projectinput.Crop_DayN
 
     # 1.1 Temperature
     if (projectinput.Temperature_Filename=="(None)") | (projectinput.Temperature_Filename=="(External)")
         temperature_file = projectinput.Temperature_Filename 
     else
         temperature_file = projectinput.ParentDir * projectinput.Temperature_Directory * projectinput.Temperature_Filename
-        setparameter!(inse[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
-        if inse[:bool_parameters][:temperature_file_exists]
-            read_temperature_file!(inse[:array_parameters], temperature_file)
+        setparameter!(gvars[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
+        if gvars[:bool_parameters][:temperature_file_exists]
+            read_temperature_file!(gvars[:array_parameters], temperature_file)
         end
-        load_clim!(inse[:temperature_record], temperature_file)
+        load_clim!(gvars[:temperature_record], temperature_file)
     end 
-    setparameter!(inse[:string_parameters], :temperature_file, temperature_file)
+    setparameter!(gvars[:string_parameters], :temperature_file, temperature_file)
 
     # 1.2 ETo
     if (projectinput.ETo_Filename=="(None)") | (projectinput.ETo_Filename=="(External)")
         eto_file = projectinput.ETo_Filename 
     else
         eto_file = projectinput.ParentDir * projectinput.ETo_Directory * projectinput.ETo_Filename
-        load_clim!(inse[:eto_record], eto_file)
+        load_clim!(gvars[:eto_record], eto_file)
     end 
-    setparameter!(inse[:string_parameters], :eto_file, eto_file)
+    setparameter!(gvars[:string_parameters], :eto_file, eto_file)
 
     # 1.3 Rain
     if (projectinput.Rain_Filename=="(None)") | (projectinput.Rain_Filename=="(External)")
         rain_file = projectinput.Rain_Filename
     else
         rain_file = projectinput.ParentDir * projectinput.Rain_Directory * projectinput.Rain_Filename
-        load_clim!(inse[:rain_record], rain_file)
+        load_clim!(gvars[:rain_record], rain_file)
     end 
-    setparameter!(inse[:string_parameters], :rain_file, rain_file)
+    setparameter!(gvars[:string_parameters], :rain_file, rain_file)
 
     # 1.4 Climate
     if projectinput.Climate_Filename != "(External)"
-        set_clim_data!(inse, projectinput)
+        set_clim_data!(gvars, projectinput)
     end
-    adjust_onset_search_period!(inse) # Set initial StartSearch and StopSearchDayNr
+    adjust_onset_search_period!(gvars) # Set initial StartSearch and StopSearchDayNr
 
     # 3. Crop
-    inse[:simulation].LinkCropToSimPeriod = true
+    gvars[:simulation].LinkCropToSimPeriod = true
     crop_file = projectinput.ParentDir * projectinput.Crop_Directory * projectinput.Crop_Filename
-    load_crop!(inse[:crop], inse[:perennial_period], crop_file)
+    load_crop!(gvars[:crop], gvars[:perennial_period], crop_file)
     # copy to CropFileSet
-    inse[:crop_file_set].DaysFromSenescenceToEnd = inse[:crop].DaysToHarvest - inse[:crop].DaysToSenescence
-    inse[:crop_file_set].DaysToHarvest = inse[:crop].DaysToHarvest
-    if inse[:crop].ModeCycle==:GDDays
-        inse[:crop_file_set].GDDaysFromSenescenceToEnd = inse[:crop].GDDaysToHarvest - inse[:crop].GDDaysToSenescence
-        inse[:crop_file_set].GDDaysToHarvest = inse[:crop].GDDaysToHarvest
+    gvars[:crop_file_set].DaysFromSenescenceToEnd = gvars[:crop].DaysToHarvest - gvars[:crop].DaysToSenescence
+    gvars[:crop_file_set].DaysToHarvest = gvars[:crop].DaysToHarvest
+    if gvars[:crop].ModeCycle==:GDDays
+        gvars[:crop_file_set].GDDaysFromSenescenceToEnd = gvars[:crop].GDDaysToHarvest - gvars[:crop].GDDaysToSenescence
+        gvars[:crop_file_set].GDDaysToHarvest = gvars[:crop].GDDaysToHarvest
     else
-        inse[:crop_file_set].GDDaysFromSenescenceToEnd = undef_int
-        inse[:crop_file_set].GDDaysToHarvest = undef_int 
+        gvars[:crop_file_set].GDDaysFromSenescenceToEnd = undef_int
+        gvars[:crop_file_set].GDDaysToHarvest = undef_int 
     end
     # maximum rooting depth in given soil profile
-    inse[:soil].RootMax = root_max_in_soil_profile(inse[:crop].RootMax, inse[:soil_layers])
+    gvars[:soil].RootMax = root_max_in_soil_profile(gvars[:crop].RootMax, gvars[:soil_layers])
 
     # Adjust crop parameters of Perennials
-    if inse[:crop].subkind==:Forage
+    if gvars[:crop].subkind==:Forage
         # adjust crop characteristics to the Year (Seeding/Planting or
         # Non-seesing/Planting year)
-        adjust_year_perennials!(inse[:crop], inse[:simulation].YearSeason)
+        adjust_year_perennials!(gvars[:crop], gvars[:simulation].YearSeason)
         # adjust length of season
-        inse[:crop].DaysToHarvest = inse[:crop].DayN - inse[:crop].Day1 + 1
-        adjust_crop_file_parameters!(inse)
+        gvars[:crop].DaysToHarvest = gvars[:crop].DayN - gvars[:crop].Day1 + 1
+        adjust_crop_file_parameters!(gvars)
     end 
-    adjust_calendar_crop!(inse)
-    complete_crop_description!(inse[:crop], inse[:simulation], inse[:management])
+    adjust_calendar_crop!(gvars)
+    complete_crop_description!(gvars[:crop], gvars[:simulation], gvars[:management])
     # Onset.Off := true;
-    clim_file = inse[:string_parameters][:clim_file]
+    clim_file = gvars[:string_parameters][:clim_file]
     if clim_file=="(None)" 
         # adjusting Crop.Day1 and Crop.DayN to ClimFile
-        adjust_crop_year_to_climfile!(inse[:crop], clim_file, inse[:clim_record])
+        adjust_crop_year_to_climfile!(gvars[:crop], clim_file, gvars[:clim_record])
     else
-        inse[:crop].DayN = inse[:crop].Day1 + inse[:crop].DaysToHarvest - 1
+        gvars[:crop].DayN = gvars[:crop].Day1 + gvars[:crop].DaysToHarvest - 1
     end 
 
     # adjusting ClimRecord.'TO' for undefined year with 365 days
-    if (clim_file != "(None)") & (inse[:clim_record].FromY == 1901) & (inse[:clim_record].NrObs==365) 
-        adjust_climrecord_to!(inse[:clim_record], inse[:crop].DayN)
+    if (clim_file != "(None)") & (gvars[:clim_record].FromY == 1901) & (gvars[:clim_record].NrObs==365) 
+        adjust_climrecord_to!(gvars[:clim_record], gvars[:crop].DayN)
     end 
     # adjusting simulation period
-    adjust_simperiod!(inse, projectinput)
+    adjust_simperiod!(gvars, projectinput)
 
     # 4. Irrigation
     if projectinput.Irrigation_Filename == "(None)" 
         irri_file = projectinput.Irrigation_Filename
-        no_irrigation!(inse)
+        no_irrigation!(gvars)
     else
         irri_file = projectinput.ParentDir * projectinput.Irrigation_Directory * projectinput.Irrigation_Filename
-        load_irri_schedule_info!(inse, fullname)
+        load_irri_schedule_info!(gvars, fullname)
     end 
-    setparameter!(inse[:string_parameters], :irri_file, irri_file)
+    setparameter!(gvars[:string_parameters], :irri_file, irri_file)
 
     # 5. Field Management
     if projectinput.Management_Filename == "(None)" 
         man_file = projectinput.Management_Filename
     else
         man_file = projectinput.ParentDir * projectinput.Management_Directory * projectinput.Management_Filename
-        load_management!(inse, man_file)
+        load_management!(gvars, man_file)
         # reset canopy development to soil fertility
         daystofullcanopy, RedCGC_temp, RedCCX_temp, fertstress = time_to_max_canopy_sf(
-                              inse[:crop].CCo, 
-                              inse[:crop].CGC,
-                              inse[:crop].CCx,
-                              inse[:crop].DaysToGermination,
-                              inse[:crop].DaysToFullCanopy,
-                              inse[:crop].DaysToSenescence,
-                              inse[:crop].DaysToFlowering,
-                              inse[:crop].LengthFlowering,
-                              inse[:crop].DeterminancyLinked,
-                              inse[:crop].DaysToFullCanopySF, 
-                              inse[:simulation].EffectStress.RedCGC,
-                              inse[:simulation].EffectStress.RedCCX,
-                              inse[:management].FertilityStress)
-        inse[:management].FertilityStress = fertstress
-        inse[:simulation].EffectStress.RedCGC = RedCGC_temp
-        inse[:simulation].EffectStress.RedCCX = RedCCX_temp
-        inse[:crop].DaysToFullCanopySF = daystofullcanopy
+                              gvars[:crop].CCo, 
+                              gvars[:crop].CGC,
+                              gvars[:crop].CCx,
+                              gvars[:crop].DaysToGermination,
+                              gvars[:crop].DaysToFullCanopy,
+                              gvars[:crop].DaysToSenescence,
+                              gvars[:crop].DaysToFlowering,
+                              gvars[:crop].LengthFlowering,
+                              gvars[:crop].DeterminancyLinked,
+                              gvars[:crop].DaysToFullCanopySF, 
+                              gvars[:simulation].EffectStress.RedCGC,
+                              gvars[:simulation].EffectStress.RedCCX,
+                              gvars[:management].FertilityStress)
+        gvars[:management].FertilityStress = fertstress
+        gvars[:simulation].EffectStress.RedCGC = RedCGC_temp
+        gvars[:simulation].EffectStress.RedCCX = RedCCX_temp
+        gvars[:crop].DaysToFullCanopySF = daystofullcanopy
     end 
-    setparameter!(inse[:string_parameters], :man_file, man_file)
+    setparameter!(gvars[:string_parameters], :man_file, man_file)
 
     # 6. Soil Profile
     if projectinput.Soil_Filename=="(External)"
@@ -137,7 +137,7 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
         # The load of profile is delayed to check if soil water profile need to be reset (see 8.)
         prof_file = projectinput.ParentDir * projectinput.Soil_Directory * projectinput.Soil_Filename
     end 
-    setparameter!(inse[:string_parameters], :prof_file, prof_file)
+    setparameter!(gvars[:string_parameters], :prof_file, prof_file)
 
 
     # 7. Groundwater
@@ -147,13 +147,13 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
         # Loading the groundwater is done after loading the soil profile (see 9.)
         groundwater_file = projectinput.ParentDir * projectinput.GroundWater_Directory * projectinput.GroundWater_Filename
     end 
-    setparameter!(inse[:string_parameters], :groundwater_file, groundwater_file)
+    setparameter!(gvars[:string_parameters], :groundwater_file, groundwater_file)
 
     # 8. Set simulation period
-    inse[:simulation].FromDayNr = projectinput.Simulation_DayNr1
-    inse[:simulation].ToDayNr = projectinput.Simulation_DayNrN
-    if (inse[:crop].Day1 != inse[:simulation].FromDayNr) | (inse[:crop].DayN != inse[:simulation].ToDayNr)
-        inse[:simulation].LinkCropToSimPeriod = false
+    gvars[:simulation].FromDayNr = projectinput.Simulation_DayNr1
+    gvars[:simulation].ToDayNr = projectinput.Simulation_DayNrN
+    if (gvars[:crop].Day1 != gvars[:simulation].FromDayNr) | (gvars[:crop].DayN != gvars[:simulation].ToDayNr)
+        gvars[:simulation].LinkCropToSimPeriod = false
     end 
 
     # 9. Initial conditions
@@ -165,35 +165,35 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
         # start with load and complete profile description (see 5.) which reset
         # SWC to FC by default
         if prof_file=="(External)"
-            load_profile_processing!(inse[:soil], inse[:soil_layers], inse[:compartments], inse[:simulparam])
+            load_profile_processing!(gvars[:soil], gvars[:soil_layers], gvars[:compartments], gvars[:simulparam])
         else
-            soil, soil_layers, compartments = load_profile(prof_file, inse[:simulparam])
-            inse[:soil] = soil
-            inse[:soil_layers] = soil_layers
-            inse[:compartments] = compartments
+            soil, soil_layers, compartments = load_profile(prof_file, gvars[:simulparam])
+            gvars[:soil] = soil
+            gvars[:soil_layers] = soil_layers
+            gvars[:compartments] = compartments
         end 
-        inse[:soil].RootMax = root_max_in_soil_profile(inse[:crop].RootMax, inse[:soil_layers])
-        complete_profile_description!(inse[:soil_layers], inse[:compartments], inse[:simulation], inse[:total_water_content]) 
+        gvars[:soil].RootMax = root_max_in_soil_profile(gvars[:crop].RootMax, gvars[:soil_layers])
+        complete_profile_description!(gvars[:soil_layers], gvars[:compartments], gvars[:simulation], gvars[:total_water_content]) 
 
         # Adjust size of compartments if required
         totdepth = 0
-        for i in eachindex(inse[:compartments]) 
-            totdepth = totdepth + inse[:compartments][i].Thickness
+        for i in eachindex(gvars[:compartments]) 
+            totdepth = totdepth + gvars[:compartments][i].Thickness
         end 
-        if inse[:simulation].MultipleRunWithKeepSWC
+        if gvars[:simulation].MultipleRunWithKeepSWC
             # Project with a sequence of simulation runs and KeepSWC
-            if round(Int, inse[:simulation].MultipleRunConstZrx*1000)>round(Int, totdepth*1000) 
-                adjust_size_compartments!(inse, inse[:simulation].MultipleRunConstZrx)
+            if round(Int, gvars[:simulation].MultipleRunConstZrx*1000)>round(Int, totdepth*1000) 
+                adjust_size_compartments!(gvars, gvars[:simulation].MultipleRunConstZrx)
             end 
         else
-            if round(Int, inse[:crop].RootMax*1000)>round(Int, totdepth*1000)
-                if round(Int, inse[:soil].RootMax*1000)==round(Int, inse[:crop].RootMax*1000)
+            if round(Int, gvars[:crop].RootMax*1000)>round(Int, totdepth*1000)
+                if round(Int, gvars[:soil].RootMax*1000)==round(Int, gvars[:crop].RootMax*1000)
                     # no restrictive soil layer
-                    adjust_size_compartments!(inse, inse[:crop].RootMax)
+                    adjust_size_compartments!(gvars, gvars[:crop].RootMax)
                 else
                     # restrictive soil layer
-                    if round(Int, inse[:soil].RootMax*1000)>round(Int, totdepth*1000)
-                        adjust_size_compartments!(inse, inse[:soil].RootMax)
+                    if round(Int, gvars[:soil].RootMax*1000)>round(Int, totdepth*1000)
+                        adjust_size_compartments!(gvars, gvars[:soil].RootMax)
                     end 
                 end 
             end
@@ -203,27 +203,27 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
             swcini_file = projectinput.SWCIni_Filename
         else
             swcini_file = projectinput.ParentDir * projectinput.SWCIni_Directory * projectinput.SWCIni_Filename
-            load_initial_conditions!(inse, swcini_file)
+            load_initial_conditions!(gvars, swcini_file)
         end 
-        setparameter!(inse[:string_parameters], :swcini_file, swcini_file)
+        setparameter!(gvars[:string_parameters], :swcini_file, swcini_file)
 
-        if inse[:simulation].IniSWC.AtDepths
-            translate_inipoints_to_swprofile!(inse, inse[:simulation].IniSWC.NrLoc, inse[:simulation].IniSWC.Loc, inse[:simulation].IniSWC.VolProc, inse[:simulation].IniSWC.SaltECe)
+        if gvars[:simulation].IniSWC.AtDepths
+            translate_inipoints_to_swprofile!(gvars, gvars[:simulation].IniSWC.NrLoc, gvars[:simulation].IniSWC.Loc, gvars[:simulation].IniSWC.VolProc, gvars[:simulation].IniSWC.SaltECe)
         else
-            translate_inilayers_to_swprofile!(inse, inse[:simulation].IniSWC.NrLoc, inse[:simulation].IniSWC.Loc, inse[:simulation].IniSWC.VolProc, inse[:simulation].IniSWC.SaltECe)
+            translate_inilayers_to_swprofile!(gvars, gvars[:simulation].IniSWC.NrLoc, gvars[:simulation].IniSWC.Loc, gvars[:simulation].IniSWC.VolProc, gvars[:simulation].IniSWC.SaltECe)
         end
 
-        if inse[:simulation].ResetIniSWC
+        if gvars[:simulation].ResetIniSWC
             # to reset SWC and SALT at end of simulation run
-            for i in eachindex(inse[:compartments])
-                inse[:simulation].ThetaIni[i] = inse[:compartments][i].Theta
-                inse[:simulation].ECeIni[i] = ececomp(inse[:compartments][i], inse)
+            for i in eachindex(gvars[:compartments])
+                gvars[:simulation].ThetaIni[i] = gvars[:compartments][i].Theta
+                gvars[:simulation].ECeIni[i] = ececomp(gvars[:compartments][i], gvars)
             end 
             # ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN -
             # CHECK LATER
-            if inse[:management].BundHeight>=0.01
-                inse[:simulation].SurfaceStorageIni = inse[:float_parameters][:surfacestorage]
-                inse[:simulation].ECStorageIni = inse[:float_parameters][:ecstorage]
+            if gvars[:management].BundHeight>=0.01
+                gvars[:simulation].SurfaceStorageIni = gvars[:float_parameters][:surfacestorage]
+                gvars[:simulation].ECStorageIni = gvars[:float_parameters][:ecstorage]
             end 
         end 
     end 
@@ -231,15 +231,15 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
     # 10. load the groundwater file if it exists (only possible for Version 4.0
     # and higher)
     if groundwater_file != "(None)"
-        load_groundwater!(inse, groundwater_file)
+        load_groundwater!(gvars, groundwater_file)
     else
-        setparameter!(inse[:integer_parameters],:ziaqua, undef_int)
-        setparameter!(inse[:float_parameters],:eciaqua, undef_double)
-        inse[:simulparam].ConstGwt = true
+        setparameter!(gvars[:integer_parameters],:ziaqua, undef_int)
+        setparameter!(gvars[:float_parameters],:eciaqua, undef_double)
+        gvars[:simulparam].ConstGwt = true
     end
-    calculate_adjusted_fc!(inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua]/100)
-    if inse[:simulation].IniSWC.AtFC & (swcini_file != "KeepSWC")
-        reset_swc_to_fc!(inse[:simulation], inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua])
+    calculate_adjusted_fc!(gvars[:compartments], gvars[:soil_layers], gvars[:integer_parameters][:ziaqua]/100)
+    if gvars[:simulation].IniSWC.AtFC & (swcini_file != "KeepSWC")
+        reset_swc_to_fc!(gvars[:simulation], gvars[:compartments], gvars[:soil_layers], gvars[:integer_parameters][:ziaqua])
     end 
 
     # 11. Off-season conditions
@@ -247,9 +247,9 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
         offseason_file = projectinput.OffSeason_Filename
     else
         offseason_file = projectinput.ParentDir * projectinput.OffSeason_Directory * projectinput.OffSeason_Filename
-        load_offseason!(inse, offseason_file)
+        load_offseason!(gvars, offseason_file)
     end 
-    setparameter!(inse[:string_parameters], :offseason_file, offseason_file)
+    setparameter!(gvars[:string_parameters], :offseason_file, offseason_file)
 
     # 12. Field data
     if projectinput.Observations_Filename=="(None)"
@@ -257,7 +257,7 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
     else
         observations_file = projectinput.ParentDir * projectinput.OffSeason_Directory * projectinput.Observations_Filename
     end
-    setparameter!(inse[:string_parameters], :observations_file, observations_file)
+    setparameter!(gvars[:string_parameters], :observations_file, observations_file)
 
     return nothing
 end 
@@ -380,16 +380,16 @@ function complete_climate_description!(record::RepClim)
 end
 
 """
-    set_clim_data!(inse, projectinput::ProjectInputType)
+    set_clim_data!(gvars, projectinput::ProjectInputType)
 
 global.f90:4295
 """
-function set_clim_data!(inse, projectinput::ProjectInputType)
-    clim_record = inse[:clim_record]
-    temperature_record = inse[:temperature_record]
-    eto_record = inse[:eto_record]
-    rain_record = inse[:rain_record]
-    clim_file = inse[:string_parameters][:clim_file]
+function set_clim_data!(gvars, projectinput::ProjectInputType)
+    clim_record = gvars[:clim_record]
+    temperature_record = gvars[:temperature_record]
+    eto_record = gvars[:eto_record]
+    rain_record = gvars[:rain_record]
+    clim_file = gvars[:string_parameters][:clim_file]
     eto_file = projectinput.ETo_Filename
     rain_file = projectinput.Rain_Filename
     temperature_file = projectinput.Temperature_Filename
@@ -543,7 +543,7 @@ function set_clim_data!(inse, projectinput::ProjectInputType)
         end 
     end 
 
-    setparameter!(inse[:string_parameters], :clim_file, clim_file)
+    setparameter!(gvars[:string_parameters], :clim_file, clim_file)
     return nothing
 end
 
@@ -564,15 +564,15 @@ end
 
 
 """
-    adjust_onset_search_period!(inse)
+    adjust_onset_search_period!(gvars)
 
 global.f90:4214
 """
-function adjust_onset_search_period!(inse)
-    onset = inse[:onset]
-    simulation = inse[:simulation]
-    clim_file = inse[:string_parameters][:clim_file]
-    clim_record = inse[:clim_record]
+function adjust_onset_search_period!(gvars)
+    onset = gvars[:onset]
+    simulation = gvars[:simulation]
+    clim_file = gvars[:string_parameters][:clim_file]
+    clim_record = gvars[:clim_record]
 
     if clim_file=="(None)"
         onset.StartSearchDayNr = 1
@@ -1041,14 +1041,14 @@ function adjust_year_perennials!(crop::RepCrop, theyearseason)
 end
 
 """
-    adjust_crop_file_parameters!(inse)
+    adjust_crop_file_parameters!(gvars)
 
 tempprocessing.f90:1882
 """
-function adjust_crop_file_parameters!(inse)
-    crop = inse[:crop]
-    crop_file_set = inse[:crop_file_set]
-    simulparam = inse[:simulparam]
+function adjust_crop_file_parameters!(gvars)
+    crop = gvars[:crop]
+    crop_file_set = gvars[:crop_file_set]
+    simulparam = gvars[:simulparam]
 
     lseasondays = crop.DaysToHarvest
     thecropday1 = crop.Day1
@@ -1063,7 +1063,7 @@ function adjust_crop_file_parameters!(inse)
     if (themodecycle == :GDDays) 
         tmin_tmp = simulparam.Tmin 
         tmax_tmp = simulparam.Tmax 
-        gdd1234 = growing_degree_days(inse, tmin_tmp, tmax_tmp) 
+        gdd1234 = growing_degree_days(gvars, tmin_tmp, tmax_tmp) 
 
     else
         gdd1234 = undef_int
@@ -1078,7 +1078,7 @@ function adjust_crop_file_parameters!(inse)
         else
             tmin_tmp = simulparam.Tmin 
             tmax_tmp = simulparam.Tmax 
-            l123 = sum_calendar_days(gdd123, thecropday1, thetbase, thetupper, tmin_tmp, tmax_tmp, inse)
+            l123 = sum_calendar_days(gdd123, thecropday1, thetbase, thetupper, tmin_tmp, tmax_tmp, gvars)
         end 
     else
         l123 = lseasondays - crop_file_set.DaysFromSenescenceToEnd
@@ -1095,18 +1095,18 @@ function adjust_crop_file_parameters!(inse)
 end 
 
 """
-    gdd1234 = growing_degree_days(inse, tdaymin, tdaymax)
+    gdd1234 = growing_degree_days(gvars, tdaymin, tdaymax)
 
 tempprocessing.f90:871
 """
-function growing_degree_days(inse, tdaymin, tdaymax)
-    crop = inse[:crop]
-    temperature_file = inse[:string_parameters][:temperature_file]
-    temperature_file_exists = inse[:bool_parameters][:temperature_file_exists]
-    simulparam = inse[:simulparam]
-    temperature_record = inse[:temperature_record]
-    Tmin = inse[:array_parameters][:Tmin]
-    Tmax = inse[:array_parameters][:Tmax]
+function growing_degree_days(gvars, tdaymin, tdaymax)
+    crop = gvars[:crop]
+    temperature_file = gvars[:string_parameters][:temperature_file]
+    temperature_file_exists = gvars[:bool_parameters][:temperature_file_exists]
+    simulparam = gvars[:simulparam]
+    temperature_record = gvars[:temperature_record]
+    Tmin = gvars[:array_parameters][:Tmin]
+    Tmax = gvars[:array_parameters][:Tmax]
 
     valperiod = crop.DaysToHarvest
     firstdayperiod = crop.Day1
@@ -1785,17 +1785,17 @@ end
 
 
 """
-    nrcdays = sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tdaymax, inse)
+    nrcdays = sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tdaymax, gvars)
 
 tempprocessing.f90:1035
 """
-function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tdaymax, inse)
-    temperature_file = inse[:string_parameters][:temperature_file]
-    temperature_file_exists = inse[:bool_parameters][:temperature_file_exists]
-    temperature_record = inse[:temperature_record]
-    simulparam = inse[:simulparam]
-    Tmin = inse[:array_parameters][:Tmin]
-    Tmax = inse[:array_parameters][:Tmax]
+function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tdaymax, gvars)
+    temperature_file = gvars[:string_parameters][:temperature_file]
+    temperature_file_exists = gvars[:bool_parameters][:temperature_file_exists]
+    temperature_record = gvars[:temperature_record]
+    simulparam = gvars[:simulparam]
+    Tmin = gvars[:array_parameters][:Tmin]
+    Tmax = gvars[:array_parameters][:Tmax]
 
     tmin_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
     tmax_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
@@ -1922,12 +1922,12 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
 end 
 
 """
-    adjust_calendar_crop!(inse)
+    adjust_calendar_crop!(gvars)
 
 tempprocessing.f90:1467
 """
-function adjust_calendar_crop!(inse)
-    crop = inse[:crop]
+function adjust_calendar_crop!(gvars)
+    crop = gvars[:crop]
     cgcisgiven = true
 
     if crop.ModeCycle==:GDDays
@@ -1936,20 +1936,20 @@ function adjust_calendar_crop!(inse)
         if crop.GDDaysToFullCanopy>crop.GDDaysToHarvest 
             crop.GDDaysToFullCanopy = crop.GDDaysToHarvest
         end 
-        adjust_calendar_days!(inse, cgcisgiven)
+        adjust_calendar_days!(gvars, cgcisgiven)
     end 
     return nothing
 end 
 
 
 """
-    adjust_calendar_days!(inse, iscgcgiven)
+    adjust_calendar_days!(gvars, iscgcgiven)
 
 tempprocessing.f90:1327
 """
-function adjust_calendar_days!(inse, iscgcgiven)
-    crop = inse[:crop]
-    simulparam = inse[:simulparam]
+function adjust_calendar_days!(gvars, iscgcgiven)
+    crop = gvars[:crop]
+    simulparam = gvars[:simulparam]
     plantdaynr = crop.Day1
     infocroptype = crop.subkind
     tbase = crop.Tbase
@@ -1993,33 +1993,33 @@ function adjust_calendar_days!(inse, iscgcgiven)
     succes = true
     if thedaystoccini==0 
         # planting/sowing
-        d0 = sum_calendar_days(gddl0, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, inse)
-        d12 = sum_calendar_days(gddl12, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, inse)
+        d0 = sum_calendar_days(gddl0, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
+        d12 = sum_calendar_days(gddl12, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
     else
         # regrowth
         if thedaystoccini>0 
            # ccini < ccx
            extragddays = gddl12 - gddl0 - thegddaystoccini
-           extradays = sum_calendar_days(extragddays, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, inse)
+           extradays = sum_calendar_days(extragddays, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
            d12 = d0 + thedaystoccini + extradays
         end 
     end 
 
     if infocroptype!=:Forage 
-        d123 = sum_calendar_days(gddl123, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
-        dharvest = sum_calendar_days(gddharvest, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+        d123 = sum_calendar_days(gddl123, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
+        dharvest = sum_calendar_days(gddharvest, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
     end 
 
-    dlzmax = sum_calendar_days(gddlzmax, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+    dlzmax = sum_calendar_days(gddlzmax, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
     if (infocroptype==:Grain) | (infocroptype==:Tuber)
-        dflor = sum_calendar_days(gddflor, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+        dflor = sum_calendar_days(gddflor, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
         if dflor!=undef_int 
             if infocroptype==:Grain 
-                lengthflor = sum_calendar_days(gddlengthflor, (plantdaynr+dflor), tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+                lengthflor = sum_calendar_days(gddlengthflor, (plantdaynr+dflor), tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
             else
                 lengthflor = 0
             end 
-            lhimax = sum_calendar_days(gddhimax, (plantdaynr+dflor), tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+            lhimax = sum_calendar_days(gddhimax, (plantdaynr+dflor), tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
             if (lengthflor==undef_int) | (lhimax==undef_int) 
                 succes = false
             end 
@@ -2029,7 +2029,7 @@ function adjust_calendar_days!(inse, iscgcgiven)
             succes = false
         end 
     elseif (infocroptype==:Vegetative) | (infocroptype==:Forage)
-        lhimax = sum_calendar_days(gddhimax, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+        lhimax = sum_calendar_days(gddhimax, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
     end 
     if (d0==undef_int) | (d12 == undef_int) | (d123==undef_int) | (dharvest==undef_int) | (dlzmax==undef_int) 
         succes = false
@@ -2037,7 +2037,7 @@ function adjust_calendar_days!(inse, iscgcgiven)
 
     if succes 
         cgc = gddl12/d12 * gddcgc
-        cdc = gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, inse)
+        cdc = gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
         d123, stlength, d12, cgc = determine_length_growth_stages(cco, ccx, cdc, d0, dharvest, iscgcgiven, thedaystoccini, theplanting, d123, stlength, d12, cgc)
         if (infocroptype==:Grain) | (infocroptype==:Tuber) 
             dhidt = hindex/lhimax
@@ -2080,11 +2080,11 @@ end
 
 
 """
-    cdc = gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, notempfiletmin, notempfiletmax, inse)
+    cdc = gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
 
 tempprocessing.f90:1545
 """
-function gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, notempfiletmin, notempfiletmax, inse)
+function gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
     gddi = length_canopy_decline(ccx, gddcdc)
     if (gddl123+gddi)<=gddharvest 
         cci = 0 # full decline
@@ -2098,7 +2098,7 @@ function gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase
         # cc at time ti
         cci = ccx * (1 - 0.05 *(exp(gddi*gddcdc*3.33/(ccx+2.29))-1)) 
     end 
-    ti = sum_calendar_days(gddi, (plantdaynr+d123), tbase, tupper, notempfiletmin, notempfiletmax, inse)
+    ti = sum_calendar_days(gddi, (plantdaynr+d123), tbase, tupper, notempfiletmin, notempfiletmax, gvars)
     if ti>0 
         cdc = ((ccx+2.29)/ti * log(1 + (1-cci/ccx)/0.05))/3.33
     else
@@ -2151,17 +2151,17 @@ function adjust_climrecord_to!(clim_record::RepClim, cdayn)
 end
 
 """
-    adjust_simperiod!(inse, projectinput::ProjectInputType)
+    adjust_simperiod!(gvars, projectinput::ProjectInputType)
 
 global.f90:4692
 """
-function adjust_simperiod!(inse, projectinput::ProjectInputType)
-    simulation = inse[:simulation]
-    crop = inse[:crop]
-    clim_file = inse[:string_parameters][:clim_file]
-    clim_record = inse[:clim_record]
-    simulparam = inse[:simulparam]
-    groundwater_file = inse[:string_parameters][:groundwater_file]
+function adjust_simperiod!(gvars, projectinput::ProjectInputType)
+    simulation = gvars[:simulation]
+    crop = gvars[:crop]
+    clim_file = gvars[:string_parameters][:clim_file]
+    clim_record = gvars[:clim_record]
+    simulparam = gvars[:simulparam]
+    groundwater_file = gvars[:string_parameters][:groundwater_file]
 
 
     inisimfromdaynr = simulation.FromDayNr
@@ -2199,10 +2199,10 @@ function adjust_simperiod!(inse, projectinput::ProjectInputType)
             fullfilename = groundwater_file
         end 
         # initialize ZiAqua and ECiAqua
-        load_groundwater!(inse, fullname)
-        calculate_adjusted_fc!(inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua]/100)
-        if inse[:simulation].IniSWC.AtFC 
-            reset_swc_to_fc!(inse[:simulation], inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua])
+        load_groundwater!(gvars, fullname)
+        calculate_adjusted_fc!(gvars[:compartments], gvars[:soil_layers], gvars[:integer_parameters][:ziaqua]/100)
+        if gvars[:simulation].IniSWC.AtFC 
+            reset_swc_to_fc!(gvars[:simulation], gvars[:compartments], gvars[:soil_layers], gvars[:integer_parameters][:ziaqua])
         end 
     end 
 
@@ -2227,13 +2227,13 @@ function determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_recor
 end
 
 """
-    load_groundwater!(inse, fullname)
+    load_groundwater!(gvars, fullname)
 
 global.f90:5981
 """
-function load_groundwater!(inse, fullname)
-    simulparam = inse[:simulparam]
-    simulation = inse[:simulation]
+function load_groundwater!(gvars, fullname)
+    simulparam = gvars[:simulparam]
+    simulation = gvars[:simulation]
     atdaynr = simulation.FromDayNr
 
     atdaynr_local = atdaynr
@@ -2370,8 +2370,8 @@ function load_groundwater!(inse, fullname)
                 end 
                 # variable groundwater table with more than 1 observation
             end 
-            inse[:integer_parameters][:ziaqua] = zcm
-            inse[:float_parameters][:eciaqua] = ecdsm
+            gvars[:integer_parameters][:ziaqua] = zcm
+            gvars[:float_parameters][:eciaqua] = ecdsm
         end 
     end
 
@@ -2499,35 +2499,35 @@ function reset_swc_to_fc!(simulation::RepSim, compartments::Vector{AbstractParam
     return nothing
 end
 """
-    no_irrigation!(inse)
+    no_irrigation!(gvars)
 
 global.f90:2838
 """
-function no_irrigation!(inse)
-    setparameter!(inse[:symbol_parameters], :irrimode, :NoIrri)
-    setparameter!(inse[:symbol_parameters], :irrimethod, :MSprinkler)
-    inse[:simulation].IrriECw = 0
-    setparameter!(inse[:symbol_parameters], :timemode, :AllRAW)
-    setparameter!(inse[:symbol_parameters], :depthmode, :ToFC)
+function no_irrigation!(gvars)
+    setparameter!(gvars[:symbol_parameters], :irrimode, :NoIrri)
+    setparameter!(gvars[:symbol_parameters], :irrimethod, :MSprinkler)
+    gvars[:simulation].IrriECw = 0
+    setparameter!(gvars[:symbol_parameters], :timemode, :AllRAW)
+    setparameter!(gvars[:symbol_parameters], :depthmode, :ToFC)
 
     for nri = 1:5
-        inse[:irri_before_season][nri].DayNr = 0
-        inse[:irri_before_season][nri].Param = 0
-        inse[:irri_after_season][nri].DayNr = 0
-        inse[:irri_after_season][nri].Param = 0
+        gvars[:irri_before_season][nri].DayNr = 0
+        gvars[:irri_before_season][nri].Param = 0
+        gvars[:irri_after_season][nri].DayNr = 0
+        gvars[:irri_after_season][nri].Param = 0
     end 
-    inse[:irri_ecw].PreSeason = 0 
-    inse[:irri_ecw].PostSeason = 0 
+    gvars[:irri_ecw].PreSeason = 0 
+    gvars[:irri_ecw].PostSeason = 0 
 
     return nothing
 end 
 
 """
-    load_irri_schedule_info!(inse, fullname)
+    load_irri_schedule_info!(gvars, fullname)
 
 global.f90:2860
 """
-function load_irri_schedule_info!(inse, fullname)
+function load_irri_schedule_info!(gvars, fullname)
     open(fullname, "r") do file
         readline(file)
         readline(file)
@@ -2535,62 +2535,62 @@ function load_irri_schedule_info!(inse, fullname)
         # irrigation method
         i = parse(Int, split(readline(file))[1])
         if i==1
-            inse[:symbol_parameters][:irrimethod] = :MSprinkler
+            gvars[:symbol_parameters][:irrimethod] = :MSprinkler
         elseif i==2
-            inse[:symbol_parameters][:irrimethod] = :MBasin
+            gvars[:symbol_parameters][:irrimethod] = :MBasin
         elseif i==3
-            inse[:symbol_parameters][:irrimethod] = :MBorder
+            gvars[:symbol_parameters][:irrimethod] = :MBorder
         elseif i==4
-            inse[:symbol_parameters][:irrimethod] = :MFurrow 
+            gvars[:symbol_parameters][:irrimethod] = :MFurrow 
         else
-            inse[:symbol_parameters][:irrimethod] = :MDrip 
+            gvars[:symbol_parameters][:irrimethod] = :MDrip 
         end
         # fraction of soil surface wetted
-        inse[:simulparam].IrriFwInSeason = parse(Int, split(readline(file))[1])
+        gvars[:simulparam].IrriFwInSeason = parse(Int, split(readline(file))[1])
 
         # irrigation mode and parameters
         i = parse(Int, split(readline(file))[1])
         if i==0
-            inse[:symbol_parameters][:irrimode] = :NoIrri
+            gvars[:symbol_parameters][:irrimode] = :NoIrri
         elseif i==1
-            inse[:symbol_parameters][:irrimode] = :Manual
+            gvars[:symbol_parameters][:irrimode] = :Manual
         elseif i==2
-            inse[:symbol_parameters][:irrimode] = :Generate
+            gvars[:symbol_parameters][:irrimode] = :Generate
         else
-            inse[:symbol_parameters][:irrimode] = :Inet
+            gvars[:symbol_parameters][:irrimode] = :Inet
         end 
 
         # 1. Irrigation schedule
         if i == 1
-            inse[:integer_parameters][:irri_first_daynr] = parse(Int, split(readline(file))[1])
+            gvars[:integer_parameters][:irri_first_daynr] = parse(Int, split(readline(file))[1])
         end 
 
 
         # 2. Generate
-        if inse[:symbol_parameters][:irrimode] == :Generate 
+        if gvars[:symbol_parameters][:irrimode] == :Generate 
             i = parse(Int, split(readline(file))[1])
             if i==1
-                inse[:symbol_parameters][:timemode] = :FixInt
+                gvars[:symbol_parameters][:timemode] = :FixInt
             elseif i==2
-                inse[:symbol_parameters][:timemode] = :AllDepl
+                gvars[:symbol_parameters][:timemode] = :AllDepl
             elseif i==3
-                inse[:symbol_parameters][:timemode] = :AllRAW
+                gvars[:symbol_parameters][:timemode] = :AllRAW
             elseif i==4
-                inse[:symbol_parameters][:timemode] = :WaterBetweenBunds
+                gvars[:symbol_parameters][:timemode] = :WaterBetweenBunds
             else
-                inse[:symbol_parameters][:timemode] = :AllRAW
+                gvars[:symbol_parameters][:timemode] = :AllRAW
             end
             i = parse(Int, split(readline(file))[1])
             if i==1
-                inse[:symbol_parameters][:depthmode] = :ToFc
+                gvars[:symbol_parameters][:depthmode] = :ToFc
             else
-                inse[:symbol_parameters][:depthmode] = :FixDepth
+                gvars[:symbol_parameters][:depthmode] = :FixDepth
             end 
         end 
 
         # 3. Net irrigation requirement
-        if inse[:symbol_parameters][:irrimode] == :Inet 
-            inse[:simulparam].PercRAW = parse(Int, split(readline(file))[1])
+        if gvars[:symbol_parameters][:irrimode] == :Inet 
+            gvars[:simulparam].PercRAW = parse(Int, split(readline(file))[1])
         end 
     end
 
@@ -2598,14 +2598,14 @@ function load_irri_schedule_info!(inse, fullname)
 end 
 
 """
-    load_management!(inse, fullname)
+    load_management!(gvars, fullname)
 
 global.f90:3350
 """
-function load_management!(inse, fullname)
-    management = inse[:management]
-    crop = inse[:crop]
-    simulation = inse[:simulation]
+function load_management!(gvars, fullname)
+    management = gvars[:management]
+    crop = gvars[:crop]
+    simulation = gvars[:simulation]
     open(fullname, "r") do file
         readline(file)
         readline(file)
@@ -2694,13 +2694,13 @@ function load_management!(inse, fullname)
 end 
     
 """
-    adjust_size_compartments!(inse, cropzx)
+    adjust_size_compartments!(gvars, cropzx)
 
 global.f90:6563
 """
-function adjust_size_compartments!(inse, cropzx)
-    compartments = inse[:compartments]
-    simulparam = inse[:simulparam]
+function adjust_size_compartments!(gvars, cropzx)
+    compartments = gvars[:compartments]
+    simulparam = gvars[:simulparam]
 
     # 1. Save intial soil water profile (required when initial soil
     # water profile is NOT reset at start simulation - see 7.)
@@ -2757,19 +2757,19 @@ function adjust_size_compartments!(inse, cropzx)
     end 
     # 5. Adjust soil water content and theta initial
     prevecdscomp = zero(prevvolprcomp) #OJO this is not declared in fortran code, but it is implicit value is 0 and that is what we do here
-    adjust_theta_initial!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
+    adjust_theta_initial!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
     return nothing
 end 
 
 """
-    adjust_theta_initial!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
+    adjust_theta_initial!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
 
 global.f90:5852
 """
-function adjust_theta_initial!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
-    compartments = inse[:compartments]
-    soil_layers = inse[:soil_layers]
-    simulation = inse[:simulation]
+function adjust_theta_initial!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
+    compartments = gvars[:compartments]
+    soil_layers = gvars[:soil_layers]
+    simulation = gvars[:simulation]
 
     # 1. Actual total depth of compartments
     totdepthc = 0
@@ -2792,12 +2792,12 @@ function adjust_theta_initial!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, p
     # 4. Adjust initial Soil Water Content of soil compartments
     if simulation.ResetIniSWC 
         if simulation.IniSWC.AtDepths 
-            translate_inipoints_to_swprofile!(inse, simulation.IniSWC.NrLoc, simulation.IniSWC.Loc, simulation.IniSWC.VolProc, simulation.IniSWC.SaltECe)
+            translate_inipoints_to_swprofile!(gvars, simulation.IniSWC.NrLoc, simulation.IniSWC.Loc, simulation.IniSWC.VolProc, simulation.IniSWC.SaltECe)
         else
-            translate_inilayers_to_swprofile!(inse, simulation.IniSWC.NrLoc, simulation.IniSWC.Loc, simulation.IniSWC.VolProc, simulation.IniSWC.SaltECe)
+            translate_inilayers_to_swprofile!(gvars, simulation.IniSWC.NrLoc, simulation.IniSWC.Loc, simulation.IniSWC.VolProc, simulation.IniSWC.SaltECe)
         end 
     else
-        translate_inilayers_to_swprofile!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp) 
+        translate_inilayers_to_swprofile!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp) 
     end 
 
     # 5. Adjust watercontent in soil layers and determine ThetaIni
@@ -2812,20 +2812,20 @@ function adjust_theta_initial!(inse, prevnrcomp, prevthickcomp, prevvolprcomp, p
     for layeri in eachindex(soil_layers)
         total += soil_layers[layeri].WaterContent
     end 
-    inse[:total_water_content].BeginDay = total
+    gvars[:total_water_content].BeginDay = total
 
     return nothing
 end 
 
 """
-    translate_inipoints_to_swprofile!(inse, nrloc, locdepth, locvolpr, locecds)
+    translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, locecds)
 
 global.f90:6258
 """
-function translate_inipoints_to_swprofile!(inse, nrloc, locdepth, locvolpr, locecds)
-    soil_layers = inse[:soil_layers]
-    compartments = inse[:compartments]
-    simulparam = inse[:simulparam]
+function translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, locecds)
+    soil_layers = gvars[:soil_layers]
+    compartments = gvars[:compartments]
+    simulparam = gvars[:simulparam]
     nrcomp = length(compartments)
 
     totd = 0
@@ -2989,14 +2989,14 @@ function salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::
 end 
 
 """
-    translate_inilayers_to_swprofile!(inse, nrlay, laythickness, layvolpr, layecds)
+    translate_inilayers_to_swprofile!(gvars, nrlay, laythickness, layvolpr, layecds)
 
 global.f90:6179
 """
-function translate_inilayers_to_swprofile!(inse, nrlay, laythickness, layvolpr, layecds)
-    compartments = inse[:compartments]
-    soil_layers = inse[:soil_layers]
-    simulparam = inse[:simulparam]
+function translate_inilayers_to_swprofile!(gvars, nrlay, laythickness, layvolpr, layecds)
+    compartments = gvars[:compartments]
+    soil_layers = gvars[:soil_layers]
+    simulparam = gvars[:simulparam]
     nrcomp = length(compartments)
 
     # from specific layers to Compartments
@@ -3057,12 +3057,12 @@ function translate_inilayers_to_swprofile!(inse, nrlay, laythickness, layvolpr, 
 end 
 
 """
-     load_initial_conditions!(inse, swcinifilefull)
+     load_initial_conditions!(gvars, swcinifilefull)
 
 global.f90:6486
 """
-function load_initial_conditions!(inse, swcinifilefull)
-    simulation = inse[:simulation]
+function load_initial_conditions!(gvars, swcinifilefull)
+    simulation = gvars[:simulation]
     # IniSWCRead attribute of the function was removed to fix a
     # bug occurring when the function was called in TempProcessing.pas
     # Keep in mind that this could affect the graphical interface
@@ -3071,7 +3071,7 @@ function load_initial_conditions!(inse, swcinifilefull)
         simulation.CCini = parse(Float64, split(readline(file))[1]) 
         simulation.Bini = parse(Float64, split(readline(file))[1]) 
         simulation.Zrini = parse(Float64, split(readline(file))[1]) 
-        setparameter!(inse[:float_parameters], :surfacestorage, parse(Float64, split(readline(file))[1]))
+        setparameter!(gvars[:float_parameters], :surfacestorage, parse(Float64, split(readline(file))[1]))
         simulation.ECStorageIni = parse(Float64, split(readline(file))[1])
         i = parse(Int, split(readline(file))[1])
         if i==1
@@ -3096,13 +3096,13 @@ function load_initial_conditions!(inse, swcinifilefull)
 end 
 
 """
-    ece = ececomp(compartment::CompartmentIndividual, inse)
+    ece = ececomp(compartment::CompartmentIndividual, gvars)
 
 global.f90:2523
 """
-function ececomp(compartment::CompartmentIndividual, inse)
-    soil_layers = inse[:soil_layers]
-    simulparam = inse[:simulparam]
+function ececomp(compartment::CompartmentIndividual, gvars)
+    soil_layers = gvars[:soil_layers]
+    simulparam = gvars[:simulparam]
 
     volsat = soil_layers[compartment.Layer].SAT
     totsalt = 0
@@ -3120,16 +3120,16 @@ function ececomp(compartment::CompartmentIndividual, inse)
 end 
 
 """
-    load_offseason!(inse, fullname)
+    load_offseason!(gvars, fullname)
 
 global.f90:5769
 """
-function load_offseason!(inse, fullname)
-    management = inse[:management]
-    simulation = inse[:management]
-    irri_before_season = inse[:irri_before_season]
-    irri_after_season = inse[:irri_after_season]
-    irri_ecw = inse[:irri_ecw]
+function load_offseason!(gvars, fullname)
+    management = gvars[:management]
+    simulation = gvars[:management]
+    irri_before_season = gvars[:irri_before_season]
+    irri_after_season = gvars[:irri_after_season]
+    irri_ecw = gvars[:irri_ecw]
 
     if isfile(fullname)
         open(fullname, "r") do file
@@ -3186,17 +3186,17 @@ function load_offseason!(inse, fullname)
 end 
 
 """
-    adjust_compartments!(inse)
+    adjust_compartments!(gvars)
 
 run.f90:6619
 """
-function adjust_compartments!(inse)
-    simulation = inse[:simulation]
-    crop = inse[:crop]
-    soil = inse[:soil]
-    soil_layers = inse[:soil_layers]
-    compartments = inse[:compartments]
-    ziaqua = inse[:integer_parameters][:ziaqua]
+function adjust_compartments!(gvars)
+    simulation = gvars[:simulation]
+    crop = gvars[:crop]
+    soil = gvars[:soil]
+    soil_layers = gvars[:soil_layers]
+    compartments = gvars[:compartments]
+    ziaqua = gvars[:integer_parameters][:ziaqua]
     # Adjust size of compartments if required
     totdepth = 0
     for i in eachindex(compartments) 
@@ -3205,13 +3205,13 @@ function adjust_compartments!(inse)
     if simulation.MultipleRunWithKeepSWC 
         # Project with a sequence of simulation runs and KeepSWC
         if round(Int, simulation.MultipleRunConstZrx*1000)>round(Int,totdepth*1000)
-            adjust_size_compartments!(inse, simulation.MultipleRunConstZrx)
+            adjust_size_compartments!(gvars, simulation.MultipleRunConstZrx)
         end 
     else
         if round(Int, crop.RootMax*1000)>round(Int,totdepth*1000)
             if round(Int, soil.RootMax*1000)==round(Int, crop.RootMax*1000)
                 # no restrictive soil layer
-                adjust_size_compartments!(inse, crop.RootMax)
+                adjust_size_compartments!(gvars, crop.RootMax)
                 # adjust soil water content
                 calculate_adjusted_fc!(compartments, soil_layers, ziaqua/100) 
                 if simulation.IniSWC.AtFC
@@ -3220,7 +3220,7 @@ function adjust_compartments!(inse)
             else
                 # restrictive soil layer
                 if round(Int, soil.RootMax*1000)>round(Int,totdepth*1000)
-                    adjust_size_compartments!(inse, soil.RootMax)
+                    adjust_size_compartments!(gvars, soil.RootMax)
                     # adjust soil water content
                     calculate_adjusted_fc!(compartments, soil_layers, ziaqua/100) 
                     if simulation.IniSWC.AtFC
@@ -3233,18 +3233,18 @@ function adjust_compartments!(inse)
 end 
 
 """
-    reset_previous_sum!(inse)
+    reset_previous_sum!(gvars)
 
 run.f90:3445
 """
-function reset_previous_sum!(inse)
-    inse[:previoussum] = RepSum()
+function reset_previous_sum!(gvars)
+    gvars[:previoussum] = RepSum()
     
-    setparameter!(inse[:float_parameters], :sumeto, 0)
-    setparameter!(inse[:float_parameters], :sumgdd, 0)
-    setparameter!(inse[:float_parameters], :previoussumeto, 0)
-    setparameter!(inse[:float_parameters], :previoussumgdd, 0)
-    setparameter!(inse[:float_parameters], :previousbmob, 0)
-    setparameter!(inse[:float_parameters], :previousbsto, 0)
+    setparameter!(gvars[:float_parameters], :sumeto, 0)
+    setparameter!(gvars[:float_parameters], :sumgdd, 0)
+    setparameter!(gvars[:float_parameters], :previoussumeto, 0)
+    setparameter!(gvars[:float_parameters], :previoussumgdd, 0)
+    setparameter!(gvars[:float_parameters], :previousbmob, 0)
+    setparameter!(gvars[:float_parameters], :previousbsto, 0)
 end 
 

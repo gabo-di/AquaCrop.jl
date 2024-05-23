@@ -1,9 +1,9 @@
 """
-   runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, inse)
+   runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, gvars)
 
 global.f90:6643
 """
-function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, inse)
+function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, gvars)
     # @NOTE This procedure will try to read from the soil profile file.
     # If this file does not exist, the necessary information is gathered
     # from the attributes of the Soil global variable instead.
@@ -23,15 +23,15 @@ function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, i
     if (has_external) 
         # Note: here we use the AquaCrop version number and assume that
         # the same version can be used in finalizing the soil settings.
-        soil = inse[:soil]
-        soil_layers = inse[:soil_layers]
-        compartments = inse[:compartments]
+        soil = gvars[:soil]
+        soil_layers = gvars[:soil_layers]
+        compartments = gvars[:compartments]
     elseif (filename == "(None)") 
-        soil = inse[:soil]
-        soil_layers = inse[:soil_layers]
-        compartments = inse[:compartments]
+        soil = gvars[:soil]
+        soil_layers = gvars[:soil_layers]
+        compartments = gvars[:compartments]
     else
-        soil, soil_layers, compartments = load_profile(filepaths[:prog]*projectinput[1].Soil_Directory*filename, inse[:simulparam])
+        soil, soil_layers, compartments = load_profile(filepaths[:prog]*projectinput[1].Soil_Directory*filename, gvars[:simulparam])
     end 
 
     # 3. Check if runs with KeepSWC exist
@@ -302,7 +302,7 @@ end
 
 
 """
-    inse = initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
+    gvars = initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
 
 gets the initial settings.
 
