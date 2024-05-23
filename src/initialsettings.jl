@@ -376,6 +376,9 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     perennial_period = RepPerennialPeriod()
     crop_file_set = RepCropFileSet()
 
+    # 11.3 Extra variables for run
+    gwtable = RepGwTable()
+
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
     setparameter!(float_parameters, :eto, 5.0)
@@ -456,6 +459,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
         temperature_record = temperature_record,
         perennial_period = perennial_period,
         crop_file_set = crop_file_set,
+        gwtable = gwtable,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,

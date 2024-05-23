@@ -1094,3 +1094,17 @@ end
     GDDaysToHarvest::Int=undef_int
 end
 
+"""
+    gwtable = RepGwTable()
+"""
+@kwdef mutable struct RepGwTable <: AbstractParametersContainer
+    "Undocumented"
+    DNr1::Int=undef_int
+    DNr2::Int=undef_int
+    "cm"
+    Z1::Int=undef_int
+    Z2::Int=undef_int
+    "dS/m"
+    EC1::Float64=undef_double
+    EC2::Float64=undef_double
+end

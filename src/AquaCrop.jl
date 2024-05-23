@@ -7,6 +7,7 @@ using ComponentArrays
 include("types.jl")
 include("utils.jl")
 include("initialsettings.jl")
+include("loadsimulation.jl")
 include("runsim.jl")
 include("FieldCrop.jl")
 include("main.jl")
