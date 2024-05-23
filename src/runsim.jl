@@ -52,39 +52,40 @@ function initialize_simulation_run_part1!(inse, projectinput::ProjectInputType)
 
     # 1.2 Check if FromDayNr simulation needs to be adjusted
     # from previous run if Keep initial SWC
-    if ((GetSWCIniFile() == 'KeepSWC') .and. &
-        (GetNextSimFromDayNr() /= undef_int)) then
+    if (projectinput.SWCIni_Filename=="KeepSWC") & (inse[:integer_parameters][:nextsim_from_daynr] != undef_int) 
         # assign the adjusted DayNr defined in previous run
-        if (GetNextSimFromDayNr() <= GetCrop_Day1()) then
-            call SetSimulation_FromDayNr(GetNextSimFromDayNr())
+        if inse[:integer_parameters][:nextsim_from_daynr] <= inse[:crop].Day1
+            inse[:simulation].FromDayNr = inse[:integer_parameters][:nextsim_from_daynr]
         end 
     end 
-    call SetNextSimFromDayNr(undef_int)
+    setparameter!(inse[:integer_parameters], :nextsim_from_daynr, undef_int)
 
     # 2. initial settings for Crop
-    call SetCrop_pActStom(GetCrop_pdef())
-    call SetCrop_pSenAct(GetCrop_pSenescence())
-    call SetCrop_pLeafAct(GetCrop_pLeafDefUL())
-    call SetEvapoEntireSoilSurface(.true.)
-    call SetSimulation_EvapLimitON(.false.)
-    call SetSimulation_EvapWCsurf(0._dp)
-    call SetSimulation_EvapZ(EvapZmin/100._dp)
-    call SetSimulation_SumEToStress(0._dp)
-    call SetCCxWitheredTpotNoS(0._dp) # for calculation Maximum Biomass
-                                      # unlimited soil fertility
-    call SetSimulation_DayAnaero(0_int8) # days of anaerobic conditions in
-                                    # global root zone
+    inse[:crop].pActStom = inse[:crop].pdef
+    inse[:crop].pSenAct = inse[:crop].pSenescence
+    inse[:crop].pLeafAct = inse[:crop].pLeafDefUL
+    setparameter!(inse[:bool_parameters], :evapo_entire_soil_surface, true)
+    inse[:simulation].EvapLimitON = false
+    inse[:simulation].EvapWCsurf = 0
+    inse[:simulation].EvapZ = EvapZmin/100
+    inse[:simulation].SumEToStress = 0
+    # for calculation Maximum Biomass
+    # unlimited soil fertility
+    setparameter!(inse[:float_parameters], :ccxwitheredtpotnos, 0)
+    # days of anaerobic conditions in
+    # global root zone
+    inse[:simulation].DayAnaero = 0
+    
+
     # germination
-    if ((GetCrop_Planting() == plant_Seed) .and. &
-        (GetSimulation_FromDayNr() <= GetCrop_Day1())) then
-        call SetSimulation_Germinate(.false.)
+    if (inse[:crop].Planting == :Seed) & (inse[:simulation].FromDayNr<=inse[:crop].Day1)
+        inse[:simulation].Germinate = false
     else
-        call SetSimulation_Germinate(.true.)
-        # since already germinated no protection required
-        call SetSimulation_ProtectedSeedling(.false.)
-    end 
+        inse[:simulation].Germinate = true 
+        inse[:simulation].ProtectedSeedling = false
+    end
     # delayed germination
-    call SetSimulation_DelayedDays(0)
+    inse[:simulation].DelayedDays = 0
 
     # 3. create temperature file covering crop cycle
     if (GetTemperatureFile() /= '(None)') then

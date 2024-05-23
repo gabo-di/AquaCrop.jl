@@ -398,6 +398,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(float_parameters, :previoussumgdd, undef_double)
     setparameter!(float_parameters, :previousbmob, undef_double)
     setparameter!(float_parameters, :previousbsto, undef_double)
+    setparameter!(float_parameters, :ccxwitheredtpotnos, undef_double)
 
     symbol_parameters = ParametersContainer(Symbol)
     setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
@@ -412,10 +413,12 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(integer_parameters, :maxplottr, 10)
     setparameter!(integer_parameters, :irri_first_daynr, undef_int)
     setparameter!(integer_parameters, :ziaqua, undef_int)
+    setparameter!(integer_parameters, :nextsim_from_daynr, 0)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
     setparameter!(bool_parameters, :temperature_file_exists, undef_bool)
+    setparameter!(bool_parameters, :evapo_entire_soil_surface, undef_bool)
 
     array_parameters = ParametersContainer(Vector{Float64})
     setparameter!(array_parameters, :Tmin, Float64[])
@@ -436,6 +439,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(string_parameters, :CO2_file, "MaunaLoa.CO2")
     setparameter!(string_parameters, :irri_file, "(None)")
     setparameter!(string_parameters, :offseason_file, "(None)")
+    setparameter!(string_parameters, :swcini_file, undef_str)
 
 
     return ComponentArray(
