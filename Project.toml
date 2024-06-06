@@ -9,6 +9,7 @@ Infiltrator = "5903a43b-9cc3-4c30-8d17-598619ec4e9b"
 
 [compat]
 ComponentArrays = "0.15"
+Infiltrator = "1"
 julia = "1.9"
 
 [extras]
