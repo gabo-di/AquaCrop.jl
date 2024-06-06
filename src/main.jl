@@ -10,6 +10,8 @@ starts the program
 startunit.f90:931
 """
 function start_the_program(parentdir=nothing)
+    outputs = start_outputs()
+
     if isnothing(parentdir)
         parentdir = pwd()
     end
@@ -25,9 +27,9 @@ function start_the_program(parentdir=nothing)
         theprojectfile = project_filenames[i]
         theprojecttype = get_project_type(theprojectfile)
         gvars, projectinput, fileok = initialize_project(i, theprojectfile, theprojecttype, filepaths)
-        run_simulation(gvars, projectinput)
+        run_simulation!(outputs, gvars, projectinput)
     end
-end # not end
+end # notend
 
 
 """

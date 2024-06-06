@@ -378,6 +378,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
 
     # 11.3 Extra variables for run
     gwtable = RepGwTable()
+    stresstot = RepStressTot()
 
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
@@ -399,6 +400,8 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(float_parameters, :previousbmob, undef_double)
     setparameter!(float_parameters, :previousbsto, undef_double)
     setparameter!(float_parameters, :ccxwitheredtpotnos, undef_double)
+    setparameter!(float_parameters, :co2i, undef_double)
+    setparameter!(float_parameters, :fracbiomasspotsf, undef_double)
 
     symbol_parameters = ParametersContainer(Symbol)
     setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
@@ -464,6 +467,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
         perennial_period = perennial_period,
         crop_file_set = crop_file_set,
         gwtable = gwtable,
+        stresstot = stresstot,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,
