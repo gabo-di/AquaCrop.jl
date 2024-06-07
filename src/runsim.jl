@@ -761,7 +761,11 @@ end #notend
 
 tempprocessing.f90:3067
 """
-function stress_biomass_relationship(outputs, crop::RepCrop, simulparam::RepParam, co2given)
+function stress_biomass_relationship!(outputs, gvars, co2given)
+    crop = gvars[:crop]
+    simulparam = gvars[:simulparam]
+    simulation = gvars[:simulation]
+
     thedaystoccini = crop.DaysToCCini
     thegddaystoccini = crop.GDDaysToCCini
     l0 = crop.DaysToGermination
@@ -812,134 +816,130 @@ function stress_biomass_relationship(outputs, crop::RepCrop, simulparam::RepPara
     stress_matrix = StressIndexes[StressIndexes() for _ in 1:8]
 
     # 1. initialize
-    # required for CalculateETpot
-    simulation.DelayedDays = 0
     # to calculate SumKcTop (no stress)
     l12sf = l12
     # to calculate SumKcTop (no stress)
     gddl12sf = gddl12
     # Maximum sum Kc (no stress)
+    simulation.DelayedDays = 0 #note that we need to do this before calling seasonal_sum_of_kcpot
     sumkctop = seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini,
         l0, l12, l123, l1234, gddl0, gddl12, gddl123, gddl1234,
         cco, ccx, cgc, gddcgc, cdc, gddcdc, kctop, kcdeclageing,
         cceffectprocent, tbase, tupper, tdaymin, tdaymax, 
-        gdtransplow, co2given, themodecycle)
+        gdtransplow, co2given, themodecycle, simulation, simulparam)
 
     # Get PercentLagPhase (for estimate WPi during yield formation)
     if (thecroptype == :Tuber) | (thecroptype == :Grain) 
         # DaysToFlowering corresponds with Tuberformation
         daysyieldformation = round(Int, refhi/ratedhidt)
         if cropdeterm 
-            HIGC = HarvestIndexGrowthCoefficient(real(RefHI, kind=dp), RatedHIdt)
-            call GetDaySwitchToLinear(RefHI, RatedHIdt, HIGC, tSwitch,&
-                  HIGClinear)
+            higc = harvest_index_growth_coefficient(refhi, ratedhidt)
+            tswitch, higclinear = get_days_witch_to_linear(refhi, ratedhidt, higc)
         else
-            tswitch = roundc(Int, daysyieldformation/3)
+            tswitch = round(Int, daysyieldformation/3)
         end 
     end 
 
     # 2. Biomass production for various stress levels
-    do Si = 1, 8
+    for si in 1:8
         # various stress levels
         # stress effect
-        SiPr = int(10*(Si-1), kind=int8)
-        StressMatrix(Si)%StressProc = SiPr
-        call CropStressParametersSoilFertility(CropSResp, SiPr, StressResponse)
+        sipr = 10*(si-1)
+        stress_matrix[si].StressProc = sipr
+        stress_response = crop_stress_parameters_soil_fertility(cropsresp, sipr)
         # adjusted length of Max canopy cover
-        RatDGDD = 1
-        if ((StressResponse%RedCCX == 0) .and. &
-            (StressResponse%RedCGC == 0))then
-            L12SF = L12
-            GDDL12SF = GDDL12
+        ratdgdd = 1
+        if (stress_response.RedCCX == 0) & (stress_response.RedCGC == 0)
+            l12sf = l12
+            gddl12sf = gddl12
         else
-            call TimeToMaxCanopySF(CCo, CGC, CCx, L0, L12, L123, LFlor,&
-                   LengthFlor, CropDeterm, L12SF, StressResponse%RedCGC,&
-                   StressResponse%RedCCX, SiPr)
-            if (TheModeCycle == modeCycle_GDDays) then
-                TDayMin_temp = TDayMin
-                TDayMax_temp = TDayMax
-                GDDL12SF = GrowingDegreeDays(L12SF, CropDNr1, Tbase, Tupper,&
-                                 TDayMin_temp, TDayMax_temp)
-            end if
-            if ((TheModeCycle == modeCycle_GDDays) .and. (GDDL12SF < GDDL123)) then
-                RatDGDD = (L123-L12SF)*1._dp/(GDDL123-GDDL12SF)
-            end if
-        end if
+            l12sf, stress_response.RedCGC, stress_response.RedCCX, sipr = time_to_max_canopy_sf(
+                                    cco, cgc, ccx, l0, l12, l123, lflor,
+                                    lengthflor, cropdeterm,
+                                    l12sf, stress_response.RedCGC,
+                                    stress_response.RedCCX, sipr)
+            if themodecycle == :GDDays 
+                tdaymin_temp = tdaymin
+                tdaymax_temp = tdaymax
+                gddl12sf = growing_degree_days(l12sf, cropdnr1, tbase, tupper, gvars, tdaymin_temp, tdaymax_temp)
+            end 
+            if (themodecycle == :GDDays) & (gddl12sf < gddl123) 
+                ratdgdd = (l123-l12sf)*1/(gddl123-gddl12sf)
+            end 
+        end 
         # biomass production
-        BNor = Bnormalized(TheDaysToCCini, TheGDDaysToCCini,&
-                L0, L12, L12SF, L123, L1234, LFlor,&
-                GDDL0, GDDL12, GDDL12SF, GDDL123, GDDL1234, WPyield, &
-                DaysYieldFormation, tSwitch, CCo, CCx, CGC, GDDCGC, CDC,&
-                GDDCDC, KcTop, KcDeclAgeing, CCeffectProcent, WPveg, CO2Given,&
-                Tbase, Tupper, TDayMin, TDayMax, GDtranspLow, RatDGDD,&
-                SumKcTop, SiPr, StressResponse%RedCGC, StressResponse%RedCCX,&
-                StressResponse%RedWP, StressResponse%RedKsSto, 0_int8, 0 ,&
-                StressResponse%CDecline, -0.01_dp, TheModeCycle, .true.,&
-                .false.)
-        if (Si == 1) then
-            BNor100 = BNor
-            StressMatrix(1)%BioMProc = 100._dp
+        bnor = bnormalized(thedaystoccini, thegddaystoccini,
+                l0, l12, l12sf, l123, l1234, lflor,
+                gddl0, gddl12, gddl12sf, gddl123, gddl1234, wpyield, 
+                daysyieldformation, tswitch, cco, ccx, cgc, gddcgc, cdc,
+                gddcdc, kctop, kcdeclageing, cceffectprocent, wpveg, co2given,
+                tbase, tupper, tdaymin, tdaymax, gdtransplow, ratdgdd,
+                sumkctop, sipr, stress_response.RedCGC, stress_response.RedCCX,
+                stress_response.RedWP, stress_response.RedKsSto, 0, 0,
+                stress_response.CDecline, -0.01, themodecycle, true,
+                false)
+        if si == 1 
+            bnor100 = bnor
+            stress_matrix[1].BioMProc = 100
         else
-            if (BNor100 > 0.00001_dp) then
-                StressMatrix(Si)%BioMProc = 100._dp * BNor/BNor100
+            if bnor100 > 0.00001 
+                stress_matrix[si].BioMProc = 100 * bnor/bnor100
             else
-                StressMatrix(Si)%BioMProc = 100._dp
-            end if
-        end if
-        StressMatrix(Si)%BioMSquare =&
-             StressMatrix(Si)%BioMProc *&
-             StressMatrix(Si)%BioMProc
+                stress_matrix[si].BioMProc = 100
+            end 
+        end 
+        stress_matrix[si].BioMSquare = stress_matrix[si].BioMProc^2
         # end stress level
-    end do
+    end 
 
     # 5. Stress - Biomass relationship
-    Yavg = 0._dp
-    X1avg = 0._dp
-    X2avg = 0._dp
-    do Si = 1, 8
+    yavg = 0
+    x1avg = 0
+    x2avg = 0
+    for si in 1:8
         # various stress levels
-        Yavg = Yavg + StressMatrix(Si)%StressProc
-        X1avg = X1avg + StressMatrix(Si)%BioMProc
-        X2avg = X2avg + StressMatrix(Si)%BioMSquare
+        yavg += stress_matrix[si].StressProc
+        x1avg += stress_matrix[si].BioMProc
+        x2avg += stress_matrix[si].BioMSquare
     end do
-    Yavg  = Yavg/8._dp
-    X1avg = X1avg/8._dp
-    X2avg = X2avg/8._dp
-    SUMx1y  = 0._dp
-    SUMx2y  = 0._dp
-    SUMx1Sq = 0._dp
-    SUMx2Sq = 0._dp
-    SUMx1x2 = 0._dp
-    do Si = 1, 8
+    yavg  = yavg/8
+    x1avg = x1avg/8
+    x2avg = x2avg/8
+    sumx1y  = 0
+    sumx2y  = 0
+    sumx1sq = 0
+    sumx2sq = 0
+    sumx1x2 = 0
+    for si in 1:8
         # various stress levels
-        y     = StressMatrix(Si)%StressProc - Yavg
-        x1    = StressMatrix(Si)%BioMProc - X1avg
-        x2    = StressMatrix(Si)%BioMSquare - X2avg
+        y     = stress_matrix[si].StressProc - yavg
+        x1    = stress_matrix[si].BioMProc - x1avg
+        x2    = stress_matrix[si].BioMSquare - x2avg
         x1y   = x1 * y
         x2y   = x2 * y
-        x1Sq  = x1 * x1
-        x2Sq  = x2 * x2
+        x1sq  = x1 * x1
+        x2sq  = x2 * x2
         x1x2  = x1 * x2
-        SUMx1y  = SUMx1y + x1y
-        SUMx2y  = SUMx2y + x2y
-        SUMx1Sq = SUMx1Sq + x1Sq
-        SUMx2Sq = SUMx2Sq + x2Sq
-        SUMx1x2 = SUMx1x2 + x1x2
-    end do
+        sumx1y  = sumx1y + x1y
+        sumx2y  = sumx2y + x2y
+        sumx1sq = sumx1sq + x1sq
+        sumx2sq = sumx2sq + x2sq
+        sumx1x2 = sumx1x2 + x1x2
+    end 
 
-    if (abs(roundc(SUMx1x2*1000._dp, mold=1)) /= 0) then
-        b2 = (SUMx1y - (SUMx2y * SUMx1Sq)/SUMx1x2)/&
-             (SUMx1x2 - (SUMx1Sq * SUMx2Sq)/SUMx1x2)
-        b1 = (SUMx1y - b2 * SUMx1x2)/SUMx1Sq
-        b0 = Yavg - b1*X1avg - b2*X2avg
+    if abs(round(Int, sumx1x2*1000)) != 0 
+        b2 = (sumx1y - (sumx2y * sumx1sq)/sumx1x2)/
+             (sumx1x2 - (sumx1sq * sumx2sq)/sumx1x2)
+        b1 = (sumx1y - b2 * sumx1x2)/sumx1sq
+        b0 = yavg - b1*x1avg - b2*x2avg
 
-        BM10 =  StressMatrix(2)%BioMProc
-        BM20 =  StressMatrix(3)%BioMProc
-        BM30 =  StressMatrix(4)%BioMProc
-        BM40 =  StressMatrix(5)%BioMProc
-        BM50 =  StressMatrix(6)%BioMProc
-        BM60 =  StressMatrix(7)%BioMProc
-        BM70 =  StressMatrix(8)%BioMProc
+        bm10 =  stress_matrix[2].BioMProc
+        bm20 =  stress_matrix[3].BioMProc
+        bm30 =  stress_matrix[4].BioMProc
+        bm40 =  stress_matrix[5].BioMProc
+        bm50 =  stress_matrix[6].BioMProc
+        bm60 =  stress_matrix[7].BioMProc
+        bm70 =  stress_matrix[8].BioMProc
     else
         b2 = real(undef_int, kind=dp)
         b1 = real(undef_int, kind=dp)
@@ -950,25 +950,30 @@ function stress_biomass_relationship(outputs, crop::RepCrop, simulparam::RepPara
 end #notend
 
 """
+    sumkcpot = seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l12, 
+                                     l123, l1234, gddl0, gddl12, gddl123, 
+                                     gddl1234, cco, ccx, cgc, gddcgc, cdc, 
+                                     gddcdc, kctop, kcdeclageing, 
+                                     cceffectprocent, tbase, tupper, tdaymin, 
+                                     tdaymax, gdtransplow, co2i, themodecycle,
+                                     simulation, simulparam)
 
 global.f90:5315
+note that we must do simulation.DelayedDays = 0 before calling this function
 """
 function seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l12, 
                                      l123, l1234, gddl0, gddl12, gddl123, 
                                      gddl1234, cco, ccx, cgc, gddcgc, cdc, 
                                      gddcdc, kctop, kcdeclageing, 
                                      cceffectprocent, tbase, tupper, tdaymin, 
-                                     tdaymax, gdtransplow, co2i, themodecycle)
-
-    simulation!!
-    simulparam!!
-
+                                     tdaymax, gdtransplow, co2i, themodecycle,
+                                     simulation, simulparam)
     # 1. Open Temperature file
-    loggi =  (length(outputs[:tcropsim][:tlow]) > 0) 
+    loggi = (length(outputs[:tcropsim][:tlow]) > 0) 
 
     # 2. Initialise global settings
     # required for CalculateETpot
-    simulation.DelayedDays = 0
+    # simulation.DelayedDays = 0   note that this should do before calling this function
     sumkcpot = 0
     sumgddforplot = undef_int 
     sumgdd = undef_int
@@ -1001,7 +1006,7 @@ function seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l1
                                               gddl123, gddl1234, cco, ccx, 
                                               cgc, cdc, gddcgc, gddcdc, 
                                               sumgddforplot, themodecycle, 
-                                              0, 0)
+                                              0, 0, simulation)
         end 
         # Time reduction for days between L12 and L123
         dayfraction = (l123-l12)/(tadj + l0 + (l123-l12))
@@ -1093,7 +1098,7 @@ function seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l1
                                         gddl123, gddl1234, cco, ccx, 
                                         cgc, cdc, gddcgc, gddcdc, 
                                         sumgddforplot, themodecycle, 
-                                        0, 0)
+                                        0, 0, simulation)
         end
 
         # 3.3 calculate CCxWithered
@@ -1105,11 +1110,11 @@ function seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l1
         # 3.4 Calculate Tpot + Adjust for Low temperature
         # (no transpiration)
         if cci > 0.0001
-            calculate_etpot(daycc, l0, l12, l123, l1234, 0, cci, 
+            tpotforb, epottotforb = calculate_etpot(daycc, l0, l12, l123, l1234, 0, cci, 
                            etostandard, kctop, 
                            kcdeclageing, ccx, ccxwitheredforb, 
                            cceffectprocent, co2i, 
-                           gddi, gdtransplow, tpotforb, epottotforb)
+                           gddi, gdtransplow, simulation, simulparam) 
         else
             tpotforb = 0
         end 
@@ -1120,5 +1125,387 @@ function seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l1
 
     # 6. final sum
     return sumkcpot
-end #notend
+end 
 
+"""
+    canopycovernostresssf = canopy_cover_no_stress_sf(dap, l0, l123, 
+       lmaturity, gddl0, gddl123, gddlmaturity, cco, ccx,
+       cgc, cdc, gddcgc, gddcdc, sumgdd, typedays, sfredcgc, sfredccx, simulation)
+
+global.f90:1299
+"""
+function canopy_cover_no_stress_sf(dap, l0, l123, 
+       lmaturity, gddl0, gddl123, gddlmaturity, cco, ccx,
+       cgc, cdc, gddcgc, gddcdc, sumgdd, typedays, sfredcgc, sfredccx, simulation)
+    if typedays == :GDDays
+        canopycovernostresssf = canopy_cover_no_stress_gddays_sf(gddl0, gddl123,
+            gddlmaturity, sumgdd, cco, ccx, gddcgc, gddcdc, sfredcgc, sfredccx)
+    else
+        canopycovernostresssf = canopy_cover_no_stress_days_sf(dap, l0, l123,
+            lmaturity, cco, ccx, cgc, cdc, sfredcgc, sfredccx, simulation)
+    end 
+    return canopycovernostresssf
+end 
+
+
+"""
+    cc = canopy_cover_no_stress_days_sf(dap, l0, l123,
+       lmaturity, cco, ccx, cgc, cdc, sfredcgc, sfredccx, simulation)
+
+global.f90:1333
+"""
+function canopy_cover_no_stress_days_sf(dap, l0, l123,
+       lmaturity, cco, ccx, cgc, cdc, sfredcgc, sfredccx, simulation)
+    # CanopyCoverNoStressDaysSF
+    cc = 0
+    t = dap - simulation.DelayedDays
+    # CC refers to canopy cover at the end of the day
+
+    if (t >= 1) & (t <= lmaturity) & (cco > eps()) 
+        if t <= l0  # before germination or recovering of transplant
+            cc = 0
+        else
+            if t < l123  # Canopy development and Mid-season stage
+                cc = ccattime((t-l0), cco, ((1-sfredcgc/100)*cgc),
+                              ((1-sfredccx/100)*ccx))
+            else
+               # Late-season stage  (t <= LMaturity)
+                if ccx < 0.001 
+                    cc = 0
+                else
+                    ccxadj = ccattime((l123-l0), cco, 
+                              ((1-sfredcgc/100)*cgc),
+                              ((1-sfredccx/100)*ccx))
+                    cdcadj = cdc*(ccxadj+2.29)/(ccx+2.29)
+                    if ccxadj < 0.001 
+                        cc = 0
+                    else
+                        cc = ccxadj * (1 - 0.05 *
+                             (exp((t-l123)*3.33*cdcadj/(ccxadj+2.29))-1))
+                    end 
+                end 
+            end 
+        end 
+    end
+    if cc > 1
+        cc = 1
+    elseif cc < eps()
+        cc = 0
+    end 
+
+    return cc
+end 
+
+"""
+    cc = canopy_cover_no_stress_gddays_sf(gddl0, gddl123, gddlmaturity, sumgdd, 
+        cco, ccx, gddcgc, gddcdc, sfredcgc, sfredccx)
+
+global.f90:2670
+"""
+function canopy_cover_no_stress_gddays_sf(gddl0, gddl123, gddlmaturity, sumgdd, 
+        cco, ccx, gddcgc, gddcdc, sfredcgc, sfredccx)
+    # sumgdd refers to the end of the day and delayed days are not considered
+    cc = 0
+    if (sumgdd > 0) & (round(Int, sumgdd) <= gddlmaturity) & (cco > 0) 
+        if sumgdd <= gddl0  # before germination or recovering of transplant
+            cc = 0
+        else
+            if sumgdd < gddl123  # canopy development and mid-season stage
+                cc = ccatgdd((sumgdd-gddl0), cco, ((1-sfredcgc/100)*gddcgc), 
+                  ((1-sfredccx/100)*ccx))
+            else
+                # late-season stage  (sumgdd <= gddlmaturity)
+                if ccx < 0.001
+                    cc = 0
+                else
+                    ccxadj = ccatgdd((gddl123-gddl0), cco, ((1-sfredcgc/100)*gddcgc), 
+                      ((1-sfredccx/100)*ccx))
+                    gddcdcadj = gddcdc*(ccxadj+2.29)/(ccx+2.29)
+                    if (ccxadj < 0.001) 
+                        cc = 0
+                    else
+                        cc = ccxadj * (1 - 0.05*(exp((sumgdd-gddl123)*3.33*gddcdcadj/
+                          (ccxadj+2.29))-1))
+                    end 
+                end 
+            end 
+        end 
+    end 
+    if cc > 1
+        cc = 1
+    elseif cc < 0
+        cc = 0
+    end 
+    return cc
+end 
+
+"""
+    cci = ccattime(dayi, ccoin, cgcin, ccxin)
+
+global.f90:2371
+"""
+function ccattime(dayi, ccoin, cgcin, ccxin)
+    cci = ccoin * exp(cgcin * dayi)
+    if cci > ccxin/2 
+        cci = ccxin - 0.25 * (ccxin/ccoin) * ccxin * exp(-cgcin*dayi)
+    end 
+    return cci
+end 
+
+"""
+    cci = ccatgdd(gddi, ccoin, gddcgcin, ccxin)
+
+global.f90:2654
+"""
+function ccatgdd(gddi, ccoin, gddcgcin, ccxin)
+    cci = ccoin * exp(gddcgcin * gddi)
+    if cci > ccxin/2 
+        cci = ccxin - 0.25 * (ccxin/ccoin) * ccxin * exp(-gddcgcin*gddi)
+    end 
+    return cci
+end
+
+"""
+   tpotval, epotval = calculate_etpot(dap, l0, l12, l123, lharvest, daylastcut, cci, 
+                          etoval, kcval, kcdeclineval, ccx, ccxwithered, 
+                          cceffectprocent, co2i, gddayi, tempgdtransplow, 
+                          simulation, simulparam)
+
+global.f90:7888
+"""
+function calculate_etpot(dap, l0, l12, l123, lharvest, daylastcut, cci, 
+                          etoval, kcval, kcdeclineval, ccx, ccxwithered, 
+                          cceffectprocent, co2i, gddayi, tempgdtransplow, 
+                          simulation, simulparam)
+    # CalculateETpot
+    virtualday = dap - simulation.DelayedDays
+    if ((virtualday < l0) & (round(Int, 100*cci) == 0)) | (virtualday > lharvest) 
+        # To handlle Forage crops: Round(100*CCi) = 0
+        tpotval = 0
+        epotval = simulparam.KcWetBare*etoval
+    else
+        # Correction for micro-advection
+        cciadjusted = 1.72*cci - 1*(cci*cci) + 0.30*(cci*cci*cci)
+        if cciadjusted < eps() 
+            cciadjusted = 0
+        elseif cciadjusted > 1 
+            cciadjusted = 1
+        end 
+
+        # Correction for ageing effects - is a function of calendar days
+        if (virtualday-daylastcut) > (l12+5) 
+            kcval_local = kcval - (virtualday-daylastcut-(l12+5)) * (kcdeclineval/100)*ccxwithered
+        else
+            kcval_local = kcval
+        end 
+
+        # Correction for elevated atmospheric CO2 concentration
+        if co2i > 369.41 
+            kcval_local = kcval_local * (1 - 0.05 * (co2i-369.41)/(550-369.41))
+        end 
+
+        # Correction for Air temperature stress
+        if (cciadjusted <= 0.0000001) | (round(Int, gddayi) < 0) 
+            kstrcold = 1
+        else
+            kstrcold = ks_temperature(0, tempgdtransplow, gddayi)
+        end 
+
+        # First estimate of Epot and Tpot
+        tpotval = cciadjusted * kstrcold * kcval_local * etoval
+        epotval = simulparam.KcWetBare * (1 - cciadjusted) * etoval
+
+        # Maximum Epot with withered canopy as a result of (early) senescence
+        epotmax = simulparam.KcWetBare * etoval * 
+                        (1 - ccxwithered * cceffectprocent/100)
+
+        # Correction Epot for dying crop in late-season stage
+        if (virtualday > l123) & (ccx > eps()) 
+            if cci > (ccx/2) 
+                # not yet full effect
+                if cci > ccx 
+                    multiplier = 0  # no effect
+                else
+                    multiplier = (ccx-cci)/(ccx/2)
+                end 
+            else
+                multiplier = 1 # full effect
+            end 
+            epotval = epotval * (1 - ccx * (cceffectprocent/100) * multiplier)
+            epotmin = simulparam.KcWetBare * (1._dp - 1.72_dp*ccx + 1._dp*(ccx*ccx) - 0.30_dp*(ccx*ccx*ccx)) * etoval
+            if epotmin < eps() 
+                epotmin = 0
+            end 
+            if epotval < epotmin 
+                epotval = epotmin
+            end 
+            if epotval > epotmax 
+                epotval = epotmax
+            end 
+        end 
+
+        # Correction for canopy senescence before late-season stage
+        if simulation.EvapLimitON 
+            if epotval > epotmax 
+                epotval = epotmax
+            end 
+        end 
+
+        # Correction for drop in photosynthetic capacity of a dying green canopy
+        if cci < ccxwithered 
+            if (ccxwithered > 0.01) & (cci > 0.001) 
+                tpotval = tpotval * exp(simulparam.ExpFsen * log(cci/ccxwithered))
+            end 
+        end 
+    end 
+
+    return tpotval, epotval
+end 
+
+"""
+    m = ks_temperature(t0, t1, tin)
+
+global.f90:1981
+"""
+function ks_temperature(t0, t1, tin)
+    m = 1 # no correction applied (to and/or t1 is undefined, or t0=t1)
+    if (round(Int, t0) != undef_int) & 
+         (round(Int, t1) != undef_int) & (abs(t0-t1)>epsilon) 
+        if (t0 < t1) then
+            a =  1  # cold stress
+        else
+            a = -1 # heat stress
+        end 
+        if (a*tin > a*t0) & (a*tin < a*t1) 
+            # within range for correction
+            m = getks(t0, t1, tin)
+            if m < 0 
+                m = 0
+            elseif m > 1 
+                m = 1
+            end 
+        else
+            if a*tin <= a*t0 
+                m = 0
+            end 
+            if a*tin >= a*t1 
+                m = 1
+            end 
+        end 
+    end 
+
+    return  m
+end
+
+"""
+    ksi = getks(t0, t1, tin)
+
+global.f90:2021
+"""
+function getks(t0, t1, tin)
+    mo = 0.02
+    mx = 1
+
+    trel = (tin-t0)/(t1-t0)
+    # derive rate of increase (mrate)
+    mrate = (-1)*(log((mo*mx-0.98*mo)/(0.98*(mx-mo))))
+    # get ks from logistic equation
+    ksi = (mo*mx)/(mo+(mx-mo)*exp(-mrate*trel))
+    # adjust for mo
+    ksi = ksi - mo * (1 - trel)
+    return ksi
+end
+
+"""
+    higc = harvest_index_growth_coefficient(himax, dhidt)
+
+global.f90:1860
+"""
+function harvest_index_growth_coefficient(himax, dhidt)
+    hio = 1
+
+    if himax > hio 
+        t = himax/dhidt
+        higc = 0.001
+        higc = higc + 0.001
+        hivar = (hio*himax)/(hio+(himax-hio)*exp(-higc*t))
+        while (hivar <= (0.98*himax))
+            higc = higc + 0.001
+            hivar = (hio*himax)/(hio+(himax-hio)*exp(-higc*t))
+        end 
+
+        if hivar >= himax 
+            higc = higc - 0.001
+        end 
+    else
+        higc = undef_int
+    end 
+    return higc
+end
+
+"""
+    tswitch, higclinear = get_days_witch_to_linear(himax, dhidt, higc)
+
+global.f90:2988
+"""
+function get_days_witch_to_linear(himax, dhidt, higc)
+    tmax = round(Int, himax/dhidt)
+    ti = 0
+    him1 = hio
+    if tmax > 0 
+        loopi = true
+        while loopi
+            ti = ti + 1
+            hii = (hio*himax)/ (hio+(himax-hio)*exp(-higc*ti))
+            hifinal = hii + (tmax - ti)*(hii-him1)
+            him1 = hii
+            if (hifinal > himax) | (ti >= tmax)  
+                loopi = false
+            end
+        end 
+        tswitch = ti - 1
+    else
+        tswitch = 0
+    end 
+    if tswitch > 0 
+        hii = (hio*himax)/ (hio+(himax-hio)*exp(-higc*tswitch))
+    else
+        hii = 0
+    end 
+    higclinear = (himax-hii)/(tmax-tswitch)
+
+    return tswitch, higclinear
+end
+
+
+"""
+    stressout = crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel)
+
+global.f90:1231
+"""
+function crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel)
+    stressout = RepEffectStress()
+    pllactual = 1
+
+    # decline canopy growth coefficient (CGC)
+    pulactual = 0
+    ksi = ks_any(stresslevel/100, pulactual, pllactual, cropsresp.ShapeCGC)
+    stressout.RedCGC = round(Int, (1-ksi)*100)
+    # decline maximum canopy cover (CCx)
+    pulactual = 0
+    ksi = ks_any(stresslevel/100, pulactual, pllactual, cropsresp.ShapeCCX)
+    stressout.RedCCX = round(Int, (1-ksi)*100)
+    # decline crop water productivity (WP)
+    pulactual = 0
+    ksi = ks_any(stresslevel/100, pulactual, pllactual, cropsresp.ShapeWP)
+    stressout.RedWP = round(Int, (1-ksi)*100)
+    # decline Canopy Cover (CDecline)
+    pulactual = 0
+    ksi = ks_any(stresslevel/100, pulactual, pllactual, cropsresp.ShapeCDecline)
+    stressout.CDecline = 1 - ksi
+    # inducing stomatal closure (KsSto) not applicable
+    ksi = 1
+    stressout.RedKsSto = round(Int, (1-ksi)*100)
+
+    return stressout
+end

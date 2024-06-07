@@ -1063,7 +1063,7 @@ function adjust_crop_file_parameters!(gvars)
     if (themodecycle == :GDDays) 
         tmin_tmp = simulparam.Tmin 
         tmax_tmp = simulparam.Tmax 
-        gdd1234 = growing_degree_days(gvars, tmin_tmp, tmax_tmp) 
+        gdd1234 = growing_degree_days(lseasondays, thecropday1, thetbase, thetupper, gvars, tmin_tmp, tmax_tmp) 
 
     else
         gdd1234 = undef_int
@@ -1095,23 +1095,17 @@ function adjust_crop_file_parameters!(gvars)
 end 
 
 """
-    gdd1234 = growing_degree_days(gvars, tdaymin, tdaymax)
+    gdd1234 = growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, tdaymin, tdaymax)
 
 tempprocessing.f90:871
 """
-function growing_degree_days(gvars, tdaymin, tdaymax)
-    crop = gvars[:crop]
+function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, tdaymin, tdaymax)
     temperature_file = gvars[:string_parameters][:temperature_file]
     temperature_file_exists = gvars[:bool_parameters][:temperature_file_exists]
     simulparam = gvars[:simulparam]
     temperature_record = gvars[:temperature_record]
     Tmin = gvars[:array_parameters][:Tmin]
     Tmax = gvars[:array_parameters][:Tmax]
-
-    valperiod = crop.DaysToHarvest
-    firstdayperiod = crop.Day1
-    tbase = crop.Tbase
-    tupper = crop.Tupper
 
     tmin_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
     tmax_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
@@ -1235,7 +1229,8 @@ function growing_degree_days(gvars, tdaymin, tdaymax)
     else
         gddays = undef_int
     end
-    return round(Int, gddays)
+    gdd1234 = round(Int, gddays)
+    return gdd1234
 end 
 
 """
