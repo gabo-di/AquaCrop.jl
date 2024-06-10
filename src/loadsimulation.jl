@@ -2609,7 +2609,7 @@ function load_management!(gvars, fullname)
         management.EffectMulchInS = parse(Int, split(readline(file))[1])
         # soil fertility
         management.FertilityStress = parse(Int, split(readline(file))[1])
-        crop_stress_parameters_soil_fertility!(simulation.EffectStress, crop.StressResponse, management.FertilityStress)
+        simulation.EffectStress = crop_stress_parameters_soil_fertility(crop.StressResponse, management.FertilityStress)
         # soil bunds
         management.BundHeight = parse(Float64, split(readline(file))[1])
         simulation.SurfaceStorageIni = 0

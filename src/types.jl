@@ -1129,9 +1129,9 @@ end
 end
 
 """
-    stress_indexes = StressIndexes()
+    stress_indexes = StressIndexesBio()
 """
-@kwdef mutable struct StressIndexes <: AbstractParametersContainer
+@kwdef mutable struct StressIndexesBio <: AbstractParametersContainer
     "Undocumented"
     StressProc::Int=undef_int
     "Undocumented"
@@ -1139,3 +1139,17 @@ end
     "Undocumented"
     BioMSquare::Float64=undef_double
 end
+
+
+"""
+    stress_indexes = StressIndexesSalt()
+"""
+@kwdef mutable struct StressIndexesSalt <: AbstractParametersContainer
+    "Undocumented"
+    CCxReduction::Int=undef_int
+    "Undocumented"
+    SaltProc::Float64=undef_double
+    "Undocumented"
+    SaltSquare::Float64=undef_double
+end
+

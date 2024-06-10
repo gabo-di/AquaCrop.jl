@@ -347,7 +347,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
 
     # 4. Field Management
     management.FertilityStress = 0
-    crop_stress_parameters_soil_fertility!(simulation.EffectStress, crop.StressResponse, management.FertilityStress) 
+    simulation.EffectStress = crop_stress_parameters_soil_fertility(crop.StressResponse, management.FertilityStress) 
 
     sumwabal = RepSum()
     previoussum = RepSum()
@@ -402,6 +402,12 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(float_parameters, :ccxwitheredtpotnos, undef_double)
     setparameter!(float_parameters, :co2i, undef_double)
     setparameter!(float_parameters, :fracbiomasspotsf, undef_double)
+    setparameter!(float_parameters, :coeffb0, undef_double)
+    setparameter!(float_parameters, :coeffb1, undef_double)
+    setparameter!(float_parameters, :coeffb2, undef_double)
+    setparameter!(float_parameters, :coeffb0salt, undef_double)
+    setparameter!(float_parameters, :coeffb1salt, undef_double)
+    setparameter!(float_parameters, :coeffb2salt, undef_double)
 
     symbol_parameters = ParametersContainer(Symbol)
     setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
@@ -478,11 +484,12 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
 end
 
 """
-    crop_stress_parameters_soil_fertility!(stressout::RepEffectStress, cropsresp::RepShapes, stresslevel)
+    crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel)
 
 global.f90:1231
 """
-function crop_stress_parameters_soil_fertility!(stressout::RepEffectStress, cropsresp::RepShapes, stresslevel)
+function crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel)
+    stressout = RepEffectStress()
     pllactual = 1
 
     # decline canopy growth coefficient (cgc)
@@ -504,6 +511,8 @@ function crop_stress_parameters_soil_fertility!(stressout::RepEffectStress, crop
     # inducing stomatal closure (kssto) not applicable
     ksi = 1
     stressout.RedKsSto = round(Int, (1-ksi)*100)
+
+    return stressout
 end 
 
 """
@@ -514,26 +523,26 @@ global.f90:2611
 function ks_any(wrel, pulactual, pllactual, shapefactor)
     pulactual_local = pulactual
 
-    if ((pllactual - pulactual_local) < 0.0001) 
+    if (pllactual - pulactual_local) < 0.0001 
         pulactual_local = pllactual - 0.0001
     end 
 
     prelativellul = (wrel - pulactual_local)/(pllactual - pulactual_local)
 
-    if (prelativellul <= 0) 
+    if prelativellul <= 0 
         ksval = 1
-    elseif (prelativellul >= 1) 
+    elseif prelativellul >= 1 
         ksval = 0
     else
-        if (round(Int,10*shapefactor) == 0)  # straight line
+        if round(Int,10*shapefactor) == 0  # straight line
             ksval = 1 - (exp(prelativellul*0.01)-1)/(exp(0.01)-1)
         else
             ksval = 1 - (exp(prelativellul*shapefactor)-1)/(exp(shapefactor)-1)
         end 
-        if (ksval > 1) 
+        if ksval > 1 
             ksval = 1
         end 
-        if (ksval < 0) 
+        if ksval < 0 
             ksval = 0
         end 
     end 
