@@ -408,6 +408,9 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(float_parameters, :coeffb0salt, undef_double)
     setparameter!(float_parameters, :coeffb1salt, undef_double)
     setparameter!(float_parameters, :coeffb2salt, undef_double)
+    setparameter!(float_parameters, :sum_kc_top, undef_double)
+    setparameter!(float_parameters, :sum_kc_top_stress, undef_double)
+    setparameter!(float_parameters, :sum_kci, undef_double)
 
     symbol_parameters = ParametersContainer(Symbol)
     setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
@@ -423,6 +426,8 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(integer_parameters, :irri_first_daynr, undef_int)
     setparameter!(integer_parameters, :ziaqua, undef_int)
     setparameter!(integer_parameters, :nextsim_from_daynr, 0)
+    setparameter!(integer_parameters, :previous_stress_level, undef_int)
+    setparameter!(integer_parameters, :stress_sf_adj_new, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)

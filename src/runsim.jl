@@ -133,51 +133,53 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
     end
 
     # Reset soil fertility parameters to selected value in management
-    EffectStress_temp = GetSimulation_EffectStress()
-    call CropStressParametersSoilFertility(GetCrop_StressResponse(), &
-            GetManagement_FertilityStress(), EffectStress_temp)
-    call SetSimulation_EffectStress(EffectStress_temp)
-    FertStress = GetManagement_FertilityStress()
-    RedCGC_temp = GetSimulation_EffectStress_RedCGC()
-    RedCCX_temp = GetSimulation_EffectStress_RedCCX()
-    Crop_DaysToFullCanopySF_temp = GetCrop_DaysToFullCanopySF()
-    call TimeToMaxCanopySF(GetCrop_CCo(), GetCrop_CGC(), GetCrop_CCx(), &
-           GetCrop_DaysToGermination(), GetCrop_DaysToFullCanopy(), &
-           GetCrop_DaysToSenescence(), GetCrop_DaysToFlowering(), &
-           GetCrop_LengthFlowering(), GetCrop_DeterminancyLinked(), &
-           Crop_DaysToFullCanopySF_temp, RedCGC_temp, RedCCX_temp, FertStress)
-    call SetCrop_DaysToFullCanopySF(Crop_DaysToFullCanopySF_temp)
-    call SetManagement_FertilityStress(FertStress)
-    call SetSimulation_EffectStress_RedCGC(RedCGC_temp)
-    call SetSimulation_EffectStress_RedCCX(RedCCX_temp)
-    call SetPreviousStressLevel(int(GetManagement_FertilityStress(),kind=int32))
-    call SetStressSFadjNEW(int(GetManagement_FertilityStress(),kind=int32))
+    gvars[:simulation].EffectStress = crop_stress_parameters_soil_fertility(gvars[:crop].StressResponse, gvars[:management].FertilityStress)
+    l12sf, redcgc, redccx, classsf = time_to_max_canopy_sf(gvars[:crop].CCo, gvars[:crop].CGC, gvars[:crop].CCx, 
+        gvars[:crop].DaysToGermination, gvars[:crop].DaysToFullCanopy,
+        gvars[:crop].DaysToSenescence, gvars[:crop].DaysToFlowering,
+        gvars[:crop].LengthFlowering, gvars[:crop].DeterminancyLinked,
+        gvars[:crop].DaysToFullCanopySF, gvars[:simulation].EffectStress.RedCGC,
+        gvars[:simulation].EffectStress.RedCCX, gvars[:management].FertilityStress)
+    
+    gvars[:crop].DaysToFullCanopySF = l12sf
+    gvars[:simulation].EffectStress.RedCGC = redcgc
+    gvars[:simulation].EffectStress.RedCCX = redccx
+    gvars[:management].FertilityStress = classsf
+
+    setparameter!(gvars[:integer_parameters], :previous_stress_level, gvars[:management].FertilityStress)
+    setparameter!(gvars[:integer_parameters], :stress_sf_adj_new, gvars[:management].FertilityStress)
     # soil fertility and GDDays
-    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
-        if (GetManagement_FertilityStress() /= 0_int8) then
-            call SetCrop_GDDaysToFullCanopySF(GrowingDegreeDays(&
-                  GetCrop_DaysToFullCanopySF(), GetCrop_Day1(), &
-                  GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(),&
-                  GetSimulParam_Tmax()))
+    if gvars[:crop].ModeCycle == :GDDays 
+        if gvars[:management].FertilityStress != 0 
+            gvars[:crop].GDDaysToFullCanopySF = growing_degree_days(
+                                                    gvars[:crop].DaysToFullCanopySF,
+                                                    gvars[:crop].Day1,
+                                                    gvars[:crop].Tbase,
+                                                    gvars[:crop].Tupper,
+                                                    gvars,
+                                                    gvars[:simulparam].Tmin,
+                                                    gvars[:simulparam].Tmax
+                                                ) 
         else
-            call SetCrop_GDDaysToFullCanopySF(GetCrop_GDDaysToFullCanopy())
+            gvars[:crop].GDDaysToFullCanopySF = gvars[:crop].GDDaysToFullCanopy
         end 
     end
 
     # Maximum sum Kc (for reduction WP in season if soil fertility stress)
-    call SetSumKcTop(SeasonalSumOfKcPot(GetCrop_DaysToCCini(), &
-            GetCrop_GDDaysToCCini(), GetCrop_DaysToGermination(), &
-            GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
-            GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
-            GetCrop_GDDaysToFullCanopy(), GetCrop_GDDaysToSenescence(), &
-            GetCrop_GDDaysToHarvest(), GetCrop_CCo(), GetCrop_CCx(), &
-            GetCrop_CGC(), GetCrop_GDDCGC(), GetCrop_CDC(), GetCrop_GDDCDC(), &
-            GetCrop_KcTop(), GetCrop_KcDecline(), real(GetCrop_CCEffectEvapLate(),kind=dp), &
-            GetCrop_Tbase(), GetCrop_Tupper(), GetSimulParam_Tmin(), &
-            GetSimulParam_Tmax(), GetCrop_GDtranspLow(), GetCO2i(), &
-            GetCrop_ModeCycle()))
-    call SetSumKcTopStress( GetSumKcTop() * GetFracBiomassPotSF())
-    call SetSumKci(0._dp)
+    sumkctop = seasonal_sum_of_kcpot(outputs, gvars[:crop].DaysToCCini,
+            gvars[:crop].GDDaysToCCini, gvars[:crop].DaysToGermination,
+            gvars[:crop].DaysToFullCanopy, gvars[:crop].DaysToSenescence,
+            gvars[:crop].DaysToHarvest, gvars[:crop].GDDaysToGermination,
+            gvars[:crop].GDDaysToFullCanopy, gvars[:crop].GDDaysToSenescence,
+            gvars[:crop].GDDaysToHarvest, gvars[:crop].CCo, gvars[:crop].CCx,
+            gvars[:crop].CGC, gvars[:crop].GDDCGC, gvars[:crop].CDC, gvars[:crop].GDDCDC,
+            gvars[:crop].KcTop, gvars[:crop].KcDecline, gvars[:crop].CCEffectEvapLate, 
+            gvars[:crop].Tbase, gvars[:crop].Tupper, gvars[:simulparam].Tmin,
+            gvars[:simulparam].Tmax, gvars[:crop].GDtranspLow, gvars[:float_parameters][:co2i],
+            gvars[:crop].ModeCycle, gvars[:simulation], gvars[:simulparam])
+    setparameter!(gvars[:float_parameters], :sum_kc_top, sumkctop)
+    setparameter!(gvars[:float_parameters], :sum_kc_top_stress, sumkctop*gvars[:float_parameters][:fracbiomasspotsf])
+    setparameter!(gvars[:float_parameters], :sum_kci, 0)
 
     # 7. weed infestation and self-thinning of herbaceous perennial forage crops
     # CC expansion due to weed infestation and/or CC decrease as a result of
