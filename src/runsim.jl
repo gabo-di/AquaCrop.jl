@@ -30,7 +30,7 @@ function initialize_run_part_1!(outputs, gvars, projectinput::ProjectInputType)
     initialize_simulation_run_part1!(outputs, gvars, projectinput)
 
     return nothing
-end #notend
+end 
 
 """
     initialize_simulation_run_part1!(outputs, gvars, projectinput)
@@ -177,99 +177,96 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
             gvars[:crop].Tbase, gvars[:crop].Tupper, gvars[:simulparam].Tmin,
             gvars[:simulparam].Tmax, gvars[:crop].GDtranspLow, gvars[:float_parameters][:co2i],
             gvars[:crop].ModeCycle, gvars[:simulation], gvars[:simulparam])
-    setparameter!(gvars[:float_parameters], :sum_kc_top, sumkctop)
-    setparameter!(gvars[:float_parameters], :sum_kc_top_stress, sumkctop*gvars[:float_parameters][:fracbiomasspotsf])
-    setparameter!(gvars[:float_parameters], :sum_kci, 0)
+    setparameter!(gvars[:float_parameters], :sumkctop, sumkctop)
+    setparameter!(gvars[:float_parameters], :sumkctop_stress, sumkctop*gvars[:float_parameters][:fracbiomasspotsf])
+    setparameter!(gvars[:float_parameters], :sumkci, 0)
 
     # 7. weed infestation and self-thinning of herbaceous perennial forage crops
     # CC expansion due to weed infestation and/or CC decrease as a result of
     # self-thinning
     # 7.1 initialize
-    call SetSimulation_RCadj(GetManagement_WeedRC())
-    Cweed = 0_int8
-    if (GetCrop_subkind() == subkind_Forage) then
-        fi = MultiplierCCxSelfThinning(int(GetSimulation_YearSeason(),kind=int32), &
-              int(GetCrop_YearCCx(),kind=int32), GetCrop_CCxRoot())
+    gvars[:simulation].RCadj = gvars[:management].WeedRC
+    cweed = 
+    if gvars[:crop].subkind == :Forage
+        fi = multiplier_ccx_self_thinning(gvars[:simulation].YearSeason, gvars[:crop].YearCCx, gvars[:crop].CCxRoot)
     else
-        fi = 1._dp
+        fi = 1
     end 
     # 7.2 fweed
-    if (GetManagement_WeedRC() > 0_int8) then
-        call SetfWeedNoS(CCmultiplierWeed(GetManagement_WeedRC(), &
-              GetCrop_CCx(), GetManagement_WeedShape()))
-        call SetCCxCropWeedsNoSFstress( roundc(((100._dp*GetCrop_CCx() &
-                  * GetfWeedNoS()) + 0.49),mold=1)/100._dp) # reference for plot with weed
-        if (GetManagement_FertilityStress() > 0_int8) then
-            fWeed = 1._dp
-            if ((fi > 0._dp) .and. (GetCrop_subkind() == subkind_Forage)) then
-                Cweed = 1_int8
-                if (fi > 0.005_dp) then
+    if gvars[:management].WeedRC > 0 
+        fweednos = cc_multiplier_weed(gvars[:management].WeedRC, gvars[:crop].CCx, gvars[:management].WeedShape)
+        setparameter!(gvars[:float_parameters], :fweednos, fweednos)
+        ccxcrop_weednosf_stress = round(Int, (100*gvars[:crop].CCx*fweednos + 0.49))/100 # reference for plot with weed
+        setparameter!(gvars[:float_parameters], :ccxcrop_weednosf_stress, ccxcrop_weednosf_stress)
+        if gvars[:management].FertilityStress > 0
+            fWeed = 1
+            if (fi > 0) & (gvars[:crop].subkind == :Forage) 
+                cweed = 1
+                if fi > 0.005
                     # calculate the adjusted weed cover
-                    call SetSimulation_RCadj(roundc(GetManagement_WeedRC() &
-                         + Cweed*(1._dp-fi)*GetCrop_CCx()*&
-                           (1._dp-GetSimulation_EffectStress_RedCCX()/100._dp)*&
-                           GetManagement_WeedAdj()/100._dp, mold=1_int8))
-                    if (GetSimulation_RCadj() < (100._dp * (1._dp- fi/(fi + (1._dp-fi)*&
-                          (GetManagement_WeedAdj()/100._dp))))) then
-                        call SetSimulation_RCadj(roundc(100._dp * (1._dp- fi/(fi + &
-                              (1._dp-fi)*(GetManagement_WeedAdj()/100._dp))),mold=1_int8))
+                    gvars[:simulation].RCadj = round(Int, gvars[:management].WeedRC+cweed*(1-fi)*gvars[:crop].CCx*
+                                                     (1-gvars[:simulation].EffectStress.RedCCX/100)*gvars[:management].WeedAdj/100)
+                    if (gvars[:simulation].RCadj < (100*(1-fi/(fi+(1-fi)*(gvars[:management].WeedAdj/100))))) 
+                        gvars[:simulation].RCadj = round(Int, 100*(1-fi/(fi+(1-fi)*(gvars[:management].WeedAdj/100))))
                     end
-                    if (GetSimulation_RCadj() > 100_int8) then
-                        call SetSimulation_RCadj(98_int8)
+                    if gvars[:simulation].RCadj > 100
+                        gvars[:simulation].RCadj = 98
                     end 
                 else
-                    call SetSimulation_RCadj(100_int8)
+                    gvars[:simulation].RCadj = 100 
                 end 
             end 
         else
-            if (GetCrop_subkind() == subkind_Forage) then
-                RCadj_temp = GetSimulation_RCadj()
-                fweed = CCmultiplierWeedAdjusted(GetManagement_WeedRC(), &
-                          GetCrop_CCx(), GetManagement_WeedShape(), &
-                          fi, GetSimulation_YearSeason(), &
-                          GetManagement_WeedAdj(), &
-                          RCadj_temp)
-                call SetSimulation_RCadj(RCadj_temp)
+            if gvars[:crop].subkind == :Forage 
+                fweed, rcadj = cc_multiplier_weed_adjusted(gvars[:management].WeedRC, 
+                                    gvars[:crop].CCx, gvars[:management].WeedShape,
+                                    fi, gvars[:simulation].YearSeason,
+                                    gvars[:management].WeedAdj, gvars[:crop].subkind)
+                gvars[:simulation].RCadj = rcadj
             else
-                fWeed = GetfWeedNoS()
+                fweed = gvars[:float_parameters][:fweednos]
             end 
         end 
     else
-        call SetfWeedNoS(1._dp)
-        fWeed = 1._dp
-        call SetCCxCropWeedsNoSFstress(GetCrop_CCx())
+        setparameter!(gvars[:float_parameters], :fweednos, 1)
+        fWeed = 1
+        setparameter!(gvars[:float_parameters], :ccxcrop_weednosf_stress, gvars[:crop].CCx)
     end
+
     # 7.3 CC total due to weed infestation
-    call SetCCxTotal( fWeed * GetCrop_CCx() * (fi+Cweed*(1._dp-fi)*&
-           GetManagement_WeedAdj()/100._dp))
-    call SetCDCTotal( GetCrop_CDC() * (fWeed*GetCrop_CCx()*&
-           (fi+Cweed*(1._dp-fi)*GetManagement_WeedAdj()/100._dp) + 2.29_dp)/ &
-           (GetCrop_CCx()*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100._dp) &
-            + 2.29_dp))
-    call SetGDDCDCTotal(GetCrop_GDDCDC() * (fWeed*GetCrop_CCx()*&
-           (fi+Cweed*(1._dp-fi)*GetManagement_WeedAdj()/100._dp) + 2.29_dp)/ &
-           (GetCrop_CCx()*(fi+Cweed*(1-fi)*GetManagement_WeedAdj()/100._dp) &
-            + 2.29_dp))
-    if (GetCrop_subkind() == subkind_Forage) then
-        fi = MultiplierCCoSelfThinning(int(GetSimulation_YearSeason(),kind=int32), &
-               int(GetCrop_YearCCx(),kind=int32), GetCrop_CCxRoot())
+    ccxtotal = fweed * gvars[:crop].CCx * (fi+cweed*(1-fi)*gvars[:management].WeedAdj/100)
+    setparameter!(gvars[:float_parameters], :ccxtotal, ccxtotal)
+
+    cdctotal = (gvars.[:crop].CDC*(fweed*gvars[:crop].CCx*
+                (fi+cweed*(1-fi)*gvars.[management].WeedAdj/100) + 2.29)/
+                (gvars[:crop].CCx*(fi+cweed*(1-fi)*gvars[:management].WeedAdj/100)+2.29))
+    setparameter!(gvars[:float_parameters], :cdctotal, cdctotal)
+
+    gddcdctotal = (gvars[:crop].GDDCDC*(fweed*gvars[:crop].CCx*
+                    (fi+cweed*(1-fi)*gvars[:management].WeedAdj/100) + 2.29)/
+                    (gvars[:crop].CCx*(fi+cweed*(1-fi)*gvars[:management].WeedAdj/100)+2.29))
+    setparameter!(gvars[:float_parameters], :gddcdctotal, gddcdctotal)
+
+    if gvars[:crop].subkind == :Forage
+        fi = multiplier_cco_self_thinning(gvars[:simulation].YearSeason, gvars[:crop].YearCCx, gvars[:crop].CCxRoot)
     else
-        fi = 1._dp
+        fi = 1
     end 
-    call SetCCoTotal(fWeed * GetCrop_CCo() * (fi+Cweed*(1._dp-fi)*&
-            GetManagement_WeedAdj()/100._dp))
+    ccototal = (fweed*gvars[:crop].CCo*(fi+cweed*(1-fi)*gvars[:management].WeedAdj/100))
+    setparameter!(gvars[:float_parameters], :ccototal, ccototal)
 
     # 8. prepare output files
     # Not applicable
 
     # 9. first day
-    call SetStartMode(.true.)
-    bool_temp = (.not. GetSimulation_ResetIniSWC())
-    call SetPreDay(bool_temp)
-    call SetDayNri(GetSimulation_FromDayNr())
-    call DetermineDate(GetSimulation_FromDayNr(), Day1, Month1, Year1) # start simulation run
-    call SetNoYear((Year1 == 1901));  # for output file
-end #notend
+    setparameter!(gvars[:bool_parameters], :startmode, true)
+    setparameter!(gvars[:bool_parameters], :preday, !gvars[:simulation].ResetIniSWC)
+    setparameter!(gvars[:integer_parameters], :daynri, gvars[:simulation].FromDayNr)
+    day1, month1, year1 = determine_date(gvars[:simulation].FromDayNr) # start simulation run
+    setparameter!(gvars[:bool_parameters], :noyear, year1==1901) # for output file
+
+    return nothing
+end 
 
 """
     check_for_watertable_in_profile(profilecomp::Vector{CompartmentIndividual}, depthgwtmeter)
@@ -2195,3 +2192,112 @@ function crop_stress_parameters_soil_salinity(ccxred, ccdistortion,
 
     return stress_response
 end 
+
+"""
+    fccx = multiplier_ccx_self_thinning(yeari, yearx, shapefactor)
+
+global.f90:1784
+"""
+function multiplier_ccx_self_thinning(yeari, yearx, shapefactor)
+    fccx = 1
+    if (yeari >= 2) & (yearx >= 2) & (round(Int, 100*shapefactor) != 0) 
+        year0 = 1 + (yearx-1) * exp(shapefactor*log(10))
+        if yeari >= year0
+            fccx = 0
+        else
+            fccx = 0.9 + 0.1 * (1 - exp((1/shapefactor)*log((yeari-1)/(yearx-1))))
+        end 
+        if fccx < 0 
+            fccx = 0
+        end 
+    end 
+    return fccx
+end
+
+"""
+    fweedi, rcadj = cc_multiplier_weed_adjusted(procentweedcover, ccxcrop, fshapeweed, fccx, yeari, mweedadj, cropsubkind)
+
+global.f90:2204
+"""
+function cc_multiplier_weed_adjusted(procentweedcover, ccxcrop, fshapeweed, fccx, yeari, mweedadj, cropsubkind)
+    fweedi = 1
+    rcadj = procentweedcover
+    if procentweedcover > 0 
+        fweedi = cc_multiplier_weed(procentweedcover, ccxcrop, fshapeweed)
+        # FOR perennials when self-thinning
+        if (cropsubkind == :Forage) & (yeari > 1) & (fccx < 0.995) 
+            # need for adjustment
+            # step 1 - adjusment of shape factor to degree of crop replacement by weeds
+            fshapeminimum = 10 - 20*( (exp(fccx*3)-1)/(exp(3)-1) + sqrt(mweedadj/100))
+            if round(Int, fshapeminimum*10) == 0 
+                fshapeminimum = 0.1
+            end 
+            fshapeweed = fshapeweed;
+            if fshapeweed < fshapeminimum 
+                fshapeweed = fshapeminimum
+            end 
+
+            # step 2 - Estimate of CCxTot
+            # A. Total CC (crop and weeds) when self-thinning and 100% weed take over
+            fweedi = cc_multiplier_weed(procentweedcover, ccxcrop, fshapeweed)
+            ccxtot100 = fweedi * ccxcrop
+            # B. Total CC (crop and weeds) when self-thinning and 0% weed take over
+            if fccx > 0.005
+                fweedi = cc_multiplier_weed(round(Int, fccx*procentweedcover), (fccx*ccxcrop), fshapeweed)
+            else
+                fweedi = 1
+            end 
+            ccxtot0 = fweedi * (fccx*ccxcrop)
+            # C. total CC (crop and weeds) with specified weed take over (MWeedAdj)
+            ccxtotm = ccxtot0 + (ccxtot100 - ccxtot0)* mweedadj/100
+            if ccxtotm < (fccx*ccxcrop*(1-procentweedcover/100)) 
+                ccxtotm = fccx*ccxcrop*(1-procentweedcover/100)
+            end 
+            if fccx > 0.005 
+                fweedi = ccxtotm/(fccx*ccxcrop)
+                fweedmax = 1/(fccx*ccxcrop)
+                if round(Int, fweedi*1000) > round(Int, fweedmax*1000) 
+                    fweedi = fweedmax
+                end 
+            end
+
+            # step 3 - Estimate of adjusted weed cover
+            rcadjd = procentweedcover + (1-fccx)*ccxcrop*mweedadj
+            if fccx > 0.005
+                if rcadjd < (100*(ccxtotm - fccx*ccxcrop)/ccxtotm)
+                    rcadjd = 100*(ccxtotm - fccx*ccxcrop)/ccxtotm
+                end 
+                if rcadjd > (100 * (1- (fccx*ccxcrop*(1-procentweedcover/100)/ccxtotm))) 
+                    rcadjd = 100*(1- fccx*ccxcrop*(1-procentweedcover/100._dp)/ccxtotm)
+                end 
+            end 
+            rcadj = round(Int, rcadjd)
+            if rcadj > 100
+                rcadj = 100
+            end
+        end 
+    end 
+
+    return fweedi, rcadj
+end 
+
+"""
+    fcco = multiplier_cco_self_thinning(yeari, yearx, shapefactor)
+
+global.f90:2588
+"""
+function multiplier_cco_self_thinning(yeari, yearx, shapefactor)
+    fcco = 1
+    if (yeari >= 1) & (yearx >= 2) & (round(Int, 100*shapefactor) != 0) 
+        year0 = 1 + (yearx-1) * exp(shapefactor*log(10))
+        if (yeari >= year0) | (year0 <= 1)
+            fcco = 0
+        else
+            fcco = 1 - (yeari-1)/(year0-1)
+        end 
+        if fcco < 0
+            fcco = 0
+        end 
+    end 
+    return fcco
+end
