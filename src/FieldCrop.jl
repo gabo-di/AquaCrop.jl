@@ -21,7 +21,7 @@ function Base.getindex(b::FieldAquaCrop, s::Symbol)
     end
 end
 
-function Base.getproperty(b::B, s::Symbol)
+function Base.getproperty(b::FieldAquaCrop, s::Symbol)
     if s in fieldnames(FieldAquaCrop)
         return getfield(b, s) 
     else
