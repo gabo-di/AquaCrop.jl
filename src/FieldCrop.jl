@@ -4,23 +4,41 @@ abstract type AbstractFieldCrop end
 
 
 """
-    FieldCrop
+    FieldAquaCrop
 
 Has all the data for the simulation of AquaCrop
 """
-struct FieldCrop <: AbstractFieldCrop
-    data::Int
+struct FieldAquaCrop <: AbstractFieldCrop
+    gvars::ComponentArray
+    outputs::ComponentArray
+end
+
+function Base.getindex(b::FieldAquaCrop, s::Symbol)
+    if s in fieldnames(FieldAquaCrop)
+        return getfield(b, s) 
+    else
+        return getfield(b, :gvars)[s]
+    end
+end
+
+function Base.getproperty(b::B, s::Symbol)
+    if s in fieldnames(FieldAquaCrop)
+        return getfield(b, s) 
+    else
+        return getfield(b, :gvars)[s]
+    end
 end
 
 
-"""
-    FieldCrop(inputDataDir::String)
 
-Starts the struct FieldCrop that has all the data for the simulation of AquaCrop
 """
-function FieldCrop(inputDataDir::String)
+    FieldAquaCrop(inputDataDir::String)
+
+Starts the struct FieldAquaCrop that has all the data for the simulation of AquaCrop
+"""
+function FieldAquaCrop(inputDataDir::String)
     data = readdata(inputDataDir)
-    FieldCrop(data)
+    FieldAquaCrop(data)
 end
 
 
