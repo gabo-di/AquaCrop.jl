@@ -1,0 +1,67 @@
+# this is TOML file for AquaCrop.jl
+# it has the parameters defined in various files of AquaCrop.f90
+# the files are listed in chronological order 
+
+# it has general parameters settings, do not depend on the project
+
+
+# SIMUL/AggregationResults.SIM
+# initialsettings.jl:1426
+# what kind of aggregation do we want (note that actually this seems to be controled by the tempertature_record variable) 
+[resultsparameters.aggregationresultsparameters]
+aggregationtype = 0           # Time aggregation for intermediate results (0 = none ; 1 = daily; 2 = 10-daily; 3 = monthly)
+
+
+
+
+# SIMUL/DailyResults.SIM
+# initialsettings.jl:1444
+# in the original AquaCrop we have numbers, if that number is in the file, then we have to set true here.
+[resultsparameters.dailyresultsparameters]
+out1Wabal = true              # Various parameters of the soil water balance
+out2Crop = true               # Crop development and production
+out3Prof = true               # Soil water content in the soil profile and root zone
+out4Salt = true               # Soil salinity in the soil profile and root zone
+out5CompWC = true             # Soil water content at various depths of the soil profile
+out6CompEC = true             # Soil salinity at various depths of the soil profile
+out7Clim = true               # Climate input parameters
+
+
+
+
+# SIMUL/ParticularResultso.SIM
+# initialsettings.jl:1479
+# in the original AquaCrop we have numbers, if that number is in the file, then we have to set true here.
+[resultsparameters.particularresultsparameters]
+part1Mult = true              # Biomass and Yield at Multiple cuttings (for herbaceous forage crops)
+part2Eval = true              # Evaluation of simulation results (when Field Data)
+
+
+
+
+# LIST/ListProjects.txt 
+# initialsettings.jl:1369
+# this lists the file projects that we will run, they can end with .PRO or .PRM
+project_filenames = ["Ottawa.PRM"]
+
+
+
+
+# SIMUL/DEFAULT.SOL
+# initialsettings.jl:1013
+[soil]
+CNValue = 61                  # CN (Curve Number)
+REW = 9                       # Readily evaporable water from top layer (mm)
+NrSoilLayers = 1              # number of soil horizons
+
+[[soil_layers]]
+Thicknes = 4.0
+SAT = 50.0
+FC = 30.0
+WP = 10.0
+InfRate = 500.0
+Penetrability = 100
+GravelMass = 0
+CRa = -0.4536
+CRb = 0.83734
+Description = "Loamy soil horizon"

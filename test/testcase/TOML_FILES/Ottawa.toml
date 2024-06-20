@@ -1,0 +1,409 @@
+# this is TOML file for AquaCrop.jl
+# it has the parameters defined in various files of AquaCrop.f90
+# the files are listed in chronological order 
+
+
+# SIMUL/AggregationResults.SIM
+# initialsettings.jl:1426
+# what kind of aggregation do we want (note that actually this seems to be controled by the tempertature_record variable) 
+[resultsparameters.aggregationresultsparameters]
+aggregationtype = 0           # Time aggregation for intermediate results (0 = none ; 1 = daily; 2 = 10-daily; 3 = monthly)
+
+
+
+
+# SIMUL/DailyResults.SIM
+# initialsettings.jl:1444
+# in the original AquaCrop we have numbers, if that number is in the file, then we have to set true here.
+[resultsparameters.dailyresultsparameters]
+out1Wabal = true              # Various parameters of the soil water balance
+out2Crop = true               # Crop development and production
+out3Prof = true               # Soil water content in the soil profile and root zone
+out4Salt = true               # Soil salinity in the soil profile and root zone
+out5CompWC = true             # Soil water content at various depths of the soil profile
+out6CompEC = true             # Soil salinity at various depths of the soil profile
+out7Clim = true               # Climate input parameters
+
+
+
+
+# SIMUL/ParticularResultso.SIM
+# initialsettings.jl:1479
+# in the original AquaCrop we have numbers, if that number is in the file, then we have to set true here.
+[resultsparameters.particularresultsparameters]
+part1Mult = true              # Biomass and Yield at Multiple cuttings (for herbaceous forage crops)
+part2Eval = true              # Evaluation of simulation results (when Field Data)
+
+
+
+
+# LIST/ListProjects.txt 
+# initialsettings.jl:1369
+# this lists the file projects that we will run, they can end with .PRO or .PRM
+project_filenames = ["Ottawa.PRM"]
+
+
+
+
+# SIMUL/DEFAULT.SOL
+# initialsettings.jl:1013
+[soil]
+CNValue = 61                  # CN (Curve Number)
+REW = 9                       # Readily evaporable water from top layer (mm)
+NrSoilLayers = 1              # number of soil horizons
+
+[[soil_layers]]
+Thicknes = 4.0
+SAT = 50.0
+FC = 30.0
+WP = 10.0
+InfRate = 500.0
+Penetrability = 100
+GravelMass = 0
+CRa = -0.4536
+CRb = 0.83734
+Description = "Loamy soil horizon"
+
+
+
+
+# From here it is project specific, this is related to the variable project_filenames
+
+
+# LIST/Ottawa.PRM
+# initialsettings.jl:212
+# this makes a list of information about the files and starting dates for each project run
+# maybe we only need the dates since the other files info will be in a TOML 
+[[projectinput]]
+Simulation_YearSeason = 1         # Year number of cultivation (Seeding/planting year)
+Simulation_DayNr1 = 41414         # First day of simulation period - 21 May 2014      
+Simulation_DayNrN = 41577         # Last day of simulation period - 31 October 2014  
+Crop_Day1 = 41414                 # First day of cropping period - 21 May 2014      
+Crop_DayN = 41577                 # Last day of cropping period - 31 October 2014  
+Climate_Info = "-- 1. Climate (CLI) file"
+Climate_Filename = "Ottawa.CLI"
+Climate_Directory = "/DATA/"
+Temperature_Info = "1.1 Temperature (Tnx or TMP) file"
+Temperature_Filename = "Ottawa.Tnx"
+Temperature_Directory = "/DATA/"
+ETo_Info = "1.2 Reference ET (ETo) file"
+ETo_Filename = "Ottawa.ETo"
+ETo_Directory = "/DATA/"
+Rain_Info = "1.3 Rain (PLU) file"
+Rain_Filename = "Ottawa.PLU"
+Rain_Directory = "/DATA/"
+CO2_Info = "1.4 Atmospheric CO2 concentration (CO2) file"
+CO2_Filename = "MaunaLoa.CO2"
+CO2_Directory = "/SIMUL/"
+Calendar_Info = "-- 2. Calendar (CAL) file"
+Calendar_Filename = "21May.CAL"
+Calendar_Directory = "/DATA/"
+Crop_Info = "-- 3. Crop (CRO) file"
+Crop_Filename = "AlfOttawaGDD.CRO"
+Crop_Directory = "/DATA/"
+Irrigation_Info = "-- 4. Irrigation management (IRR) file"
+Irrigantion_Filename = "(None)"
+Irrigation_Directory = "(None)"
+Management_Info = "-- 5. Field management (MAN) file"
+Management_Filename = "Ottawa.MAN"
+Management_Directory = "/DATA/"
+Soil_Info = "-- 6. Soil profile (SOL) file"
+Soil_Filename = "Ottawa.SOL"
+Soil_Directory = "/DATA/"
+GroundWater_Info = "-- 7. Groundwater table (GWT) file"
+GroundWater_Filename = "(None)"
+GroundWater_Directory = "(None)"
+SWCIni_Info = "-- 8. Initial conditions (SW0) file"
+SWCIni_Filename = "(None)"
+SWCIni_Directory = "(None)"
+OffSeasson_Info = "-- 9. Off-season conditions (OFF) file"
+OffSeasson_Filename = "(None)"
+OffSeasson_Directory = "(None)"
+Observations_Info = "-- 10. Field data (OBS) file"
+Observations_Filename = "Ottawa.OBS"
+Observations_Directory =  "/OBS/" 
+
+[[projectinput]]
+Simulation_YearSeason = 2         # Year number of cultivation (Non-seeding/planting year)
+Simulation_DayNr1 = 41578         # First day of simulation period - 1 November 2014  
+Simulation_DayNrN = 41935         # Last day of simulation period - 24 October 2015  
+Crop_Day1 = 41759                 # First day of cropping period - 1 May 2015       
+Crop_DayN = 41935                 # Last day of cropping period - 24 October 2015  
+Climate_Info = "-- 1. Climate (CLI) file"
+Climate_Filename = "Ottawa.CLI"
+Climate_Directory = "/DATA/"
+Temperature_Info = "1.1 Temperature (Tnx or TMP) file"
+Temperature_Filename = "Ottawa.Tnx"
+Temperature_Directory = "/DATA/"
+ETo_Info = "1.2 Reference ET (ETo) file"
+ETo_Filename = "Ottawa.ETo"
+ETo_Directory = "/DATA/"
+Rain_Info = "1.3 Rain (PLU) file"
+Rain_Filename = "Ottawa.PLU"
+Rain_Directory = "/DATA/"
+CO2_Info = "1.4 Atmospheric CO2 concentration (CO2) file"
+CO2_Filename = "MaunaLoa.CO2"
+CO2_Directory = "/SIMUL/"
+Calendar_Info = "-- 2. Calendar (CAL) file"
+Calendar_Filename = "21May.CAL"
+Calendar_Directory = "/DATA/"
+Crop_Info = "-- 3. Crop (CRO) file"
+Crop_Filename = "AlfOttawaGDD.CRO"
+Crop_Directory = "/DATA/"
+Irrigation_Info = "-- 4. Irrigation management (IRR) file"
+Irrigantion_Filename = "(None)"
+Irrigation_Directory = "(None)"
+Management_Info = "-- 5. Field management (MAN) file"
+Management_Filename = "Ottawa.MAN"
+Management_Directory = "/DATA/"
+Soil_Info = "-- 6. Soil profile (SOL) file"
+Soil_Filename = "Ottawa.SOL"
+Soil_Directory = "/DATA/"
+GroundWater_Info = "-- 7. Groundwater table (GWT) file"
+GroundWater_Filename = "(None)"
+GroundWater_Directory = "(None)"
+SWCIni_Info = "-- 8. Initial conditions (SW0) file"
+SWCIni_Filename = "KeepSWC"
+SWCIni_Directory = "Keep soil water profile of previous run"
+OffSeasson_Info = "-- 9. Off-season conditions (OFF) file"
+OffSeasson_Filename = "(None)"
+OffSeasson_Directory = "(None)"
+Observations_Info = "-- 10. Field data (OBS) file"
+Observations_Filename = "Ottawa.OBS"
+Observations_Directory = "/OBS/"
+
+[[projectinput]]
+Simulation_YearSeason = 3         # Year number of cultivation (Non-seeding/planting year)
+Simulation_DayNr1 = 41936         # First day of simulation period - 25 October 2015  
+Simulation_DayNrN = 42305         # Last day of simulation period - 28 October 2016  
+Crop_Day1 = 42131                 # First day of cropping period - 7 May 2016       
+Crop_DayN = 42305                 # Last day of cropping period - 28 October 2016  
+Climate_Info = "-- 1. Climate (CLI) file"
+Climate_Filename = "Ottawa.CLI"
+Climate_Directory = "/DATA/"
+Temperature_Info = "1.1 Temperature (Tnx or TMP) file"
+Temperature_Filename = "Ottawa.Tnx"
+Temperature_Directory = "/DATA/"
+ETo_Info = "1.2 Reference ET (ETo) file"
+ETo_Filename = "Ottawa.ETo"
+ETo_Directory = "/DATA/"
+Rain_Info = "1.3 Rain (PLU) file"
+Rain_Filename = "Ottawa.PLU"
+Rain_Directory = "/DATA/"
+CO2_Info = "1.4 Atmospheric CO2 concentration (CO2) file"
+CO2_Filename = "MaunaLoa.CO2"
+CO2_Directory = "/SIMUL/"
+Calendar_Info = "-- 2. Calendar (CAL) file"
+Calendar_Filename = "21May.CAL"
+Calendar_Directory = "/DATA/"
+Crop_Info = "-- 3. Crop (CRO) file"
+Crop_Filename = "AlfOttawaGDD.CRO"
+Crop_Directory = "/DATA/"
+Irrigation_Info = "-- 4. Irrigation management (IRR) file"
+Irrigantion_Filename = "(None)"
+Irrigation_Directory = "(None)"
+Management_Info = "-- 5. Field management (MAN) file"
+Management_Filename = "Ottawa.MAN"
+Management_Directory = "/DATA/"
+Soil_Info = "-- 6. Soil profile (SOL) file"
+Soil_Filename = "Ottawa.SOL"
+Soil_Directory = "/DATA/"
+GroundWater_Info = "-- 7. Groundwater table (GWT) file"
+GroundWater_Filename = "(None)"
+GroundWater_Directory = "(None)"
+SWCIni_Info = "-- 8. Initial conditions (SW0) file"
+SWCIni_Filename = "KeepSWC"
+SWCIni_Directory = "Keep soil water profile of previous run"
+OffSeasson_Info = "-- 9. Off-season conditions (OFF) file"
+OffSeasson_Filename = "(None)"
+OffSeasson_Directory = "(None)"
+Observations_Info = "-- 10. Field data (OBS) file"
+Observations_Filename = "Ottawa.OBS"
+Observations_Directory = "/OBS/"
+
+
+
+
+# for now we are missing initialsettings.jl:58
+
+
+
+
+# PARAM/Ottawa.PPn
+# initialsettings.jl:86
+[simulparam]
+# crop 
+EvapDeclineFactor = 4         # Evaporation decline factor for stage II
+KcWetBare = 1.10              # Ke(x) Soil evaporation coefficient for fully wet and non-shaded soil surface
+PercCCxHIfinal = 5            # Threshold for green CC below which HI can no longer increase (% cover)
+RootPercentZmin = 70          # Starting depth of root zone expansion curve (% of Zmin)
+MaxRootZoneExpansion  = 5.00  # Maximum allowable root zone expansion (fixed at 5 cm/day)
+KsShapeFactorRoot = -6        # Shape factor for effect water stress on root zone expansion
+TAWGermination = 20           # Required soil water content in top soil for germination (% TAW)
+pAdjFAO = 1.0                 # Adjustment factor for FAO-adjustment soil water depletion (p) by ETo
+DelayLowOxygen = 3            # Number of days after which deficient aeration is fully effective
+ExpFsen = 1.00                # Exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
+Beta = 12                     # Decrease of p(sen) once early canopy senescence is triggered (% of p(sen))
+ThicknessTopSWC = 10          # Thickness top soil (cm) in which soil water depletion has to be determined
+EvapZmax = 30                 # Depth [cm] of soil profile affected by water extraction by soil evaporation
+RunoffDepth = 0.30            # Considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment
+CNcorrection = 1              # CN is adjusted to Antecedent Moisture Class
+SaltDiff = 20                 # Salt diffusion factor (capacity for salt diffusion in micro pores) [%]
+SaltSolub = 100               # Salt solubility [g/liter]
+RootNrDF = 16                 # Shape factor for effect of soil water content gradient on capillary rise
+# temperature
+Tmin = 12.0                   # Default minimum temperature (degC) if no temperature file is specified
+Tmax = 28.0                   # Default maximum temperature (degC) if no temperature file is specified
+GDDMethod = 3                 # Default method for the calculation of growing degree days
+# Rainfall
+EffectiveRain.method = 1      # Daily rainfall is estimated by USDA-SCS procedure (when input is 10-day/monthly rainfall)
+EffectiveRain.PercentEffRain = 70         # Percentage of effective rainfall (when input is 10-day/monthly rainfall)
+EffectiveRain.ShowersInDecade = 2         # Number of showers in a decade for run-off estimate (when input is 10-day/monthly rainfall)
+EffectiveRain.RootNrEvap = 5              # Parameter for reduction of soil evaporation (when input is 10-day/monthly rainfall)
+
+
+
+
+# DATA/Ottawa.Tnx
+# runsim.jl:343
+# here we only have the part of tempertature_record variable, not the actual values of temperature
+# that part is in a csv OttawaTnx.csv which has the Tmin (C) TMax (C) values
+[temperature_record]
+Datatype = 1                  # Daily records (1=daily, 2=10-daily and 3=monthly data)
+FromD = 1                     # First day of record (1, 11 or 21 for 10-day or 1 for months)
+FromM = 1                     # First month of record
+FromY = 2014                  # First year of record (1901 if not linked to a specific year)
+
+
+
+
+# DATA/Ottawa.ETo
+# runsim.jl:343
+# here we only have the part of eto_record variable, not the actual values of eto
+# that part is in a csv OttawaETo.csv which has the Average ETo (mm/day) value
+[ETo_record]
+Datatype = 1                  # Daily records (1=daily, 2=10-daily and 3=monthly data)
+FromD = 1                     # First day of record (1, 11 or 21 for 10-day or 1 for months)
+FromM = 1                     # First month of record
+FromY = 2014                  # First year of record (1901 if not linked to a specific year)
+
+
+
+
+# DATA/Ottawa.PLU
+# runsim.jl:343
+# here we only have the part of rain_record variable, not the actual values of rain
+# that part is in a csv OttawaPLU.csv which has the Total Rain (mm) value
+[rain_record]
+Datatype = 1                  # Daily records (1=daily, 2=10-daily and 3=monthly data)
+FromD = 1                     # First day of record (1, 11 or 21 for 10-day or 1 for months)
+FromM = 1                     # First month of record
+FromY = 2014                  # First year of record (1901 if not linked to a specific year)
+
+
+
+
+# DATA/AlfOttawaGDD.CRO 
+# runsim.jl:637
+Ottawa variety - Alfalfa - Louvain-La-Neuve (Belgium) -  adjusted for Ottawa - calibrated for Soil Fertility
+     7.1       : AquaCrop Version (August 2023)
+     1         : File not protected
+     4         : forage crop
+     1         : Crop is sown in 1st year
+     0         : Determination of crop cycle : by growing degree-days
+     1         : Soil water depletion factors (p) are adjusted by ETo
+     5.0       : Base temperature (degC) below which crop development does not progress
+    30.0       : Upper temperature (degC) above which crop development no longer increases with an increase in temperature
+  1920         : Total length of crop cycle in growing degree-days
+     0.15      : Soil water depletion factor for canopy expansion (p-exp) - Upper threshold
+     0.55      : Soil water depletion factor for canopy expansion (p-exp) - Lower threshold
+     3.0       : Shape factor for water stress coefficient for canopy expansion (0.0 = straight line)
+     0.60      : Soil water depletion fraction for stomatal control (p - sto) - Upper threshold
+     3.0       : Shape factor for water stress coefficient for stomatal control (0.0 = straight line)
+     0.70      : Soil water depletion factor for canopy senescence (p - sen) - Upper threshold
+     3.0       : Shape factor for water stress coefficient for canopy senescence (0.0 = straight line)
+   600         : Sum(ETo) during dormant period to be exceeded before crop is permanently wilted
+     0.90      : Soil water depletion factor for pollination (p - pol) - Upper threshold
+     2         : Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)
+    50         : Considered soil fertility stress for calibration of stress response (%)
+     2.35      : Shape factor for the response of canopy expansion to soil fertility stress
+     0.79      : Shape factor for the response of maximum canopy cover to soil fertility stress
+    -0.16      : Shape factor for the response of crop Water Productivity to soil fertility stress
+     6.26      : Shape factor for the response of decline of canopy cover to soil fertility stress
+    -9         : dummy - Parameter no Longer required
+     8         : Minimum air temperature below which pollination starts to fail (cold stress) (degC)
+    40         : Maximum air temperature above which pollination starts to fail (heat stress) (degC)
+     8.0       : Minimum growing degrees required for full crop transpiration (degC - day)
+     2         : Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)
+    16         : Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)
+    -9         : Dummy - no longer applicable
+    25         : Calibrated distortion (%) of CC due to salinity stress (Range: 0 (none) to +100 (very strong))
+   100         : Calibrated response (%) of stomata stress to ECsw (Range: 0 (none) to +200 (extreme))
+     1.15      : Crop coefficient when canopy is complete but prior to senescence (KcTr,x)
+     0.050     : Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.
+     0.30      : Minimum effective rooting depth (m)
+     3.00      : Maximum effective rooting depth (m)
+    15         : Shape factor describing root zone expansion
+     0.020     : Maximum root water extraction (m3water/m3soil.day) in top quarter of root zone
+     0.010     : Maximum root water extraction (m3water/m3soil.day) in bottom quarter of root zone
+    60         : Effect of canopy cover in reducing soil evaporation in late season stage
+     2.50      : Soil surface covered by an individual seedling at 90 % emergence (cm2)
+    19.38      : Canopy size of individual plant (re-growth) at 1st day (cm2)
+  2000000      : Number of plants per hectare
+     0.17713   : Canopy growth coefficient (CGC): Increase in canopy cover (fraction soil cover per day)
+     9         : Number of years at which CCx declines to 90 % of its value due to self-thinning - for Perennials
+     0.50      : Shape factor of the decline of CCx over the years due to self-thinning - for Perennials
+    -9         : dummy - Parameter no Longer required
+     0.95      : Maximum canopy cover (CCx) in fraction soil cover
+     0.03636   : Canopy decline coefficient (CDC): Decrease in canopy cover (in fraction per day)
+     2         : Calendar Days: from sowing to emergence
+   178         : Calendar Days: from sowing to maximum rooting depth
+   180         : Calendar Days: from sowing to start senescence
+   180         : Calendar Days: from sowing to maturity (length of crop cycle)
+     0         : Calendar Days: from sowing to flowering
+     0         : Length of the flowering stage (days)
+     0         : Crop determinancy unlinked with flowering
+    -9         : parameter NO LONGER required
+    17         : Building up of Harvest Index starting at sowing/transplanting (days)
+    15.0       : Water Productivity normalized for ETo and CO2 (WP*) (gram/m2)
+   100         : Water Productivity normalized for ETo and CO2 during yield formation (as % WP*)
+    50         : Sink strength (%) quatifying biomass response to elevated atmospheric CO2 concentration
+   100         : Reference Harvest Index (HIo) (%)
+    -9         : Possible increase (%) of HI due to water stress before flowering
+    -9.0       : No impact on HI of restricted vegetative growth during yield formation 
+    -9.0       : No effect on HI of stomatal closure during yield formation
+    -9         : Allowable maximum increase (%) of specified HI
+     5         : GDDays: from sowing to emergence
+  1920         : GDDays: from sowing to maximum rooting depth
+  1920         : GDDays: from sowing to start senescence
+  1920         : GDDays: from sowing to maturity (length of crop cycle)
+     0         : GDDays: from sowing to flowering
+     0         : Length of the flowering stage (growing degree days)
+     0.012000  : CGC for GGDays: Increase in canopy cover (in fraction soil cover per growing-degree day)
+     0.006000  : CDC for GGDays: Decrease in canopy cover (in fraction per growing-degree day)
+   118         : GDDays: building-up of Harvest Index during yield formation
+    20         : dry matter content (%) of fresh yield
+     0.30      : Minimum effective rooting depth (m) in first year (for perennials)
+     1         : Crop is sown in 1st year (for perennials)
+     1         : Transfer of assimilates from above ground parts to root system is considered
+   100         : Number of days at end of season during which assimilates are stored in root system
+    65         : Percentage of assimilates transferred to root system at last day of season
+    60         : Percentage of stored assimilates transferred to above ground parts in next season
+
+ Internal crop calendar
+ ========================================================
+    13         : The Restart of growth is generated by Growing-degree days
+     1         : First Day for the time window (Restart of growth)
+     4         : First Month for the time window (Restart of growth)
+   120         : Length (days) of the time window (Restart of growth)
+    20.0       : Threshold for the Restart criterion: Growing-degree days
+     8         : Number of successive days for the Restart criterion
+     2         : Number of occurrences before the Restart criterion applies
+    63         : The End of growth is generated by Growing-degree days
+    31         : Last Day for the time window (End of growth)
+    10         : Last Month for the time window (End of growth)
+     0         : Number of years to add to the Onset year
+    60         : Length (days) of the time window (End of growth)
+    10.0       : Threshold for the End criterion: Growing-degree days
+     8         : Number of successive days for the End criterion
+     1         : Number of occurrences before the End criterion applies
