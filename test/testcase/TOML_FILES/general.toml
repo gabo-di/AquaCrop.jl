@@ -29,7 +29,7 @@ out7Clim = true               # Climate input parameters
 
 
 
-# SIMUL/ParticularResultso.SIM
+# SIMUL/ParticularResults.SIM
 # initialsettings.jl:1479
 # in the original AquaCrop we have numbers, if that number is in the file, then we have to set true here.
 [resultsparameters.particularresultsparameters]

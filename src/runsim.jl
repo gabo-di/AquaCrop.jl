@@ -132,7 +132,7 @@ function load_simulation_project!(inse, projectinput::ProjectInputType)
         no_irrigation!(inse)
     else
         irri_file = projectinput.ParentDir * projectinput.Irrigation_Directory * projectinput.Irrigation_Filename
-        load_irri_schedule_info!(inse, fullname)
+        load_irri_schedule_info!(inse, irri_file)
     end 
     setparameter!(inse[:string_parameters], :irri_file, irri_file)
 
@@ -309,13 +309,15 @@ function read_temperature_file!(array_parameters::ParametersContainer{T}, temper
     
     open(temperature_file, "r") do file
         readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
+        if !endswith(temperature_file, ".csv")
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+        end
 
         for line in eachline(file)
             splitedline = split(line)
@@ -1429,13 +1431,15 @@ function get_set_of_three(dayn, deci, monthi, yeari, temperature_file, temperatu
     # 1 = previous decade, 2 = Actual decade, 3 = Next decade;
     open(temperature_file, "r") do file
         readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
+        if !endswith(temperature_file, ".csv")
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+        end
 
         if temperature_record.FromD>20
             decfile=3
@@ -1590,7 +1594,7 @@ function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, te
     c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months(monthi, yeari, temperature_file, temperature_record)
 
     dayi = 1
-    dnr = dete(dayi, monthi, yeari)
+    dnr = determine_day_nr(dayi, monthi, yeari)
     dayn = DaysInMonth[monthi]
     if ((monthi == 2) & isleapyear(yeari)) 
         dayn = dayn + 1
@@ -1628,13 +1632,15 @@ function get_set_of_three_months(monthi, yeari, temperature_file, temperature_re
     # 1. Prepare record
     open(temperature_file, "r") do file
         readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
+        if !endswith(temperature_file, ".csv")
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+        end
 
         mfile = temperature_record.FromM
         if temperature_record.FromY==1901
@@ -1673,7 +1679,7 @@ function get_set_of_three_months(monthi, yeari, temperature_file, temperature_re
                     c2max = c1max
                     x2 = x1 + n1
                     x3 = x2 + n3
-               end 
+                end 
             elseif temperature_record.NrObs==2
                 if monthi==mfile 
                     t1 = 0
@@ -2224,7 +2230,7 @@ function adjust_simperiod!(inse, projectinput::ProjectInputType)
         if (clim_file != "(None)") & ((simulation.FromDayNr<=clim_record.FromDayNr) | (simulation.FromDayNr>=clim_record.ToDayNr)) 
             simulation.FromDayNr = clim_record.FromDayNr
             simulation.ToDayNr = simulation.FromDayNr + 30
-       end 
+        end 
     end 
 
     # adjust initial depth and quality of the groundwater when required
@@ -2235,7 +2241,7 @@ function adjust_simperiod!(inse, projectinput::ProjectInputType)
             fullfilename = groundwater_file
         end 
         # initialize ZiAqua and ECiAqua
-        load_groundwater!(inse, fullname)
+        load_groundwater!(inse, fullfilename)
         calculate_adjusted_fc!(inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua]/100)
         if inse[:simulation].IniSWC.AtFC 
             reset_swc_to_fc!(inse[:simulation], inse[:compartments], inse[:soil_layers], inse[:integer_parameters][:ziaqua])
@@ -2692,7 +2698,7 @@ function load_management!(inse, fullname)
         if i==1 
             management.Cuttings.Generate = true
         else
-            management.Cuttings.Generate =false 
+            management.Cuttings.Generate = false 
         end
         # Time criterion for generating cuttings
         i = parse(Int, split(readline(file))[1])
