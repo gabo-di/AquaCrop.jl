@@ -186,7 +186,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
     # self-thinning
     # 7.1 initialize
     gvars[:simulation].RCadj = gvars[:management].WeedRC
-    cweed = 
+    cweed = 0
     if gvars[:crop].subkind == :Forage
         fi = multiplier_ccx_self_thinning(gvars[:simulation].YearSeason, gvars[:crop].YearCCx, gvars[:crop].CCxRoot)
     else
@@ -229,7 +229,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
         end 
     else
         setparameter!(gvars[:float_parameters], :fweednos, 1)
-        fWeed = 1
+        fweed = 1
         setparameter!(gvars[:float_parameters], :ccxcrop_weednosf_stress, gvars[:crop].CCx)
     end
 
@@ -372,7 +372,7 @@ function get_gwt_set!(gvars, parentdir, daynrin)
                 if daynrin<gwt.DNr2 
                     # DayNrIN before 1st observation
                     gwt.DNr1 = simulation.FromDayNr
-                    gwt.Z1 = Gwt.Z2
+                    gwt.Z1 = gwt.Z2
                     gwt.EC1 = gwt.EC2
                 else
                     # DayNrIN after or at 1st observation
@@ -407,7 +407,7 @@ function get_gwt_set!(gvars, parentdir, daynrin)
             # undefined year
             if daynr1gwt<=365 
                 dayi, monthi, yearact = determine_date(daynrin)
-                if yearACT != 1901 
+                if yearact != 1901 
                     # make 1st observation defined
                     dayi, monthi, yeari = determine_date(gwt.DNr2)
                     gwt.DNr2 = determine_day_nr(dayi, monthi, yearact)
@@ -445,10 +445,10 @@ function get_gwt_set!(gvars, parentdir, daynrin)
                         zm = parse(Float64, popfirst!(splitedline))
                         gwt.EC2 = parse(Float64, popfirst!(splitedline))
                         gwt.DNr2 = daynr1gwt + round(Int, daydouble) - 1
-                        if yearACT != 1901 
+                        if yearact != 1901 
                             # make observation defined
                             dayi, monthi, yeari = determine_date(gwt.DNr2)
-                            gwt.DNr2 = determine_day_nr(dayi, nthi, yearact)
+                            gwt.DNr2 = determine_day_nr(dayi, monthi, yearact)
                         end 
                         gwt.Z2 = round(Int, zm * 100)
                         if daynrin<gwt.DNr2 
@@ -458,7 +458,7 @@ function get_gwt_set!(gvars, parentdir, daynrin)
                             loop3 = false
                         end
                     end
-                    if !TheEnd 
+                    if !theend 
                         # DayNrIN after last observation
                         gwt.DNr1 = gwt.DNr2
                         gwt.Z1 = gwt.Z2
@@ -874,9 +874,9 @@ function stress_biomass_relationship!(outputs, gvars)
         bm60 =  stress_matrix[7].BioMProc
         bm70 =  stress_matrix[8].BioMProc
     else
-        b2 = real(undef_int, kind=dp)
-        b1 = real(undef_int, kind=dp)
-        b0 = real(undef_int, kind=dp)
+        b2 = undef_double #real(undef_int, kind=dp)
+        b1 = undef_double #real(undef_int, kind=dp)
+        b0 = undef_double #real(undef_int, kind=dp)
     end 
     
     setparameter!(gvars[:float_parameters], :coeffb0, b0)
@@ -1957,7 +1957,7 @@ function ccx_salt_stress_relationship!(outputs, gvars)
     end 
 
     # 2. Biomass production (or Salt stress) for various CCx reductions
-    for Si in 1:10
+    for si in 1:10
         # various CCx reduction
         # CCx reduction
         sipr = 10*(si-1)
@@ -1989,7 +1989,7 @@ function ccx_salt_stress_relationship!(outputs, gvars)
 
         # biomass production
         simulation.DelayedDays = 0 #note that we must do this before calling bnormalized
-        bnor = bnormalized(thedaystoccini, thegddaystoccini,
+        bnor = bnormalized(outputs, thedaystoccini, thegddaystoccini,
                 l0, l12, l12ss, l123, l1234, lflor,
                 gddl0, gddl12, gddl12ss, gddl123, gddl1234,
                 wpyield, daysyieldformation, tswitch,
@@ -2067,9 +2067,9 @@ function ccx_salt_stress_relationship!(outputs, gvars)
         salt80 =  stress_matrix[9].SaltProc
         salt90 =  stress_matrix[10].SaltProc
     else
-        coeffb2salt = real(undef_int, kind=dp)
-        coeffb1salt = real(undef_int, kind=dp)
-        coeffb0salt = real(undef_int, kind=dp)
+        coeffb2salt = undef_double #real(undef_int, kind=dp)
+        coeffb1salt = undef_double #real(undef_int, kind=dp)
+        coeffb0salt = undef_double #real(undef_int, kind=dp)
     end 
     setparameter!(gvars[:float_parameters], :coeffb0salt, coeffb0salt)
     setparameter!(gvars[:float_parameters], :coeffb1salt, coeffb1salt)
