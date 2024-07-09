@@ -6,7 +6,7 @@ include("checkpoints.jl")
 @testset "Load Simulation Run Project" begin
     gvars, projectinput, fileok = checkpoint2()
 
-    gvars_0 = checkpoint3()
+    gvars_0, _ = checkpoint3()
 
     i = 1
     AquaCrop.load_simulation_project!(gvars, projectinput[i])
@@ -32,9 +32,31 @@ include("checkpoints.jl")
     @test isapprox(gvars[:temperature_record], gvars_0[:temperature_record])
     @test isapprox(gvars[:perennial_period], gvars_0[:perennial_period])
     @test isapprox(gvars[:crop_file_set], gvars_0[:crop_file_set])
+
     # @test isapprox(gvars[:array_parameters][:Tmax], gvars_0[:array_parameters][:Tmax])
     # @test isapprox(gvars[:array_parameters][:Tmin], gvars_0[:array_parameters][:Tmin])
-    
 end
 
+@testset "Simulation Run Part 1" begin
+    gvars, projectinput = checkpoint3()
+    outputs = AquaCrop.start_outputs()
 
+    outputs_0, gvars_0, _ = checkpoint4()
+    
+    i = 1
+    AquaCrop.adjust_compartments!(gvars)
+    gvars[:sumwabal] = AquaCrop.RepSum()
+    AquaCrop.reset_previous_sum!(gvars)
+    AquaCrop.initialize_run_part_1!(outputs, gvars, projectinput[i])
+
+
+    @test isapprox(gvars[:simulation], gvars_0[:simulation])
+    @test isapprox(gvars[:crop], gvars_0[:crop])
+    @test isapprox(gvars[:management], gvars_0[:management])
+    @test isapprox(gvars[:stresstot], gvars_0[:stresstot])
+    @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
+    @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
+    @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
+    @test isapprox(outputs[:tcropsim], outputs_0[:tcropsim])
+
+end

@@ -38,17 +38,19 @@ abstract type AbstractParametersContainer end
 Base.length(p::AbstractParametersContainer) = 1
 
 function _isapprox(a, b; kwargs...)
+    ans = true
     for field in fieldnames(typeof(a))
         if isapprox(getfield(a, field), getfield(b, field); kwargs...)
             continue
         else
             println("\n\n\n")
             println(field)
+            println(getfield(a, field), "   ", getfield(b, field))
             println("\n\n\n")
-            return false
+            ans = false
         end
     end
-    return true
+    return ans 
 end
 
 Base.isapprox(a::T, b::T; kwargs...) where {T<:AbstractParametersContainer} = _isapprox(a, b, kwargs...)
@@ -68,6 +70,23 @@ end
 function ParametersContainer(::Type{T}) where {T}
     ParametersContainer(Dict{Symbol,T}())
 end
+
+Base.isapprox(a::Dict{Symbol, T}, b::Dict{Symbol, T}; kwargs...) where {T} = begin 
+    ans = true
+    for key in keys(a)
+        if isapprox(a[key], b[key]; kwargs...)
+            continue
+        else
+            println("\n\n\n")
+            println(key)
+            println(a[key], "   ", b[key])
+            println("\n\n\n")
+            ans = false
+        end
+    end
+    return ans 
+end
+
 
 """
     setparameter!(parameterscontainer::ParametersContainer{T}, parameterkey::Symbol, parameter::T)

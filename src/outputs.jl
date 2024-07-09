@@ -5,13 +5,13 @@ variable with the outputs of the program
 """
 function start_outputs()
     logger = String[]
-    tcropsim = ComponentArray(
-                    tlow = Float64[],
-                    thig = Float64[])
+    tcropsim = Dict(
+                    :tlow => Float64[],
+                    :thigh => Float64[])
 
-    return ComponentArray( 
-        logger = logger,
-        tcropsim = tcropsim,
+    return Dict( 
+        :logger => logger,
+        :tcropsim => tcropsim,
     )
 end
 

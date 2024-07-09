@@ -39,8 +39,13 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
         load_clim!(gvars[:rain_record], rain_file)
     end 
     setparameter!(gvars[:string_parameters], :rain_file, rain_file)
+    
 
-    # 1.4 Climate
+    # 1.4 CO2 and Climate
+    if projectinput.CO2_Filename != "(None)"
+        co2_file = projectinput.ParentDir * projectinput.CO2_Directory * projectinput.CO2_Filename
+        setparameter!(gvars[:string_parameters], :CO2_file, co2_file)
+    end
     if projectinput.Climate_Filename != "(External)"
         set_clim_data!(gvars, projectinput)
     end
@@ -3235,11 +3240,11 @@ run.f90:3445
 function reset_previous_sum!(gvars)
     gvars[:previoussum] = RepSum()
     
-    setparameter!(gvars[:float_parameters], :sumeto, 0)
-    setparameter!(gvars[:float_parameters], :sumgdd, 0)
-    setparameter!(gvars[:float_parameters], :previoussumeto, 0)
-    setparameter!(gvars[:float_parameters], :previoussumgdd, 0)
-    setparameter!(gvars[:float_parameters], :previousbmob, 0)
-    setparameter!(gvars[:float_parameters], :previousbsto, 0)
+    setparameter!(gvars[:float_parameters], :sumeto, 0.0)
+    setparameter!(gvars[:float_parameters], :sumgdd, 0.0)
+    setparameter!(gvars[:float_parameters], :previoussumeto, 0.0)
+    setparameter!(gvars[:float_parameters], :previoussumgdd, 0.0)
+    setparameter!(gvars[:float_parameters], :previousbmob, 0.0)
+    setparameter!(gvars[:float_parameters], :previousbsto, 0.0)
 end 
 

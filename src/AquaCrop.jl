@@ -14,7 +14,7 @@ include("FieldCrop.jl")
 include("main.jl")
 
 # ---- exports ----
-export starttheprogram
+export start_the_program
 
 
 

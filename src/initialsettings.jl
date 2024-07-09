@@ -525,7 +525,6 @@ function crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel
     # inducing stomatal closure (kssto) not applicable
     ksi = 1
     stressout.RedKsSto = round(Int, (1-ksi)*100)
-
     return stressout
 end 
 
