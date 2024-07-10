@@ -1,9 +1,9 @@
 """
-   runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, inse)
+   runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, gvars)
 
 global.f90:6643
 """
-function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, inse)
+function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, gvars)
     # @NOTE This procedure will try to read from the soil profile file.
     # If this file does not exist, the necessary information is gathered
     # from the attributes of the Soil global variable instead.
@@ -23,15 +23,15 @@ function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, i
     if (has_external) 
         # Note: here we use the AquaCrop version number and assume that
         # the same version can be used in finalizing the soil settings.
-        soil = inse[:soil]
-        soil_layers = inse[:soil_layers]
-        compartments = inse[:compartments]
+        soil = gvars[:soil]
+        soil_layers = gvars[:soil_layers]
+        compartments = gvars[:compartments]
     elseif (filename == "(None)") 
-        soil = inse[:soil]
-        soil_layers = inse[:soil_layers]
-        compartments = inse[:compartments]
+        soil = gvars[:soil]
+        soil_layers = gvars[:soil_layers]
+        compartments = gvars[:compartments]
     else
-        soil, soil_layers, compartments = load_profile(filepaths[:prog]*projectinput[1].Soil_Directory*filename, inse[:simulparam])
+        soil, soil_layers, compartments = load_profile(filepaths[:prog]*projectinput[1].Soil_Directory*filename, gvars[:simulparam])
     end 
 
     # 3. Check if runs with KeepSWC exist
@@ -302,7 +302,7 @@ end
 
 
 """
-    inse = initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
+    gvars = initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
 
 gets the initial settings.
 
@@ -347,7 +347,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
 
     # 4. Field Management
     management.FertilityStress = 0
-    crop_stress_parameters_soil_fertility!(simulation.EffectStress, crop.StressResponse, management.FertilityStress) 
+    simulation.EffectStress = crop_stress_parameters_soil_fertility(crop.StressResponse, management.FertilityStress) 
 
     sumwabal = RepSum()
     previoussum = RepSum()
@@ -376,6 +376,10 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     perennial_period = RepPerennialPeriod()
     crop_file_set = RepCropFileSet()
 
+    # 11.3 Extra variables for run
+    gwtable = RepGwTable()
+    stresstot = RepStressTot()
+
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
     setparameter!(float_parameters, :eto, 5.0)
@@ -395,6 +399,24 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(float_parameters, :previoussumgdd, undef_double)
     setparameter!(float_parameters, :previousbmob, undef_double)
     setparameter!(float_parameters, :previousbsto, undef_double)
+    setparameter!(float_parameters, :ccxwitheredtpotnos, undef_double)
+    setparameter!(float_parameters, :co2i, undef_double)
+    setparameter!(float_parameters, :fracbiomasspotsf, undef_double)
+    setparameter!(float_parameters, :coeffb0, undef_double)
+    setparameter!(float_parameters, :coeffb1, undef_double)
+    setparameter!(float_parameters, :coeffb2, undef_double)
+    setparameter!(float_parameters, :coeffb0salt, undef_double)
+    setparameter!(float_parameters, :coeffb1salt, undef_double)
+    setparameter!(float_parameters, :coeffb2salt, undef_double)
+    setparameter!(float_parameters, :sumkctop, undef_double)
+    setparameter!(float_parameters, :sumkctop_stress, undef_double)
+    setparameter!(float_parameters, :sumkci, undef_double)
+    setparameter!(float_parameters, :fweednos, undef_double)
+    setparameter!(float_parameters, :ccxcrop_weednosf_stress, undef_double)
+    setparameter!(float_parameters, :ccxtotal, undef_double)
+    setparameter!(float_parameters, :cdctotal, undef_double)
+    setparameter!(float_parameters, :gddcdctotal, undef_double)
+    setparameter!(float_parameters, :ccototal, undef_double)
 
     symbol_parameters = ParametersContainer(Symbol)
     setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
@@ -409,10 +431,17 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(integer_parameters, :maxplottr, 10)
     setparameter!(integer_parameters, :irri_first_daynr, undef_int)
     setparameter!(integer_parameters, :ziaqua, undef_int)
+    setparameter!(integer_parameters, :nextsim_from_daynr, 0)
+    setparameter!(integer_parameters, :previous_stress_level, undef_int)
+    setparameter!(integer_parameters, :stress_sf_adj_new, undef_int)
+    setparameter!(integer_parameters, :daynri, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
     setparameter!(bool_parameters, :temperature_file_exists, undef_bool)
+    setparameter!(bool_parameters, :evapo_entire_soil_surface, undef_bool)
+    setparameter!(bool_parameters, :startmode, undef_bool)
+    setparameter!(bool_parameters, :noyear, undef_bool)
 
     array_parameters = ParametersContainer(Vector{Float64})
     setparameter!(array_parameters, :Tmin, Float64[])
@@ -433,6 +462,7 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(string_parameters, :CO2_file, "MaunaLoa.CO2")
     setparameter!(string_parameters, :irri_file, "(None)")
     setparameter!(string_parameters, :offseason_file, "(None)")
+    setparameter!(string_parameters, :swcini_file, undef_str)
 
 
     return ComponentArray(
@@ -456,6 +486,8 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
         temperature_record = temperature_record,
         perennial_period = perennial_period,
         crop_file_set = crop_file_set,
+        gwtable = gwtable,
+        stresstot = stresstot,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,
@@ -466,11 +498,12 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
 end
 
 """
-    crop_stress_parameters_soil_fertility!(stressout::RepEffectStress, cropsresp::RepShapes, stresslevel)
+    crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel)
 
 global.f90:1231
 """
-function crop_stress_parameters_soil_fertility!(stressout::RepEffectStress, cropsresp::RepShapes, stresslevel)
+function crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel)
+    stressout = RepEffectStress()
     pllactual = 1
 
     # decline canopy growth coefficient (cgc)
@@ -492,6 +525,7 @@ function crop_stress_parameters_soil_fertility!(stressout::RepEffectStress, crop
     # inducing stomatal closure (kssto) not applicable
     ksi = 1
     stressout.RedKsSto = round(Int, (1-ksi)*100)
+    return stressout
 end 
 
 """
@@ -502,26 +536,26 @@ global.f90:2611
 function ks_any(wrel, pulactual, pllactual, shapefactor)
     pulactual_local = pulactual
 
-    if ((pllactual - pulactual_local) < 0.0001) 
+    if (pllactual - pulactual_local) < 0.0001 
         pulactual_local = pllactual - 0.0001
     end 
 
     prelativellul = (wrel - pulactual_local)/(pllactual - pulactual_local)
 
-    if (prelativellul <= 0) 
+    if prelativellul <= 0 
         ksval = 1
-    elseif (prelativellul >= 1) 
+    elseif prelativellul >= 1 
         ksval = 0
     else
-        if (round(Int,10*shapefactor) == 0)  # straight line
+        if round(Int,10*shapefactor) == 0  # straight line
             ksval = 1 - (exp(prelativellul*0.01)-1)/(exp(0.01)-1)
         else
             ksval = 1 - (exp(prelativellul*shapefactor)-1)/(exp(shapefactor)-1)
         end 
-        if (ksval > 1) 
+        if ksval > 1 
             ksval = 1
         end 
-        if (ksval < 0) 
+        if ksval < 0 
             ksval = 0
         end 
     end 

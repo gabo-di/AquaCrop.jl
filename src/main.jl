@@ -10,6 +10,8 @@ starts the program
 startunit.f90:931
 """
 function start_the_program(parentdir=nothing)
+    outputs = start_outputs()
+
     if isnothing(parentdir)
         parentdir = pwd()
     end
@@ -24,14 +26,14 @@ function start_the_program(parentdir=nothing)
     for i in eachindex(project_filenames)
         theprojectfile = project_filenames[i]
         theprojecttype = get_project_type(theprojectfile)
-        inse, projectinput, fileok = initialize_project(i, theprojectfile, theprojecttype, filepaths)
-        run_simulation(inse, projectinput)
+        gvars, projectinput, fileok = initialize_project(i, theprojectfile, theprojecttype, filepaths)
+        run_simulation!(outputs, gvars, projectinput)
     end
-end # not end
+end # notend
 
 
 """
-    inse, projectinput, fileok = initialize_project(i, theprojectfile, theprojecttype, filepaths)
+    gvars, projectinput, fileok = initialize_project(i, theprojectfile, theprojecttype, filepaths)
 
 startunit.f90:535
 """
@@ -47,7 +49,7 @@ function initialize_project(i, theprojectfile, theprojecttype, filepaths)
     end 
 
     if (theprojecttype != :typenone) & canselect[1]
-        inse = initialize_settings(true, true, filepaths)
+        gvars = initialize_settings(true, true, filepaths)
 
         if theprojecttype == :typepro
             # 2. Assign single project file and read its contents
@@ -61,7 +63,7 @@ function initialize_project(i, theprojectfile, theprojecttype, filepaths)
             if (canselect[1]) 
                 auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PP1"
                 if isfile(auxparfile) 
-                    load_program_parameters_project_plugin!(inse[:simulparam], auxparfile)
+                    load_program_parameters_project_plugin!(gvars[:simulparam], auxparfile)
                     println("Project loaded with its program parameters")
                 else
                     # TODO Logging
@@ -94,12 +96,12 @@ function initialize_project(i, theprojectfile, theprojecttype, filepaths)
             if (canselect[1]) 
                 auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PPn"
                 if isfile(auxparfile)
-                    load_program_parameters_project_plugin!(inse[:simulparam], auxparfile)
-                    inse[:simulation].MultipleRun = true
-                    inse[:simulation].NrRuns = totalsimruns
-                    runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput, filepaths, inse)
-                    inse[:simulation].MultipleRunWithKeepSWC = runwithkeepswc
-                    inse[:simulation].MultipleRunConstZrx = constzrxforrun
+                    load_program_parameters_project_plugin!(gvars[:simulparam], auxparfile)
+                    gvars[:simulation].MultipleRun = true
+                    gvars[:simulation].NrRuns = totalsimruns
+                    runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput, filepaths, gvars)
+                    gvars[:simulation].MultipleRunWithKeepSWC = runwithkeepswc
+                    gvars[:simulation].MultipleRunConstZrx = constzrxforrun
                     println("Project loaded with its program parameters")
                 else
                     # TODO Logging
@@ -116,6 +118,6 @@ function initialize_project(i, theprojectfile, theprojecttype, filepaths)
             error("did not find the file "*theprojectfile)
         end
     end
-    return  inse, projectinput, fileok
+    return  gvars, projectinput, fileok
 end
 
