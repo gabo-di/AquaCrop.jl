@@ -6,6 +6,7 @@ version = "0.0.1-DEV"
 [deps]
 ComponentArrays = "b0b7db55-cfe3-40fc-9ded-d10e2dbeff66"
 Infiltrator = "5903a43b-9cc3-4c30-8d17-598619ec4e9b"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
 ComponentArrays = "0.15"

@@ -6,7 +6,7 @@
 
 
 # SIMUL/AggregationResults.SIM
-# initialsettings.jl:1426
+# initialsettings.jl:1460
 # what kind of aggregation do we want (note that actually this seems to be controled by the tempertature_record variable) 
 [resultsparameters.aggregationresultsparameters]
 aggregationtype = 0           # Time aggregation for intermediate results (0 = none ; 1 = daily; 2 = 10-daily; 3 = monthly)
@@ -15,7 +15,7 @@ aggregationtype = 0           # Time aggregation for intermediate results (0 = n
 
 
 # SIMUL/DailyResults.SIM
-# initialsettings.jl:1444
+# initialsettings.jl:1478
 # in the original AquaCrop we have numbers, if that number is in the file, then we have to set true here.
 [resultsparameters.dailyresultsparameters]
 out1Wabal = true              # Various parameters of the soil water balance
@@ -30,7 +30,7 @@ out7Clim = true               # Climate input parameters
 
 
 # SIMUL/ParticularResults.SIM
-# initialsettings.jl:1479
+# initialsettings.jl:1513
 # in the original AquaCrop we have numbers, if that number is in the file, then we have to set true here.
 [resultsparameters.particularresultsparameters]
 part1Mult = true              # Biomass and Yield at Multiple cuttings (for herbaceous forage crops)
@@ -40,7 +40,7 @@ part2Eval = true              # Evaluation of simulation results (when Field Dat
 
 
 # LIST/ListProjects.txt 
-# initialsettings.jl:1369
+# initialsettings.jl:1403
 # this lists the file projects that we will run, they can end with .PRO or .PRM
 project_filenames = ["Ottawa.PRM"]
 
@@ -48,7 +48,7 @@ project_filenames = ["Ottawa.PRM"]
 
 
 # SIMUL/DEFAULT.SOL
-# initialsettings.jl:1013
+# initialsettings.jl:1047
 [soil]
 CNValue = 61                  # CN (Curve Number)
 REW = 9                       # Readily evaporable water from top layer (mm)

@@ -313,10 +313,10 @@ function load_clim!(record::RepClim, filename)
     if isfile(filename)
         open(filename, "r") do file
             readline(file)
-            Ni = parse(Int,split(readline(file))[1])
-            if Ni == 1
+            ni = parse(Int,split(readline(file))[1])
+            if ni == 1
                 record.Datatype = :Daily
-            elseif Ni == 2
+            elseif ni == 2
                 record.Datatype = :Decadely
             else
                 record.Datatype = :Monthly

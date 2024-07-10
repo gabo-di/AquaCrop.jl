@@ -7,6 +7,7 @@ using TOML
 # ---- includes ----
 include("types.jl")
 include("utils.jl")
+include("read_toml.jl")
 include("outputs.jl")
 include("initialsettings.jl")
 include("loadsimulation.jl")
