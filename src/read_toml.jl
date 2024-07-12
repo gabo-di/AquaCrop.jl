@@ -1,3 +1,21 @@
+"""
+    checkget_gvar_file(filename)
+
+we check if the file exists, if not we give the default file path
+"""
+function checkget_gvar_file(filename)
+    file_ = ""
+    if isfile(filename)
+        file_ = filename
+    else
+        file_ = joinpath([@__DIR__, "test/testcase/TOML_FILES/gvars.toml"])
+    end
+    return file_
+end
+        
+"""
+    actualize_with_dict!(obj::T, aux::AbstractDict) where T<:AbstractParametersContainer
+"""
 function actualize_with_dict!(obj::T, aux::AbstractDict) where T<:AbstractParametersContainer
     field_names = String.(fieldnames(T))
     for key in keys(aux) 

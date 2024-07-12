@@ -1,161 +1,21 @@
-# From here it is project specific, this is related to the variable project_filenames
+# SIMUL/DEFAULT.SOL
+# initialsettings.jl:1047
+[soil]
+CNValue = 61                  # CN (Curve Number)
+REW = 9                       # Readily evaporable water from top layer (mm)
+NrSoilLayers = 1              # number of soil horizons
 
-
-# LIST/Ottawa.PRM
-# initialsettings.jl:212
-# this makes a list of information about the files and starting dates for each project run
-# maybe we only need the dates since the other files info will be in a TOML 
-[[projectinput]]
-Simulation_YearSeason = 1         # Year number of cultivation (Seeding/planting year)
-Simulation_DayNr1 = 41414         # First day of simulation period - 21 May 2014      
-Simulation_DayNrN = 41577         # Last day of simulation period - 31 October 2014  
-Crop_Day1 = 41414                 # First day of cropping period - 21 May 2014      
-Crop_DayN = 41577                 # Last day of cropping period - 31 October 2014  
-Climate_Info = "-- 1. Climate (CLI) file"
-Climate_Filename = "Ottawa.CLI"
-Climate_Directory = "/DATA/"
-Temperature_Info = "1.1 Temperature (Tnx or TMP) file"
-Temperature_Filename = "Ottawa.Tnx"
-Temperature_Directory = "/DATA/"
-ETo_Info = "1.2 Reference ET (ETo) file"
-ETo_Filename = "Ottawa.ETo"
-ETo_Directory = "/DATA/"
-Rain_Info = "1.3 Rain (PLU) file"
-Rain_Filename = "Ottawa.PLU"
-Rain_Directory = "/DATA/"
-CO2_Info = "1.4 Atmospheric CO2 concentration (CO2) file"
-CO2_Filename = "MaunaLoa.CO2"
-CO2_Directory = "/SIMUL/"
-Calendar_Info = "-- 2. Calendar (CAL) file"
-Calendar_Filename = "21May.CAL"
-Calendar_Directory = "/DATA/"
-Crop_Info = "-- 3. Crop (CRO) file"
-Crop_Filename = "AlfOttawaGDD.CRO"
-Crop_Directory = "/DATA/"
-Irrigation_Info = "-- 4. Irrigation management (IRR) file"
-Irrigantion_Filename = "(None)"
-Irrigation_Directory = "(None)"
-Management_Info = "-- 5. Field management (MAN) file"
-Management_Filename = "Ottawa.MAN"
-Management_Directory = "/DATA/"
-Soil_Info = "-- 6. Soil profile (SOL) file"
-Soil_Filename = "Ottawa.SOL"
-Soil_Directory = "/DATA/"
-GroundWater_Info = "-- 7. Groundwater table (GWT) file"
-GroundWater_Filename = "(None)"
-GroundWater_Directory = "(None)"
-SWCIni_Info = "-- 8. Initial conditions (SW0) file"
-SWCIni_Filename = "(None)"
-SWCIni_Directory = "(None)"
-OffSeasson_Info = "-- 9. Off-season conditions (OFF) file"
-OffSeasson_Filename = "(None)"
-OffSeasson_Directory = "(None)"
-Observations_Info = "-- 10. Field data (OBS) file"
-Observations_Filename = "Ottawa.OBS"
-Observations_Directory =  "/OBS/" 
-
-[[projectinput]]
-Simulation_YearSeason = 2         # Year number of cultivation (Non-seeding/planting year)
-Simulation_DayNr1 = 41578         # First day of simulation period - 1 November 2014  
-Simulation_DayNrN = 41935         # Last day of simulation period - 24 October 2015  
-Crop_Day1 = 41759                 # First day of cropping period - 1 May 2015       
-Crop_DayN = 41935                 # Last day of cropping period - 24 October 2015  
-Climate_Info = "-- 1. Climate (CLI) file"
-Climate_Filename = "Ottawa.CLI"
-Climate_Directory = "/DATA/"
-Temperature_Info = "1.1 Temperature (Tnx or TMP) file"
-Temperature_Filename = "Ottawa.Tnx"
-Temperature_Directory = "/DATA/"
-ETo_Info = "1.2 Reference ET (ETo) file"
-ETo_Filename = "Ottawa.ETo"
-ETo_Directory = "/DATA/"
-Rain_Info = "1.3 Rain (PLU) file"
-Rain_Filename = "Ottawa.PLU"
-Rain_Directory = "/DATA/"
-CO2_Info = "1.4 Atmospheric CO2 concentration (CO2) file"
-CO2_Filename = "MaunaLoa.CO2"
-CO2_Directory = "/SIMUL/"
-Calendar_Info = "-- 2. Calendar (CAL) file"
-Calendar_Filename = "21May.CAL"
-Calendar_Directory = "/DATA/"
-Crop_Info = "-- 3. Crop (CRO) file"
-Crop_Filename = "AlfOttawaGDD.CRO"
-Crop_Directory = "/DATA/"
-Irrigation_Info = "-- 4. Irrigation management (IRR) file"
-Irrigantion_Filename = "(None)"
-Irrigation_Directory = "(None)"
-Management_Info = "-- 5. Field management (MAN) file"
-Management_Filename = "Ottawa.MAN"
-Management_Directory = "/DATA/"
-Soil_Info = "-- 6. Soil profile (SOL) file"
-Soil_Filename = "Ottawa.SOL"
-Soil_Directory = "/DATA/"
-GroundWater_Info = "-- 7. Groundwater table (GWT) file"
-GroundWater_Filename = "(None)"
-GroundWater_Directory = "(None)"
-SWCIni_Info = "-- 8. Initial conditions (SW0) file"
-SWCIni_Filename = "KeepSWC"
-SWCIni_Directory = "Keep soil water profile of previous run"
-OffSeasson_Info = "-- 9. Off-season conditions (OFF) file"
-OffSeasson_Filename = "(None)"
-OffSeasson_Directory = "(None)"
-Observations_Info = "-- 10. Field data (OBS) file"
-Observations_Filename = "Ottawa.OBS"
-Observations_Directory = "/OBS/"
-
-[[projectinput]]
-Simulation_YearSeason = 3         # Year number of cultivation (Non-seeding/planting year)
-Simulation_DayNr1 = 41936         # First day of simulation period - 25 October 2015  
-Simulation_DayNrN = 42305         # Last day of simulation period - 28 October 2016  
-Crop_Day1 = 42131                 # First day of cropping period - 7 May 2016       
-Crop_DayN = 42305                 # Last day of cropping period - 28 October 2016  
-Climate_Info = "-- 1. Climate (CLI) file"
-Climate_Filename = "Ottawa.CLI"
-Climate_Directory = "/DATA/"
-Temperature_Info = "1.1 Temperature (Tnx or TMP) file"
-Temperature_Filename = "Ottawa.Tnx"
-Temperature_Directory = "/DATA/"
-ETo_Info = "1.2 Reference ET (ETo) file"
-ETo_Filename = "Ottawa.ETo"
-ETo_Directory = "/DATA/"
-Rain_Info = "1.3 Rain (PLU) file"
-Rain_Filename = "Ottawa.PLU"
-Rain_Directory = "/DATA/"
-CO2_Info = "1.4 Atmospheric CO2 concentration (CO2) file"
-CO2_Filename = "MaunaLoa.CO2"
-CO2_Directory = "/SIMUL/"
-Calendar_Info = "-- 2. Calendar (CAL) file"
-Calendar_Filename = "21May.CAL"
-Calendar_Directory = "/DATA/"
-Crop_Info = "-- 3. Crop (CRO) file"
-Crop_Filename = "AlfOttawaGDD.CRO"
-Crop_Directory = "/DATA/"
-Irrigation_Info = "-- 4. Irrigation management (IRR) file"
-Irrigantion_Filename = "(None)"
-Irrigation_Directory = "(None)"
-Management_Info = "-- 5. Field management (MAN) file"
-Management_Filename = "Ottawa.MAN"
-Management_Directory = "/DATA/"
-Soil_Info = "-- 6. Soil profile (SOL) file"
-Soil_Filename = "Ottawa.SOL"
-Soil_Directory = "/DATA/"
-GroundWater_Info = "-- 7. Groundwater table (GWT) file"
-GroundWater_Filename = "(None)"
-GroundWater_Directory = "(None)"
-SWCIni_Info = "-- 8. Initial conditions (SW0) file"
-SWCIni_Filename = "KeepSWC"
-SWCIni_Directory = "Keep soil water profile of previous run"
-OffSeasson_Info = "-- 9. Off-season conditions (OFF) file"
-OffSeasson_Filename = "(None)"
-OffSeasson_Directory = "(None)"
-Observations_Info = "-- 10. Field data (OBS) file"
-Observations_Filename = "Ottawa.OBS"
-Observations_Directory = "/OBS/"
-
-
-
-
-# for now we are missing initialsettings.jl:58
+[[soil_layers]]
+Thicknes = 4.0
+SAT = 50.0
+FC = 30.0
+WP = 10.0
+InfRate = 500.0
+Penetrability = 100
+GravelMass = 0
+CRa = -0.4536
+CRb = 0.83734
+Description = "Loamy soil horizon"
 
 
 
@@ -338,20 +198,6 @@ EndOccurrence = 1                # Number of occurrences before the End criterio
 
 
 
-# DATA/[GroundWater.AqC, Ottawa.GWT]
-# loadsimulation.jl:2253
-# does not exist in AquaCrop testcase
-
-
-
-
-# DATA/Ottawa.IRR
-# loadsimulation.jl:2537
-# does not exist in AquaCrop testcase
-
-
-
-
 # DATA/Ottawa.MAN
 # loadsimulation.jl:2615
 # here we only have the part of management variable, not the actual values of harvest day
@@ -375,17 +221,3 @@ Cuttings.Generate = false   # Multiple cuttings schedule is specified
 Cuttings.Criterion = 0      # Time criterion: Not Applicable
 Cuttings.HarvestEnd = false # final harvest at crop maturity is not considered
 Cuttings.FirstDayNr = 41274 # dayNr for Day 1 of list of cuttings
-
-
-
-
-# DATA/Ottawa.SW0
-# loadsimulation.jl:3075
-# does not exist in AquaCrop testcase
-
-
-
-
-# DATA/Ottawa.OFF
-# loadsimulation.jl:3141
-# does not exist in AquaCrop testcase
