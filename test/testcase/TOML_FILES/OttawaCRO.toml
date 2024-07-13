@@ -1,0 +1,100 @@
+# DATA/AlfOttawaGDD.CRO 
+# loadsimulation.jl:608
+[crop]
+subkind = 4                      # forage crop
+Planting = 1                     # Crop is sown in 1st year
+ModeCycle = 0                    # Determination of crop cycle : by growing degree-days
+pMethod = 1                      # Soil water depletion factors (p) are adjusted by ETo
+Tbase = 5.0                      # Base temperature (degC) below which crop development does not progress
+Tupper = 30.0                    # Upper temperature (degC) above which crop development no longer increases with an increase in temperature
+GDDaysToHarvest = 1920           # Total length of crop cycle in growing degree-days
+pLeafDefUL = 0.15                # Soil water depletion factor for canopy expansion (p-exp) - Upper threshold
+pLeafDefLL = 0.55                # Soil water depletion factor for canopy expansion (p-exp) - Lower threshold
+KdShapeFactorLeaf = 3.0          # Shape factor for water stress coefficient for canopy expansion (0.0 = straight line)
+pdef = 0.60                      # Soil water depletion fraction for stomatal control (p - sto) - Upper threshold
+KsShapeFactorStomata = 3.0       # Shape factor for water stress coefficient for stomatal control (0.0 = straight line)
+pSenescence = 0.70               # Soil water depletion factor for canopy senescence (p - sen) - Upper threshold
+KsShapeFactorSenescence = 3.0    # Shape factor for water stress coefficient for canopy senescence (0.0 = straight line)
+SumEToDelaySenescence = 600      # Sum(ETo) during dormant period to be exceeded before crop is permanently wilted
+pPollination = 0.90              # Soil water depletion factor for pollination (p - pol) - Upper threshold
+AnaeroPoint = 2                  # Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)
+StressResponse.Stress = 50       # Considered soil fertility stress for calibration of stress response (%)
+StressResponse.ShapeCGC = 2.35   # Shape factor for the response of canopy expansion to soil fertility stress
+StressResponse.ShapeCCX = 0.79   # Shape factor for the response of maximum canopy cover to soil fertility stress
+StressResponse.ShapeWP = -0.16   # Shape factor for the response of crop Water Productivity to soil fertility stress
+StressResponse.ShapeCDecline = 6.26      # Shape factor for the response of decline of canopy cover to soil fertility stress
+Tcold = 8                        # Minimum air temperature below which pollination starts to fail (cold stress) (degC)
+Theat = 40                       # Maximum air temperature above which pollination starts to fail (heat stress) (degC)
+GDtransplow = 8.0                # Minimum growing degrees required for full crop transpiration (degC - day)
+ECemin = 2                       # Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)
+ECemax = 16                      # Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)
+CCsaltDistortion = 25            # Calibrated distortion (%) of CC due to salinity stress (Range: 0 (none) to +100 (very strong))
+ResponseECsw = 100               # Calibrated response (%) of stomata stress to ECsw (Range: 0 (none) to +200 (extreme))
+KcTop = 1.15                     # Crop coefficient when canopy is complete but prior to senescence (KcTr,x)
+KcDecline = 0.050                # Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.
+RootMin = 0.30                   # Minimum effective rooting depth (m)
+RootMax = 3.00                   # Maximum effective rooting depth (m)
+RootShape = 15                   # Shape factor describing root zone expansion
+SmaxTopQuarter = 0.020           # Maximum root water extraction (m3water/m3soil.day) in top quarter of root zone
+SmaxBotQuarter = 0.010           # Maximum root water extraction (m3water/m3soil.day) in bottom quarter of root zone
+CCEffectEvapLate = 60            # Effect of canopy cover in reducing soil evaporation in late season stage
+SizeSeedling = 2.50              # Soil surface covered by an individual seedling at 90 % emergence (cm2)
+SizePlant = 19.38                # Canopy size of individual plant (re-growth) at 1st day (cm2)
+PlantingDens = 2000000           # Number of plants per hectare
+CGC = 0.17713                    # Canopy growth coefficient (CGC): Increase in canopy cover (fraction soil cover per day)
+YearCCx = 9                      # Number of years at which CCx declines to 90 % of its value due to self-thinning - for Perennials
+CCxRoot = 0.50                   # Shape factor of the decline of CCx over the years due to self-thinning - for Perennials
+CCx = 0.95                       # Maximum canopy cover (CCx) in fraction soil cover
+CDC = 0.03636                    # Canopy decline coefficient (CDC): Decrease in canopy cover (in fraction per day)
+DaysToGermination = 2            # Calendar Days: from sowing to emergence
+DaysToMaxRooting = 178           # Calendar Days: from sowing to maximum rooting depth
+DaysToSenescence = 180           # Calendar Days: from sowing to start senescence
+DaysToHarvest = 180              # Calendar Days: from sowing to maturity (length of crop cycle)
+DaysToFlowering = 0              # Calendar Days: from sowing to flowering
+LengthFlowering = 0              # Length of the flowering stage (days)
+DeterminancyLinked = 0           # Crop determinancy unlinked with flowering
+fExcess = -9                     # parameter NO LONGER required
+DaysToHIo = 17                   # Building up of Harvest Index starting at sowing/transplanting (days)
+WP = 15.0                        # Water Productivity normalized for ETo and CO2 (WP*) (gram/m2)
+WPy = 100                        # Water Productivity normalized for ETo and CO2 during yield formation (as % WP*)
+AdaptedToCO2 = 50                # Sink strength (%) quatifying biomass response to elevated atmospheric CO2 concentration
+HI = 100                         # Reference Harvest Index (HIo) (%)
+HIincrease = -9                  # Possible increase (%) of HI due to water stress before flowering
+aCoeff = -9.0                    # No impact on HI of restricted vegetative growth during yield formation 
+bCoeff = -9.0                    # No effect on HI of stomatal closure during yield formation
+DHImax = -9                      # Allowable maximum increase (%) of specified HI
+GDDaysToGermination = 5          # GDDays: from sowing to emergence
+GDDaysToMaxRooting = 1920        # GDDays: from sowing to maximum rooting depth
+GDDaysToSenescence = 1920        # GDDays: from sowing to start senescence
+GDDaysToHarvest = 1920           # GDDays: from sowing to maturity (length of crop cycle)
+GDDaysToFlowering = 0            # GDDays: from sowing to flowering
+GDDLengthFlowering = 0           # Length of the flowering stage (growing degree days)
+GDDCGC = 0.012000                # CGC for GGDays: Increase in canopy cover (in fraction soil cover per growing-degree day)
+GDDCDC = 0.006000                # CDC for GGDays: Decrease in canopy cover (in fraction per growing-degree day)
+GDDaysToHIo = 118                # GDDays: building-up of Harvest Index during yield formation
+DryMatter = 20                   # dry matter content (%) of fresh yield
+RootMinYear1 = 0.30              # Minimum effective rooting depth (m) in first year (for perennials)
+SownYear1 = 1                    # Crop is sown in 1st year (for perennials)
+Assimilates.On = 1               # Transfer of assimilates from above ground parts to root system is considered
+Assimilates.Period = 100         # Number of days at end of season during which assimilates are stored in root system
+Assimilates.Stored = 65          # Percentage of assimilates transferred to root system at last day of season
+Assimilates.Mobilized = 60       # Percentage of stored assimilates transferred to above ground parts in next season
+
+
+
+[perennial_period]
+aux_GenerateOnset = 13           # The Restart of growth is generated by Growing-degree days
+OnsetFirstDay = 1                # First Day for the time window (Restart of growth)
+OnsetFirstMonth = 4              # First Month for the time window (Restart of growth)
+OnsetLengthSearchPeriod = 120    # Length (days) of the time window (Restart of growth)
+OnsetThresholdValue = 20.0       # Threshold for the Restart criterion: Growing-degree days
+OnsetPeriodValue = 8             # Number of successive days for the Restart criterion
+OnsetOccurrence = 2              # Number of occurrences before the Restart criterion applies
+aux_GenerateEnd = 63             # The End of growth is generated by Growing-degree days
+EndLastDay = 31                  # Last Day for the time window (End of growth)
+EndLastMonth = 10                # Last Month for the time window (End of growth)
+ExtraYears = 0                   # Number of years to add to the Onset year
+EndLengthSearchPeriod = 60       # Length (days) of the time window (End of growth)
+EndThresholdValue = 10.0         # Threshold for the End criterion: Growing-degree days
+EndPeriodValue = 8               # Number of successive days for the End criterion
+EndOccurrence = 1                # Number of occurrences before the End criterion applies

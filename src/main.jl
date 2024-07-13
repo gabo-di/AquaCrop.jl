@@ -3,21 +3,26 @@
 # setup
 
 """
-    start_the_program(dir::Union{String,Nothing}=nothing)
+    start_the_program(parentdir::Union{String,Nothing}=nothing, runtype::Union{Symbol,Nothing}=nothing)
 
 starts the program
 
 startunit.f90:931
 """
-function start_the_program(parentdir=nothing)
+function start_the_program(parentdir=nothing, runtype=nothing)
     outputs = start_outputs()
 
     if isnothing(parentdir)
         parentdir = pwd()
     end
+    # runtype allowed for now is :Fortran, :Julia or :Persefone 
+    if isnothing(runtype)
+        kwargs = (:runtype = FortranRun(),)
+        add_output_in_logger!(outputs, "using default FortranRun")
+    end
 
-    filepaths, resultsparameters = initialize_the_program(parentdir) 
-    project_filenames = initialize_project_filename(filepaths)
+    filepaths, resultsparameters = initialize_the_program(outputs, parentdir; kwargs...) 
+    project_filenames = initialize_project_filename(outputs, filepaths; kwargs...)
 
     nprojects = length(project_filenames)
     # TODO write some messages if nprojects==0 like in startunit.F90:957
@@ -33,11 +38,11 @@ end # notend
 
 
 """
-    gvars, projectinput, fileok = initialize_project(i, theprojectfile, theprojecttype, filepaths)
+    gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths)
 
 startunit.f90:535
 """
-function initialize_project(i, theprojectfile, theprojecttype, filepaths)
+function initialize_project(outputs, theprojectfile, theprojecttype, filepaths)
     canselect = [true]
 
     # check if project file exists
@@ -64,10 +69,9 @@ function initialize_project(i, theprojectfile, theprojecttype, filepaths)
                 auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PP1"
                 if isfile(auxparfile) 
                     load_program_parameters_project_plugin!(gvars[:simulparam], auxparfile)
-                    println("Project loaded with its program parameters")
+                    add_output_in_logger!(outputs, "Project loaded with its program parameters")
                 else
-                    # TODO Logging
-                    println("Project loaded with default parameters")
+                    add_output_in_logger!(outputs, "Project loaded with default parameters")
                 end
             else
                 wrongsimnr = 1
@@ -102,20 +106,17 @@ function initialize_project(i, theprojectfile, theprojecttype, filepaths)
                     runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput, filepaths, gvars)
                     gvars[:simulation].MultipleRunWithKeepSWC = runwithkeepswc
                     gvars[:simulation].MultipleRunConstZrx = constzrxforrun
-                    println("Project loaded with its program parameters")
+                    add_output_in_logger!(outputs, "Project loaded with its program parameters")
                 else
-                    # TODO Logging
-                    println("Project loaded with default parameters")
+                    add_output_in_logger!(outputs, "Project loaded with default parameters")
                 end
             end 
         end
-    
     else
-        # TODO better logging
         if canselect[1]
-            error("bad projecttype for "*theprojectfile)
+            add_output_in_logger!(outputs, "bad projecttype for "*theprojectfile)
         else
-            error("did not find the file "*theprojectfile)
+            add_output_in_logger!(outputs, "did not find the file "*theprojectfile)
         end
     end
     return  gvars, projectinput, fileok

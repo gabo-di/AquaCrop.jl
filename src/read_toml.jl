@@ -1,18 +1,51 @@
 """
-    checkget_gvar_file(filename)
+    checkget_gvar_file(outputs, filename)
 
 we check if the file exists, if not we give the default file path
 """
-function checkget_gvar_file(filename)
+function checkget_gvar_file(outputs, filename)
     file_ = ""
     if isfile(filename)
         file_ = filename
     else
+        add_output_in_logger!(outputs, "using default file for gvars")
         file_ = joinpath([@__DIR__, "test/testcase/TOML_FILES/gvars.toml"])
     end
     return file_
 end
         
+"""
+    checkget_resultsparameters_file(outputs, filename)
+
+we check if the file exists, if not we give the default file path
+"""
+function checkget_resultsparameters_file(outputs, filename)
+    file_ = ""
+    if isfile(filename)
+        file_ = filename
+    else
+        add_output_in_logger!(outputs, "using default file for resultsparameters")
+        file_ = joinpath([@__DIR__, "test/testcase/TOML_FILES/resultsparameters.toml"])
+    end
+    return file_
+end
+
+"""
+    checkget_projectfiles_file(outputs, filename)
+
+we check if the file exists, if not we give the default file path
+"""
+function checkget_projectfiles_file(outputs, filename)
+    file_ = ""
+    if isfile(filename)
+        file_ = filename
+    else
+        add_output_in_logger!(outputs, "using default file for project_filenames")
+        file_ = joinpath([@__DIR__, "test/testcase/TOML_FILES/projectfilenames.toml"])
+    end
+    return file_
+end
+
 """
     actualize_with_dict!(obj::T, aux::AbstractDict) where T<:AbstractParametersContainer
 """
@@ -32,8 +65,6 @@ end
 
 """
     load_gvars_from_toml!(simulparam::RepParam, auxparfile; kwargs...)
-
-startunit.f90:767
 """
 function load_gvars_from_toml!(simulparam::RepParam, auxparfile; kwargs...)
     aux = TOML.parsefile(auxparfile)
@@ -251,7 +282,32 @@ function load_gvars_from_toml!(perennial_period::RepPerennialPeriod, auxparfile;
     return nothing 
 end
 
+function load_resultsparameters_from_toml(auxparfile)
+    aux = TOML.parsefile(auxparfile)
+    
+    dailyresultsparameters = aux["resultsparameters"]["dailyresultsparameters"]
+    if ( dailyresultsparameters["out1Wabal"] | dailyresultsparameters["out2Crop"] 
+        | dailyresultsparameters["out3Prof"] | dailyresultsparameters["out4Salt"]
+        | dailyresultsparameters["out5CompWC"] | dailyresultsparameters["out6CompEC"]
+        | dailyresultsparameters["out7Clim"])
+        aux["resultsparameters"]["dailyresultsparameters"]["outdailyresults"] = true
+    end
+
+    return ComponentArray(aggregationresults=aux["resultsparameters"]["aggregationresultsparameters"],
+                dailyresults=aux["resultsparameters"]["dailyresultsparameters"],
+                paricularresults=aux["resultsparameters"]["particularresultsparameters"])
+end
+
+function load_projectfilenames_from_toml(auxparfile)
+    aux = TOML.parsefile(auxparfile)
+    return aux["project_filenames"]
+end
+
 # MISSING maybe ?
+# resultsparameters.aggregationresultsparameters   initialsettings.jl:1460  (add to main!!)
+# resultsparameters.dailyresultsparameters         initialsettings.jl:1478  (add to main!!)
+# resultsparameters.particularresultsparameters    initialsettings.jl:1513  (add to main!!)
+# project_filenames    initialsettings.jl:1403    (add to main!!)
 # soil               initialsettings.jl.1047 (add to main!!)
 # soillayer          initialsettings.jl.1047 (add to main!!)
 # crop               loadsimulation.jl.608 (add to main!!)
@@ -261,8 +317,4 @@ end
 # record             loadsimulation.jl.314 (it is missing the part of NrObs that is actually related to th csv file)
 # projectinput       initialsettings.jl:212 (makes sense to read this? maybe change the input file and dir names)
 # -----------        initialsettings.jl:58  (this is not in the TOML file yet, maybe not necessary?)
-# resultsparameters.aggregationresultsparameters   initialsettings.jl:1460  (maybe not necessary because we do not use it yet)
-# resultsparameters.dailyresultsparameters         initialsettings.jl:1478  (maybe not necessary because we do not use it yet)
-# resultsparameters.particularresultsparameters    initialsettings.jl:1513  (maybe not necessary because we do not use it yet)
-# project_filenames    initialsettings.jl:1403    (this links to projectinput, is it necessary?)
 #

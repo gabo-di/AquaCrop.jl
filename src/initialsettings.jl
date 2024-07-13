@@ -1379,13 +1379,17 @@ end
 
 
 """
-    project_filenames = initialize_project_filename(filepaths)
+    project_filenames = initialize_project_filename(outputs, filepaths; kwargs...)
 
 Gets all the names of the projects files.
 
 startunit.f90:441
 """
-function initialize_project_filename(filepaths)
+function initialize_project_filename(outputs, filepaths; kwargs...)
+    return _initialize_project_filename(kwargs[:runtype], outputs, filepaths)
+end
+
+function _initialize_project_filename(runtype::FortranRun, outputs, filepaths) 
     project_filenames = String[]
 
     listprojectsfile = filepaths[:list]*"ListProjects.txt"
@@ -1396,32 +1400,39 @@ function initialize_project_filename(filepaths)
         cmd_2 = `grep -E ".*.PR[O,M]\$"`
         rc = run(pipeline( pipeline(cmd_1,cmd_2), stdout = listprojectsfile))
         if rc.exitcode != 0
-            error("Failed to create "*listprojectsfile)
+            add_output_in_logger!(outputs, "Failed to create "*listprojectsfile)
         end
     end
 
-    open(listprojectsfile, "r") do file
-        for line in eachline(file)
-            projectfile = strip(line)
-            if !isempty(projectfile)
-                push!(project_filenames, projectfile)
+    if isfile(listprojectsfile)
+        open(listprojectsfile, "r") do file
+            for line in eachline(file)
+                projectfile = strip(line)
+                if !isempty(projectfile)
+                    push!(project_filenames, projectfile)
+                end
             end
         end
     end
     return project_filenames
 end
 
+function _initialize_project_filename(runtype::T, outputs, filepaths) where {T<:Union{JuliaRun, PersefoneRun}}
+    filename = checkget_projectfiles_file(outputs, joinpath(outputs, filepaths))
+    return load_projectfilenames_from_toml(filename)
+end
+
 """
-    filepaths, resultsparameters = initialize_the_program(parentdir)
+    filepaths, resultsparameters = initialize_the_program(outputs, parentdir; kwargs...)
     
 Gets the file paths and the simulation parameters.
 
 startunit.f90:417
 """
-function initialize_the_program(parentdir)
-    filepaths = default_filepaths(parentdir)
+function initialize_the_program(outputs, parentdir; kwargs...)
+    filepaths = default_filepaths(parentdir; kwargs...)
 
-    resultsparameters = get_results_parameters(filepaths[:simul])
+    resultsparameters = get_results_parameters(outputs, filepaths[:simul]; kwargs...)
 
     # TODO startunit.F90:429  PrepareReport()
 
@@ -1430,13 +1441,17 @@ end
 
 
 """
-    fl = default_filepaths(parentdir::AbstractString)
+    fl = default_filepaths(parentdir::AbstractString; kwargs...)
 
 sets the default directories for the input files.
 
 startunit.f90:420
 """
-function default_filepaths(parentdir::AbstractString)
+function default_filepaths(parentdir::AbstractString; kwargs...)
+    return _default_filepaths(kwargs[:runtype], parentdir)
+end
+
+function _default_filepaths(runtype::FortranRun, parentdir)
     return ComponentArray(
     outp=parentdir*"/OUTP/",
     simul=parentdir*"/SIMUL/",
@@ -1445,17 +1460,30 @@ function default_filepaths(parentdir::AbstractString)
     prog=parentdir)
 end
 
+function _default_filepaths(runtype::T, parentdir) where {T<:Union{JuliaRun, PersefoneRun}}
+    return ComponentArray(
+    outp=parentdir,
+    simul=parentdir,
+    list=parentdir,
+    param=parentdir,
+    prog=parentdir)
+end
+
 """
-    resultsparameters = get_results_parameters(path::String)
+    resultsparameters = get_results_parameters(outputs, path::String; kwargs...)
 
 gets all the results parameters in filepaths[:simul].
 
 startunit.f90:426
 """
-function get_results_parameters(path::String)
+function get_results_parameters(outputs, path::String; kwargs...)
+    return _get_results_parameters(kwargs[:runtype], outputs, path)
+end
+
+function _get_results_parameters(runtype::FortranRun, outputs, path::String)
     #startunit.f90:282
     aggregationresultsparameters = ParametersContainer(Symbol)
-    filename = path*"AggregationResults.SIM"
+    filename = joinpath(path, "AggregationResults.SIM")
     if isfile(filename) 
         open(filename, "r") do file
             aggregationtype = strip(readline(file))[1]
@@ -1473,7 +1501,7 @@ function get_results_parameters(path::String)
 
     #startunit.f90:188
     dailyresultsparameters = ParametersContainer(Bool)
-    filename = path*"DailyResults.SIM"
+    filename = join(path, "DailyResults.SIM")
     if isfile(filename) 
         open(filename, "r") do file
             for line in eachline(file)
@@ -1508,7 +1536,7 @@ function get_results_parameters(path::String)
 
     #startunit.f90:248
     particularresultsparameters = ParametersContainer(Bool)
-    filename = path*"ParticularResults.SIM"
+    filename = join(path, "ParticularResults.SIM")
     if isfile(filename) 
         open(filename, "r") do file
             for line in eachline(file)
@@ -1529,4 +1557,9 @@ function get_results_parameters(path::String)
     return ComponentArray(aggregationresults=aggregationresultsparameters,
                 dailyresults=dailyresultsparameters,
                 paricularresults=particularresultsparameters)
+end
+
+function _get_results_parameters(runtype::T, outputs, path::String) where {T<:Union{JuliaRun, PersefoneRun}}
+    filename = checkget_resultsparameters_file(outputs, joinpath(outputs, path, "resultsparameters.toml"))
+    return load_resultsparameters_from_toml(filename) 
 end

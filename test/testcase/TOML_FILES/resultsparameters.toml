@@ -1,0 +1,30 @@
+# SIMUL/AggregationResults.SIM
+# initialsettings.jl:1460
+# what kind of aggregation do we want (note that actually this seems to be controled by the tempertature_record variable) 
+[resultsparameters.aggregationresultsparameters]
+aggregationtype = 0           # Time aggregation for intermediate results (0 = none ; 1 = daily; 2 = 10-daily; 3 = monthly)
+
+
+
+
+# SIMUL/DailyResults.SIM
+# initialsettings.jl:1478
+# in the original AquaCrop we have numbers, if that number is in the file, then we have to set true here.
+[resultsparameters.dailyresultsparameters]
+out1Wabal = true              # Various parameters of the soil water balance
+out2Crop = true               # Crop development and production
+out3Prof = true               # Soil water content in the soil profile and root zone
+out4Salt = true               # Soil salinity in the soil profile and root zone
+out5CompWC = true             # Soil water content at various depths of the soil profile
+out6CompEC = true             # Soil salinity at various depths of the soil profile
+out7Clim = true               # Climate input parameters
+
+
+
+
+# SIMUL/ParticularResults.SIM
+# initialsettings.jl:1513
+# in the original AquaCrop we have numbers, if that number is in the file, then we have to set true here.
+[resultsparameters.particularresultsparameters]
+part1Mult = true              # Biomass and Yield at Multiple cuttings (for herbaceous forage crops)
+part2Eval = true              # Evaluation of simulation results (when Field Data)
