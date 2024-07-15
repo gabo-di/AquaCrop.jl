@@ -1,4 +1,4 @@
 # LIST/ListProjects.txt 
 # initialsettings.jl:1403
 # this lists the file projects that we will run, they can end with .PRO or .PRM
-project_filenames = ["Ottawa.PRM"]
+project_filenames = ["OttawaPRM.toml"]

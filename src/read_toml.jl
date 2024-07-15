@@ -303,6 +303,19 @@ function load_projectfilenames_from_toml(auxparfile)
     return aux["project_filenames"]
 end
 
+function load_projectinput_from_toml(auxparfile, parentdir) 
+    aux = TOML.parsefile(auxparfile)
+    projectinput = ProjectInputType[]
+    for i in eachindex(aux["projectinput"])
+        aux["projectinput"][i]["ParentDir"] = parentdir
+        self = ProjectInputType()
+        actualize_with_dict!(self, aux["projectinput"][i])
+        push!(projectinput, self)
+    end
+
+    return projectinput
+end
+
 # MISSING maybe ?
 # resultsparameters.aggregationresultsparameters   initialsettings.jl:1460  (add to main!!)
 # resultsparameters.dailyresultsparameters         initialsettings.jl:1478  (add to main!!)
@@ -314,7 +327,7 @@ end
 # perennial_period   loadsimulation.jl.608 (add to main!!)
 # simulparam         initialsettings.jl:86 (add to main!!)
 # management         loadsimulation.jl:2615 (add to main!!)
+# projectinput       initialsettings.jl:212 (add to main!!)
+# -----------        initialsettings.jl:58  (add to main!!)
 # record             loadsimulation.jl.314 (it is missing the part of NrObs that is actually related to th csv file)
-# projectinput       initialsettings.jl:212 (makes sense to read this? maybe change the input file and dir names)
-# -----------        initialsettings.jl:58  (this is not in the TOML file yet, maybe not necessary?)
 #
