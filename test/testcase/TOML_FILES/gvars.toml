@@ -1,0 +1,225 @@
+# SIMUL/DEFAULT.SOL
+# initialsettings.jl:1047
+[soil]
+CNValue = 61                  # CN (Curve Number)
+REW = 9                       # Readily evaporable water from top layer (mm)
+NrSoilLayers = 1              # number of soil horizons
+
+[[soil_layers]]
+Thickness = 4.0
+SAT = 50.0
+FC = 30.0
+WP = 10.0
+InfRate = 500.0
+Penetrability = 100
+GravelMass = 0
+CRa = -0.4536
+CRb = 0.83734
+Description = "Loamy"
+
+
+
+
+# PARAM/Ottawa.PPn
+# initialsettings.jl:86
+[simulparam]
+# crop 
+EvapDeclineFactor = 4         # Evaporation decline factor for stage II
+KcWetBare = 1.10              # Ke(x) Soil evaporation coefficient for fully wet and non-shaded soil surface
+PercCCxHIfinal = 5            # Threshold for green CC below which HI can no longer increase (% cover)
+RootPercentZmin = 70          # Starting depth of root zone expansion curve (% of Zmin)
+MaxRootZoneExpansion  = 5.00  # Maximum allowable root zone expansion (fixed at 5 cm/day)
+KsShapeFactorRoot = -6        # Shape factor for effect water stress on root zone expansion
+TAWGermination = 20           # Required soil water content in top soil for germination (% TAW)
+pAdjFAO = 1.0                 # Adjustment factor for FAO-adjustment soil water depletion (p) by ETo
+DelayLowOxygen = 3            # Number of days after which deficient aeration is fully effective
+ExpFsen = 1.00                # Exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
+Beta = 12                     # Decrease of p(sen) once early canopy senescence is triggered (% of p(sen))
+ThicknessTopSWC = 10          # Thickness top soil (cm) in which soil water depletion has to be determined
+EvapZmax = 30                 # Depth [cm] of soil profile affected by water extraction by soil evaporation
+RunoffDepth = 0.30            # Considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment
+CNcorrection = 1              # CN is adjusted to Antecedent Moisture Class
+SaltDiff = 20                 # Salt diffusion factor (capacity for salt diffusion in micro pores) [%]
+SaltSolub = 100               # Salt solubility [g/liter]
+RootNrDF = 16                 # Shape factor for effect of soil water content gradient on capillary rise
+# temperature
+Tmin = 12.0                   # Default minimum temperature (degC) if no temperature file is specified
+Tmax = 28.0                   # Default maximum temperature (degC) if no temperature file is specified
+GDDMethod = 3                 # Default method for the calculation of growing degree days
+# Rainfall
+EffectiveRain.method = 1      # Daily rainfall is estimated by USDA-SCS procedure (when input is 10-day/monthly rainfall)
+EffectiveRain.PercentEffRain = 70         # Percentage of effective rainfall (when input is 10-day/monthly rainfall)
+EffectiveRain.ShowersInDecade = 2         # Number of showers in a decade for run-off estimate (when input is 10-day/monthly rainfall)
+EffectiveRain.RootNrEvap = 5              # Parameter for reduction of soil evaporation (when input is 10-day/monthly rainfall)
+
+
+
+
+# DATA/Ottawa.Tnx
+# loadsimulation.jl:314
+# here we only have the part of tempertature_record variable, not the actual values of temperature
+# that part is in a csv OttawaTnx.csv which has the Tmin (C) TMax (C) values
+[temperature_record]
+Datatype = 1                  # Daily records (1=daily, 2=10-daily and 3=monthly data)
+FromD = 1                     # First day of record (1, 11 or 21 for 10-day or 1 for months)
+FromM = 1                     # First month of record
+FromY = 2014                  # First year of record (1901 if not linked to a specific year)
+
+
+
+
+# DATA/Ottawa.ETo
+# loadsimulation.jl:314
+# here we only have the part of eto_record variable, not the actual values of eto
+# that part is in a csv OttawaETo.csv which has the Average ETo (mm/day) value
+[eto_record]
+Datatype = 1                  # Daily records (1=daily, 2=10-daily and 3=monthly data)
+FromD = 1                     # First day of record (1, 11 or 21 for 10-day or 1 for months)
+FromM = 1                     # First month of record
+FromY = 2014                  # First year of record (1901 if not linked to a specific year)
+
+
+
+
+# DATA/Ottawa.PLU
+# loadsimulation.jl:314
+# here we only have the part of rain_record variable, not the actual values of rain
+# that part is in a csv OttawaPLU.csv which has the Total Rain (mm) value
+[rain_record]
+Datatype = 1                  # Daily records (1=daily, 2=10-daily and 3=monthly data)
+FromD = 1                     # First day of record (1, 11 or 21 for 10-day or 1 for months)
+FromM = 1                     # First month of record
+FromY = 2014                  # First year of record (1901 if not linked to a specific year)
+
+
+
+
+# SIMUL/DEFAULT.CRO 
+# loadsimulation.jl:608
+[crop]
+subkind = 2                      # fruit/grain producing crop
+Planting = 1                     # Crop is sown in 1st year
+ModeCycle = 1                    # Determination of crop cycle : by growing calendar days
+pMethod = 1                      # Soil water depletion factors (p) are adjusted by ETo
+Tbase = 5.5                      # Base temperature (degC) below which crop development does not progress
+Tupper = 30.0                    # Upper temperature (degC) above which crop development no longer increases with an increase in temperature
+# this is set later GDDaysoHarvest = -9             # Total length of crop cycle in growing degree-days
+pLeafDefUL = 0.25                # Soil water depletion factor for canopy expansion (p-exp) - Upper threshold
+pLeafDefLL = 0.60                # Soil water depletion factor for canopy expansion (p-exp) - Lower threshold
+KsShapeFactorLeaf = 3.0          # Shape factor for water stress coefficient for canopy expansion (0.0 = straight line)
+pdef = 0.50                      # Soil water depletion fraction for stomatal control (p - sto) - Upper threshold
+KsShapeFactorStomata = 3.0       # Shape factor for water stress coefficient for stomatal control (0.0 = straight line)
+pSenescence = 0.85               # Soil water depletion factor for canopy senescence (p - sen) - Upper threshold
+KsShapeFactorSenescence = 3.0    # Shape factor for water stress coefficient for canopy senescence (0.0 = straight line)
+SumEToDelaySenescence = 50       # Sum(ETo) during dormant period to be exceeded before crop is permanently wilted
+pPollination = 0.90              # Soil water depletion factor for pollination (p - pol) - Upper threshold
+AnaeroPoint = 5                  # Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)
+StressResponse.Stress = 50       # Considered soil fertility stress for calibration of stress response (%)
+StressResponse.ShapeCGC = 2.16   # Shape factor for the response of canopy expansion to soil fertility stress
+StressResponse.ShapeCCX = 0.79   # Shape factor for the response of maximum canopy cover to soil fertility stress
+StressResponse.ShapeWP =  1.67   # Shape factor for the response of crop Water Productivity to soil fertility stress
+StressResponse.ShapeCDecline = 1.67      # Shape factor for the response of decline of canopy cover to soil fertility stress
+Tcold = 8                        # Minimum air temperature below which pollination starts to fail (cold stress) (degC)
+Theat = 40                       # Maximum air temperature above which pollination starts to fail (heat stress) (degC)
+GDtranspLow = 11.1               # Minimum growing degrees required for full crop transpiration (degC - day)
+ECemin = 2                       # Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)
+ECemax = 12                      # Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)
+CCsaltDistortion = 25            # Calibrated distortion (%) of CC due to salinity stress (Range: 0 (none) to +100 (very strong))
+ResponseECsw = 100               # Calibrated response (%) of stomata stress to ECsw (Range: 0 (none) to +200 (extreme))
+KcTop = 1.10                     # Crop coefficient when canopy is complete but prior to senescence (KcTr,x)
+KcDecline = 0.150                # Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.
+RootMin = 0.30                   # Minimum effective rooting depth (m)
+RootMax = 1.00                   # Maximum effective rooting depth (m)
+RootShape = 15                   # Shape factor describing root zone expansion
+SmaxTopQuarter = 0.048           # Maximum root water extraction (m3water/m3soil.day) in top quarter of root zone
+SmaxBotQuarter = 0.012           # Maximum root water extraction (m3water/m3soil.day) in bottom quarter of root zone
+CCEffectEvapLate = 50            # Effect of canopy cover in reducing soil evaporation in late season stage
+SizeSeedling = 6.50              # Soil surface covered by an individual seedling at 90 % emergence (cm2)
+SizePlant = 6.50                 # Canopy size of individual plant (re-growth) at 1st day (cm2)
+PlantingDens = 185000            # Number of plants per hectare
+CGC = 0.15                       # Canopy growth coefficient (CGC): Increase in canopy cover (fraction soil cover per day)
+YearCCx = -9                     # Number of years at which CCx declines to 90 % of its value due to self-thinning - for Perennials
+CCxRoot = -9.0                   # Shape factor of the decline of CCx over the years due to self-thinning - for Perennials
+CCx = 0.80                       # Maximum canopy cover (CCx) in fraction soil cover
+CDC = 0.1275                     # Canopy decline coefficient (CDC): Decrease in canopy cover (in fraction per day)
+DaysToGermination = 5            # Calendar Days: from sowing to emergence
+DaysToMaxRooting = 100           # Calendar Days: from sowing to maximum rooting depth
+DaysToSenescence = 110           # Calendar Days: from sowing to start senescence
+DaysToHarvest = 125              # Calendar Days: from sowing to maturity (length of crop cycle)
+DaysToFlowering = 70             # Calendar Days: from sowing to flowering
+LengthFlowering = 10             # Length of the flowering stage (days)
+DeterminancyLinked = 1           # Crop determinancy unlinked with flowering
+fExcess = 50                     # parameter NO LONGER required
+DaysToHIo = 50                   # Building up of Harvest Index starting at sowing/transplanting (days)
+WP = 17.0                        # Water Productivity normalized for ETo and CO2 (WP*) (gram/m2)
+WPy = 100                        # Water Productivity normalized for ETo and CO2 during yield formation (as % WP*)
+AdaptedToCO2 = 50                # Sink strength (%) quatifying biomass response to elevated atmospheric CO2 concentration
+HI = 50                          # Reference Harvest Index (HIo) (%)
+HIincrease = 5.0                 # Possible increase (%) of HI due to water stress before flowering
+aCoeff = 10.0                    # No impact on HI of restricted vegetative growth during yield formation 
+bCoeff = 8.0                     # No effect on HI of stomatal closure during yield formation
+DHImax = 15                      # Allowable maximum increase (%) of specified HI
+GDDaysToGermination = -9         # GDDays: from sowing to emergence
+GDDaysToMaxRooting = -9          # GDDays: from sowing to maximum rooting depth
+GDDaysToSenescence = -9          # GDDays: from sowing to start senescence
+GDDaysToHarvest = -9             # GDDays: from sowing to maturity (length of crop cycle)
+GDDaysToFlowering = -9           # GDDays: from sowing to flowering
+GDDLengthFlowering = -9          # Length of the flowering stage (growing degree days)
+GDDCGC = -9.0                    # CGC for GGDays: Increase in canopy cover (in fraction soil cover per growing-degree day)
+GDDCDC = -9.0                    # CDC for GGDays: Decrease in canopy cover (in fraction per growing-degree day)
+GDDaysToHIo = -9                 # GDDays: building-up of Harvest Index during yield formation
+DryMatter = 25                   # dry matter content (%) of fresh yield
+RootMinYear1 = 0.30              # Minimum effective rooting depth (m) in first year (for perennials)
+SownYear1 = 1                    # Crop is sown in 1st year (for perennials)
+Assimilates.On = 0               # Transfer of assimilates from above ground parts to root system is considered
+Assimilates.Period = 0           # Number of days at end of season during which assimilates are stored in root system
+Assimilates.Stored = 0           # Percentage of assimilates transferred to root system at last day of season
+Assimilates.Mobilized = 0        # Percentage of stored assimilates transferred to above ground parts in next season
+
+
+
+# DATA/AlfOttawaGDD.CRO 
+# loadsimulation.jl:608
+[perennial_period]
+aux_GenerateOnset = 13           # The Restart of growth is generated by Growing-degree days
+OnsetFirstDay = 1                # First Day for the time window (Restart of growth)
+OnsetFirstMonth = 4              # First Month for the time window (Restart of growth)
+OnsetLengthSearchPeriod = 120    # Length (days) of the time window (Restart of growth)
+OnsetThresholdValue = 20.0       # Threshold for the Restart criterion: Growing-degree days
+OnsetPeriodValue = 8             # Number of successive days for the Restart criterion
+OnsetOccurrence = 2              # Number of occurrences before the Restart criterion applies
+aux_GenerateEnd = 63             # The End of growth is generated by Growing-degree days
+EndLastDay = 31                  # Last Day for the time window (End of growth)
+EndLastMonth = 10                # Last Month for the time window (End of growth)
+ExtraYears = 0                   # Number of years to add to the Onset year
+EndLengthSearchPeriod = 60       # Length (days) of the time window (End of growth)
+EndThresholdValue = 10.0         # Threshold for the End criterion: Growing-degree days
+EndPeriodValue = 8               # Number of successive days for the End criterion
+EndOccurrence = 1                # Number of occurrences before the End criterion applies
+
+
+
+
+# DATA/Ottawa.MAN
+# loadsimulation.jl:2615
+# here we only have the part of management variable, not the actual values of harvest day
+# that part is in a csv OttawaMAN.csv which has the Harvest Day value
+[management]
+Mulch = 0                   # percentage (%) of ground surface covered by mulches IN growing period
+EffectMulchInS = 50         # effect (%) of mulches on reduction of soil evaporation
+FertilityStress = 50        # Degree of soil fertility stress (%) - Effect is crop specific
+BundHeight = 0.00          # height (m) of soil bunds
+RunoffOn = 0                # surface runoff NOT affected by field surface practices
+CNcorrection = 0            # N/A (surface runoff is not affected or completely prevented)
+WeedRC = 0                  # relative cover of weeds at canopy closure (%)
+WeedDeltaRC = 0             # increase of relative cover of weeds in mid-season (+%)
+WeedShape = 100.00          # shape factor of the CC expansion function in a weed infested field
+WeedAdj = 100               # replacement (%) by weeds of the self-thinned part of the CC - only for perennials
+Cuttings.Considered = true  # Multiple cuttings are considered
+Cuttings.CCcut = 25         # Canopy cover (%) after cutting
+Cuttings.Day1 = 1           # First day of window for multiple cuttings (1 = start of growth cycle)
+Cuttings.NrDays = -9        # Number of days in window for multiple cuttings (-9 = total growth cycle)
+Cuttings.Generate = false   # Multiple cuttings schedule is specified
+Cuttings.Criterion = 0      # Time criterion: Not Applicable
+Cuttings.HarvestEnd = false # final harvest at crop maturity is not considered
+Cuttings.FirstDayNr = 41274 # dayNr for Day 1 of list of cuttings

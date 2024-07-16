@@ -1,14 +1,14 @@
 """
-    run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType})
+    run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
 
 run.f90:7779
 """
-function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType})
+function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
     # maybe set outputfilesa run.f90:7786 OJO
     nrruns = gvars[:simulation].NrRuns 
 
     for nrrun in 1:nrruns
-        initialize_run_part_1!(outputs, gvars, projectinput[nrrun])
+        initialize_run_part_1!(outputs, gvars, projectinput[nrrun]; kwargs...)
 
     end
 
@@ -16,12 +16,12 @@ function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType})
 end #notend
 
 """
-    initialize_run_part_1!(outputs, gvars, projectinput::ProjectInputType)
+    initialize_run_part_1!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
 
 run.f90:6590
 """
-function initialize_run_part_1!(outputs, gvars, projectinput::ProjectInputType)
-    load_simulation_project!(gvars, projectinput)
+function initialize_run_part_1!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+    load_simulation_project!(outputs, gvars, projectinput; kwargs...)
     adjust_compartments!(gvars) #TODO check if neccesary
     # reset sumwabal and previoussum
     gvars[:sumwabal] = RepSum() 
@@ -589,8 +589,10 @@ function co2_for_simulation_period(co2_file, fromdaynr, todaynr)
         co2to = undef_double
         open(co2_file, "r") do file
             readline(file)
-            readline(file)
-            readline(file)
+            if !endswith(co2_file, ".csv")
+                readline(file)
+                readline(file)
+            end
             # from year
             splitedline = split(readline(file))
             yearb = parse(Float64, popfirst!(splitedline))

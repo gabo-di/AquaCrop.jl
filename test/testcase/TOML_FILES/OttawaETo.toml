@@ -1,0 +1,9 @@
+# DATA/Ottawa.ETo
+# loadsimulation.jl:314
+# here we only have the part of eto_record variable, not the actual values of eto
+# that part is in a csv OttawaETo.csv which has the Average ETo (mm/day) value
+[eto_record]
+Datatype = 1                  # Daily records (1=daily, 2=10-daily and 3=monthly data)
+FromD = 1                     # First day of record (1, 11 or 21 for 10-day or 1 for months)
+FromM = 1                     # First month of record
+FromY = 2014                  # First year of record (1901 if not linked to a specific year)

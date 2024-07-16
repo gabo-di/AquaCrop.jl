@@ -1,0 +1,23 @@
+# DATA/Ottawa.MAN
+# loadsimulation.jl:2615
+# here we only have the part of management variable, not the actual values of harvest day
+# that part is in a csv OttawaMAN.csv which has the Harvest Day value
+[management]
+Mulch = 0                   # percentage (%) of ground surface covered by mulches IN growing period
+EffectMulchInS = 50         # effect (%) of mulches on reduction of soil evaporation
+FertilityStress = 50        # Degree of soil fertility stress (%) - Effect is crop specific
+BundHeight = 0.00          # height (m) of soil bunds
+RunoffOn = 0                # surface runoff NOT affected by field surface practices
+CNcorrection = 0            # N/A (surface runoff is not affected or completely prevented)
+WeedRC = 0                  # relative cover of weeds at canopy closure (%)
+WeedDeltaRC = 0             # increase of relative cover of weeds in mid-season (+%)
+WeedShape = 100.00          # shape factor of the CC expansion function in a weed infested field
+WeedAdj = 100               # replacement (%) by weeds of the self-thinned part of the CC - only for perennials
+Cuttings.Considered = true  # Multiple cuttings are considered
+Cuttings.CCcut = 25         # Canopy cover (%) after cutting
+Cuttings.Day1 = 1           # First day of window for multiple cuttings (1 = start of growth cycle)
+Cuttings.NrDays = -9        # Number of days in window for multiple cuttings (-9 = total growth cycle)
+Cuttings.Generate = false   # Multiple cuttings schedule is specified
+Cuttings.Criterion = 0      # Time criterion: Not Applicable
+Cuttings.HarvestEnd = false # final harvest at crop maturity is not considered
+Cuttings.FirstDayNr = 41274 # dayNr for Day 1 of list of cuttings

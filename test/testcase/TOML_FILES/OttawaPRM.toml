@@ -1,0 +1,185 @@
+# LIST/Ottawa.PRM
+# initialsettings.jl:212
+# this makes a list of information about the files and starting dates for each project run
+# maybe we only need the dates since the other files info will be in a TOML 
+[[projectinput]]
+Simulation_YearSeason = 1         # Year number of cultivation (Seeding/planting year)
+Simulation_DayNr1 = 41414         # First day of simulation period - 21 May 2014      
+Simulation_DayNrN = 41577         # Last day of simulation period - 31 October 2014  
+Crop_Day1 = 41414                 # First day of cropping period - 21 May 2014      
+Crop_DayN = 41577                 # Last day of cropping period - 31 October 2014  
+Climate_Info = "-- 1. Climate (CLI) file"
+Climate_Filename = "OttawaCLI.toml"
+Climate_Directory = ""
+Temperature_Info = "1.1 Temperature (Tnx or TMP) file"
+Temperature_Filename = "OttawaTnx.toml"
+Temperature_Directory = ""
+ETo_Info = "1.2 Reference ET (ETo) file"
+ETo_Filename = "OttawaETo.toml"
+ETo_Directory = ""
+Rain_Info = "1.3 Rain (PLU) file"
+Rain_Filename = "OttawaPLU.toml"
+Rain_Directory = ""
+CO2_Info = "1.4 Atmospheric CO2 concentration (CO2) file"
+CO2_Filename = "MaunaLoaCO2.csv"
+CO2_Directory = ""
+Calendar_Info = "-- 2. Calendar (CAL) file"
+Calendar_Filename = "21MayCAL.toml"
+Calendar_Directory = ""
+Crop_Info = "-- 3. Crop (CRO) file"
+Crop_Filename = "OttawaCRO.toml"
+Crop_Directory = ""
+Irrigation_Info = "-- 4. Irrigation management (IRR) file"
+Irrigation_Filename = "(None)"
+Irrigation_Directory = "(None)"
+Management_Info = "-- 5. Field management (MAN) file"
+Management_Filename = "OttawaMAN.toml"
+Management_Directory = ""
+Soil_Info = "-- 6. Soil profile (SOL) file"
+Soil_Filename = "OttawaSOL.toml"
+Soil_Directory = ""
+GroundWater_Info = "-- 7. Groundwater table (GWT) file"
+GroundWater_Filename = "(None)"
+GroundWater_Directory = "(None)"
+SWCIni_Info = "-- 8. Initial conditions (SW0) file"
+SWCIni_Filename = "(None)"
+SWCIni_Directory = "(None)"
+OffSeason_Info = "-- 9. Off-season conditions (OFF) file"
+OffSeason_Filename = "(None)"
+OffSeason_Directory = "(None)"
+Observations_Info = "-- 10. Field data (OBS) file"
+Observations_Filename = "OttawaOBS.toml"
+Observations_Directory =  "" 
+
+[[projectinput]]
+Simulation_YearSeason = 2         # Year number of cultivation (Non-seeding/planting year)
+Simulation_DayNr1 = 41578         # First day of simulation period - 1 November 2014  
+Simulation_DayNrN = 41935         # Last day of simulation period - 24 October 2015  
+Crop_Day1 = 41759                 # First day of cropping period - 1 May 2015       
+Crop_DayN = 41935                 # Last day of cropping period - 24 October 2015  
+Climate_Info = "-- 1. Climate (CLI) file"
+Climate_Filename = "OttawaCLI.toml"
+Climate_Directory = ""
+Temperature_Info = "1.1 Temperature (Tnx or TMP) file"
+Temperature_Filename = "OttawaTnx.toml"
+Temperature_Directory = ""
+ETo_Info = "1.2 Reference ET (ETo) file"
+ETo_Filename = "OttawaETo.toml"
+ETo_Directory = ""
+Rain_Info = "1.3 Rain (PLU) file"
+Rain_Filename = "OttawaPLU.toml"
+Rain_Directory = ""
+CO2_Info = "1.4 Atmospheric CO2 concentration (CO2) file"
+CO2_Filename = "MaunaLoaCO2.csv"
+CO2_Directory = ""
+Calendar_Info = "-- 2. Calendar (CAL) file"
+Calendar_Filename = "21MayCAL.toml"
+Calendar_Directory = ""
+Crop_Info = "-- 3. Crop (CRO) file"
+Crop_Filename = "OttawaCRO.toml"
+Crop_Directory = ""
+Irrigation_Info = "-- 4. Irrigation management (IRR) file"
+Irrigation_Filename = "(None)"
+Irrigation_Directory = "(None)"
+Management_Info = "-- 5. Field management (MAN) file"
+Management_Filename = "OttawaMAN.toml"
+Management_Directory = ""
+Soil_Info = "-- 6. Soil profile (SOL) file"
+Soil_Filename = "OttawaSOL.toml"
+Soil_Directory = ""
+GroundWater_Info = "-- 7. Groundwater table (GWT) file"
+GroundWater_Filename = "(None)"
+GroundWater_Directory = "(None)"
+SWCIni_Info = "-- 8. Initial conditions (SW0) file"
+SWCIni_Filename = "KeepSWC"
+SWCIni_Directory = "Keep soil water profile of previous run"
+OffSeason_Info = "-- 9. Off-season conditions (OFF) file"
+OffSeason_Filename = "(None)"
+OffSeason_Directory = "(None)"
+Observations_Info = "-- 10. Field data (OBS) file"
+Observations_Filename = "OttawaOBS.toml"
+Observations_Directory = ""
+
+[[projectinput]]
+Simulation_YearSeason = 3         # Year number of cultivation (Non-seeding/planting year)
+Simulation_DayNr1 = 41936         # First day of simulation period - 25 October 2015  
+Simulation_DayNrN = 42305         # Last day of simulation period - 28 October 2016  
+Crop_Day1 = 42131                 # First day of cropping period - 7 May 2016       
+Crop_DayN = 42305                 # Last day of cropping period - 28 October 2016  
+Climate_Info = "-- 1. Climate (CLI) file"
+Climate_Filename = "OttawaCLI.toml"
+Climate_Directory = ""
+Temperature_Info = "1.1 Temperature (Tnx or TMP) file"
+Temperature_Filename = "OttawaTnx.toml"
+Temperature_Directory = ""
+ETo_Info = "1.2 Reference ET (ETo) file"
+ETo_Filename = "OttawaETo.toml"
+ETo_Directory = ""
+Rain_Info = "1.3 Rain (PLU) file"
+Rain_Filename = "OttawaPLU.toml"
+Rain_Directory = ""
+CO2_Info = "1.4 Atmospheric CO2 concentration (CO2) file"
+CO2_Filename = "MaunaLoaCO2.csv"
+CO2_Directory = ""
+Calendar_Info = "-- 2. Calendar (CAL) file"
+Calendar_Filename = "21MayCAL.toml"
+Calendar_Directory = ""
+Crop_Info = "-- 3. Crop (CRO) file"
+Crop_Filename = "OttawaCRO.toml"
+Crop_Directory = ""
+Irrigation_Info = "-- 4. Irrigation management (IRR) file"
+Irrigation_Filename = "(None)"
+Irrigation_Directory = "(None)"
+Management_Info = "-- 5. Field management (MAN) file"
+Management_Filename = "OttawaMAN.toml"
+Management_Directory = ""
+Soil_Info = "-- 6. Soil profile (SOL) file"
+Soil_Filename = "OttawaSOL.toml"
+Soil_Directory = ""
+GroundWater_Info = "-- 7. Groundwater table (GWT) file"
+GroundWater_Filename = "(None)"
+GroundWater_Directory = "(None)"
+SWCIni_Info = "-- 8. Initial conditions (SW0) file"
+SWCIni_Filename = "KeepSWC"
+SWCIni_Directory = "Keep soil water profile of previous run"
+OffSeason_Info = "-- 9. Off-season conditions (OFF) file"
+OffSeason_Filename = "(None)"
+OffSeason_Directory = "(None)"
+Observations_Info = "-- 10. Field data (OBS) file"
+Observations_Filename = "OttawaOBS.toml"
+Observations_Directory = ""
+
+
+
+# PARAM/Ottawa.PPn
+# initialsettings.jl:86
+[simulparam]
+# crop 
+EvapDeclineFactor = 4         # Evaporation decline factor for stage II
+KcWetBare = 1.10              # Ke(x) Soil evaporation coefficient for fully wet and non-shaded soil surface
+PercCCxHIfinal = 5            # Threshold for green CC below which HI can no longer increase (% cover)
+RootPercentZmin = 70          # Starting depth of root zone expansion curve (% of Zmin)
+MaxRootZoneExpansion  = 5.00  # Maximum allowable root zone expansion (fixed at 5 cm/day)
+KsShapeFactorRoot = -6        # Shape factor for effect water stress on root zone expansion
+TAWGermination = 20           # Required soil water content in top soil for germination (% TAW)
+pAdjFAO = 1.0                 # Adjustment factor for FAO-adjustment soil water depletion (p) by ETo
+DelayLowOxygen = 3            # Number of days after which deficient aeration is fully effective
+ExpFsen = 1.00                # Exponent of senescence factor adjusting drop in photosynthetic activity of dying crop
+Beta = 12                     # Decrease of p(sen) once early canopy senescence is triggered (% of p(sen))
+ThicknessTopSWC = 10          # Thickness top soil (cm) in which soil water depletion has to be determined
+EvapZmax = 30                 # Depth [cm] of soil profile affected by water extraction by soil evaporation
+RunoffDepth = 0.30            # Considered depth (m) of soil profile for calculation of mean soil water content for CN adjustment
+CNcorrection = 1              # CN is adjusted to Antecedent Moisture Class
+SaltDiff = 20                 # Salt diffusion factor (capacity for salt diffusion in micro pores) [%]
+SaltSolub = 100               # Salt solubility [g/liter]
+RootNrDF = 16                 # Shape factor for effect of soil water content gradient on capillary rise
+# temperature
+Tmin = 12.0                   # Default minimum temperature (degC) if no temperature file is specified
+Tmax = 28.0                   # Default maximum temperature (degC) if no temperature file is specified
+GDDMethod = 3                 # Default method for the calculation of growing degree days
+# Rainfall
+EffectiveRain.method = 1      # Daily rainfall is estimated by USDA-SCS procedure (when input is 10-day/monthly rainfall)
+EffectiveRain.PercentEffRain = 70         # Percentage of effective rainfall (when input is 10-day/monthly rainfall)
+EffectiveRain.ShowersInDecade = 2         # Number of showers in a decade for run-off estimate (when input is 10-day/monthly rainfall)
+EffectiveRain.RootNrEvap = 5              # Parameter for reduction of soil evaporation (when input is 10-day/monthly rainfall)
+

@@ -1,9 +1,9 @@
 """
-    load_simulation_project!(gvars, projectinput::ProjectInputType) 
+    load_simulation_project!(outputs, gvars, projectinput::ProjectInputType; kwargs...) 
 
 tempprocessing.f90:1932
 """
-function load_simulation_project!(gvars, projectinput::ProjectInputType) 
+function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType; kwargs...) 
     # 0. Year of cultivation and Simulation and Cropping period
     gvars[:simulation].YearSeason = projectinput.Simulation_YearSeason
     gvars[:crop].Day1 = projectinput.Crop_Day1
@@ -13,12 +13,17 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
     if (projectinput.Temperature_Filename=="(None)") | (projectinput.Temperature_Filename=="(External)")
         temperature_file = projectinput.Temperature_Filename 
     else
-        temperature_file = projectinput.ParentDir * projectinput.Temperature_Directory * projectinput.Temperature_Filename
+        _temperature_file = joinpath([projectinput.ParentDir, projectinput.Temperature_Directory, projectinput.Temperature_Filename])
+        if typeof(kwargs[:runtype]) == FortranRun
+            temperature_file = _temperature_file
+        else
+            temperature_file = _temperature_file[1:end-5]*".csv"
+        end
         setparameter!(gvars[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
         if gvars[:bool_parameters][:temperature_file_exists]
             read_temperature_file!(gvars[:array_parameters], temperature_file)
         end
-        load_clim!(gvars[:temperature_record], temperature_file)
+        load_clim!(gvars[:temperature_record], _temperature_file; str="temperature_record", kwargs...)
     end 
     setparameter!(gvars[:string_parameters], :temperature_file, temperature_file)
 
@@ -26,8 +31,8 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
     if (projectinput.ETo_Filename=="(None)") | (projectinput.ETo_Filename=="(External)")
         eto_file = projectinput.ETo_Filename 
     else
-        eto_file = projectinput.ParentDir * projectinput.ETo_Directory * projectinput.ETo_Filename
-        load_clim!(gvars[:eto_record], eto_file)
+        eto_file = joinpath([projectinput.ParentDir, projectinput.ETo_Directory, projectinput.ETo_Filename])
+        load_clim!(gvars[:eto_record], eto_file; str="eto_record", kwargs...)
     end 
     setparameter!(gvars[:string_parameters], :eto_file, eto_file)
 
@@ -35,15 +40,15 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
     if (projectinput.Rain_Filename=="(None)") | (projectinput.Rain_Filename=="(External)")
         rain_file = projectinput.Rain_Filename
     else
-        rain_file = projectinput.ParentDir * projectinput.Rain_Directory * projectinput.Rain_Filename
-        load_clim!(gvars[:rain_record], rain_file)
+        rain_file = joinpath([projectinput.ParentDir, projectinput.Rain_Directory, projectinput.Rain_Filename])
+        load_clim!(gvars[:rain_record], rain_file; str="rain_record", kwargs...)
     end 
     setparameter!(gvars[:string_parameters], :rain_file, rain_file)
     
 
     # 1.4 CO2 and Climate
     if projectinput.CO2_Filename != "(None)"
-        co2_file = projectinput.ParentDir * projectinput.CO2_Directory * projectinput.CO2_Filename
+        co2_file = joinpath([projectinput.ParentDir, projectinput.CO2_Directory, projectinput.CO2_Filename])
         setparameter!(gvars[:string_parameters], :CO2_file, co2_file)
     end
     if projectinput.Climate_Filename != "(External)"
@@ -53,8 +58,8 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
 
     # 3. Crop
     gvars[:simulation].LinkCropToSimPeriod = true
-    crop_file = projectinput.ParentDir * projectinput.Crop_Directory * projectinput.Crop_Filename
-    load_crop!(gvars[:crop], gvars[:perennial_period], crop_file)
+    crop_file = joinpath([projectinput.ParentDir, projectinput.Crop_Directory, projectinput.Crop_Filename])
+    load_crop!(gvars[:crop], gvars[:perennial_period], crop_file; kwargs...)
     # copy to CropFileSet
     gvars[:crop_file_set].DaysFromSenescenceToEnd = gvars[:crop].DaysToHarvest - gvars[:crop].DaysToSenescence
     gvars[:crop_file_set].DaysToHarvest = gvars[:crop].DaysToHarvest
@@ -100,7 +105,7 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
         irri_file = projectinput.Irrigation_Filename
         no_irrigation!(gvars)
     else
-        irri_file = projectinput.ParentDir * projectinput.Irrigation_Directory * projectinput.Irrigation_Filename
+        irri_file = joinpath([projectinput.ParentDir, projectinput.Irrigation_Directory, projectinput.Irrigation_Filename])
         load_irri_schedule_info!(gvars, fullname)
     end 
     setparameter!(gvars[:string_parameters], :irri_file, irri_file)
@@ -109,8 +114,8 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
     if projectinput.Management_Filename == "(None)" 
         man_file = projectinput.Management_Filename
     else
-        man_file = projectinput.ParentDir * projectinput.Management_Directory * projectinput.Management_Filename
-        load_management!(gvars, man_file)
+        man_file = joinpath([projectinput.ParentDir, projectinput.Management_Directory, projectinput.Management_Filename])
+        load_management!(gvars, man_file; kwargs...)
         # reset canopy development to soil fertility
         daystofullcanopy, RedCGC_temp, RedCCX_temp, fertstress = time_to_max_canopy_sf(
                               gvars[:crop].CCo, 
@@ -137,10 +142,14 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
     if projectinput.Soil_Filename=="(External)"
         prof_file = projectinput.Soil_Filename
     elseif projectinput.Soil_Filename=="(None)"
-        prof_file = projectinput.ParentDir * "DEFAULT.SOL"
+        if typeof(kwargs[:runtype]) == FortranRun 
+            prof_file = joinpath([projectinput.ParentDir, "SIMUL", "DEFAULT.SOL"])
+        else
+            prof_file = joinpath( projectinput.ParentDir, "gvars.toml")
+        end
     else
         # The load of profile is delayed to check if soil water profile need to be reset (see 8.)
-        prof_file = projectinput.ParentDir * projectinput.Soil_Directory * projectinput.Soil_Filename
+        prof_file = joinpath([projectinput.ParentDir, projectinput.Soil_Directory, projectinput.Soil_Filename])
     end 
     setparameter!(gvars[:string_parameters], :prof_file, prof_file)
 
@@ -150,7 +159,7 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
         groundwater_file = projectinput.GroundWater_Filename
     else
         # Loading the groundwater is done after loading the soil profile (see 9.)
-        groundwater_file = projectinput.ParentDir * projectinput.GroundWater_Directory * projectinput.GroundWater_Filename
+        groundwater_file = joinpath([projectinput.ParentDir, projectinput.GroundWater_Directory, projectinput.GroundWater_Filename])
     end 
     setparameter!(gvars[:string_parameters], :groundwater_file, groundwater_file)
 
@@ -172,7 +181,7 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
         if prof_file=="(External)"
             load_profile_processing!(gvars[:soil], gvars[:soil_layers], gvars[:compartments], gvars[:simulparam])
         else
-            soil, soil_layers, compartments = load_profile(prof_file, gvars[:simulparam])
+            soil, soil_layers, compartments = load_profile(outputs, prof_file, gvars[:simulparam]; kwargs...)
             gvars[:soil] = soil
             gvars[:soil_layers] = soil_layers
             gvars[:compartments] = compartments
@@ -251,7 +260,7 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
     if projectinput.OffSeason_Filename=="(None)"
         offseason_file = projectinput.OffSeason_Filename
     else
-        offseason_file = projectinput.ParentDir * projectinput.OffSeason_Directory * projectinput.OffSeason_Filename
+        offseason_file = joinpath([projectinput.ParentDir, projectinput.OffSeason_Directory, projectinput.OffSeason_Filename])
         load_offseason!(gvars, offseason_file)
     end 
     setparameter!(gvars[:string_parameters], :offseason_file, offseason_file)
@@ -260,7 +269,7 @@ function load_simulation_project!(gvars, projectinput::ProjectInputType)
     if projectinput.Observations_Filename=="(None)"
         observations_file = projectinput.Observations_Filename
     else
-        observations_file = projectinput.ParentDir * projectinput.OffSeason_Directory * projectinput.Observations_Filename
+        observations_file = joinpath([projectinput.ParentDir, projectinput.OffSeason_Directory, projectinput.Observations_Filename])
     end
     setparameter!(gvars[:string_parameters], :observations_file, observations_file)
 
@@ -278,13 +287,15 @@ function read_temperature_file!(array_parameters::ParametersContainer{T}, temper
     
     open(temperature_file, "r") do file
         readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
+        if !endswith(temperature_file, ".csv")
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+        end
 
         for line in eachline(file)
             splitedline = split(line)
@@ -303,18 +314,23 @@ function read_temperature_file!(array_parameters::ParametersContainer{T}, temper
 end
 
 """
-    load_clim!(record::RepClim, filename)
+    load_clim!(record::RepClim, filename; kwargs...)
 
 global.f90:5936
 """
-function load_clim!(record::RepClim, filename)
+function load_clim!(record::RepClim, filename; kwargs...)
+    _load_clim!(kwargs[:runtype], record, filename; kwargs...)
+    return nothing
+end
+
+function _load_clim!(runtype::FortranRun, record::RepClim, filename; kwargs...)
     if isfile(filename)
         open(filename, "r") do file
             readline(file)
-            Ni = parse(Int,split(readline(file))[1])
-            if Ni == 1
+            ni = parse(Int,split(readline(file))[1])
+            if ni == 1
                 record.Datatype = :Daily
-            elseif Ni == 2
+            elseif ni == 2
                 record.Datatype = :Decadely
             else
                 record.Datatype = :Monthly
@@ -324,6 +340,22 @@ function load_clim!(record::RepClim, filename)
             record.FromY = parse(Int,split(readline(file))[1]) 
             readline(file)
             readline(file)
+            readline(file)
+            record.NrObs = 0
+            for line in eachline(file)
+                record.NrObs += 1
+            end
+        end
+        complete_climate_description!(record)
+    end
+    return nothing
+end
+
+function _load_clim!(runtype::T, record::RepClim, filename; kwargs...) where {T<:Union{JuliaRun, PersefoneRun}}
+    _filename = filename
+    if isfile(_filename)
+        load_gvars_from_toml!(record, _filename; kwargs...) 
+        open(filename[1:end-5]*".csv", "r") do file
             readline(file)
             record.NrObs = 0
             for line in eachline(file)
@@ -598,11 +630,16 @@ function adjust_onset_search_period!(gvars)
 end
 
 """
-    load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file)
+    load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...)
 
 global.f90:4799
 """
-function load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file)
+function load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...)
+    _load_crop!(kwargs[:runtype], crop, perennial_period, crop_file)
+    return nothing
+end
+
+function _load_crop!(runtype::FortranRun, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file)
     open(crop_file, "r") do file
         readline(file)
         readline(file)
@@ -943,10 +980,15 @@ function load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_fi
             end
         end
     end
-
     return nothing
 end
 
+function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file) where {T<:Union{JuliaRun, PersefoneRun}}
+    _filename = crop_file  
+    load_gvars_from_toml!(crop, _filename)
+    load_gvars_from_toml!(perennial_period, _filename)
+    return nothing
+end 
 
 """
     sxtop, sxbot = derive_smax_top_bottom(crop::RepCrop)
@@ -1393,13 +1435,15 @@ function get_set_of_three(dayn, deci, monthi, yeari, temperature_file, temperatu
     # 1 = previous decade, 2 = Actual decade, 3 = Next decade;
     open(temperature_file, "r") do file
         readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
+        if !endswith(temperature_file, ".csv")
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+        end
 
         if temperature_record.FromD>20
             decfile=3
@@ -1554,7 +1598,7 @@ function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, te
     c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months(monthi, yeari, temperature_file, temperature_record)
 
     dayi = 1
-    dnr = dete(dayi, monthi, yeari)
+    dnr = determine_day_nr(dayi, monthi, yeari)
     dayn = DaysInMonth[monthi]
     if ((monthi == 2) & isleapyear(yeari)) 
         dayn = dayn + 1
@@ -1592,13 +1636,15 @@ function get_set_of_three_months(monthi, yeari, temperature_file, temperature_re
     # 1. Prepare record
     open(temperature_file, "r") do file
         readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
-        readline(file)
+        if !endswith(temperature_file, ".csv")
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+        end
 
         mfile = temperature_record.FromM
         if temperature_record.FromY==1901
@@ -1637,7 +1683,7 @@ function get_set_of_three_months(monthi, yeari, temperature_file, temperature_re
                     c2max = c1max
                     x2 = x1 + n1
                     x3 = x2 + n3
-               end 
+                end 
             elseif temperature_record.NrObs==2
                 if monthi==mfile 
                     t1 = 0
@@ -2188,7 +2234,7 @@ function adjust_simperiod!(gvars, projectinput::ProjectInputType)
         if (clim_file != "(None)") & ((simulation.FromDayNr<=clim_record.FromDayNr) | (simulation.FromDayNr>=clim_record.ToDayNr)) 
             simulation.FromDayNr = clim_record.FromDayNr
             simulation.ToDayNr = simulation.FromDayNr + 30
-       end 
+        end 
     end 
 
     # adjust initial depth and quality of the groundwater when required
@@ -2199,7 +2245,7 @@ function adjust_simperiod!(gvars, projectinput::ProjectInputType)
             fullfilename = groundwater_file
         end 
         # initialize ZiAqua and ECiAqua
-        load_groundwater!(gvars, fullname)
+        load_groundwater!(gvars, fullfilename)
         calculate_adjusted_fc!(gvars[:compartments], gvars[:soil_layers], gvars[:integer_parameters][:ziaqua]/100)
         if gvars[:simulation].IniSWC.AtFC 
             reset_swc_to_fc!(gvars[:simulation], gvars[:compartments], gvars[:soil_layers], gvars[:integer_parameters][:ziaqua])
@@ -2598,11 +2644,16 @@ function load_irri_schedule_info!(gvars, fullname)
 end 
 
 """
-    load_management!(gvars, fullname)
+    load_management!(gvars, fullname; kwargs...)
 
 global.f90:3350
 """
-function load_management!(gvars, fullname)
+function load_management!(gvars, fullname; kwargs...)
+    _load_management!(kwargs[:runtype], gvars, fullname) 
+    return nothing
+end
+
+function _load_management!(runtype::FortranRun, gvars, fullname)
     management = gvars[:management]
     crop = gvars[:crop]
     simulation = gvars[:simulation]
@@ -2656,7 +2707,7 @@ function load_management!(gvars, fullname)
         if i==1 
             management.Cuttings.Generate = true
         else
-            management.Cuttings.Generate =false 
+            management.Cuttings.Generate = false 
         end
         # Time criterion for generating cuttings
         i = parse(Int, split(readline(file))[1])
@@ -2692,6 +2743,20 @@ function load_management!(gvars, fullname)
     end
     return nothing
 end 
+
+function _load_management!(runtype::T, gvars, fullname) where {T<:Union{JuliaRun, PersefoneRun}}
+    _fullname = fullname
+    load_gvars_from_toml!(gvars[:management], _fullname)
+
+    management = gvars[:management]
+    crop = gvars[:crop]
+    simulation = gvars[:simulation]
+    simulation.EffectStress = crop_stress_parameters_soil_fertility(crop.StressResponse, management.FertilityStress)
+    # soil bunds
+    simulation.SurfaceStorageIni = 0
+    simulation.ECStorageIni = 0
+    return nothing
+end
     
 """
     adjust_size_compartments!(gvars, cropzx)
@@ -3230,6 +3295,7 @@ function adjust_compartments!(gvars)
             end 
         end 
     end 
+    return nothing
 end 
 
 """
@@ -3246,5 +3312,6 @@ function reset_previous_sum!(gvars)
     setparameter!(gvars[:float_parameters], :previoussumgdd, 0.0)
     setparameter!(gvars[:float_parameters], :previousbmob, 0.0)
     setparameter!(gvars[:float_parameters], :previousbsto, 0.0)
+    return nothing
 end 
 

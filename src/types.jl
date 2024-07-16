@@ -30,6 +30,13 @@ const NameMonth = ["January", "February", "March", "April", "May", "June",
 
 # types
 
+abstract type AbstractInfo end
+abstract type AbstractRunType <: AbstractInfo end
+
+struct FortranRun <: AbstractRunType end
+struct JuliaRun <: AbstractRunType end
+struct PersefoneRun <: AbstractRunType end
+
 """
     AbstractParametersContainer
 """

@@ -1,0 +1,18 @@
+# DATA/Ottawa.SOL
+# initialsettings.jl:1047
+[soil]
+CNValue = 46                  # CN (Curve Number)
+REW = 7                       # Readily evaporable water from top layer (mm)
+NrSoilLayers = 1              # number of soil horizons
+
+[[soil_layers]]
+Thickness = 1.5
+SAT = 46.0
+FC = 29.0
+WP = 13.0
+InfRate = 1200.0
+Penetrability = 100
+GravelMass = 0
+CRa = -0.3906
+CRb = 1.255639
+Description = "sandy"

@@ -1,21 +1,21 @@
 """
-   runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, gvars)
+   runwithkeepswc, constzrxforrun = check_for_keep_swc(outputs, projectinput::Vector{ProjectInputType}, filepaths, gvars; kwargs...)
 
 global.f90:6643
 """
-function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, gvars)
+function check_for_keep_swc(outputs, projectinput::Vector{ProjectInputType}, filepaths, gvars; kwargs...)
     # @NOTE This procedure will try to read from the soil profile file.
     # If this file does not exist, the necessary information is gathered
     # from the attributes of the Soil global variable instead.
 
     # 1. Initial settings
     runwithkeepswc = false
-    constzrxforrun =  undef_double
+    constzrxforrun = undef_double
 
     # 2. Look for restrictive soil layer
     # restricted to run 1 since with KeepSWC,
     # the soil file has to be common between runs
-    previousproffilefull = filepaths[:simul]*"DEFAULT.SOL" # keep name soil file (to restore after check)
+    # previousproffilefull = filepaths[:simul]*"DEFAULT.SOL" # keep name soil file (to restore after check)
 
     filename = projectinput[1].Soil_Filename
     has_external = filename == "(External)"
@@ -31,7 +31,9 @@ function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, g
         soil_layers = gvars[:soil_layers]
         compartments = gvars[:compartments]
     else
-        soil, soil_layers, compartments = load_profile(filepaths[:prog]*projectinput[1].Soil_Directory*filename, gvars[:simulparam])
+        soil, soil_layers, compartments = load_profile(outputs,
+            joinpath([filepaths[:prog], projectinput[1].Soil_Directory, filename]),
+            gvars[:simulparam]; kwargs...)
     end 
 
     # 3. Check if runs with KeepSWC exist
@@ -53,21 +55,9 @@ function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, g
         runi = 1
         while (runi <= totalnrofruns)
             # Obtain maximum rooting depth from the crop file
-            fullfilename = filepaths[:prog]*projectinput[runi].Crop_Directory*projectinput[runi].Crop_Filename
-
-            open(fullfilename, "r") do file
-                readline(file) # description
-                versionnr = parse(Float64,strip(readline(file))[1:4])
-                for i in 1:34
-                    readline(file) 
-                end 
-                zrni = parse(Float64,strip(readline(file))[1:6])
-                zrxi = parse(Float64,strip(readline(file))[1:6])
-                zrsoili = root_max_in_soil_profile(zrxi, soil_layers)
-                if (zrsoili > constzrxforrun) 
-                    constzrxforrun = zrsoili
-                end 
-            end
+            fullfilename = joinpath([filepaths[:prog], projectinput[runi].Crop_Directory, projectinput[runi].Crop_Filename])
+        
+            constzrxforrun = _check_for_keep_swc(kwargs[:runtype], fullfilename, soil_layers, constzrxforrun)
             runi = runi + 1
         end 
     end 
@@ -77,12 +67,46 @@ function check_for_keep_swc(projectinput::Vector{ProjectInputType}, filepaths, g
     return runwithkeepswc, constzrxforrun
 end 
 
+function _check_for_keep_swc(runtype::FortranRun, fullfilename, soil_layers, constzrxforrun)
+    ret = [constzrxforrun]
+    open(fullfilename, "r") do file
+        readline(file) # description
+        versionnr = parse(Float64,strip(readline(file))[1:4])
+        for i in 1:34
+            readline(file) 
+        end 
+        zrni = parse(Float64,strip(readline(file))[1:6])
+        zrxi = parse(Float64,strip(readline(file))[1:6])
+        zrsoili = root_max_in_soil_profile(zrxi, soil_layers)
+        if (zrsoili > constzrxforrun) 
+            ret[1] = zrsoili
+        end 
+    end
+    return ret[1]
+end
+
+function _check_for_keep_swc(runtype::T, fullfilename, soil_layers, constzrxforrun) where {T<:Union{JuliaRun, PersefoneRun}}
+    ret = [constzrxforrun]
+    aux = TOML.parsefile(fullfilename)
+    zrxi = aux["crop"]["RootMax"]
+    zrsoili = root_max_in_soil_profile(zrxi, soil_layers)
+    if (zrsoili > constzrxforrun) 
+        ret[1] = zrsoili
+    end 
+    return ret[1]
+end
+
 """
-    load_program_parameters_project_plugin!(simulparam::RepParam, auxparfile)
+    load_program_parameters_project_plugin!(simulparam::RepParam, auxparfile; kwargs...)
 
 startunit.f90:767
 """
-function load_program_parameters_project_plugin!(simulparam::RepParam, auxparfile)
+function load_program_parameters_project_plugin!(simulparam::RepParam, auxparfile; kwargs...)
+    _load_program_parameters_project_plugin!(kwargs[:runtype], simulparam, auxparfile)
+    return nothing
+end
+
+function _load_program_parameters_project_plugin!(runtype::FortranRun, simulparam::RepParam, auxparfile)
     open(auxparfile, "r") do file
         # crop
         simulparam.EvapDeclineFactor =  parse(Float64,strip(readline(file))[1:6]) # evaporation decline factor in stage 2
@@ -101,7 +125,7 @@ function load_program_parameters_project_plugin!(simulparam::RepParam, auxparfil
         simulparam.EvapZmax = parse(Float64,strip(readline(file))[1:6]) # maximum water extraction depth by soil evaporation [cm] soil
         simulparam.RunoffDepth = parse(Float64,strip(readline(file))[1:6]) # considered depth (m) of soil profile for calculation of mean soil water content
         i = parse(Int,strip(readline(file))[1:6])
-        if (i == 1) 
+        if i == 1 
             simulparam.CNcorrection = true
         else
             simulparam.CNcorrection = false
@@ -115,20 +139,20 @@ function load_program_parameters_project_plugin!(simulparam::RepParam, auxparfil
         simulparam.Tmin = parse(Float64,strip(readline(file))[1:6]) # Default minimum temperature (degC) if no temperature file is specified
         simulparam.Tmax = parse(Float64,strip(readline(file))[1:6]) # Default maximum temperature (degC) if no temperature file is specified
         simulparam.GDDMethod = parse(Float64,strip(readline(file))[1:6]) # Default method for GDD calculations
-        if (simulparam.GDDMethod > 3) 
+        if simulparam.GDDMethod > 3 
             simulparam.GDDMethod = 3
         end 
-        if (simulparam.GDDMethod < 1) 
+        if simulparam.GDDMethod < 1 
             simulparam.GDDMethod = 1
         end 
 
         # Rainfall
         i = parse(Int,strip(readline(file))[1:6])
-        if (i==0)
+        if i==0
             simulparam.EffectiveRain.method = :Full
-        elseif (i==1)
+        elseif i==1
             simulparam.EffectiveRain.method = :USDA
-        elseif (i==2)
+        elseif i==2
             simulparam.EffectiveRain.method = :Percentage
         end 
 
@@ -136,6 +160,11 @@ function load_program_parameters_project_plugin!(simulparam::RepParam, auxparfil
         simulparam.EffectiveRain.ShowersInDecade = parse(Float64,strip(readline(file))[1:6])# For estimation of surface run-off
         simulparam.EffectiveRain.RootNrEvap = parse(Float64,strip(readline(file))[1:6]) # For reduction of soil evaporation
     end
+    return nothing
+end
+
+function _load_program_parameters_project_plugin!(runtype::T, simulparam::RepParam, auxparfile) where {T<:Union{JuliaRun, PersefoneRun}}
+    load_gvars_from_toml!(simulparam, auxparfile) 
     return nothing
 end
 
@@ -151,7 +180,7 @@ function check_files_in_project!(fileok::RepFileOK, allok, input::ProjectInputTy
     function check_file(directory, filename)
         # sets allok to false if expected file does not exist.
         if (filename != "(None)") 
-            if !isfile(parentdir*directory*filename) 
+            if !isfile(joinpath([parentdir, directory, filename])) 
                 allok[1] = false
                 fileok_tmp = false
             else
@@ -201,11 +230,15 @@ end
 
 
 """
-    projectinput = initialize_project_input(filename, parentdir)
+    projectinput = initialize_project_input(filename, parentdir; kwargs...)
 
 project_input.f90:152
 """
-function initialize_project_input(filename, parentdir)
+function initialize_project_input(filename, parentdir; kwargs...)
+    return _initialize_project_input(kwargs[:runtype], filename, parentdir)
+end
+
+function _initialize_project_input(runtype::FortranRun, filename, parentdir)
     projectinput = ProjectInputType[]
 
     # project_input.f90:225
@@ -228,71 +261,71 @@ function initialize_project_input(filename, parentdir)
             # 1. Climate
             self.Climate_Info = strip(readline(file))
             self.Climate_Filename = strip(readline(file))
-            self.Climate_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Climate_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 1.1 Temperature
             self.Temperature_Info = strip(readline(file))
             self.Temperature_Filename = strip(readline(file))
-            self.Temperature_Directory = replace(strip(readline(file)),"'"=>"","."=>"")
+            self.Temperature_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 1.2 ETo
             self.ETo_Info = strip(readline(file))
             self.ETo_Filename = strip(readline(file))
-            self.ETo_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.ETo_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 1.3 Rain
             self.Rain_Info = strip(readline(file))
             self.Rain_Filename = strip(readline(file))
-            self.Rain_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Rain_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 1.4 CO2
             self.CO2_Info = strip(readline(file))
             self.CO2_Filename = strip(readline(file))
-            self.CO2_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.CO2_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 2. Calendar
             self.Calendar_Info = strip(readline(file))
             self.Calendar_Filename = strip(readline(file))
-            self.Calendar_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Calendar_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 3. Crop
             self.Crop_Info = strip(readline(file))
             self.Crop_Filename = strip(readline(file))
-            self.Crop_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Crop_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             self.Irrigation_Info = strip(readline(file))
             self.Irrigation_Filename = strip(readline(file))
-            self.Irrigation_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Irrigation_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 5. Field Management
             self.Management_Info = strip(readline(file))
             self.Management_Filename = strip(readline(file))
-            self.Management_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Management_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 6. Soil Profile
             self.Soil_Info = strip(readline(file))
             self.Soil_Filename = strip(readline(file))
-            self.Soil_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Soil_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 7. GroundWater
             self.GroundWater_Info = strip(readline(file))
             self.GroundWater_Filename = strip(readline(file))
-            self.GroundWater_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.GroundWater_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 8. Initial conditions
             self.SWCIni_Info = strip(readline(file))
             self.SWCIni_Filename = strip(readline(file))
-            self.SWCIni_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.SWCIni_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 9. Off-season conditions
             self.OffSeason_Info = strip(readline(file))
             self.OffSeason_Filename = strip(readline(file))
-            self.OffSeason_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.OffSeason_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 10. Field data
             self.Observations_Info = strip(readline(file))
             self.Observations_Filename = strip(readline(file))
-            self.Observations_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Observations_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             push!(projectinput, self)
         end
@@ -300,15 +333,19 @@ function initialize_project_input(filename, parentdir)
     return projectinput
 end
 
+function _initialize_project_input(runtype::T, filename, parentdir) where {T<:Union{JuliaRun, PersefoneRun}}
+    return load_projectinput_from_toml(filename, parentdir)
+end
+
 
 """
-    gvars = initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
+    gvars = initialize_settings(outputs, filepaths; kwargs...)
 
 gets the initial settings.
 
 initialsettings.f90:201
 """
-function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
+function initialize_settings(outputs, filepaths; kwargs...)
     # 1. Program settings
     simulparam = RepParam()
 
@@ -319,15 +356,20 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     # TODO save soil profile defaultcropsoil.f90:322 maybe write a @show method?
     # OJO do not change soil.RootMax like in global.f90:4029 since it will be taken care later
 
-    if usedefaultsoilfile
-        soil, soil_layers, compartments = load_profile(filepaths[:simul]*"DEFAULT.SOL", simulparam)
+    # if usedefaultsoilfile  (this is always true)
+    if typeof(kwargs[:runtype]) == FortranRun 
+        filename = joinpath(filepaths[:simul], "DEFAULT.SOL")
     else
-        soil = RepSoil()
-        soil_layers = [SoilLayerIndividual()]
-        compartments = CompartmentIndividual[CompartmentIndividual(Thickness=simulparam.CompDefThick) for _ in 1:max_no_compartments]
-        determinate_soilclass!(soil_layers[1])
-        determinate_coeffcapillaryrise!(soil_layers[1])
+        filename = joinpath(filepaths[:simul], "gvars.toml")
     end
+    soil, soil_layers, compartments = load_profile(outputs, filename, simulparam; kwargs...)
+    # else
+    #     soil = RepSoil()
+    #     soil_layers = [SoilLayerIndividual()]
+    #     compartments = CompartmentIndividual[CompartmentIndividual(Thickness=simulparam.CompDefThick) for _ in 1:max_no_compartments]
+    #     determinate_soilclass!(soil_layers[1])
+    #     determinate_coeffcapillaryrise!(soil_layers[1])
+    # end
     
     simulation = RepSim()
     total_water_content = RepContent()
@@ -454,12 +496,16 @@ function initialize_settings(usedefaultsoilfile, usedefaultcropfile, filepaths)
     setparameter!(string_parameters, :eto_file,  "(None)")
     setparameter!(string_parameters, :rain_file,  "(None)")
     setparameter!(string_parameters, :groundwater_file, "(None)")
-    if usedefaultsoilfile
+    if typeof(kwargs[:runtype]) == FortranRun
         setparameter!(string_parameters, :prof_file, "DEFAULT.SOL")
+        setparameter!(string_parameters, :crop_file, "DEFAULT.CRO")
+        setparameter!(string_parameters, :CO2_file, "MaunaLoa.CO2")
+    else
+        setparameter!(string_parameters, :prof_file, "gvars.toml")
+        setparameter!(string_parameters, :crop_file, "gvars.toml")
+        setparameter!(string_parameters, :CO2_file, "MaunaLoaCO2.csv")
     end
-    setparameter!(string_parameters, :crop_file, "DEFAULT.CRO")
     setparameter!(string_parameters, :man_file, "(None)")
-    setparameter!(string_parameters, :CO2_file, "MaunaLoa.CO2")
     setparameter!(string_parameters, :irri_file, "(None)")
     setparameter!(string_parameters, :offseason_file, "(None)")
     setparameter!(string_parameters, :swcini_file, undef_str)
@@ -1032,18 +1078,25 @@ end
 
 
 """
-    soil, soil_layers, compartments = load_profile(filepath, simulparam::RepParam)
+    soil, soil_layers, compartments = load_profile(filepath, simulparam::RepParam; kwargs...)
 
 loads data from filepath.
 
 global.f90:7590
 """
-function load_profile(filepath, simulparam::RepParam)
+function load_profile(outputs, filepath, simulparam::RepParam; kwargs...)
     # note that we only consider version 7.1 parsing style
+    soil, soil_layers = _load_profile(kwargs[:runtype], outputs, filepath)
+
+    compartments = CompartmentIndividual[]
+    load_profile_processing!(soil, soil_layers, compartments, simulparam)
+
+    return soil, soil_layers, compartments
+end
+
+function _load_profile(runtype::FortranRun, outputs, filepath)
     soil = RepSoil()
     soil_layers = SoilLayerIndividual[]
-    compartments = CompartmentIndividual[]
-
     open(filepath, "r") do file
         profdescriptionlocal = strip(readline(file))
         versionnr = parse(Float64,strip(readline(file))[1:4])
@@ -1086,10 +1139,18 @@ function load_profile(filepath, simulparam::RepParam)
             push!(soil_layers, soillayer)
         end
     end
+    return soil, soil_layers 
+end
 
-    load_profile_processing!(soil, soil_layers, compartments, simulparam)
+function _load_profile(runtype::T, outputs, filepath) where {T<:Union{JuliaRun, PersefoneRun}}
+    soil = RepSoil()
+    soil_layers = SoilLayerIndividual[]
 
-    return soil, soil_layers, compartments
+    filename = checkget_gvar_file(outputs, filepath)
+    load_gvars_from_toml!(soil, filename)
+    load_gvars_from_toml!(soil_layers, filename)
+
+    return soil, soil_layers
 end
 
 """
@@ -1360,13 +1421,17 @@ function determinate_coeffcapillaryrise!(soillayer::SoilLayerIndividual)
 end
 
 """
-    pt = get_project_type(theprojectfile)
+    pt = get_project_type(theprojectfile; kwargs...)
 
 gets the project type for a given file.
 
 startunit.f90:322
 """
-function get_project_type(theprojectfile)
+function get_project_type(theprojectfile; kwargs...)
+    return _get_project_type(kwargs[:runtype], theprojectfile)
+end
+
+function _get_project_type(runtype::FortranRun, theprojectfile)
     if endswith(theprojectfile, "PRO")
         theprojecttype = :typepro
     elseif endswith(theprojectfile, "PRM")
@@ -1377,15 +1442,30 @@ function get_project_type(theprojectfile)
     return theprojecttype
 end
 
+function _get_project_type(runtype::T, theprojectfile) where {T<:Union{JuliaRun, PersefoneRun}}
+    filename = theprojectfile[1:end-5]
+    if endswith(filename, "PRO")
+        theprojecttype = :typepro
+    elseif endswith(filename, "PRM")
+        theprojecttype = :typeprm
+    else
+        theprojecttype = :typenone
+    end
+    return theprojecttype
+end
 
 """
-    project_filenames = initialize_project_filename(filepaths)
+    project_filenames = initialize_project_filename(outputs, filepaths; kwargs...)
 
 Gets all the names of the projects files.
 
 startunit.f90:441
 """
-function initialize_project_filename(filepaths)
+function initialize_project_filename(outputs, filepaths; kwargs...)
+    return _initialize_project_filename(kwargs[:runtype], outputs, filepaths)
+end
+
+function _initialize_project_filename(runtype::FortranRun, outputs, filepaths) 
     project_filenames = String[]
 
     listprojectsfile = filepaths[:list]*"ListProjects.txt"
@@ -1396,32 +1476,39 @@ function initialize_project_filename(filepaths)
         cmd_2 = `grep -E ".*.PR[O,M]\$"`
         rc = run(pipeline( pipeline(cmd_1,cmd_2), stdout = listprojectsfile))
         if rc.exitcode != 0
-            error("Failed to create "*listprojectsfile)
+            add_output_in_logger!(outputs, "Failed to create "*listprojectsfile)
         end
     end
 
-    open(listprojectsfile, "r") do file
-        for line in eachline(file)
-            projectfile = strip(line)
-            if !isempty(projectfile)
-                push!(project_filenames, projectfile)
+    if isfile(listprojectsfile)
+        open(listprojectsfile, "r") do file
+            for line in eachline(file)
+                projectfile = strip(line)
+                if !isempty(projectfile)
+                    push!(project_filenames, projectfile)
+                end
             end
         end
     end
     return project_filenames
 end
 
+function _initialize_project_filename(runtype::T, outputs, filepaths) where {T<:Union{JuliaRun, PersefoneRun}}
+    filename = checkget_projectfiles_file(outputs, joinpath(filepaths[:list], "projectfilenames.toml"))
+    return load_projectfilenames_from_toml(filename)
+end
+
 """
-    filepaths, resultsparameters = initialize_the_program(parentdir)
+    filepaths, resultsparameters = initialize_the_program(outputs, parentdir; kwargs...)
     
 Gets the file paths and the simulation parameters.
 
 startunit.f90:417
 """
-function initialize_the_program(parentdir)
-    filepaths = default_filepaths(parentdir)
+function initialize_the_program(outputs, parentdir; kwargs...)
+    filepaths = default_filepaths(parentdir; kwargs...)
 
-    resultsparameters = get_results_parameters(filepaths[:simul])
+    resultsparameters = get_results_parameters(outputs, filepaths[:simul]; kwargs...)
 
     # TODO startunit.F90:429  PrepareReport()
 
@@ -1430,13 +1517,17 @@ end
 
 
 """
-    fl = default_filepaths(parentdir::AbstractString)
+    fl = default_filepaths(parentdir::AbstractString; kwargs...)
 
 sets the default directories for the input files.
 
 startunit.f90:420
 """
-function default_filepaths(parentdir::AbstractString)
+function default_filepaths(parentdir::AbstractString; kwargs...)
+    return _default_filepaths(kwargs[:runtype], parentdir)
+end
+
+function _default_filepaths(runtype::FortranRun, parentdir)
     return ComponentArray(
     outp=parentdir*"/OUTP/",
     simul=parentdir*"/SIMUL/",
@@ -1445,17 +1536,30 @@ function default_filepaths(parentdir::AbstractString)
     prog=parentdir)
 end
 
+function _default_filepaths(runtype::T, parentdir) where {T<:Union{JuliaRun, PersefoneRun}}
+    return ComponentArray(
+    outp=parentdir,
+    simul=parentdir,
+    list=parentdir,
+    param=parentdir,
+    prog=parentdir)
+end
+
 """
-    resultsparameters = get_results_parameters(path::String)
+    resultsparameters = get_results_parameters(outputs, path::String; kwargs...)
 
 gets all the results parameters in filepaths[:simul].
 
 startunit.f90:426
 """
-function get_results_parameters(path::String)
+function get_results_parameters(outputs, path::String; kwargs...)
+    return _get_results_parameters(kwargs[:runtype], outputs, path)
+end
+
+function _get_results_parameters(runtype::FortranRun, outputs, path::String)
     #startunit.f90:282
     aggregationresultsparameters = ParametersContainer(Symbol)
-    filename = path*"AggregationResults.SIM"
+    filename = joinpath(path, "AggregationResults.SIM")
     if isfile(filename) 
         open(filename, "r") do file
             aggregationtype = strip(readline(file))[1]
@@ -1473,7 +1577,7 @@ function get_results_parameters(path::String)
 
     #startunit.f90:188
     dailyresultsparameters = ParametersContainer(Bool)
-    filename = path*"DailyResults.SIM"
+    filename = join(path, "DailyResults.SIM")
     if isfile(filename) 
         open(filename, "r") do file
             for line in eachline(file)
@@ -1508,7 +1612,7 @@ function get_results_parameters(path::String)
 
     #startunit.f90:248
     particularresultsparameters = ParametersContainer(Bool)
-    filename = path*"ParticularResults.SIM"
+    filename = join(path, "ParticularResults.SIM")
     if isfile(filename) 
         open(filename, "r") do file
             for line in eachline(file)
@@ -1529,4 +1633,9 @@ function get_results_parameters(path::String)
     return ComponentArray(aggregationresults=aggregationresultsparameters,
                 dailyresults=dailyresultsparameters,
                 paricularresults=particularresultsparameters)
+end
+
+function _get_results_parameters(runtype::T, outputs, path::String) where {T<:Union{JuliaRun, PersefoneRun}}
+    filename = checkget_resultsparameters_file(outputs, joinpath(path, "resultsparameters.toml"))
+    return load_resultsparameters_from_toml(filename) 
 end
