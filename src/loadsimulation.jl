@@ -13,12 +13,17 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     if (projectinput.Temperature_Filename=="(None)") | (projectinput.Temperature_Filename=="(External)")
         temperature_file = projectinput.Temperature_Filename 
     else
-        temperature_file = joinpath([projectinput.ParentDir, projectinput.Temperature_Directory, projectinput.Temperature_Filename])
+        _temperature_file = joinpath([projectinput.ParentDir, projectinput.Temperature_Directory, projectinput.Temperature_Filename])
+        if typeof(kwargs[:runtype]) == FortranRun
+            temperature_file = _temperature_file
+        else
+            temperature_file = _temperature_file[1:end-5]*".csv"
+        end
         setparameter!(gvars[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
         if gvars[:bool_parameters][:temperature_file_exists]
             read_temperature_file!(gvars[:array_parameters], temperature_file)
         end
-        load_clim!(gvars[:temperature_record], temperature_file; merge(kwargs, (str="temperature_record",))...)
+        load_clim!(gvars[:temperature_record], _temperature_file; str="temperature_record", kwargs...)
     end 
     setparameter!(gvars[:string_parameters], :temperature_file, temperature_file)
 
@@ -27,7 +32,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         eto_file = projectinput.ETo_Filename 
     else
         eto_file = joinpath([projectinput.ParentDir, projectinput.ETo_Directory, projectinput.ETo_Filename])
-        load_clim!(gvars[:eto_record], eto_file; merge(kwargs, (str="eto_record",))...)
+        load_clim!(gvars[:eto_record], eto_file; str="eto_record", kwargs...)
     end 
     setparameter!(gvars[:string_parameters], :eto_file, eto_file)
 
@@ -36,7 +41,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         rain_file = projectinput.Rain_Filename
     else
         rain_file = joinpath([projectinput.ParentDir, projectinput.Rain_Directory, projectinput.Rain_Filename])
-        load_clim!(gvars[:rain_record], rain_file; merge(kwargs, (str="rain_record",))...)
+        load_clim!(gvars[:rain_record], rain_file; str="rain_record", kwargs...)
     end 
     setparameter!(gvars[:string_parameters], :rain_file, rain_file)
     
@@ -137,7 +142,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     if projectinput.Soil_Filename=="(External)"
         prof_file = projectinput.Soil_Filename
     elseif projectinput.Soil_Filename=="(None)"
-        if eltype(kwargs[:runtype]) == FortranRun 
+        if typeof(kwargs[:runtype]) == FortranRun 
             prof_file = joinpath([projectinput.ParentDir, "SIMUL", "DEFAULT.SOL"])
         else
             prof_file = joinpath( projectinput.ParentDir, "gvars.toml")
@@ -314,7 +319,7 @@ end
 global.f90:5936
 """
 function load_clim!(record::RepClim, filename; kwargs...)
-    _load_clim!(kwargs[:runtype], record, filename; kwargs)
+    _load_clim!(kwargs[:runtype], record, filename; kwargs...)
     return nothing
 end
 
@@ -347,10 +352,10 @@ function _load_clim!(runtype::FortranRun, record::RepClim, filename; kwargs...)
 end
 
 function _load_clim!(runtype::T, record::RepClim, filename; kwargs...) where {T<:Union{JuliaRun, PersefoneRun}}
-    _filename = filename * ".toml"
+    _filename = filename
     if isfile(_filename)
         load_gvars_from_toml!(record, _filename; kwargs...) 
-        open(filename*".csv", "r") do file
+        open(filename[1:end-5]*".csv", "r") do file
             readline(file)
             record.NrObs = 0
             for line in eachline(file)
@@ -979,7 +984,7 @@ function _load_crop!(runtype::FortranRun, crop::RepCrop, perennial_period::RepPe
 end
 
 function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file) where {T<:Union{JuliaRun, PersefoneRun}}
-    _filename = crop_file * ".toml" 
+    _filename = crop_file  
     load_gvars_from_toml!(crop, _filename)
     load_gvars_from_toml!(perennial_period, _filename)
     return nothing
@@ -2740,7 +2745,7 @@ function _load_management!(runtype::FortranRun, gvars, fullname)
 end 
 
 function _load_management!(runtype::T, gvars, fullname) where {T<:Union{JuliaRun, PersefoneRun}}
-    _fullname = fullname * ".toml"
+    _fullname = fullname
     load_gvars_from_toml!(gvars[:management], _fullname)
 
     management = gvars[:management]

@@ -3,18 +3,24 @@ using Test
 
 include("checkpoints.jl")
 
-@testset "Load Simulation Run Project" begin
+@testset "TOML up to Run Part 1" begin
+    parentdir = pwd()*"/testcase/TOML_FILES"
     outputs = AquaCrop.start_outputs()
 
-    kwargs = (runtype = AquaCrop.FortranRun(),)
+    kwargs = (runtype = AquaCrop.JuliaRun(),)
 
-    gvars, projectinput, fileok = checkpoint2()
+    outputs_0, gvars_0, _ = checkpoint4()
 
-    gvars_0, _ = checkpoint3()
+
+    filepaths, resultsparameters = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...) 
+    project_filenames = AquaCrop.initialize_project_filename(outputs, filepaths; kwargs...)
 
     i = 1
-    AquaCrop.load_simulation_project!(outputs, gvars, projectinput[i]; kwargs...)
-     
+    theprojectfile = project_filenames[i]
+    theprojecttype = AquaCrop.get_project_type(theprojectfile; kwargs...)
+    gvars, projectinput, fileok = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+    AquaCrop.initialize_run_part_1!(outputs, gvars, projectinput[i]; kwargs...)
+
 
     @test isapprox(gvars[:simulparam], gvars_0[:simulparam])
     @test isapprox(gvars[:soil], gvars_0[:soil])
@@ -36,34 +42,9 @@ include("checkpoints.jl")
     @test isapprox(gvars[:temperature_record], gvars_0[:temperature_record])
     @test isapprox(gvars[:perennial_period], gvars_0[:perennial_period])
     @test isapprox(gvars[:crop_file_set], gvars_0[:crop_file_set])
-
-    # @test isapprox(gvars[:array_parameters][:Tmax], gvars_0[:array_parameters][:Tmax])
-    # @test isapprox(gvars[:array_parameters][:Tmin], gvars_0[:array_parameters][:Tmin])
-end
-
-@testset "Simulation Run Part 1" begin
-    outputs = AquaCrop.start_outputs()
-
-    kwargs = (runtype = AquaCrop.FortranRun(),)
-
-    gvars, projectinput = checkpoint3()
-
-    outputs_0, gvars_0, _ = checkpoint4()
-    
-    i = 1
-    AquaCrop.adjust_compartments!(gvars)
-    gvars[:sumwabal] = AquaCrop.RepSum()
-    AquaCrop.reset_previous_sum!(gvars)
-    AquaCrop.initialize_run_part_1!(outputs, gvars, projectinput[i]; kwargs...)
-
-
-    @test isapprox(gvars[:simulation], gvars_0[:simulation])
-    @test isapprox(gvars[:crop], gvars_0[:crop])
-    @test isapprox(gvars[:management], gvars_0[:management])
     @test isapprox(gvars[:stresstot], gvars_0[:stresstot])
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
     @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
     @test isapprox(outputs[:tcropsim], outputs_0[:tcropsim])
-
 end

@@ -589,8 +589,10 @@ function co2_for_simulation_period(co2_file, fromdaynr, todaynr)
         co2to = undef_double
         open(co2_file, "r") do file
             readline(file)
-            readline(file)
-            readline(file)
+            if !endswith(co2_file, ".csv")
+                readline(file)
+                readline(file)
+            end
             # from year
             splitedline = split(readline(file))
             yearb = parse(Float64, popfirst!(splitedline))

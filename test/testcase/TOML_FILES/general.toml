@@ -55,7 +55,7 @@ REW = 9                       # Readily evaporable water from top layer (mm)
 NrSoilLayers = 1              # number of soil horizons
 
 [[soil_layers]]
-Thicknes = 4.0
+Thickness = 4.0
 SAT = 50.0
 FC = 30.0
 WP = 10.0
@@ -64,4 +64,4 @@ Penetrability = 100
 GravelMass = 0
 CRa = -0.4536
 CRb = 0.83734
-Description = "Loamy soil horizon"
+Description = "Loamy"

@@ -17,7 +17,7 @@ function start_the_program(parentdir=nothing, runtype=nothing)
     end
     # runtype allowed for now is :Fortran, :Julia or :Persefone 
     if isnothing(runtype)
-        kwargs = (:runtype = FortranRun(),)
+        kwargs = (runtype = FortranRun(),)
         add_output_in_logger!(outputs, "using default FortranRun")
     end
 
@@ -47,7 +47,7 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
 
     # check if project file exists
     if theprojecttype != :typenone 
-        testfile = filepaths[:list] * theprojectfile
+        testfile = joinpath(filepaths[:list], theprojectfile)
         if !isfile(testfile) 
             canselect[1] = false
         end 
@@ -66,7 +66,7 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
 
             # 4. load project parameters
             if (canselect[1]) 
-                if kwargs[:runtype] == :FortranRun
+                if typeof(kwargs[:runtype]) == FortranRun
                     auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PP1"
                 else
                     auxparfile = testfile
@@ -102,7 +102,7 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
 
             # 4. load project parameters
             if (canselect[1]) 
-                if kwargs[:runtype] == :FortranRun
+                if typeof(kwargs[:runtype]) == FortranRun
                     auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PPn"
                 else
                     auxparfile = testfile
@@ -111,7 +111,7 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
                     load_program_parameters_project_plugin!(gvars[:simulparam], auxparfile; kwargs...)
                     gvars[:simulation].MultipleRun = true
                     gvars[:simulation].NrRuns = totalsimruns
-                    runwithkeepswc, constzrxforrun = check_for_keep_swc(projectinput, filepaths, gvars)
+                    runwithkeepswc, constzrxforrun = check_for_keep_swc(outputs, projectinput, filepaths, gvars; kwargs...)
                     gvars[:simulation].MultipleRunWithKeepSWC = runwithkeepswc
                     gvars[:simulation].MultipleRunConstZrx = constzrxforrun
                     add_output_in_logger!(outputs, "Project loaded with its program parameters")
@@ -123,8 +123,10 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
     else
         if canselect[1]
             add_output_in_logger!(outputs, "bad projecttype for "*theprojectfile)
+            println("bad projecttype for "*theprojectfile)
         else
             add_output_in_logger!(outputs, "did not find the file "*theprojectfile)
+            println("did not find the file "*theprojectfile)
         end
     end
     return  gvars, projectinput, fileok

@@ -9,7 +9,7 @@ function checkget_gvar_file(outputs, filename)
         file_ = filename
     else
         add_output_in_logger!(outputs, "using default file for gvars")
-        file_ = joinpath([@__DIR__, "test/testcase/TOML_FILES/gvars.toml"])
+        file_ = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES/gvars.toml"])
     end
     return file_
 end
@@ -25,7 +25,7 @@ function checkget_resultsparameters_file(outputs, filename)
         file_ = filename
     else
         add_output_in_logger!(outputs, "using default file for resultsparameters")
-        file_ = joinpath([@__DIR__, "test/testcase/TOML_FILES/resultsparameters.toml"])
+        file_ = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES/resultsparameters.toml"])
     end
     return file_
 end
@@ -41,7 +41,7 @@ function checkget_projectfiles_file(outputs, filename)
         file_ = filename
     else
         add_output_in_logger!(outputs, "using default file for project_filenames")
-        file_ = joinpath([@__DIR__, "test/testcase/TOML_FILES/projectfilenames.toml"])
+        file_ = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES/projectfilenames.toml"])
     end
     return file_
 end
@@ -58,7 +58,18 @@ function actualize_with_dict!(obj::T, aux::AbstractDict) where T<:AbstractParame
             else
                 setfield!(obj, Symbol(key), aux[key]) 
             end
+        else
+            if !startswith(key, "aux_")
+                println("key "*key*" not found in type ", T)
+            end
         end
+    end
+    return nothing
+end
+
+function actualize_with_dict!(obj::ParametersContainer{T}, aux::AbstractDict) where T
+    for key in keys(aux)
+        setparameter!(obj, Symbol(key), T(aux[key]))
     end
     return nothing
 end
@@ -85,6 +96,13 @@ function load_gvars_from_toml!(simulparam::RepParam, auxparfile; kwargs...)
     elseif i == 2 
         aux["simulparam"]["EffectiveRain"]["method"] = :Percentage
     end
+
+    i = aux["simulparam"]["CNcorrection"]
+    if i == 1 
+        aux["simulparam"]["CNcorrection"] = true
+    else
+        aux["simulparam"]["CNcorrection"] = false
+    end 
 
     actualize_with_dict!(simulparam, aux["simulparam"])
     return nothing
@@ -196,7 +214,6 @@ function load_gvars_from_toml!(crop::RepCrop, auxparfile; kwargs...)
         aux["crop"]["ModeCycle"] = :CalendarDays
     end
 
-
     xx = aux["crop"]["pMethod"]
     if xx==0
         aux["crop"]["pMethod"] = :NoCorrection
@@ -204,9 +221,31 @@ function load_gvars_from_toml!(crop::RepCrop, auxparfile; kwargs...)
         aux["crop"]["pMethod"] = :FAOCorrection
     end
 
+    xx = aux["crop"]["Assimilates"]["On"]
+    if xx==1
+        aux["crop"]["Assimilates"]["On"] = true
+    else
+        aux["crop"]["Assimilates"]["On"] = false 
+    end
+
+    xx = aux["crop"]["DeterminancyLinked"]
+    if xx==1
+        aux["crop"]["DeterminancyLinked"] = true
+    else
+        aux["crop"]["DeterminancyLinked"] = false
+    end
+
+    xx = aux["crop"]["SownYear1"]
+    if xx==1
+        aux["crop"]["SownYear1"] = true
+    else
+        aux["crop"]["SownYear1"] = false
+    end
 
     actualize_with_dict!(crop, aux["crop"])
 
+
+    crop.SmaxTop, crop.SmaxBot = derive_smax_top_bottom(crop)
 
     if ((crop.StressResponse.ShapeCGC>24.9) & (crop.StressResponse.ShapeCCX>24.9) &
         (crop.StressResponse.ShapeWP>24.9) & (crop.StressResponse.ShapeCDecline>24.9))
@@ -260,9 +299,9 @@ function load_gvars_from_toml!(perennial_period::RepPerennialPeriod, auxparfile;
     else
         aux["perennial_period"]["GenerateEnd"] = true 
         if xx==62
-            aux["perennial_period"]["OnsetCriterion"] = :TMeanPeriod
-        elseif xx==13
-            aux["perennial_period"]["OnsetCriterion"] = :GDDPeriod
+            aux["perennial_period"]["EndCriterion"] = :TMeanPeriod
+        elseif xx==63
+            aux["perennial_period"]["EndCriterion"] = :GDDPeriod
         else
             aux["perennial_period"]["GenerateEnd"] = false
         end
@@ -293,9 +332,19 @@ function load_resultsparameters_from_toml(auxparfile)
         aux["resultsparameters"]["dailyresultsparameters"]["outdailyresults"] = true
     end
 
-    return ComponentArray(aggregationresults=aux["resultsparameters"]["aggregationresultsparameters"],
-                dailyresults=aux["resultsparameters"]["dailyresultsparameters"],
-                paricularresults=aux["resultsparameters"]["particularresultsparameters"])
+
+    aggregationresultsparameters = ParametersContainer(Symbol)
+    actualize_with_dict!(aggregationresultsparameters, aux["resultsparameters"]["aggregationresultsparameters"])
+
+    dailyresultsparameters = ParametersContainer(Bool)
+    actualize_with_dict!(dailyresultsparameters, aux["resultsparameters"]["dailyresultsparameters"])
+
+    particularresultsparameters = ParametersContainer(Bool)
+    actualize_with_dict!(particularresultsparameters, aux["resultsparameters"]["particularresultsparameters"])
+
+    return ComponentArray(aggregationresults=aggregationresultsparameters,
+                dailyresults=dailyresultsparameters,
+                paricularresults=particularresultsparameters)
 end
 
 function load_projectfilenames_from_toml(auxparfile)
@@ -329,5 +378,6 @@ end
 # management         loadsimulation.jl:2615 (add to main!!)
 # projectinput       initialsettings.jl:212 (add to main!!)
 # -----------        initialsettings.jl:58  (add to main!!)
-# record             loadsimulation.jl.314 (it is missing the part of NrObs that is actually related to th csv file)
+# record             loadsimulation.jl.314 (add to main!!)
+# co2                runsim.jl:581         (add to main!!) 
 #

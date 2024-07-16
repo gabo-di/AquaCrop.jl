@@ -5,9 +5,13 @@ include("checkpoints.jl")
 
 @testset "Initialize Settings" begin
     parentdir = pwd()*"/testcase"
-    filepaths, results_parameters = AquaCrop.initialize_the_program(parentdir)
-    project_filenames = AquaCrop.initialize_project_filename(filepaths)
-    gvars = AquaCrop.initialize_settings(true, true, filepaths)
+    outputs = AquaCrop.start_outputs()
+
+    kwargs = (runtype = AquaCrop.FortranRun(),)
+
+    filepaths, results_parameters = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...)
+    project_filenames = AquaCrop.initialize_project_filename(outputs, filepaths; kwargs...)
+    gvars = AquaCrop.initialize_settings(outputs, filepaths; kwargs...)
 
     gvars_0 = checkpoint1()
 
@@ -30,12 +34,17 @@ end
 
 @testset "Initialize Project" begin
     parentdir = pwd()*"/testcase"
-    filepaths, results_parameters = AquaCrop.initialize_the_program(parentdir)
-    project_filenames = AquaCrop.initialize_project_filename(filepaths)
+    outputs = AquaCrop.start_outputs()
+
+    kwargs = (runtype = AquaCrop.FortranRun(),)
+
+
+    filepaths, results_parameters = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...)
+    project_filenames = AquaCrop.initialize_project_filename(outputs, filepaths; kwargs...)
     i = 1
     theprojectfile = project_filenames[i]
-    theprojecttype = AquaCrop.get_project_type(theprojectfile)
-    gvars, projectinput, fileok = AquaCrop.initialize_project(i, theprojectfile, theprojecttype, filepaths)
+    theprojecttype = AquaCrop.get_project_type(theprojectfile; kwargs...)
+    gvars, projectinput, fileok = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
 
 
     gvars_0, projectinput_0, fileok_0 = checkpoint2()

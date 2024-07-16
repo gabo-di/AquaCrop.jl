@@ -125,7 +125,7 @@ function _load_program_parameters_project_plugin!(runtype::FortranRun, simulpara
         simulparam.EvapZmax = parse(Float64,strip(readline(file))[1:6]) # maximum water extraction depth by soil evaporation [cm] soil
         simulparam.RunoffDepth = parse(Float64,strip(readline(file))[1:6]) # considered depth (m) of soil profile for calculation of mean soil water content
         i = parse(Int,strip(readline(file))[1:6])
-        if (i == 1) 
+        if i == 1 
             simulparam.CNcorrection = true
         else
             simulparam.CNcorrection = false
@@ -139,20 +139,20 @@ function _load_program_parameters_project_plugin!(runtype::FortranRun, simulpara
         simulparam.Tmin = parse(Float64,strip(readline(file))[1:6]) # Default minimum temperature (degC) if no temperature file is specified
         simulparam.Tmax = parse(Float64,strip(readline(file))[1:6]) # Default maximum temperature (degC) if no temperature file is specified
         simulparam.GDDMethod = parse(Float64,strip(readline(file))[1:6]) # Default method for GDD calculations
-        if (simulparam.GDDMethod > 3) 
+        if simulparam.GDDMethod > 3 
             simulparam.GDDMethod = 3
         end 
-        if (simulparam.GDDMethod < 1) 
+        if simulparam.GDDMethod < 1 
             simulparam.GDDMethod = 1
         end 
 
         # Rainfall
         i = parse(Int,strip(readline(file))[1:6])
-        if (i==0)
+        if i==0
             simulparam.EffectiveRain.method = :Full
-        elseif (i==1)
+        elseif i==1
             simulparam.EffectiveRain.method = :USDA
-        elseif (i==2)
+        elseif i==2
             simulparam.EffectiveRain.method = :Percentage
         end 
 
@@ -261,71 +261,71 @@ function _initialize_project_input(runtype::FortranRun, filename, parentdir)
             # 1. Climate
             self.Climate_Info = strip(readline(file))
             self.Climate_Filename = strip(readline(file))
-            self.Climate_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Climate_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 1.1 Temperature
             self.Temperature_Info = strip(readline(file))
             self.Temperature_Filename = strip(readline(file))
-            self.Temperature_Directory = replace(strip(readline(file)),"'"=>"","."=>"")
+            self.Temperature_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 1.2 ETo
             self.ETo_Info = strip(readline(file))
             self.ETo_Filename = strip(readline(file))
-            self.ETo_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.ETo_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 1.3 Rain
             self.Rain_Info = strip(readline(file))
             self.Rain_Filename = strip(readline(file))
-            self.Rain_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Rain_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 1.4 CO2
             self.CO2_Info = strip(readline(file))
             self.CO2_Filename = strip(readline(file))
-            self.CO2_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.CO2_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 2. Calendar
             self.Calendar_Info = strip(readline(file))
             self.Calendar_Filename = strip(readline(file))
-            self.Calendar_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Calendar_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 3. Crop
             self.Crop_Info = strip(readline(file))
             self.Crop_Filename = strip(readline(file))
-            self.Crop_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Crop_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             self.Irrigation_Info = strip(readline(file))
             self.Irrigation_Filename = strip(readline(file))
-            self.Irrigation_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Irrigation_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 5. Field Management
             self.Management_Info = strip(readline(file))
             self.Management_Filename = strip(readline(file))
-            self.Management_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Management_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 6. Soil Profile
             self.Soil_Info = strip(readline(file))
             self.Soil_Filename = strip(readline(file))
-            self.Soil_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Soil_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 7. GroundWater
             self.GroundWater_Info = strip(readline(file))
             self.GroundWater_Filename = strip(readline(file))
-            self.GroundWater_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.GroundWater_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 8. Initial conditions
             self.SWCIni_Info = strip(readline(file))
             self.SWCIni_Filename = strip(readline(file))
-            self.SWCIni_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.SWCIni_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 9. Off-season conditions
             self.OffSeason_Info = strip(readline(file))
             self.OffSeason_Filename = strip(readline(file))
-            self.OffSeason_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.OffSeason_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             # 10. Field data
             self.Observations_Info = strip(readline(file))
             self.Observations_Filename = strip(readline(file))
-            self.Observations_Directory = replace(strip(readline(file)),"'"=>"","."=>"") 
+            self.Observations_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
 
             push!(projectinput, self)
         end
@@ -357,7 +357,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     # OJO do not change soil.RootMax like in global.f90:4029 since it will be taken care later
 
     # if usedefaultsoilfile  (this is always true)
-    if eltype(kwargs[:runtype]) == FortranRun 
+    if typeof(kwargs[:runtype]) == FortranRun 
         filename = joinpath(filepaths[:simul], "DEFAULT.SOL")
     else
         filename = joinpath(filepaths[:simul], "gvars.toml")
@@ -496,14 +496,14 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(string_parameters, :eto_file,  "(None)")
     setparameter!(string_parameters, :rain_file,  "(None)")
     setparameter!(string_parameters, :groundwater_file, "(None)")
-    if kwargs[:runtype] == :FortranRun
+    if typeof(kwargs[:runtype]) == FortranRun
         setparameter!(string_parameters, :prof_file, "DEFAULT.SOL")
         setparameter!(string_parameters, :crop_file, "DEFAULT.CRO")
         setparameter!(string_parameters, :CO2_file, "MaunaLoa.CO2")
     else
         setparameter!(string_parameters, :prof_file, "gvars.toml")
         setparameter!(string_parameters, :crop_file, "gvars.toml")
-        setparameter!(string_parameters, :CO2_file, "MaunaLoaCO2.toml")
+        setparameter!(string_parameters, :CO2_file, "MaunaLoaCO2.csv")
     end
     setparameter!(string_parameters, :man_file, "(None)")
     setparameter!(string_parameters, :irri_file, "(None)")
