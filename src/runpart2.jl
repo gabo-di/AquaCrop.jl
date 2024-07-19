@@ -286,8 +286,8 @@ function get_decade_eto_dataset!(eto_dataset, daynri, eto_array, eto_record::Rep
 
     if abs(c2) < eps() 
         for nri in 1:ni
-            eto_dataset[nri]%DayNr = dnr+nri-1
-            eto_dataset[nri]%Param = 0
+            eto_dataset[nri].DayNr = dnr+nri-1
+            eto_dataset[nri].Param = 0
         end 
     else
         ul, ll, mid = get_parameters(c1, c2, c3)
