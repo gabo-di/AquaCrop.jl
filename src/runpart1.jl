@@ -472,35 +472,38 @@ function temperature_file_covering_crop_period!(outputs, gvars, crop_firstday, c
     tmin_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
     tmax_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
 
+    Tmin = gvars[:array_parameters][:Tmin]
+    Tmax = gvars[:array_parameters][:Tmax]
+
     if gvars[:bool_parameters][:temperature_file_exists]
         # open file and find first day of cropping period
         if gvars[:temperature_record].Datatype == :Daily
             # Tmin and Tmax arrays contain the TemperatureFilefull data
             i = crop_firstday - gvars[:temperature_record].FromDayNr + 1
-            tlow = gvars[:array_parameters][:Tmin][i]
-            thigh = gvars[:array_parameters][:Tmax][i]
+            tlow = Tmin[i]
+            thigh = Tmax[i]
         
         elseif gvars[:temperature_record].Datatype == :Decadely
             get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, crop_firstday,
-                                            gvars[:string_parameters][:temperature_file],
+                                            (Tmin, Tmax), 
                                             gvars[:temperature_record])
             i = 1
             while tmin_dataset[1].DayNr != crop_firstday
                 i += 1
             end
-            tlow = gvars[:array_parameters][:Tmin][i]
-            thigh = gvars[:array_parameters][:Tmax][i]
+            tlow = tmin_dataset[i].Param 
+            thigh = tmax_dataset[i].Param 
 
         elseif gvars[:temperature_record].Datatype == :Monthly
             get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, crop_firstday,
-                                            gvars[:string_parameters][:temperature_file],
+                                            (Tmin, Tmax), 
                                             gvars[:temperature_record])
             i = 1
             while tmin_dataset[1].DayNr != crop_firstday
                 i += 1
             end
-            tlow = gvars[:array_parameters][:Tmin][i]
-            thigh = gvars[:array_parameters][:Tmax][i]
+            tlow = tmin_dataset[i].Param 
+            thigh = tmax_dataset[i].Param 
         end
 
         # we are not creating the TCrop.SIM for now but we use outputs variable
@@ -513,34 +516,34 @@ function temperature_file_covering_crop_period!(outputs, gvars, crop_firstday, c
                 if i==length(gvars[:array_parameters][:Tmin]) 
                     i = 1
                 end 
-                tlow = gvars[:array_parameters][:Tmin][i]
-                thigh = gvars[:array_parameters][:Tmax][i]
+                tlow = Tmin[i]
+                thigh = Tmax[i]
 
             elseif gvars[:temperature_record].Datatype == :Decadely
                 if runningday>tmin_dataset[31].DayNr
                     get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
-                                                    gvars[:string_parameters][:temperature_file],
+                                                    (Tmin, Tmax), 
                                                     gvars[:temperature_record])
                 end
                 i = 1
                 while tmin_dataset[1].DayNr != runningday
                     i += 1
                 end 
-                tlow = gvars[:array_parameters][:Tmin][i]
-                thigh = gvars[:array_parameters][:Tmax][i]
+                tlow = tmin_dataset[i].Param 
+                thigh = tmax_dataset[i].Param 
 
             elseif gvars[:temperature_record].Datatype == :Monthly
                 if runningday>tmin_dataset[31].DayNr
                     get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
-                                                    gvars[:string_parameters][:temperature_file],
-                                                    gvars[:temperature_record])
+                                                     (Tmin, Tmax), 
+                                                     gvars[:temperature_record])
                 end 
-                i =1 
+                i = 1 
                 while tmin_dataset[1].DayNr != runningday
                     i += 1
                 end
-                tlow = gvars[:array_parameters][:Tmin][i]
-                thigh = gvars[:array_parameters][:Tmax][i]
+                tlow = tmin_dataset[i].Param 
+                thigh = tmax_dataset[i].Param 
             end
 
             add_output_in_tcropsim!(outputs, tlow, thigh)

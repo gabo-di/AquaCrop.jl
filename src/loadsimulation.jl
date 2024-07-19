@@ -1433,7 +1433,7 @@ function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, tem
         dayn = 10
         ni = 10
     end 
-    c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three(Val(2){}, dayn, deci, monthi, yeari, temperature_array, temperature_record)
+    c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_array, temperature_record)
     dnr = determine_day_nr(dayi, monthi, yeari)
 
     ulmin, llmin, midmin = get_parameters(c1min, c2min, c3min)
@@ -1488,11 +1488,11 @@ function get_parameters(c1, c2, c3)
 end 
 
 """
-    c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three(val::Val{2}, dayn, deci, monthi, yeari, temperature_array, temperature_record::RepClim)
+    c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_array, temperature_record::RepClim)
 
 tempprocessing.f90:439
 """
-function get_set_of_three(val::Val{2}, dayn, deci, monthi, yeari, temperature_array, temperature_record::RepClim)
+function get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_array, temperature_record::RepClim)
     # 1 = previous decade, 2 = Actual decade, 3 = Next decade;
     if temperature_record.FromD>20
         decfile=3
@@ -1644,7 +1644,7 @@ tempprocessing.f90:596
 """
 function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_array, temperature_record::RepClim)
     dayi, monthi, yeari = determine_date(daynri)
-    c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months(Val(2){}, monthi, yeari, temperature_array, temperature_record)
+    c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months_temperature(monthi, yeari, temperature_array, temperature_record)
 
     dayi = 1
     dnr = determine_day_nr(dayi, monthi, yeari)
@@ -1673,11 +1673,11 @@ function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, te
 end 
 
 """
-    c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months(val::Val{2}, monthi, yeari, temperature_array, temperature_record::RepClim)
+    c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months_temperature(monthi, yeari, temperature_array, temperature_record::RepClim)
 
 tempprocessing.f90:645
 """
-function get_set_of_three_months(val::Val{2}, monthi, yeari, temperature_array, temperature_record::RepClim)
+function get_set_of_three_months_temperature(monthi, yeari, temperature_array, temperature_record::RepClim)
     n1 = 30
     n2 = 30
     n3 = 30
