@@ -132,3 +132,21 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
     return  gvars, projectinput, fileok
 end
 
+
+"""
+    run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
+
+run.f90:7779
+"""
+function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
+    # maybe set outputfilesa run.f90:7786 OJO
+    nrruns = gvars[:simulation].NrRuns 
+
+    for nrrun in 1:nrruns
+        initialize_run_part_1!(outputs, gvars, projectinput[nrrun]; kwargs...)
+        # initialize_climate!()
+
+    end
+
+    return nothing
+end #notend

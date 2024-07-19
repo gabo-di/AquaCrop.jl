@@ -8,10 +8,11 @@ using TOML
 include("types.jl")
 include("utils.jl")
 include("outputs.jl")
-include("read_toml.jl")
+include("readtoml.jl")
 include("initialsettings.jl")
 include("loadsimulation.jl")
-include("runsim.jl")
+include("runpart1.jl")
+include("runpart2.jl")
 include("FieldCrop.jl")
 include("main.jl")
 

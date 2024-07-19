@@ -4,4 +4,4 @@ using SafeTestsets
 
 @safetestset "Run Part 1" begin include("runpart1_tests.jl") end
 
-@safetestset "TOML Integration" begin include("toml_tests.jl") end
+@safetestset "TOML Integration" begin include("readtoml_tests.jl") end

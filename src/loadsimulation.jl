@@ -23,7 +23,9 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         if gvars[:bool_parameters][:temperature_file_exists]
             read_temperature_file!(gvars[:array_parameters], temperature_file)
         end
-        load_clim!(gvars[:temperature_record], _temperature_file; str="temperature_record", kwargs...)
+        load_clim!(gvars[:temperature_record], _temperature_file;
+                   nrobs=length(gvars[:array_parameters][:Tmin]),
+                   str="temperature_record", kwargs...)
     end 
     setparameter!(gvars[:string_parameters], :temperature_file, temperature_file)
 
@@ -31,8 +33,19 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     if (projectinput.ETo_Filename=="(None)") | (projectinput.ETo_Filename=="(External)")
         eto_file = projectinput.ETo_Filename 
     else
-        eto_file = joinpath([projectinput.ParentDir, projectinput.ETo_Directory, projectinput.ETo_Filename])
-        load_clim!(gvars[:eto_record], eto_file; str="eto_record", kwargs...)
+        _eto_file = joinpath([projectinput.ParentDir, projectinput.ETo_Directory, projectinput.ETo_Filename])
+        if typeof(kwargs[:runtype]) == FortranRun
+            eto_file = _eto_file
+        else
+            eto_file = _eto_file[1:end-5]*".csv"
+        end
+        setparameter!(gvars[:bool_parameters], :eto_file_exists, isfile(eto_file))
+        if gvars[:bool_parameters][:eto_file_exists]
+            read_eto_file!(gvars[:array_parameters], eto_file)
+        end
+        load_clim!(gvars[:eto_record], _eto_file;
+                   nrobs=length(gvars[:array_parameters][:ETo]),
+                   str="eto_record", kwargs...)
     end 
     setparameter!(gvars[:string_parameters], :eto_file, eto_file)
 
@@ -40,8 +53,19 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     if (projectinput.Rain_Filename=="(None)") | (projectinput.Rain_Filename=="(External)")
         rain_file = projectinput.Rain_Filename
     else
-        rain_file = joinpath([projectinput.ParentDir, projectinput.Rain_Directory, projectinput.Rain_Filename])
-        load_clim!(gvars[:rain_record], rain_file; str="rain_record", kwargs...)
+        _rain_file = joinpath([projectinput.ParentDir, projectinput.Rain_Directory, projectinput.Rain_Filename])
+        if typeof(kwargs[:runtype]) == FortranRun
+            rain_file = _rain_file
+        else
+            rain_file = _rain_file[1:end-5]*".csv"
+        end
+        setparameter!(gvars[:bool_parameters], :rain_file_exists, isfile(rain_file))
+        if gvars[:bool_parameters][:rain_file_exists]
+            read_rain_file!(gvars[:array_parameters], rain_file)
+        end
+        load_clim!(gvars[:rain_record], _rain_file;
+                   nrobs=length(gvars[:array_parameters][:Rain]),
+                   str="rain_record", kwargs...)
     end 
     setparameter!(gvars[:string_parameters], :rain_file, rain_file)
     
@@ -313,6 +337,56 @@ function read_temperature_file!(array_parameters::ParametersContainer{T}, temper
     return nothing
 end
 
+function read_eto_file!(array_parameters::ParametersContainer{T}, eto_file) where T
+    ETo = Float64[] 
+    
+    open(eto_file, "r") do file
+        readline(file)
+        if !endswith(eto_file, ".csv")
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+        end
+
+        for line in eachline(file)
+            eto = parse(Float64, line)
+            push!(ETo, eto)
+        end
+    end
+
+    setparameter!(array_parameters, :ETo, ETo)
+    return nothing
+end
+
+function read_rain_file!(array_parameters::ParametersContainer{T}, rain_file) where T
+    Rain = Float64[] 
+    
+    open(rain_file, "r") do file
+        readline(file)
+        if !endswith(rain_file, ".csv")
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+            readline(file)
+        end
+
+        for line in eachline(file)
+            rain = parse(Float64, line)
+            push!(Rain, rain)
+        end
+    end
+
+    setparameter!(array_parameters, :Rain, Rain)
+    return nothing
+end
+
 """
     load_clim!(record::RepClim, filename; kwargs...)
 
@@ -338,13 +412,7 @@ function _load_clim!(runtype::FortranRun, record::RepClim, filename; kwargs...)
             record.FromD = parse(Int,split(readline(file))[1]) 
             record.FromM = parse(Int,split(readline(file))[1]) 
             record.FromY = parse(Int,split(readline(file))[1]) 
-            readline(file)
-            readline(file)
-            readline(file)
-            record.NrObs = 0
-            for line in eachline(file)
-                record.NrObs += 1
-            end
+            record.NrObs = kwargs[:nrobs]
         end
         complete_climate_description!(record)
     end
@@ -355,13 +423,7 @@ function _load_clim!(runtype::T, record::RepClim, filename; kwargs...) where {T<
     _filename = filename
     if isfile(_filename)
         load_gvars_from_toml!(record, _filename; kwargs...) 
-        open(filename[1:end-5]*".csv", "r") do file
-            readline(file)
-            record.NrObs = 0
-            for line in eachline(file)
-                record.NrObs += 1
-            end
-        end
+        record.NrObs = kwargs[:nrobs]
         complete_climate_description!(record)
     end
     return nothing
@@ -1208,7 +1270,7 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
                         gddays = undef_int
                     end 
                 elseif temperature_record.Datatype == :Decadely
-                    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                     i = 1
                     while (tmin_dataset[i].DayNr != daynri)
                         i = i+1
@@ -1223,7 +1285,7 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
                     daynri = daynri + 1
                     while ((remainingdays > 0) & ((daynri < temperature_record.ToDayNr) |  adjustdaynri))
                         if (daynri > tmin_dataset[31].DayNr)
-                            get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                            get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                         end
                         i = 1
                         while (tmin_dataset[i].DayNr != daynri)
@@ -1239,9 +1301,8 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
                     if (remainingdays > 0) 
                         gddays = undef_int
                     end 
-
                 elseif temperature_record.Datatype == :Monthly
-                    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                     i = 1
                     while (tmin_dataset[i].DayNr != daynri)
                         i = i+1
@@ -1254,7 +1315,7 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
                     daynri = daynri + 1
                     while((remainingdays > 0) & ((daynri < temperature_record.ToDayNr) | adjustdaynri))
                         if (daynri > tmin_dataset[31].DayNr) 
-                            get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                            get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                         end
                         i = 1
                         while (tmin_dataset[i].DayNr != daynri)
@@ -1347,11 +1408,11 @@ end
 
 
 """
-    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record::RepClim)
+    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_array, temperature_record::RepClim)
 
 tempprocessing.f90:362
 """
-function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record::RepClim)
+function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_array, temperature_record::RepClim)
     dayi, monthi, yeari = determine_date(daynri)
     if (dayi > 20) 
         deci = 3
@@ -1372,7 +1433,7 @@ function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, tem
         dayn = 10
         ni = 10
     end 
-    c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three(dayn, deci, monthi, yeari, temperature_file, temperature_record)
+    c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three(Val(2){}, dayn, deci, monthi, yeari, temperature_array, temperature_record)
     dnr = determine_day_nr(dayi, monthi, yeari)
 
     ulmin, llmin, midmin = get_parameters(c1min, c2min, c3min)
@@ -1427,135 +1488,123 @@ function get_parameters(c1, c2, c3)
 end 
 
 """
-    c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three(dayn, deci, monthi, yeari, temperature_file, temperature_record::RepClim)
+    c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three(val::Val{2}, dayn, deci, monthi, yeari, temperature_array, temperature_record::RepClim)
 
 tempprocessing.f90:439
 """
-function get_set_of_three(dayn, deci, monthi, yeari, temperature_file, temperature_record::RepClim)
+function get_set_of_three(val::Val{2}, dayn, deci, monthi, yeari, temperature_array, temperature_record::RepClim)
     # 1 = previous decade, 2 = Actual decade, 3 = Next decade;
-    open(temperature_file, "r") do file
-        readline(file)
-        if !endswith(temperature_file, ".csv")
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-        end
-
-        if temperature_record.FromD>20
-            decfile=3
-        elseif temperature_record.FromD>10
-            decfile=2
-        else
-            decfile=1
-        end
-        mfile = temperature_record.FromM
-        if temperature_record.FromY==1901
-            yfile = yeari
-        else
-            yfile = temperature_record.FromY
-        end
-        ok3 = false
-        
-        if temperature_record.NrObs<=2
-            splitedline = split(readline(file))
-            c1min = parse(Float64, popfirst!(splitedline))
-            c1max = parse(Float64, popfirst!(splitedline))
-            if temperature_record.NrObs==0
-                c2min = c1min
-                c2max = c1max #OJO in the original code says c2max = c2max but makes not much sense
-                c3min = c1min
-                c3max = c1max
-            elseif temperature_record.NrObs==1
-                decfile += 1
-                if decfile>3
-                    decfile, mfile, yfile = adjust_decade_month_and_year(decfile, mfile, yfile)
-                end
-                splitedline = split(readline(file))
-                c3min = parse(Float64, popfirst!(splitedline))
-                c3max = parse(Float64, popfirst!(splitedline))
-                if (deci == decfile) 
-                    c2min = c3min
-                    c2max = c3max
-                    c3min = c2min+(c2min-c1min)/4
-                    c3max = c2max+(c2max-c1max)/4
-                else
-                    c2min = c1min
-                    c2max = c1max
-                    c1min = c2min + (c2min-c3min)/4
-                    c1max = c2max + (c2max-c3max)/4
-                end 
-            end
-            ok3 = true
-        end
+    if temperature_record.FromD>20
+        decfile=3
+    elseif temperature_record.FromD>10
+        decfile=2
+    else
+        decfile=1
+    end
+    mfile = temperature_record.FromM
+    if temperature_record.FromY==1901
+        yfile = yeari
+    else
+        yfile = temperature_record.FromY
+    end
+    ok3 = false
     
-        if (!ok3) & (deci==decfile) & (monthi==mfile) & (yeari==yfile)
-            splitedline = split(readline(file))
-            c1min = parse(Float64, popfirst!(splitedline))
-            c1max = parse(Float64, popfirst!(splitedline))
+    cont = 1
+    if temperature_record.NrObs<=2
+        c1min = temperature_array[1][cont]
+        c1max = temperature_array[2][cont]
+        cont += 1
+        if temperature_record.NrObs==0
             c2min = c1min
-            c2max = c1max
-            splitedline = split(readline(file))
-            c3min = parse(Float64, popfirst!(splitedline))
-            c3max = parse(Float64, popfirst!(splitedline))
-            c1min = c2min + (c2min-c3min)/4
-            c1max = c2max + (c2max-c3max)/4
-            ok3 = true
-        end 
-
-        if (!ok3) & (dayn==temperature_record.ToD) & (monthi==temperature_record.ToM)
-            if (temperature_record.FromY==1901) | (yeari==temperature_record.ToY)
-                for Nri in 1:(temperature_record.NrObs-2)
-                    readline(file)
-                end 
-                splitedline = split(readline(file))
-                c1min = parse(Float64, popfirst!(splitedline))
-                c1max = parse(Float64, popfirst!(splitedline))
-                splitedline = split(readline(file))
-                c2min = parse(Float64, popfirst!(splitedline))
-                c2max = parse(Float64, popfirst!(splitedline))
+            c2max = c1max #OJO in the original code says c2max = c2max but makes not much sense
+            c3min = c1min
+            c3max = c1max
+        elseif temperature_record.NrObs==1
+            decfile += 1
+            if decfile>3
+                decfile, mfile, yfile = adjust_decade_month_and_year(decfile, mfile, yfile)
+            end
+            c3min = temperature_array[1][cont]
+            c3max = temperature_array[2][cont]
+            cont += 1
+            if (deci == decfile) 
+                c2min = c3min
+                c2max = c3max
                 c3min = c2min+(c2min-c1min)/4
                 c3max = c2max+(c2max-c1max)/4
-                ok3 = true
-            end 
-        end 
-
-        if !ok3 
-            obsi = 1
-            while !ok3
-                if (deci==decfile) & (monthi==mfile) & (yeari == yfile) 
-                    ok3 = true
-                else
-                    decfile = decfile + 1
-                    if decfile>3 
-                        decfile, mfile, yfile = adjust_decade_month_and_year(decfile, mfile, yfile)
-                    end
-                    obsi = obsi + 1
-                end
-            end
-            if temperature_record.FromD>20
-                decfile = 3
-            elseif temperature_record.FromD>10
-                decfile = 2
             else
-                decfile = 1
-            end
-            for nri in 1:(obsi-2)
-                readline(file)
+                c2min = c1min
+                c2max = c1max
+                c1min = c2min + (c2min-c3min)/4
+                c1max = c2max + (c2max-c3max)/4
             end 
-            splitedline = split(readline(file))
-            c1min = parse(Float64, popfirst!(splitedline))
-            c1max = parse(Float64, popfirst!(splitedline))
-            splitedline = split(readline(file))
-            c2min = parse(Float64, popfirst!(splitedline))
-            c2max = parse(Float64, popfirst!(splitedline))
-            splitedline = split(readline(file))
-            c3min = parse(Float64, popfirst!(splitedline))
-            c3max = parse(Float64, popfirst!(splitedline))
+        end
+        ok3 = true
+    end
+
+    if (!ok3) & (deci==decfile) & (monthi==mfile) & (yeari==yfile)
+        c1min = temperature_array[1][cont]
+        c1max = temperature_array[2][cont]
+        cont += 1
+        c2min = c1min
+        c2max = c1max
+        c3min = temperature_array[1][cont]
+        c3max = temperature_array[2][cont]
+        cont += 1
+        c1min = c2min + (c2min-c3min)/4
+        c1max = c2max + (c2max-c3max)/4
+        ok3 = true
+    end 
+
+    if (!ok3) & (dayn==temperature_record.ToD) & (monthi==temperature_record.ToM)
+        if (temperature_record.FromY==1901) | (yeari==temperature_record.ToY)
+            for Nri in 1:(temperature_record.NrObs-2)
+                cont += 1
+            end 
+            c1min = temperature_array[1][cont]
+            c1max = temperature_array[2][cont]
+            cont += 1
+            c2min = temperature_array[1][cont]
+            c2max = temperature_array[2][cont]
+            cont += 1
+            c3min = c2min+(c2min-c1min)/4
+            c3max = c2max+(c2max-c1max)/4
+            ok3 = true
         end 
+    end 
+
+    if !ok3 
+        obsi = 1
+        while !ok3
+            if (deci==decfile) & (monthi==mfile) & (yeari == yfile) 
+                ok3 = true
+            else
+                decfile = decfile + 1
+                if decfile>3 
+                    decfile, mfile, yfile = adjust_decade_month_and_year(decfile, mfile, yfile)
+                end
+                obsi = obsi + 1
+            end
+        end
+        if temperature_record.FromD>20
+            decfile = 3
+        elseif temperature_record.FromD>10
+            decfile = 2
+        else
+            decfile = 1
+        end
+        for nri in 1:(obsi-2)
+            cont += 1
+        end 
+        c1min = temperature_array[1][cont]
+        c1max = temperature_array[2][cont]
+        cont += 1
+        c2min = temperature_array[1][cont]
+        c2max = temperature_array[2][cont]
+        cont += 1
+        c3min = temperature_array[1][cont]
+        c3max = temperature_array[2][cont]
+        cont += 1
     end 
 
     return c1min, c1max, c2min, c2max, c3min, c3max
@@ -1589,13 +1638,13 @@ function adjust_month_and_year(mfile, yfile)
 end
 
 """
-    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record::RepClim)
+    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_array, temperature_record::RepClim)
 
 tempprocessing.f90:596
 """
-function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record::RepClim)
+function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_array, temperature_record::RepClim)
     dayi, monthi, yeari = determine_date(daynri)
-    c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months(monthi, yeari, temperature_file, temperature_record)
+    c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months(Val(2){}, monthi, yeari, temperature_array, temperature_record)
 
     dayi = 1
     dnr = determine_day_nr(dayi, monthi, yeari)
@@ -1624,194 +1673,194 @@ function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, te
 end 
 
 """
-    c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months(monthi, yeari, temperature_file, temperature_record::RepClim)
+    c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months(val::Val{2}, monthi, yeari, temperature_array, temperature_record::RepClim)
 
 tempprocessing.f90:645
 """
-function get_set_of_three_months(monthi, yeari, temperature_file, temperature_record::RepClim)
+function get_set_of_three_months(val::Val{2}, monthi, yeari, temperature_array, temperature_record::RepClim)
     n1 = 30
     n2 = 30
     n3 = 30
 
     # 1. Prepare record
-    open(temperature_file, "r") do file
-        readline(file)
-        if !endswith(temperature_file, ".csv")
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-        end
+    mfile = temperature_record.FromM
+    if temperature_record.FromY==1901
+        yfile = yeari
+    else
+        yfile = temperature_record.FromY
+    end
+    ok3 = false
 
-        mfile = temperature_record.FromM
-        if temperature_record.FromY==1901
-            yfile = yeari
-        else
-            yfile = temperature_record.FromY
-        end
-        ok3 = false
-
-        # 2. IF 3 or less records
-        if temperature_record.NrObs<=3
-            c1min, c1max = read_month(readline(file))
-            x1 = n1
-            if temperature_record.NrObs==0
-                t1 = x1
-                x2 = x1 + n1
-                c2min = c1min
-                c2max = c1max
-                x3 = x2 + n1
-                c3min = c1min
-                c3max = c1max
-            elseif temperature_record.NrObs==1
-                t1 = x1
-                mfile = mfile + 1
-                if mfile>12 
-                    mfile, yfile = adjust_month_and_year(mfile, yfile)
-                end 
-                c3min, c3max = read_month(readline(file))
-                if monthi==mfile 
-                    c2min = c3min
-                    c2max = c3max
-                    x2 = x1 + n3
-                    x3 = x2 + n3
-                else
-                    c2min = c1min
-                    c2max = c1max
-                    x2 = x1 + n1
-                    x3 = x2 + n3
-                end 
-            elseif temperature_record.NrObs==2
-                if monthi==mfile 
-                    t1 = 0
-                end 
-                mfile = mfile + 1
-                if mfile>12 
-                    mfile, yfile = adjust_month_and_year(mfile, yfile)
-                end
-                c2min, c2max = read_month(readline(file))
-                x2 = x1 + n2
-                if monthi==mfile 
-                    t1 = x1
-                end 
-                mfile = mfile + 1
-                if mfile>12 
-                    mfile, yfile = adjust_month_and_year(mfile, yfile)
-                end
-                c3min, c3max = read_month(readline(file))
-                x3 = x2 + n3
-                if monthi==mfile 
-                    t1 = x2
-                end 
-            end
-            ok3 = true
-        end 
-
-        # 3. If first observation
-        if (!ok3) & (monthi==mfile) & (yeari==yfile)
-            t1 = 0
-            c1min, c1max = read_month(readline(file))
-            x1 = n1
-            mfile = mfile + 1
-            if mfile>12 
-                mfile, yfile = adjust_month_and_year(mfile, yfile)
-            end 
-            c2min, c2max = read_month(readline(file))
-            x2 = x1 + n2
-            mfile = mfile + 1
-            if mfile>12 
-                mfile, yfile = adjust_month_and_year(mfile, yfile)
-            end 
-            c3min, c3max = read_month(readline(file))
-            x3 = x2 + n3
-            ok3 = true
-        end 
-
-        # 4. If last observation
-        if (!ok3) & (monthi==temperature_record.ToM)
-            if (temperature_record.FromY==1901) | (yeari==temperature_record.ToY)
-                for nri in 1:(temperature_record.NrObs-3)
-                    readline(file)
-                    mfile = mfile + 1
-                    if mfile>12 
-                        mfile, yfile = adjust_month_and_year(mfile, yfile)
-                    end 
-                end 
-                c1min, c1max = read_month(readline(file))
-                x1 = n1
-                mfile = mfile + 1
-                if mfile>12 
-                    mfile, yfile = adjust_month_and_year(mfile, yfile)
-                end 
-                c2min, c2max = read_month(readline(file))
-                x2 = x1 + n2
-                t1 = x2
-                mfile = mfile + 1
-                if mfile>12 
-                    mfile, yfile = adjust_month_and_year(mfile, yfile)
-                end 
-                c3min, c3max = read_month(readline(file))
-                x3 = x2 + n3
-                ok3 = true
-            end 
-        end 
-
-        # 5. IF not previous cases
-        if !ok3
-            obsi = 1
-            while !ok3
-                if ((monthi==mfile) & (yeari==yfile)) 
-                   ok3 = true
-                else
-                   mfile = mfile + 1
-                   if mfile>12 
-                       mfile, yfile = adjust_month_and_year(mfile, yfile)
-                   end 
-                  obsi = obsi + 1
-                end 
-            end 
-            mfile = temperature_record.FromM 
-            for nri in 1:(obsi-2)
-                readline(file)
-                mfile = mfile + 1
-                if (mfile > 12) 
-                    mfile, yfile = adjust_month_and_year(mfile, yfile)
-                end
-            end
-            c1min, c1max = read_month(readline(file))
-            x1 = n1
+    cont = 1
+    # 2. IF 3 or less records
+    if temperature_record.NrObs<=3
+        c1min, c1max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+        cont += 1
+        x1 = n1
+        if temperature_record.NrObs==0
+            t1 = x1
+            x2 = x1 + n1
+            c2min = c1min
+            c2max = c1max
+            x3 = x2 + n1
+            c3min = c1min
+            c3max = c1max
+        elseif temperature_record.NrObs==1
             t1 = x1
             mfile = mfile + 1
             if mfile>12 
                 mfile, yfile = adjust_month_and_year(mfile, yfile)
             end 
-            c2min, c2max = read_month(readline(file))
-            x2 = x1 + n2
+            c3min, c3max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+            cont += 1
+            if monthi==mfile 
+                c2min = c3min
+                c2max = c3max
+                x2 = x1 + n3
+                x3 = x2 + n3
+            else
+                c2min = c1min
+                c2max = c1max
+                x2 = x1 + n1
+                x3 = x2 + n3
+            end 
+        elseif temperature_record.NrObs==2
+            if monthi==mfile 
+                t1 = 0
+            end 
             mfile = mfile + 1
             if mfile>12 
                 mfile, yfile = adjust_month_and_year(mfile, yfile)
             end
-            c3min, c3max = read_month(readline(file))
+            c2min, c2max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+            cont += 1
+            x2 = x1 + n2
+            if monthi==mfile 
+                t1 = x1
+            end 
+            mfile = mfile + 1
+            if mfile>12 
+                mfile, yfile = adjust_month_and_year(mfile, yfile)
+            end
+            c3min, c3max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+            cont += 1
             x3 = x2 + n3
+            if monthi==mfile 
+                t1 = x2
+            end 
+        end
+        ok3 = true
+    end 
+
+    # 3. If first observation
+    if (!ok3) & (monthi==mfile) & (yeari==yfile)
+        t1 = 0
+        c1min, c1max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+        cont += 1
+        x1 = n1
+        mfile = mfile + 1
+        if mfile>12 
+            mfile, yfile = adjust_month_and_year(mfile, yfile)
         end 
-    end
+        c2min, c2max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+        cont += 1
+        x2 = x1 + n2
+        mfile = mfile + 1
+        if mfile>12 
+            mfile, yfile = adjust_month_and_year(mfile, yfile)
+        end 
+        c3min, c3max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+        cont += 1
+        x3 = x2 + n3
+        ok3 = true
+    end 
+
+    # 4. If last observation
+    if (!ok3) & (monthi==temperature_record.ToM)
+        if (temperature_record.FromY==1901) | (yeari==temperature_record.ToY)
+            for nri in 1:(temperature_record.NrObs-3)
+                cont += 1
+                mfile = mfile + 1
+                if mfile>12 
+                    mfile, yfile = adjust_month_and_year(mfile, yfile)
+                end 
+            end 
+            c1min, c1max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+            cont += 1
+            x1 = n1
+            mfile = mfile + 1
+            if mfile>12 
+                mfile, yfile = adjust_month_and_year(mfile, yfile)
+            end 
+            c2min, c2max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+            cont += 1
+            x2 = x1 + n2
+            t1 = x2
+            mfile = mfile + 1
+            if mfile>12 
+                mfile, yfile = adjust_month_and_year(mfile, yfile)
+            end 
+            c3min, c3max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+            cont += 1
+            x3 = x2 + n3
+            ok3 = true
+        end 
+    end 
+
+    # 5. IF not previous cases
+    if !ok3
+        obsi = 1
+        while !ok3
+            if ((monthi==mfile) & (yeari==yfile)) 
+               ok3 = true
+            else
+               mfile = mfile + 1
+               if mfile>12 
+                   mfile, yfile = adjust_month_and_year(mfile, yfile)
+               end 
+              obsi = obsi + 1
+            end 
+        end 
+        mfile = temperature_record.FromM 
+        for nri in 1:(obsi-2)
+            cont += 1
+            mfile = mfile + 1
+            if (mfile > 12) 
+                mfile, yfile = adjust_month_and_year(mfile, yfile)
+            end
+        end
+        c1min, c1max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+        cont += 1
+        x1 = n1
+        t1 = x1
+        mfile = mfile + 1
+        if mfile>12 
+            mfile, yfile = adjust_month_and_year(mfile, yfile)
+        end 
+        c2min, c2max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+        cont += 1
+        x2 = x1 + n2
+        mfile = mfile + 1
+        if mfile>12 
+            mfile, yfile = adjust_month_and_year(mfile, yfile)
+        end
+        c3min, c3max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
+        cont += 1
+        x3 = x2 + n3
+    end 
 
     return c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1
 end 
 
 """
-    cimin, cimax = read_month(stringline)
+    cimin, cimax = adjust_month(tlow, thigh)
 
-tempprocessing.f90:837
+this comes from read_month tempprocessing.f90:837
 """
-function read_month(stringline)
+function adjust_month(tlow, thigh)
     ni = 30
-    splitedline = split(stringline)
-    cimin = parse(Int, strip(popfirst!(splitedline))) * ni
-    cimax = parse(Int, strip(popfirst!(splitedline))) * ni
+    cimin = tlow  * ni
+    cimax = thigh * ni
 
     return cimin, cimax
 end
@@ -1899,7 +1948,7 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                         nrcdays = undef_int
                     end 
                 elseif temperature_record.Datatype==:Decadely
-                    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                     i = 1
                     while tmin_dataset[i].DayNr != daynri
                         i = i+1
@@ -1912,7 +1961,7 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                     daynri = daynri + 1
                     while (remaininggddays>0) & ((daynri<temperature_record.ToDayNr) | (adjustdaynri))
                         if daynri>tmin_dataset[31].DayNr 
-                            get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                            get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                         end
                         i = 1
                         while tmin_dataset[i].DayNr != daynri
@@ -1929,7 +1978,7 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                         nrcdays = undef_int
                     end 
                 elseif  temperature_record.Datatype==:Monthly
-                    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                     i = 1
                     while tmin_dataset[i].DayNr != daynri
                         i = i+1
@@ -1942,7 +1991,7 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                     daynri = daynri + 1
                     while (remaininggddays>0) & ((daynri<temperature_record.ToDayNr) | adjustdaynri)
                         if daynri>tmin_dataset[31].DayNr 
-                            get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_file, temperature_record)
+                            get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                         end
                         i = 1
                         while tmin_dataset[i].DayNr != daynri
