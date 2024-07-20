@@ -421,6 +421,8 @@ function initialize_settings(outputs, filepaths; kwargs...)
     # 11.3 Extra variables for run
     gwtable = RepGwTable()
     stresstot = RepStressTot()
+    irri_info_record1 = RepIrriInfoRecord()
+    irri_info_record2 = RepIrriInfoRecord()
 
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
@@ -461,6 +463,10 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(float_parameters, :cdctotal, undef_double)
     setparameter!(float_parameters, :gddcdctotal, undef_double)
     setparameter!(float_parameters, :ccototal, undef_double)
+    setparameter!(float_parameters, :sumgddprev, undef_double)
+    setparameter!(float_parameters, :gddayi, undef_double)
+    setparameter!(float_parameters, :dayfraction, undef_double)
+    setparameter!(float_parameters, :gddayfraction, undef_double)
 
     symbol_parameters = ParametersContainer(Symbol)
     setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
@@ -479,6 +485,9 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(integer_parameters, :previous_stress_level, undef_int)
     setparameter!(integer_parameters, :stress_sf_adj_new, undef_int)
     setparameter!(integer_parameters, :daynri, undef_int)
+    setparameter!(integer_parameters, :irri_interval, undef_int)
+    setparameter!(integer_parameters, :tadj, undef_int)
+    setparameter!(integer_parameters, :gddtadj, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
@@ -488,6 +497,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(bool_parameters, :evapo_entire_soil_surface, undef_bool)
     setparameter!(bool_parameters, :startmode, undef_bool)
     setparameter!(bool_parameters, :noyear, undef_bool)
+    setparameter!(bool_parameters, :global_irri_ecw, undef_bool)
 
     array_parameters = ParametersContainer(Vector{Float64})
     setparameter!(array_parameters, :Tmin, Float64[])
@@ -540,6 +550,8 @@ function initialize_settings(outputs, filepaths; kwargs...)
         crop_file_set = crop_file_set,
         gwtable = gwtable,
         stresstot = stresstot,
+        irri_info_record1 = irri_info_record1,
+        irri_info_record2 = irri_info_record2,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,

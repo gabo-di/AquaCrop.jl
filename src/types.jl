@@ -1179,3 +1179,19 @@ end
     SaltSquare::Float64=undef_double
 end
 
+"""
+    irri_info = RepIrriInfoRecord()
+"""
+@kwdef mutable struct RepIrriInfoRecord <: AbstractParametersContainer
+    "Undocumented"
+    NoMoreInfo::Bool=undef_bool
+    "Undocumented"
+    FromDay::Int=undef_int
+    "Undocumented"
+    ToDay::Int=undef_int
+    "Undocumented"
+    TimeInfo::Int=undef_int
+    "Undocumented"
+    DepthInfo::Int=undef_int
+end
+
