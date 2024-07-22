@@ -1195,3 +1195,34 @@ end
     DepthInfo::Int=undef_int
 end
 
+"""
+    transfer = RepTransfer()
+"""
+@kwdef mutable struct RepTransfer <: AbstractParametersContainer
+    "transfer of assimilates from above ground parts to root system is active"
+    Store::Bool=undef_bool
+    "transfer of assimialtes from root system to above ground parts is active"
+    Mobilize::Bool=undef_bool
+    "Total mass of assimilates (ton/ha) to mobilize at start of the season"
+    ToMobilize::Float64=undef_double
+    "Cumulative sum of assimilates (ton/ha) mobilized form root system"
+    Bmobilized::Float64=undef_double
+end
+
+"""
+    cut_info = RepCutInfoRecord()
+"""
+@kwdef mutable struct RepCutInfoRecord <: AbstractParametersContainer 
+    "Undocumented"
+    NoMoreInfo::Bool=undef_bool
+    "Undocumented"
+    FromDay::Int=undef_int
+    "Undocumented"
+    ToDay::Int=undef_int
+    "Undocumented"
+    IntervalInfo::Int=undef_int
+    "Undocumented"
+    IntervalGDD::Float64=undef_double
+    "Undocumented"
+    MassInfo::Float64=undef_double
+end

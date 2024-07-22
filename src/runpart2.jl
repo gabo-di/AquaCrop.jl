@@ -1034,263 +1034,278 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
     # 13. Initial canopy cover
     # 13.1 default value
     # 13.1a RatDGDD for simulation of CanopyCoverNoStressSF (CCi with decline)
-    RatDGDD = 1._dp
-    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
-        if (GetCrop_GDDaysToFullCanopySF() < GetCrop_GDDaysToSenescence()) then
-            RatDGDD = (GetCrop_DaysToSenescence() - &
-                       GetCrop_DaysToFullCanopySF()) / &
-                      real(GetCrop_GDDaysToSenescence() -&
-                           GetCrop_GDDaysToFullCanopySF(), kind=dp)
-        end if
-    end if
+    ratdgdd = 1
+    if gvars[:crop].ModeCycle == :GDDays 
+        if gvars[:crop].GDDaysToFullCanopySF < gvars[:crop].GDDaysToSenescence
+            ratdgdd = (gvars[:crop].DaysToSenescence - 
+                       gvars[:crop].DaysToFullCanopySF) / 
+                      (gvars[:crop].GDDaysToSenescence -
+                           gvars[:crop].GDDaysToFullCanopySF)
+        end 
+    end 
     # 13.1b DayCC for initial canopy cover
-    Dayi = GetDayNri() - GetCrop_Day1()
-    if (GetCrop_DaysToCCini() == 0) then
+    dayi = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1
+    if gvars[:crop].DaysToCCini == 0
         # sowing or transplant
-        DayCC = Dayi
-        call SetDayFraction(real(undef_int, kind=dp))
+        daycc = dayi
+        setparameter!(gvars[:float_parameters], :dayfraction, undef_double)
     else
         # adjust time (calendar days) for regrowth
-        DayCC = Dayi + GetTadj() + GetCrop_DaysToGermination() # adjusted time scale
-        if (DayCC > GetCrop_DaysToHarvest()) then
-            DayCC = GetCrop_DaysToHarvest() # special case where L123 > L1234
-        end if
-        if (DayCC > GetCrop_DaysToFullCanopy()) then
-            if (Dayi <= GetCrop_DaysToSenescence()) then
-                DayCC = GetCrop_DaysToFullCanopy()  + &
-                         roundc(GetDayFraction() * &
-                         (Dayi+GetTadj()+GetCrop_DaysToGermination() -&
-                         GetCrop_DaysToFullCanopy()),mold=1) # slow down
+        daycc = dayi + gvars[:integer_parameters][:tadj] + gvars[:crop].DaysToGermination # adjusted time scale
+        if daycc > gvars[:crop].DaysToHarvest
+            daycc = gvars[:crop].DaysToHarvest # special case where L123 > L1234
+        end 
+        if daycc > gvars[:crop].DaysToFullCanopy 
+            if dayi <= gvars[:crop].DaysToSenescence
+                daycc = gvars[:crop].DaysToFullCanopy + 
+                round(Int, gvars[:integer_parameters][:dayfraction] * 
+                         (dayi+gvars[:integer_parameters][:tadj]+gvars[:crop].DaysToGermination -
+                         gvars[:crop].DaysToFullCanopy)) # slow down
             else
-                DayCC = Dayi # switch time scale
-            end if
-        end if
-    end if
+                daycc = dayi # switch time scale
+            end 
+        end 
+    end 
     # 13.1c SumGDDayCC for initial canopy cover
-    SumGDDforDayCC = undef_int
-    if (GetCrop_ModeCycle() == modeCycle_GDDays) then
-        if (GetCrop_GDDaysToCCini() == 0) then
-            SumGDDforDayCC = GetSimulation_SumGDDfromDay1() - GetGDDayi()
+    sumgddfordaycc = undef_int
+    if gvars[:crop].ModeCycle == :GDDays
+        if gvars[:crop].GDDaysToCCini == 0
+            sumgddfordaycc = gvars[:simulation].SumGDDfromDay1 - gvars[:integer_parameters][:gddayi]
         else
             # adjust time (Growing Degree Days) for regrowth
-            SumGDDforDayCC = GetSimulation_SumGDDfromDay1() - GetGDDayi() + &
-                             GetGDDTadj() + GetCrop_GDDaysToGermination()
-            if (SumGDDforDayCC > GetCrop_GDDaysToHarvest()) then
-                SumGDDforDayCC = GetCrop_GDDaysToHarvest()
+                sumgddfordaycc = gvars[:simulation].SumGDDfromDay1 - gvars[:integer_parameters][:gddayi] + 
+                             gvars[:integer_parameters][:gddtadj] + gvars[:crop].GDDaysToGermination
+            if sumgddfordaycc > gvars[:crop].GDDaysToHarvest
+                sumgddfordaycc = gvars[:crop].GDDaysToHarvest
                 # special case where L123 > L1234
-            end if
-            if (SumGDDforDayCC > GetCrop_GDDaysToFullCanopy()) then
-                if (GetSimulation_SumGDDfromDay1() <= &
-                    GetCrop_GDDaysToFullCanopy()) then
-                    SumGDDforDayCC = GetCrop_GDDaysToFullCanopy() + &
-                      roundc(GetGDDayFraction() * &
-                       (GetSimulation_SumGDDfromDay1()+GetGDDTadj()+ &
-                       GetCrop_GDDaysToGermination()- &
-                       GetCrop_GDDaysToFullCanopy()),mold=1)
+            end 
+            if sumgddfordaycc > gvars[:crop].GDDaysToFullCanopy
+                if gvars[:simulation].SumGDDfromDay1 <= gvars[:crop].GDDaysToFullCanopy
+                    sumgddfordaycc = gvars[:crop].GDDaysToFullCanopy + 
+                    round(Int, gvars[:float_parameters][:gddayfraction] * 
+                                (gvars[:simulation].SumGDDfromDay1 + gvars[:integer_parameters][:gddtadj] + 
+                                gvars[:crop].GDDaysToGermination - gvars[:crop].GDDaysToFullCanopy))
                     # slow down
                 else
-                    SumGDDforDayCC = GetSimulation_SumGDDfromDay1() - &
-                                      GetGDDayi()
+                    sumgddfordaycc = gvars[:simulation].SumGDDfromDay1 - gvars[:integer_parameters][:gddayi]
                     # switch time scale
-                end if
-            end if
-        end if
-    end if
+                end 
+            end 
+        end 
+    end 
     # 13.1d CCi at start of day (is CCi at end of previous day)
-    if (GetDayNri() <= GetCrop_Day1()) then
-        if (GetCrop_DaysToCCini() /= 0) then
+    if gvars[:integer_parameters][:daynri] <= gvars[:crop].Day1
+        if gvars[:crop].DaysToCCini != 0
             # regrowth which starts on 1st day
-            if (GetDayNri() == GetCrop_Day1()) then
-                call SetCCiPrev(CCiNoWaterStressSF(DayCC, &
-                   GetCrop_DaysToGermination(), &
-                   GetCrop_DaysToFullCanopySF(), &
-                   GetCrop_DaysToSenescence(), GetCrop_DaysToHarvest(), &
-                   GetCrop_GDDaysToGermination(), &
-                   GetCrop_GDDaysToFullCanopySF(), &
-                   GetCrop_GDDaysToSenescence(), GetCrop_GDDaysToHarvest(), &
-                   GetCCoTotal(), GetCCxTotal(), GetCrop_CGC(), &
-                   GetCrop_GDDCGC(), GetCDCTotal(), GetGDDCDCTotal(), &
-                   SumGDDforDayCC, RatDGDD, &
-                   GetSimulation_EffectStress_RedCGC(), &
-                   GetSimulation_EffectStress_RedCCX(), &
-                   GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle()))
+            if gvars[:integer_parameters][:daynri] == gvars[:crop].Day1
+                cciprev = cci_no_water_stress_sf(daycc, 
+                   gvars[:crop].DaysToGermination, 
+                   gvars[:crop].DaysToFullCanopySF, 
+                   gvars[:crop].DaysToSenescence, gvars[:crop].DaysToHarvest, 
+                   gvars[:crop].GDDaysToGermination, 
+                   gvars[:crop].GDDaysToFullCanopySF, 
+                   gvars[:crop].GDDaysToSenescence, gvars[:crop].GDDaysToHarvest, 
+                   gvars[:float_parameters][:ccototal], gvars[:float_parameters][:ccxtotal], 
+                   gvars[:crop].CGC, 
+                   gvars[:crop].GDDCGC, gvars[:float_parameters][:cdctotal],
+                   gvars[:float_parameters][:gddcdctotal], 
+                   sumgddfordaycc, ratdgdd, 
+                   gvars[:simulation].EffectStress.RedCGC, 
+                   gvars[:simulation].EffectStress.RedCCX, 
+                   gvars[:simulation].EffectStress.CDecline, gvars[:crop].ModeCycle,
+                   gvars[:simulation])
             else
-                call SetCCiPrev(0._dp)
-            end if
+                cciprev = 0.0
+            end 
+            setparameter!(gvars[:float_parameters], :cciprev, cciprev)
         else
             # sowing or transplanting
-            call SetCCiPrev(0._dp)
-            if (GetDayNri() == (GetCrop_Day1()+GetCrop_DaysToGermination())) then
-                call SetCCiPrev(GetCCoTotal())
-            end if
-        end if
+            cciprev = 0.0
+            setparameter!(gvars[:float_parameters], :cciprev, cciprev)
+            if gvars[:integer_parameters][:daynri] == (gvars[:crop].Day1+gvars[:crop].DaysToGermination) 
+                setparameter!(gvars[:float_parameters], :cciprev, gvars[:float_parameters][:ccototal])
+            end 
+        end 
     else
-        if (GetDayNri() > GetCrop_DayN()) then
-            call SetCCiPrev(0._dp)  # after cropping period
+        if gvars[:integer_parameters][:daynri] > gvars[:crop].DayN
+            # after cropping period
+            cciprev = 0.0
         else
-            call SetCCiPrev(CCiNoWaterStressSF(DayCC, &
-                GetCrop_DaysToGermination(), &
-                GetCrop_DaysToFullCanopySF(), GetCrop_DaysToSenescence(), &
-                GetCrop_DaysToHarvest(), GetCrop_GDDaysToGermination(), &
-                GetCrop_GDDaysToFullCanopySF(), GetCrop_GDDaysToSenescence(), &
-                GetCrop_GDDaysToHarvest(), GetCCoTotal(), GetCCxTotal(), &
-                GetCrop_CGC(), GetCrop_GDDCGC(), GetCDCTotal(),&
-                GetGDDCDCTotal(), SumGDDforDayCC, RatDGDD, &
-                GetSimulation_EffectStress_RedCGC(), &
-                GetSimulation_EffectStress_RedCCX(), &
-                GetSimulation_EffectStress_CDecline(), GetCrop_ModeCycle()))
-        end if
-    end if
+            cciprev = cci_no_water_stress_sf(daycc, 
+                gvars[:crop].DaysToGermination, 
+                gvars[:crop].DaysToFullCanopySF, gvars[:crop].DaysToSenescence, 
+                gvars[:crop].DaysToHarvest, gvars[:crop].GDDaysToGermination, 
+                gvars[:crop].GDDaysToFullCanopySF, gvars[:crop].GDDaysToSenescence, 
+                gvars[:crop].GDDaysToHarvest, 
+                gvars[:float_parameters][:ccototal], gvars[:float_parameters][:ccxtotal], 
+                gvars[:crop].CGC, gvars[:crop].GDDCGC,
+                gvars[:float_parameters][:cdctotal],
+                gvars[:float_parameters][:gddcdctotal],
+                sumgddfordaycc, ratdgdd, 
+                gvars[:simulation].EffectStress.RedCGC, 
+                gvars[:simulation].EffectStress.RedCCX, 
+                gvars[:simulation].EffectStress.CDecline, gvars[:crop].ModeCycle,
+                gvars[:simulation])
+        end 
+        setparameter!(gvars[:float_parameters], :cciprev, cciprev)
+    end 
     # 13.2 specified CCini (%)
-    if ((GetSimulation_CCini() > 0._dp) .and. &
-        (roundc(10000._dp*GetCCiPrev(), mold=1) > 0) .and. &
-        (roundc(GetSimulation_CCini(), mold=1) /= &
-            roundc(100._dp*GetCCiPrev(),mold=1))) then
+    if (gvars[:simulation].CCini > 0) &
+        (round(Int, 10000*gvars[:float_parameters][:cciprev]) > 0) &
+        (round(Int, gvars[:simulation].CCini) != round(Int, 100*gvars[:float_parameters][:CCiPrev])) 
         # 13.2a Minimum CC
-        CCiniMin = 100._dp * (GetCrop_SizeSeedling()/10000._dp)*&
-                    (GetCrop_PlantingDens()/10000._dp)
-        if (CCiniMin - roundc(CCiniMin*100._dp, mold=1)/100._dp >= 0.00001) then
-            CCiniMin = roundc(CCiniMin*100._dp + 1._dp, mold=1)/100._dp
+        ccinimin = 100 * (gvars[:crop].SizeSeedling/10000) *
+                    (gvars[:crop].PlantingDens/10000)
+        if (ccinimin - round(Int, ccinimin*100)/100) >= 0.00001
+            ccinimin = round(Int, ccinimin*100 + 1)/100
         else
-            CCiniMin = roundc(CCiniMin*100._dp, mold=1)/100._dp
-        end if
+            ccinimin = round(Int, ccinimin*100)/100
+        end 
         # 13.2b Maximum CC
-        CCiniMax = 100._dp * GetCCiPrev()
-        CCiniMax = roundc(CCiniMax*100._dp, mold=1)/100._dp
+        ccinimax = 100 * gvars[:float_parameters][:cciprev]
+        ccinimax = round(Int, ccinimax*100)/100
         # 13.2c accept specified CCini
-        if ((GetSimulation_CCini() >= CCiniMin) .and. &
-            (GetSimulation_CCini() <= CCiniMax)) then
-            call SetCCiPrev(GetSimulation_CCini()/100._dp)
-        end if
-    end if
+        if (gvars[:simulation].CCini >= ccinimin)  &
+            (gvars[:simulation].CCini <= ccinimax) 
+            cciprev = gvars[:simulation].CCini/100
+            setparameter!(gvars[:float_parameters], :cciprev, cciprev)
+        end 
+    end 
     # 13.3
-    call SetCrop_CCxAdjusted(GetCCxTotal())
-    call SetCrop_CCoAdjusted(GetCCoTotal())
-    call SetTimeSenescence(0._dp)
-    call SetCrop_CCxWithered(0._dp)
-    call SetNoMoreCrop(.false.)
-    call SetCCiActual(GetCCiPrev())
+    gvars[:crop].CCxAdjusted = gvars[:float_parameters][:ccxtotal]
+    gvars[:crop].CCoAdjusted = gvars[:float_parameters][:ccototal]
+    gvars[:crop].CCxWithered = 0
+    setparameter!(gvars[:float_parameters], :timesenescence, 0.0)
+    setparameter!(gvars[:bool_parameters], :nomorecrop, false)
+    setparameter!(gvars[:float_parameters], :cciactual, gvars[:float_parameters][:cciprev])
 
     # 14. Biomass and re-setting of GlobalZero
-    if (roundc(1000._dp*GetSimulation_Bini(), mold=1) > 0) then
+    if round(Int, 1000*gvars[:simulation].Bini) > 0
         # overwrite settings in GlobalZero (in Global)
-        call SetSumWaBal_Biomass(GetSimulation_Bini())
-        call SetSumWaBal_BiomassPot(GetSimulation_Bini())
-        call SetSumWaBal_BiomassUnlim(GetSimulation_Bini())
-        call SetSumWaBal_BiomassTot(GetSimulation_Bini())
-    end if
+        gvars[:sumwabal].Biomass = gvars[:simulation].Bini
+        gvars[:sumwabal].BiomassPot = gvars[:simulation].Bini
+        gvars[:sumwabal].BiomassUnlim = gvars[:simulation].Bini
+        gvars[:sumwabal].BiomassTot = gvars[:simulation].Bini
+    end 
 
     # 15. Transfer of assimilates
-    if ((GetCrop_subkind() == subkind_Forage)&
+    if (gvars[:crop].subkind == :Forage) &
         # only valid for perennial herbaceous forage crops
-        .and. (trim(GetCropFileFull()) == &
-               trim(GetSimulation_Storage_CropString()))&
+        (strip(gvars[:string_parameters][:crop_file]) == 
+            strip(gvars[:simulation].Storage.CropString)) &
         # only for the same crop
-        .and. (GetSimulation_YearSeason() > 1) &
+        (gvars[:simulation].YearSeason > 1) &
         # mobilization not possible in season 1
-        .and. (GetSimulation_YearSeason() == &
-               (GetSimulation_Storage_Season() + 1))) then
-            # season next to season in which storage took place
-            # mobilization of assimilates
-            if (GetSimulation_YearSeason() == 2) then
-                call SetTransfer_ToMobilize(GetSimulation_Storage_Btotal() *& 
-                    0.2 * GetCrop_Assimilates_Mobilized()/100._dp)
-            else
-                call SetTransfer_ToMobilize(GetSimulation_Storage_Btotal() *&
-                    GetCrop_Assimilates_Mobilized()/100._dp)
-            endif
-            if (roundc(1000._dp * GetTransfer_ToMobilize(),&
-                   mold=1) > 0) then # minimum 1 kg
-                 call SetTransfer_Mobilize(.true.)
-            else
-                 call SetTransfer_Mobilize(.false.)
-            end if
+        (gvars[:simulation].YearSeason == 
+               (gvars[:simulation].Storage.Season + 1)) 
+        # season next to season in which storage took place
+        # mobilization of assimilates
+        if gvars[:simulation].YearSeason == 2
+            gvars[:transfer].ToMobilize = gvars[:simulation].Storage.Btotal * 
+                0.2 * gvars[:crop].Assimilates.Mobilized/100
+        else
+            gvars[:transfer].ToMobilize = gvars[:simulation].Storage.Btotal *
+                gvars[:crop].Assimilates.Mobilized/100
+        end
+        if round(Int, 1000 * gvars[:transfer].ToMobilize) > 0  # minimum 1 kg
+            gvars[:transfer].Mobilize = true
+        else
+            gvars[:transfer].Mobilize = false 
+        end 
     else
-        call SetSimulation_Storage_CropString(GetCropFileFull())
+        gvars[:simulation].Storage.CropString = gvars[:string_parameters][:crop_file] 
         # no mobilization of assimilates
-        call SetTransfer_ToMobilize(0._dp)
-        call SetTransfer_Mobilize(.false.)
-    end if
+        gvars[:transfer].ToMobilize = 0 
+        gvars[:transfer].Mobilize = false 
+    end 
     # Storage is off and zero at start of season
-    call SetSimulation_Storage_Season(GetSimulation_YearSeason())
-    call SetSimulation_Storage_Btotal(0._dp)
-    call SetTransfer_Store(.false.)
+    gvars[:simulation].Storage.Season = gvars[:simulation].YearSeason
+    gvars[:simulation].Storage.Btotal = 0.0
+    gvars[:transfer].Store = false 
     # Nothing yet mobilized at start of season
-    call SetTransfer_Bmobilized(0._dp)
+    gvars[:transfer].Bmobilized = 0.0 
 
     # 16. Initial rooting depth
     # 16.1 default value
-    if (GetDayNri() <= GetCrop_Day1()) then
-        call SetZiprev(real(undef_int, kind=dp))
+    if gvars[:integer_parameters][:daynri] <= gvars[:crop].Day1
+        setparameter!(gvars[:float_parameters], :ziprev, undef_double)
     else
-        if (GetDayNri() > GetCrop_DayN()) then
-            call SetZiprev(real(undef_int, kind=dp))
+        if gvars[:integer_parameters][:daynri] > gvars[:crop].DayN
+            setparameter!(gvars[:float_parameters], :ziprev, undef_double)
         else
-            call SetZiprev( ActualRootingDepth(GetDayNri()-GetCrop_Day1(),&
-                  GetCrop_DaysToGermination(),&
-                  GetCrop_DaysToMaxRooting(),&
-                  GetCrop_DaysToHarvest(),&
-                  GetCrop_GDDaysToGermination(),&
-                  GetCrop_GDDaysToMaxRooting(),&
-                  GetSumGDDPrev(),&
-                  GetCrop_RootMin(),&
-                  GetCrop_RootMax(),&
-                  GetCrop_RootShape(),&
-                  GetCrop_ModeCycle()) )
-        end if
-    end if
+            #must set simulation.SCor = 1  before calling this function 
+            gvars[:simulation].SCor = 1
+            ziprev = actual_rooting_depth(
+                  gvars[:integer_parameters][:daynri]-gvars[:crop].Day1,
+                  gvars[:crop].DaysToGermination,
+                  gvars[:crop].DaysToMaxRooting,
+                  gvars[:crop].DaysToHarvest,
+                  gvars[:crop].GDDaysToGermination,
+                  gvars[:crop].GDDaysToMaxRooting,
+                  gvars[:float_parameters][:sumgddprev],
+                  gvars[:crop].RootMin,
+                  gvars[:crop].RootMax,
+                  gvars[:crop].RootShape,
+                  gvars[:crop].ModeCycle,
+                  gvars)
+            setparameter!(gvars[:float_parameters], :ziprev, ziprev)
+        end 
+    end 
     # 16.2 specified or default Zrini (m)
-    if ((GetSimulation_Zrini() > 0._dp) .and. &
-        (GetZiprev() > 0._dp) .and. &
-        (GetSimulation_Zrini() <= GetZiprev())) then
-        if ((GetSimulation_Zrini() >= GetCrop_RootMin()) .and. &
-            (GetSimulation_Zrini() <= GetCrop_RootMax())) then
-            call SetZiprev( GetSimulation_Zrini())
+    if (gvars[:simulation].Zrini > 0) &
+        (gvars[:float_parameters][:ziprev] > 0) &
+        (gvars[:simulation].Zrini <= gvars[:float_parameters][:ziprev]) 
+        if (gvars[:simulation].Zrini >= gvars[:crop].RootMin) &
+            (gvars[:simulation].Zrini <= gvars[:crop].RootMax) 
+            setparameter!(gvars[:float_parameters], :ziprev, gvars[:simulation].Zrini)
         else
-            if (GetSimulation_Zrini() < GetCrop_RootMin()) then
-                call SetZiprev( GetCrop_RootMin())
+            if gvars[:simulation].Zrini < gvars[:crop].RootMin
+                setparameter!(gvars[:float_parameters], :ziprev, gvars[:crop].RootMin)
             else
-                call SetZiprev( GetCrop_RootMax())
-            end if
-        end if
-        if ((roundc(GetSoil_RootMax()*1000._dp, mold=1) < &
-             roundc(GetCrop_RootMax()*1000._dp, mold=1)) &
-            .and. (GetZiprev() > GetSoil_RootMax())) then
-            call SetZiprev(real(GetSoil_RootMax(), kind=dp))
-        end if
-        call SetRootingDepth(GetZiprev())
+                setparameter!(gvars[:float_parameters], :ziprev, gvars[:crop].RootMax)
+            end 
+        end 
+        if (round(Int, gvars[:soil].RootMax*1000) < 
+             round(Int, gvars[:crop].RootMax*1000)) &
+           (gvars[:float_parameters][:ziprev] > gvars[:soil].RootMax) 
+            setparameter!(gvars[:float_parameters], :ziprev, gvars[:soil].RootMax)
+        end 
+        rooting_depth = gvars[:float_parameters][:ziprev]
+        setparameter!(gvars[:float_parameters], :rooting_depth, rooting_depth)
         # NOT NEEDED since RootingDepth is calculated in the RUN by considering
         # Ziprev
     else
-        call SetRootingDepth(ActualRootingDepth(GetDayNri()-GetCrop_Day1()+1, &
-              GetCrop_DaysToGermination(), &
-              GetCrop_DaysToMaxRooting(),&
-              GetCrop_DaysToHarvest(),&
-              GetCrop_GDDaysToGermination(),&
-              GetCrop_GDDaysToMaxRooting(),&
-              GetSumGDDPrev(),&
-              GetCrop_RootMin(),&
-              GetCrop_RootMax(),&
-              GetCrop_RootShape(),&
-              GetCrop_ModeCycle()))
-    end if
+        rooting_depth = actual_rooting_depth(
+              gvars[:integer_parameters][:daynri]-gvars[:crop].Day1+1,
+              gvars[:crop].DaysToGermination, 
+              gvars[:crop].DaysToMaxRooting,
+              gvars[:crop].DaysToHarvest,
+              gvars[:crop].GDDaysToGermination,
+              gvars[:crop].GDDaysToMaxRooting,
+              gvars[:float_parameters][:sumgddprev],
+              gvars[:crop].RootMin,
+              gvars[:crop].RootMax,
+              gvars[:crop].RootShape,
+              gvars[:crop].ModeCycle)
+        setparameter!(gvars[:float_parameters], :rooting_depth, rooting_depth)
+    end 
 
     # 17. Multiple cuttings
-    call SetNrCut(0)
-    call SetSumInterval(0)
-    call SetSumGDDcuts(0._dp)
-    call SetBprevSum(0._dp)
-    call SetYprevSum(0._dp)
-    call SetCutInfoRecord1_IntervalInfo(0)
-    call SetCutInfoRecord2_IntervalInfo(0)
-    call SetCutInfoRecord1_MassInfo(0._dp)
-    call SetCutInfoRecord2_MassInfo(0._dp)
-    call SetDayLastCut(0)
-    call SetCGCref( GetCrop_CGC())
-    call SetGDDCGCref(GetCrop_GDDCGC())
-    if (GetManagement_Cuttings_Considered()) then
-        call OpenHarvestInfo()
-    end if
+    setparameter!(gvars[:integer_parameters], :nrcut, 0)
+    setparameter!(gvars[:integer_parameters], :suminterval, 0)
+    setparameter!(gvars[:integer_parameters], :daylastcut, 0)
+    setparameter!(gvars[:float_parameters], :sumgddcuts, 0.0)
+    setparameter!(gvars[:float_parameters], :bprevsum, 0.0)
+    setparameter!(gvars[:float_parameters], :yprevsum, 0.0)
+    setparameter!(gvars[:float_parameters], :cgcref, gvars[:crop].CGC)
+    setparameter!(gvars[:float_parameters], :gddcgcref, gvars[:crop].GDDCGC)
+    gvars[:cut_info_record1].IntervalInfo = 0
+    gvars[:cut_info_record2].IntervalInfo = 0
+    gvars[:cut_info_record1].MassInfo = 0
+    gvars[:cut_info_record2].MassInfo = 0
+    if gvars[:management].Cuttings.Considered
+        open_harvest_info!(gvars, projectinput.ParentDir; kwargs...)
+    end 
 
     # 18. Tab sheets
 
@@ -1315,15 +1330,15 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
               100._dp*(1._dp-GetRootZoneSalt_KsSalt()))/real(GetStressTot_NrD(), kind=dp))
     end if
     # Harvest Index
-    call SetSimulation_HIfinal(GetCrop_HI())
+    call SetSimulation_HIfinal(gvars[:crop].HI())
     call SetHItimesBEF(real(undef_int, kind=dp))
     call SetHItimesAT1(1._dp)
     call SetHItimesAT2(1._dp)
     call SetHItimesAT(1._dp)
     call SetalfaHI(real(undef_int, kind=dp))
     call SetalfaHIAdj(0._dp)
-    if (GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
-        GetCrop_Day1() + GetCrop_DaysToFlowering())) then
+    if (gvars[:simulation].FromDayNr() <= (gvars[:simulation].DelayedDays() + &
+        gvars[:crop].Day1() + gvars[:crop].DaysToFlowering())) then
         # not yet flowering
         call SetScorAT1(0._dp)
         call SetScorAT2(0._dp)
@@ -1331,19 +1346,19 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
         # water stress affecting leaf expansion
         # NOTE: time to reach end determinancy  is tHImax (i.e. flowering/2 or
         # senescence)
-        if (GetCrop_DeterminancyLinked()) then
-            tHImax = roundc(GetCrop_LengthFlowering()/2._dp, mold=1)
+        if (gvars[:crop].DeterminancyLinked()) then
+            tHImax = roundc(gvars[:crop].LengthFlowering()/2._dp, mold=1)
         else
-            tHImax = (GetCrop_DaysToSenescence() - GetCrop_DaysToFlowering())
+            tHImax = (gvars[:crop].DaysToSenescence() - gvars[:crop].DaysToFlowering())
         end if
-        if ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
-            GetCrop_Day1() + GetCrop_DaysToFlowering() + tHImax)) & # not yet end period
+        if ((gvars[:simulation].FromDayNr() <= (gvars[:simulation].DelayedDays() + &
+            gvars[:crop].Day1() + gvars[:crop].DaysToFlowering() + tHImax)) & # not yet end period
             .and. (tHImax > 0)) then
             # not yet end determinancy
             call SetScorAT1(1._dp/tHImax)
-            call SetScorAT1(GetScorAT1() * (GetSimulation_FromDayNr() - &
-                  (GetSimulation_DelayedDays() + GetCrop_Day1() + &
-                   GetCrop_DaysToFlowering())))
+            call SetScorAT1(GetScorAT1() * (gvars[:simulation].FromDayNr() - &
+                  (gvars[:simulation].DelayedDays() + gvars[:crop].Day1() + &
+                   gvars[:crop].DaysToFlowering())))
             if (GetScorAT1() > 1._dp) then
                 call SetScorAT1(1._dp)
             end if
@@ -1352,19 +1367,19 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
         end if
         # water stress affecting stomatal closure
         # period of effect is yield formation
-        if (GetCrop_dHIdt() > 99._dp) then
+        if (gvars[:crop].dHIdt() > 99._dp) then
             tHImax = 0
         else
-            tHImax = roundc(GetCrop_HI()/GetCrop_dHIdt(), mold=1)
+            tHImax = roundc(gvars[:crop].HI()/gvars[:crop].dHIdt(), mold=1)
         end if
-        if ((GetSimulation_FromDayNr() <= (GetSimulation_DelayedDays() + &
-             GetCrop_Day1() + GetCrop_DaysToFlowering() + tHImax)) & # not yet end period
+        if ((gvars[:simulation].FromDayNr() <= (gvars[:simulation].DelayedDays() + &
+             gvars[:crop].Day1() + gvars[:crop].DaysToFlowering() + tHImax)) & # not yet end period
              .and. (tHImax > 0)) then
             # not yet end yield formation
             call SetScorAT2(1._dp/real(tHImax, kind=dp))
-            call SetScorAT2(GetScorAT2() * (GetSimulation_FromDayNr() - &
-                  (GetSimulation_DelayedDays() + GetCrop_Day1() + &
-                   GetCrop_DaysToFlowering())))
+            call SetScorAT2(GetScorAT2() * (gvars[:simulation].FromDayNr() - &
+                  (gvars[:simulation].DelayedDays() + gvars[:crop].Day1() + &
+                   gvars[:crop].DaysToFlowering())))
             if (GetScorAT2() > 1._dp) then
                 call SetScorAT2(1._dp)
             end if
@@ -1616,3 +1631,312 @@ function open_irrigation_file!(gvars, path)
     end 
     return nothing
 end 
+
+
+"""
+    zr = actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax, 
+                              sumgdd, zmin, zmax, shapefactor, typedays, gvars)
+
+global.f90:7262
+must set simulation.SCor = 1  before calling this function 
+"""
+function actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax, 
+                              sumgdd, zmin, zmax, shapefactor, typedays, gvars)
+    soil_layers = gvars[:soil_layers]
+
+    if typedays == :GDDays
+        zr = actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, gvars)
+    else
+        zr = actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, gvars)
+    end
+
+    # restrictive soil layer this is donw before calling this function
+    # call SetSimulation_SCor(1._sp)
+
+    rootmax_rounded = round(Int, soil.RootMax*1000)
+    zmax_rounded = round(Int, zmax*1000)
+
+    if rootmax_rounded < zmax_rounded
+        zr = zr_adjusted_to_restrictive_layers(zr, soil_layers)
+    end 
+
+    return zr
+end 
+
+"""
+    ardd = actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, gvars)
+
+global.f90:7306
+"""
+function actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, gvars)
+    simulation = gvars[:simulation]
+    simulparam = gvars[:simulparam]
+
+    # Actual rooting depth at the end of Dayi
+    virtualday = dap - simulation.DelayedDays
+
+    if (virtualday < 1) | (virtualday > l1234)
+        ardd = 0
+    elseif virtualday >= lzmax
+        ardd = zmax
+    elseif zmin < zmax
+        zini = zmin * simulparam.RootPercentZmin/100
+        t0 = round(Int, l0/2)
+
+        if lzmax <= t0
+            zr = zini + (zmax-zini)*virtualday*1/lzmax
+        elseif virtualday <= t0
+            zr = zini
+        else
+            zr = zini + (zmax-zini) * 
+                 time_root_function(virtualday, shapefactor, lzmax, t0)
+        end
+
+        if zr > zmin
+            ardd = zr
+        else
+            ardd = zmin
+        end 
+    else
+        ardd = zmax
+    end 
+    return ardd
+end 
+
+"""
+    ardg = actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, gvars)
+
+global.f90:7346
+"""
+function actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, gvars)
+    simulation = gvars[:simulation]
+    simulparam = gvars[:simulparam]
+
+    # after sowing the crop has roots even when SumGDD = 0
+    virtualday = dap - simulation.DelayedDays
+
+    if (virtualday < 1) | (virtualday > l1234)
+        ardg = 0
+    elseif sumgdd >= gddlzmax
+        ardg = zmax
+    elseif zmin < zmax
+        zini = zmin * simulparam.RootPercentZmin/100
+        gddt0 = gddl0/2
+
+        if gddlzmax <= gddt0
+            zr = zini + (zmax-zini)*sumgdd/gddlzmax
+        else
+            if sumgdd <= gddt0
+                zr = zini
+            else
+                zr = zini + (zmax-zini) *
+                     time_root_function(sumgdd, shapefactor, gddlzmax, gddt0)
+            end 
+        end 
+
+        if zr > zmin
+            ardg = zr
+        else
+            ardg = zmin
+        end 
+    else
+        ardg = zmax
+    end
+
+    return ardg
+end 
+
+"""
+    trf = time_root_function(t, shapefactor, tmax, t0)
+
+global.f90:1263
+"""
+function time_root_function(t, shapefactor, tmax, t0)
+    trf = exp((10 / shapefactor) * log((t-t0) / (tmax-t0)))
+    return trf
+end 
+
+"""
+    open_harvest_info!(gvars, path; kwargs...)
+
+run.f90:5937
+"""
+function open_harvest_info!(gvars, path; kwargs...)
+    if gvars[:string_parameters][:man_file] != "(None)"
+        if typeof(kwargs[:runtype]) == FortranRun
+            totalname = gvars[:string_parameters][:man_file]
+        else
+            totalname = gvars[:string_parameters][:man_file][1:end-5]*".csv"
+        end
+    else
+        totalname = joinpath(path, "Cuttings.AqC")
+    end 
+
+    Man = Float64[]
+    Man_info= Float64[]
+    open(totalname, "r") do file
+        readline(file)
+        if !endswith(".csv")
+            readline(file)
+            if gvars[:string_parameters][:man_file] != "(None)"
+                for i in 1:10
+                    tempstring = readline(file) # management info
+                end 
+            end 
+            for i in 1:12
+                tempstring = readline(file)  # cuttings info (already loaded)
+            end 
+        end
+        # note that we read the whole file now, so when we call get_next_harvest! the file is already closed
+        for line in eachline(file)
+            if !gvars[:management].Cuttings.Generate
+                push!(Man, parse(Float64, line))
+            else
+                splitedline = split(line)
+                push!(Man, parse(Float64, popfirst!(splitedline)))
+                push!(Man_info, parse(Float64, popfirst!(splitedline)))
+            end
+        end
+    end
+    setparameter!(gvars[:array_parameters], :Man, Man)
+    setparameter!(gvars[:array_parameters], :Man_info, Man_info)
+
+    get_next_harvest!(gvars)
+    return nothing
+end 
+
+"""
+    get_next_harvest!(gvars)
+
+run.f90:3670
+"""
+function get_next_harvest!(gvars)
+    management = gvars[:management]
+    cut_info_record1 = gvars[:cut_info_record1]
+    cut_info_record2 = gvars[:cut_info_record2]
+    crop = gvars[:crop]
+
+    Man = gvars[:array_parameters][:Man]
+    Man_info = gvars[:array_parameters][:Man_info]
+
+    if management.Cuttings.Generate
+        if length(Man)>0
+            fromday = popfirst!(Man)
+            cut_info_record1.FromDay = fromday
+            cut_info_record1.NoMoreInfo = false
+            if management.Cuttings.FirstDayNr != undef_int
+                # scroll to start growing cycle
+                daynrxx = management.Cuttings.FirstDayNr + cut_info_record1.FromDay - 1
+                 while (daynrxx < crop.Day1) & (cut_info_record1.NoMoreInfo == false)
+                    if length(Man)>0
+                        fromday = popfirst!(Man)
+                        cut_info_record1.FromDay = fromday
+                        daynrxx = management.Cuttings.FirstDayNr + cut_info_record1.FromDay - 1
+                    else
+                        cut_info_record1.NoMoreInfo = true 
+                    end 
+                 end 
+            end 
+        else
+            cut_info_record1.NoMoreInfo = true 
+        end 
+    else
+        if gvars[:integer_parameters][:nrcut] == 0
+            if management.Cuttings.Criterion == :IntDay 
+                fromday = popfirst!(Man)
+                intervalinfo = popfirst!(Man_info)
+                cut_info_record1.FromDay = fromday
+                cut_info_record1.IntervalInfo = round(Int, intervalinfo)
+            elseif management.Cuttings.Criterion == :IntGDD
+                fromday = popfirst!(Man)
+                intervalgdd = popfirst!(Man_info)
+                cut_info_record1.FromDay = fromday
+                cut_info_record1.IntervalGDD = intervalgdd
+            elseif (management.Cuttings.Criterion == :DryB) |
+                   (management.Cuttings.Criterion == :DryY) |
+                   (management.Cuttings.Criterion == :FreshY) 
+                fromday = popfirst!(Man)
+                massinfo = popfirst!(Man_info)
+                cut_info_record1.FromDay = fromday
+                cut_info_record1.MassInfo = massinfo
+            end 
+            if cut_info_record1.FromDay < management.Cuttings.Day1
+                cut_info_record1.FromDay = management.Cuttings.Day1
+            end 
+            infoloaded = false
+        end 
+        while !infoloaded
+            if length(Man)>0
+                if management.Cuttings.Criterion == :IntDay
+                    fromday = popfirst!(Man)
+                    intervalinfo = popfirst!(Man_info)
+                    cut_info_record2.FromDay = fromday
+                    cut_info_record2.IntervalInfo = round(Int, intervalinfo)
+                elseif management.Cuttings.Criterion == :IntGDD
+                    fromday = popfirst!(Man)
+                    intervalgdd = popfirst!(Man_info)
+                    cut_info_record2.FromDay = fromday
+                    cut_info_record2.IntervalGDD = intervalgdd
+                elseif (management.Cuttings.Criterion == :DryB) |
+                       (management.Cuttings.Criterion == :DryY) |
+                       (management.Cuttings.Criterion == :FreshY) 
+                    fromday = popfirst!(Man)
+                    massinfo = popfirst!(Man_info)
+                    cut_info_record2.FromDay = fromday
+                    cut_info_record2.MassInfo = massinfo
+                end 
+                if cut_info_record2.FromDay < management.Cuttings.Day1
+                    cut_info_record2.FromDay = management.Cuttings.Day1
+                end 
+                if cut_info_record2.FromDay <= cut_info_record1.FromDay 
+                    # CutInfoRecord2 becomes CutInfoRecord1
+                    cut_info_record1.FromDay <= cut_info_record2.FromDay 
+                    if management.Cuttings.Criterion == :IntDay
+                        cut_info_record1.IntervalInfo = cut_info_record2.IntervalInfo
+                    elseif management.Cuttings.Criterion == :IntGDD
+                        cut_info_record1.IntervalGDD = cut_info_record2.IntervalGDD
+                    elseif (management.Cuttings.Criterion == :DryB) |
+                           (management.Cuttings.Criterion == :DryY) |
+                           (management.Cuttings.Criterion == :FreshY) 
+                        cut_info_record1.MassInfo = cut_info_record2.MassInfo
+                    end 
+                    cut_info_record1.NoMoreInfo = false
+                else # complete CutInfoRecord1
+                    cut_info_record1.ToDay = cut_info_record2.FromDay - 1
+                    cut_info_record1.NoMoreInfo = false
+                    if management.Cuttings.NrDays != undef_int
+                        if cut_info_record1.ToDay > (management.Cuttings.Day1 + management.Cuttings.NrDays - 1)
+                            cut_info_record1.ToDay = management.Cuttings.Day1 + management.Cuttings.NrDays - 1 
+                            cut_info_record1.NoMoreInfo = true
+                        end 
+                    end 
+                    infoloaded = true
+                end 
+            else  
+                if gvars[:integer_parameters][:nrcut] > 0 # CutInfoRecord2 becomes CutInfoRecord1
+                    cut_info_record1.FromDay = cut_info_record2.FromDay
+                    if management.Cuttings.Criterion == :IntDay
+                        cut_info_record1.IntervalInfo = cut_info_record2.IntervalInfo
+                    elseif management.Cuttings.Criterion == :IntGDD
+                        cut_info_record1.IntervalGDD = cut_info_record2.IntervalGDD
+                    elseif (management.Cuttings.Criterion == :DryB) |
+                           (management.Cuttings.Criterion == :DryY) |
+                           (management.Cuttings.Criterion == :FreshY) 
+                        cut_info_record1.MassInfo = cut_info_record2.MassInfo
+                    end 
+                end 
+                cut_info_record1.ToDay = crop.DaysToHarvest
+                if management.Cuttings.NrDays != undef_int
+                    if  cut_info_record1.ToDay > (management.Cuttings.Day1 + management.Cuttings.NrDays - 1)
+                        cut_info_record1.ToDay = management.Cuttings.Day1 + management.Cuttings.NrDays - 1 
+                    end 
+                end 
+                cut_info_record1.NoMoreInfo = true
+                infoloaded = true
+            end 
+        end
+    end 
+    setparameter!(gvars[:array_parameters], :Man, Man)
+    setparameter!(gvars[:array_parameters], :Man_info, Man_info)
+    return nothing
+end

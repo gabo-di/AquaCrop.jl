@@ -423,6 +423,9 @@ function initialize_settings(outputs, filepaths; kwargs...)
     stresstot = RepStressTot()
     irri_info_record1 = RepIrriInfoRecord()
     irri_info_record2 = RepIrriInfoRecord()
+    transfer = RepTransfer()
+    cut_info_record1 = RepCutInfoRecord()
+    cut_info_record2 = RepCutInfoRecord()
 
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
@@ -467,6 +470,17 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(float_parameters, :gddayi, undef_double)
     setparameter!(float_parameters, :dayfraction, undef_double)
     setparameter!(float_parameters, :gddayfraction, undef_double)
+    setparameter!(float_parameters, :cciprev, undef_double)
+    setparameter!(float_parameters, :cciactual, undef_double)
+    setparameter!(float_parameters, :timesenescence, undef_double)
+    setparameter!(float_parameters, :ziprev, undef_double)
+    setparameter!(float_parameters, :rooting_depth, undef_double)
+    setparameter!(float_parameters, :sumgddcuts, undef_double)
+    setparameter!(float_parameters, :bprevsum, undef_double)
+    setparameter!(float_parameters, :yprevsum, undef_double)
+    setparameter!(float_parameters, :cgcref, undef_double)
+    setparameter!(float_parameters, :gddcgcref, undef_double)
+
 
     symbol_parameters = ParametersContainer(Symbol)
     setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
@@ -488,6 +502,9 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(integer_parameters, :irri_interval, undef_int)
     setparameter!(integer_parameters, :tadj, undef_int)
     setparameter!(integer_parameters, :gddtadj, undef_int)
+    setparameter!(integer_parameters, :nrcut, undef_int)
+    setparameter!(integer_parameters, :suminterval, undef_int)
+    setparameter!(integer_parameters, :daylastcut, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
@@ -498,12 +515,15 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(bool_parameters, :startmode, undef_bool)
     setparameter!(bool_parameters, :noyear, undef_bool)
     setparameter!(bool_parameters, :global_irri_ecw, undef_bool)
+    setparameter!(bool_parameters, :nomorecrop, undef_bool)
 
     array_parameters = ParametersContainer(Vector{Float64})
     setparameter!(array_parameters, :Tmin, Float64[])
     setparameter!(array_parameters, :Tmax, Float64[])
     setparameter!(array_parameters, :ETo, Float64[])
     setparameter!(array_parameters, :Rain, Float64[])
+    setparameter!(array_parameters, :Man, Float64[])
+    setparameter!(array_parameters, :Man_info, Float64[])
 
     string_parameters = ParametersContainer(String)
     setparameter!(string_parameters, :clim_file, undef_str)
@@ -552,6 +572,9 @@ function initialize_settings(outputs, filepaths; kwargs...)
         stresstot = stresstot,
         irri_info_record1 = irri_info_record1,
         irri_info_record2 = irri_info_record2,
+        transfer = transfer,
+        cut_info_record1 = cut_info_record1,
+        cut_info_record2 = cut_info_record2,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,

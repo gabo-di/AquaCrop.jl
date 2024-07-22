@@ -463,6 +463,9 @@ function checkpoint1()
     stresstot = AquaCrop.RepStressTot()
     irri_info_record1 = AquaCrop.RepIrriInfoRecord()
     irri_info_record2 = AquaCrop.RepIrriInfoRecord()
+    transfer = AquaCrop.RepTransfer()
+    cut_info_record1 = AquaCrop.RepCutInfoRecord()
+    cut_info_record2 = AquaCrop.RepCutInfoRecord()
 
     float_parameters = AquaCrop.ParametersContainer(Float64)
     AquaCrop.setparameter!(float_parameters, :eto, 5.0)
@@ -506,6 +509,16 @@ function checkpoint1()
     AquaCrop.setparameter!(float_parameters, :gddayi, AquaCrop.undef_double)
     AquaCrop.setparameter!(float_parameters, :dayfraction, AquaCrop.undef_double)
     AquaCrop.setparameter!(float_parameters, :gddayfraction, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :cciprev, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :cciactual, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :timesenescence, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :ziprev, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :rooting_depth, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :sumgddcuts, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :bprevsum, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :yprevsum, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :cgcref, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :gddcgcref, AquaCrop.undef_double)
 
     symbol_parameters = AquaCrop.ParametersContainer(Symbol)
     AquaCrop.setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
@@ -527,6 +540,9 @@ function checkpoint1()
     AquaCrop.setparameter!(integer_parameters, :irri_interval, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :tadj, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :gddtadj, AquaCrop.undef_int)
+    AquaCrop.setparameter!(integer_parameters, :nrcut, AquaCrop.undef_int)
+    AquaCrop.setparameter!(integer_parameters, :suminterval, AquaCrop.undef_int)
+    AquaCrop.setparameter!(integer_parameters, :daylastcut, AquaCrop.undef_int)
 
     bool_parameters = AquaCrop.ParametersContainer(Bool)
     AquaCrop.setparameter!(bool_parameters, :preday, false)
@@ -537,12 +553,15 @@ function checkpoint1()
     AquaCrop.setparameter!(bool_parameters, :startmode, AquaCrop.undef_bool)
     AquaCrop.setparameter!(bool_parameters, :noyear, AquaCrop.undef_bool)
     AquaCrop.setparameter!(bool_parameters, :global_irri_ecw, AquaCrop.undef_bool)
+    AquaCrop.setparameter!(bool_parameters, :nomorecrop, AquaCrop.undef_bool)
 
     array_parameters = AquaCrop.ParametersContainer(Vector{Float64})
     AquaCrop.setparameter!(array_parameters, :Tmin, Float64[])
     AquaCrop.setparameter!(array_parameters, :Tmax, Float64[])
     AquaCrop.setparameter!(array_parameters, :ETo, Float64[])
     AquaCrop.setparameter!(array_parameters, :Rain, Float64[])
+    AquaCrop.setparameter!(array_parameters, :Man, Float64[])
+    AquaCrop.setparameter!(array_parameters, :Man_info, Float64[])
 
     string_parameters = AquaCrop.ParametersContainer(String)
     AquaCrop.setparameter!(string_parameters, :clim_file, AquaCrop.undef_str)
@@ -583,6 +602,11 @@ function checkpoint1()
         crop_file_set=crop_file_set, 
         gwtable = gwtable,
         stresstot = stresstot,
+        irri_info_record1 = irri_info_record1,
+        irri_info_record2 = irri_info_record2,
+        transfer = transfer,
+        cut_info_record1 = cut_info_record1,
+        cut_info_record2 = cut_info_record2,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,
