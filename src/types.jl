@@ -1226,3 +1226,17 @@ end
     "Undocumented"
     MassInfo::Float64=undef_double
 end
+
+"""
+    root_zone_salt = RepRootZoneSalt()
+"""
+@kwdef mutable struct RepRootZoneSalt <: AbstractParametersContainer
+    "Electrical conductivity of the saturated soil-paste extract (dS/m)"
+    ECe::Float64=undef_double
+    "Electrical conductivity of the soil water (dS/m)"
+    ECsw::Float64=undef_double
+    "Electrical conductivity of the soil water at Field Capacity(dS/m)"
+    ECswFC::Float64=undef_double
+    "stress coefficient for salinity"
+    KsSalt::Float64=undef_double
+end

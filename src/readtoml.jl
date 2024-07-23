@@ -329,8 +329,23 @@ function load_resultsparameters_from_toml(auxparfile)
         | dailyresultsparameters["out3Prof"] | dailyresultsparameters["out4Salt"]
         | dailyresultsparameters["out5CompWC"] | dailyresultsparameters["out6CompEC"]
         | dailyresultsparameters["out7Clim"])
-        aux["resultsparameters"]["dailyresultsparameters"]["outdailyresults"] = true
+        aux["resultsparameters"]["dailyresultsparameters"]["outdaily"] = true
+    else
+        aux["resultsparameters"]["dailyresultsparameters"]["outdaily"] = false 
     end
+
+    aggregationresultsparameters = aux["resultsparameters"]["aggregationresultsparameters"]
+    aggregationtype = aggregationresultsparameters["outputaggregate"]
+    if aggregationtype == 1
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = "daily"
+    elseif aggregationtype == 2
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = "daily_10"
+    elseif aggregationtype == 3
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = "monthly"
+    else
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = "none"
+    end
+
 
 
     aggregationresultsparameters = ParametersContainer(Symbol)
@@ -344,7 +359,7 @@ function load_resultsparameters_from_toml(auxparfile)
 
     return ComponentArray(aggregationresults=aggregationresultsparameters,
                 dailyresults=dailyresultsparameters,
-                paricularresults=particularresultsparameters)
+                particularresults=particularresultsparameters)
 end
 
 function load_projectfilenames_from_toml(auxparfile)

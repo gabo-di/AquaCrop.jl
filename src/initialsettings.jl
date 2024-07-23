@@ -426,6 +426,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     transfer = RepTransfer()
     cut_info_record1 = RepCutInfoRecord()
     cut_info_record2 = RepCutInfoRecord()
+    root_zone_salt = RepRootZoneSalt()
 
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
@@ -480,6 +481,16 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(float_parameters, :yprevsum, undef_double)
     setparameter!(float_parameters, :cgcref, undef_double)
     setparameter!(float_parameters, :gddcgcref, undef_double)
+    setparameter!(float_parameters, :hi_times_bef, undef_double)
+    setparameter!(float_parameters, :hi_times_at1, undef_double)
+    setparameter!(float_parameters, :hi_times_at2, undef_double)
+    setparameter!(float_parameters, :hi_times_at, undef_double)
+    setparameter!(float_parameters, :alfa_hi, undef_double)
+    setparameter!(float_parameters, :alfa_hi_adj, undef_double)
+    setparameter!(float_parameters, :scor_at1, undef_double)
+    setparameter!(float_parameters, :scor_at2, undef_double)
+    setparameter!(float_parameters, :stressleaf, undef_double)
+    setparameter!(float_parameters, :stresssenescence, undef_double)
 
 
     symbol_parameters = ParametersContainer(Symbol)
@@ -487,6 +498,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(symbol_parameters, :irrimethod, :MSprinkler) # 4
     setparameter!(symbol_parameters, :timemode, :AllRAW) # 2
     setparameter!(symbol_parameters, :depthmode, :ToFC) # 0
+    setparameter!(symbol_parameters, :outputaggregate, undef_symbol)
 
     integer_parameters = ParametersContainer(Int)
     setparameter!(integer_parameters, :iniperctaw, 50)
@@ -505,6 +517,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(integer_parameters, :nrcut, undef_int)
     setparameter!(integer_parameters, :suminterval, undef_int)
     setparameter!(integer_parameters, :daylastcut, undef_int)
+    setparameter!(integer_parameters, :stagecode, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
@@ -516,6 +529,18 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(bool_parameters, :noyear, undef_bool)
     setparameter!(bool_parameters, :global_irri_ecw, undef_bool)
     setparameter!(bool_parameters, :nomorecrop, undef_bool)
+    setparameter!(bool_parameters, :out1Wabal, false)
+    setparameter!(bool_parameters, :out2Crop, false)
+    setparameter!(bool_parameters, :out3Prof, false)
+    setparameter!(bool_parameters, :out4Salt, false)
+    setparameter!(bool_parameters, :out5CompWC, false)
+    setparameter!(bool_parameters, :out6CompEC, false)
+    setparameter!(bool_parameters, :out7Clim, false)
+    setparameter!(bool_parameters, :outdaily, false)
+    setparameter!(bool_parameters, :part1Mult, false)
+    setparameter!(bool_parameters, :part2Eval, false)
+
+    
 
     array_parameters = ParametersContainer(Vector{Float64})
     setparameter!(array_parameters, :Tmin, Float64[])
@@ -575,6 +600,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
         transfer = transfer,
         cut_info_record1 = cut_info_record1,
         cut_info_record2 = cut_info_record2,
+        root_zone_salt = root_zone_salt,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,
@@ -1600,9 +1626,9 @@ end
 function _get_results_parameters(runtype::FortranRun, outputs, path::String)
     #startunit.f90:282
     aggregationresultsparameters = ParametersContainer(Symbol)
-    filename = joinpath(path, "AggregationResults.SIM")
-    if isfile(filename) 
-        open(filename, "r") do file
+    filename_a = joinpath(path, "AggregationResults.SIM")
+    if isfile(filename_a) 
+        open(filename_a, "r") do file
             aggregationtype = strip(readline(file))[1]
             if aggregationtype == '1'
                 setparameter!(aggregationresultsparameters, :outputaggregate, :daily)
@@ -1611,16 +1637,16 @@ function _get_results_parameters(runtype::FortranRun, outputs, path::String)
             elseif  aggregationtype == '3'
                 setparameter!(aggregationresultsparameters, :outputaggregate, :monthly)
             else
-                setparameter!(aggregationresultsparameters, :outputaggregate, :seasonal)
+                setparameter!(aggregationresultsparameters, :outputaggregate, :none)
             end
         end
     end
 
     #startunit.f90:188
     dailyresultsparameters = ParametersContainer(Bool)
-    filename = join(path, "DailyResults.SIM")
-    if isfile(filename) 
-        open(filename, "r") do file
+    filename_d = joinpath(path, "DailyResults.SIM")
+    if isfile(filename_d) 
+        open(filename_d, "r") do file
             for line in eachline(file)
                 if isempty(line)
                     break
@@ -1646,16 +1672,18 @@ function _get_results_parameters(runtype::FortranRun, outputs, path::String)
                 | dailyresultsparameters[:out3Prof] | dailyresultsparameters[:out4Salt]
                 | dailyresultsparameters[:out5CompWC] | dailyresultsparameters[:out6CompEC]
                 | dailyresultsparameters[:out7Clim])
-                setparameter!(dailyresultsparameters, :outdailyresults, true)
+                setparameter!(dailyresultsparameters, :outdaily, true)
+            else
+                setparameter!(dailyresultsparameters, :outdaily, false)
             end
         end
     end
 
     #startunit.f90:248
     particularresultsparameters = ParametersContainer(Bool)
-    filename = join(path, "ParticularResults.SIM")
-    if isfile(filename) 
-        open(filename, "r") do file
+    filename_p = joinpath(path, "ParticularResults.SIM")
+    if isfile(filename_p) 
+        open(filename_p, "r") do file
             for line in eachline(file)
                 if isempty(line)
                     break
@@ -1673,7 +1701,7 @@ function _get_results_parameters(runtype::FortranRun, outputs, path::String)
 
     return ComponentArray(aggregationresults=aggregationresultsparameters,
                 dailyresults=dailyresultsparameters,
-                paricularresults=particularresultsparameters)
+                particularresults=particularresultsparameters)
 end
 
 function _get_results_parameters(runtype::T, outputs, path::String) where {T<:Union{JuliaRun, PersefoneRun}}

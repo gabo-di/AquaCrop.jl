@@ -1310,93 +1310,90 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
     # 18. Tab sheets
 
     # 19. Labels, Plots and displays
-    if (GetManagement_BundHeight() < 0.01_dp) then
-        call SetSurfaceStorage(0._dp)
-        call SetECStorage(0._dp)
-    end if
-    if (GetRootingDepth() > 0._dp) then
+    if gvars[:management].BundHeight < 0.01
+        setparameter!(gvars[:float_parameters], :surfacestorage, 0.0)
+        setparameter!(gvars[:float_parameters], :ecstorage, 0.0)
+    end 
+    if gvars[:float_parameters][:rooting_depth] > 0
         # salinity in root zone
-        ECe_temp = GetRootZoneSalt_ECe()
-        ECsw_temp = GetRootZoneSalt_ECsw()
-        ECswFC_temp = GetRootZoneSalt_ECswFC()
-        KsSalt_temp = GetRootZoneSalt_KsSalt()
-        call DetermineRootZoneSaltContent(GetRootingDepth(), ECe_temp,&
-               ECsw_temp, ECswFC_temp, KsSalt_temp)
-        call SetRootZoneSalt_ECe(ECe_temp)
-        call SetRootZoneSalt_ECsw(ECsw_temp)
-        call SetRootZoneSalt_ECswFC(ECswFC_temp)
-        call SetRootZoneSalt_KsSalt(KsSalt_temp)
-        call SetStressTot_Salt(((GetStressTot_NrD() - 1._dp)*GetStressTot_Salt() + &
-              100._dp*(1._dp-GetRootZoneSalt_KsSalt()))/real(GetStressTot_NrD(), kind=dp))
-    end if
+        determine_root_zone_salt_content!(gvars, gvars[:float_parameters][:rooting_depth])
+        salt = ((gvars[:stresstot].NrD - 1) * gvars[:stresstot].Salt + 
+                100 * (1 - gvars[:root_zone_salt].KsSalt))/gvars[:stresstot].NrD
+        gvars[:stresstot].Salt = salt
+    end 
+
     # Harvest Index
-    call SetSimulation_HIfinal(gvars[:crop].HI())
-    call SetHItimesBEF(real(undef_int, kind=dp))
-    call SetHItimesAT1(1._dp)
-    call SetHItimesAT2(1._dp)
-    call SetHItimesAT(1._dp)
-    call SetalfaHI(real(undef_int, kind=dp))
-    call SetalfaHIAdj(0._dp)
-    if (gvars[:simulation].FromDayNr() <= (gvars[:simulation].DelayedDays() + &
-        gvars[:crop].Day1() + gvars[:crop].DaysToFlowering())) then
+    gvars[:simulation].HIfinal = gvars[:crop].HI
+    setparameter!(gvars[:float_parameters], :hi_times_bef, undef_double)
+    setparameter!(gvars[:float_parameters], :hi_times_at1, 1.0)
+    setparameter!(gvars[:float_parameters], :hi_times_at2, 1.0)
+    setparameter!(gvars[:float_parameters], :hi_times_at, 1.0)
+    setparameter!(gvars[:float_parameters], :alfa_hi, undef_double)
+    setparameter!(gvars[:float_parameters], :alfa_hi_adj, 0.0)
+    if gvars[:simulation].FromDayNr <= (gvars[:simulation].DelayedDays + 
+        gvars[:crop].Day1 + gvars[:crop].DaysToFlowering) 
         # not yet flowering
-        call SetScorAT1(0._dp)
-        call SetScorAT2(0._dp)
+        setparameter!(gvars[:float_parameters], :scor_at1, 0.0)
+        setparameter!(gvars[:float_parameters], :scor_at2, 0.0)
     else
         # water stress affecting leaf expansion
         # NOTE: time to reach end determinancy  is tHImax (i.e. flowering/2 or
         # senescence)
-        if (gvars[:crop].DeterminancyLinked()) then
-            tHImax = roundc(gvars[:crop].LengthFlowering()/2._dp, mold=1)
+        if gvars[:crop].DeterminancyLinked
+            thimax = round(Int, gvars[:crop].LengthFlowering/2)
         else
-            tHImax = (gvars[:crop].DaysToSenescence() - gvars[:crop].DaysToFlowering())
-        end if
-        if ((gvars[:simulation].FromDayNr() <= (gvars[:simulation].DelayedDays() + &
-            gvars[:crop].Day1() + gvars[:crop].DaysToFlowering() + tHImax)) & # not yet end period
-            .and. (tHImax > 0)) then
+            thimax = gvars[:crop].DaysToSenescence - gvars[:crop].DaysToFlowering
+        end 
+        if (gvars[:simulation].FromDayNr <= (gvars[:simulation].DelayedDays + 
+            gvars[:crop].Day1 + gvars[:crop].DaysToFlowering + thimax)) & # not yet end period
+           (thimax > 0)
             # not yet end determinancy
-            call SetScorAT1(1._dp/tHImax)
-            call SetScorAT1(GetScorAT1() * (gvars[:simulation].FromDayNr() - &
-                  (gvars[:simulation].DelayedDays() + gvars[:crop].Day1() + &
-                   gvars[:crop].DaysToFlowering())))
-            if (GetScorAT1() > 1._dp) then
-                call SetScorAT1(1._dp)
-            end if
+            scorat1 = (1/thimax) * (gvars[:simulation].FromDayNr - 
+                  (gvars[:simulation].DelayedDays + gvars[:crop].Day1 + 
+                   gvars[:crop].DaysToFlowering))
+            if scorat1 > 1
+                setparameter!(gvars[:float_parameters], :scor_at1, 1.0)
+            else
+                setparameter!(gvars[:float_parameters], :scor_at1, scorat1)
+            end
         else
-            call SetScorAT1(1._dp)  # after period of effect
-        end if
+            setparameter!(gvars[:float_parameters], :scor_at1, 1.0) # after period of effect
+        end 
         # water stress affecting stomatal closure
         # period of effect is yield formation
-        if (gvars[:crop].dHIdt() > 99._dp) then
-            tHImax = 0
+        if gvars[:crop].dHIdt > 99
+            thimax = 0
         else
-            tHImax = roundc(gvars[:crop].HI()/gvars[:crop].dHIdt(), mold=1)
-        end if
-        if ((gvars[:simulation].FromDayNr() <= (gvars[:simulation].DelayedDays() + &
-             gvars[:crop].Day1() + gvars[:crop].DaysToFlowering() + tHImax)) & # not yet end period
-             .and. (tHImax > 0)) then
+            thimax = round(Int, gvars[:crop].HI/gvars[:crop].dHIdt)
+        end 
+        if (gvars[:simulation].FromDayNr <= (gvars[:simulation].DelayedDays + 
+            gvars[:crop].Day1 + gvars[:crop].DaysToFlowering + thimax)) & # not yet end period
+           (thimax > 0)
             # not yet end yield formation
-            call SetScorAT2(1._dp/real(tHImax, kind=dp))
-            call SetScorAT2(GetScorAT2() * (gvars[:simulation].FromDayNr() - &
-                  (gvars[:simulation].DelayedDays() + gvars[:crop].Day1() + &
-                   gvars[:crop].DaysToFlowering())))
-            if (GetScorAT2() > 1._dp) then
-                call SetScorAT2(1._dp)
-            end if
+            scorat2 = (1/thimax) * (gvars[:simulation].FromDayNr - 
+                  (gvars[:simulation].DelayedDays + gvars[:crop].Day1 + 
+                   gvars[:crop].DaysToFlowering))
+            if scorat2 > 1
+                setparameter!(gvars[:float_parameters], :scor_at2, 1.0)
+            else
+                setparameter!(gvars[:float_parameters], :scor_at2, scorat2)
+            end
         else
-            call SetScorAT2(1._dp)  # after period of effect
-        end if
-    end if
+            setparameter!(gvars[:float_parameters], :scor_at2, 1.0) # after period of effect
+        end 
+    end 
 
-    if (GetOutDaily()) then
-        call DetermineGrowthStage(GetDayNri(), GetCCiPrev())
-    end if
+    if gvars[:bool_parameters][:outdaily]
+        determine_growth_stage!(gvars, gvars[:integer_parameters][:daynri], gvars[:float_parameters][:cciprev])
+    end 
 
     # 20. Settings for start
-    call SetStartMode(.true.)
-    call SetStressLeaf(real(undef_int, kind=dp))
-    call SetStressSenescence(real(undef_int, kind=dp))
-end #notend
+    setparameter!(gvars[:bool_parameters], :startmode, true)
+    setparameter!(gvars[:float_parameters], :stressleaf, undef_double)
+    setparameter!(gvars[:float_parameters], :stresssenescence, undef_double)
+
+    return nothing
+end 
 
 """
     get_sumgdd_before_simulation!(gvars)
@@ -1940,3 +1937,201 @@ function get_next_harvest!(gvars)
     setparameter!(gvars[:array_parameters], :Man_info, Man_info)
     return nothing
 end
+
+"""
+    determine_root_zone_salt_content!(gvars, rootingdepth)
+
+global.f90:4089
+"""
+function determine_root_zone_salt_content!(gvars, rootingdepth)
+    compartments = gvars[:compartments]    
+
+    cumdepth = 0
+    compi = 0
+    zrece = 0
+    zrecsw = 0
+    zrecswfc = 0
+    zrkssalt = 1
+    if rootingdepth >= gvar[:crop].RootMin
+        loopi = true
+        while loopi
+            compi = compi + 1
+            cumdepth = cumdepth + compartments[compi].Thickness
+            if cumdepth <= rootingdepth
+                factor = 1
+            else
+                frac_value = rootingdepth - (cumdepth - compartments[compi].Thickness)
+                if frac_value > 0
+                    factor = frac_value/compartments[compi].Thickness
+                else
+                    factor = 0
+                end 
+            end 
+            factor = factor * (compartments[compi].Thickness)/rootingdepth # weighting factor
+            zrece = zrece + factor * ececomp(compartments[compi], gvars[:soil_layers], gvars[:simulparam])
+            zrecsw = zrecsw + factor * ecswcomp(compartments[compi], false, gvars[:soil_layers], gvars[:simulparam]) # not at FC
+            zrecswfc = zrecswfc + factor * ecswcomp(compartments[compi], true, gvars[:soil_layers], gvars[:simulparam]) # at FC
+            if (cumdepth >= rootingdepth) | (compi == length(compartments)) 
+                loopi = false
+            end
+        end 
+        if (gvars[:crop].ECemin /= undef_int) & (gvars[:crop].ECemax /= undef_int) &
+                                    (gvars[:crop].ECemin < gvars[:crop].ECemax)
+            zrkssalt = ks_salinity(true, gvars[:crop].ECemin, gvars[:crop].ECemax, zrece, 0) 
+        else
+            zrkssalt = ks_salinity(false, gvars[:crop].ECemin, gvars[:crop].ECemax, zrece, 0) 
+        end 
+    else
+        zrece = undef_double
+        zrecsw = undef_double
+        zrecswfc = undef_double
+        zrkssalt = undef_double
+    end 
+
+    gvars[:root_zone_salt].ECe = zrece
+    gvars[:root_zone_salt].ECsw = zrecsw 
+    gvars[:root_zone_salt].ECswFC = zrecswfc 
+    gvars[:root_zone_salt].KsSalt = zrkssalt 
+
+    return nothing
+end 
+
+"""
+    ecc = ececomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
+
+global.f90:2523
+"""
+function ececomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
+    volsat = soil_layers[compartment.Layer].SAT
+    totsalt = 0
+    for i in 1:soil_layers[compartment.Layer].SCP1
+        totsalt = totsalt + compartment[i].Salt + compartment[i].Depo # g/m2
+    end 
+
+    denominator = volsat*10 * compartment.Thickness * 
+                  (1 - soil_layers[compartment.Layer].GravelVol/100)
+    totsalt = totsalt / denominator  # g/l
+
+    if totsalt > simulparam.SaltSolub
+        totsalt = simulparam.SaltSolub
+    end 
+
+    ecc = totsalt / equiv # dS/m
+    return ecc
+end 
+
+"""
+    ecs = ecswcomp(compartment::CompartmentIndividual, atfc, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
+
+global.f90:2547
+"""
+function ecswcomp(compartment::CompartmentIndividual, atfc, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
+    totsalt = 0
+    for i in 1:soil_layers[compartment.Layer].SCP1
+        totsalt = totsalt + compartment[i].Salt + compartment[i].Depo # g/m2
+    end 
+    if atfc == true
+        totsalt = totsalt / (soil_layers[compartment.Layer].FC * 10 * compartment.Thickness *
+                    (1 - soil_layers[compartment.Layer].GravelVol/100)) # g/l
+    else
+        totsalt = totsalt/(compartment.Theta * 1000 * compartment.Thickness * 
+                     (1 - soil_layers[compartment.Layer].GravelVol/100)) # g/l
+    end 
+    if totsalt > simulparam.SaltSolub
+        totsalt = simulparam.SaltSolub
+    end 
+
+    ecs = totsalt/equiv
+    return ecs
+end
+
+"""
+    m = ks_salinity(salinityresponsconsidered, ecen, ecex, ecevar, ksshapesalinity)
+
+global.f90:2043
+"""
+function ks_salinity(salinityresponsconsidered, ecen, ecex, ecevar, ksshapesalinity)
+    m = 1 # no correction applied
+    if salinityresponsconsidered
+        if (ecevar > ecen) & (ecevar < ecex)
+            # within range for correction
+            if (round(Int, ksshapesalinity*10) != 0) &
+               (round(Int, ksshapesalinity*10) != 990)
+                tmp_var = ecen
+                m = ks_any(ecevar, tmp_var, ecex, ksshapesalinity)
+                # convex or concave
+            else
+                if round(Int, ksshapesalinity*10) == 0
+                    m = 1 - (ecevar-ecen)/(ecex-ecen)
+                    # linear (KsShapeSalinity = 0)
+                else
+                    m = ks_temperature(ecex, ecen, ecevar)
+                    # logistic equation (KsShapeSalinity = 99)
+                end 
+            end 
+        else
+            if ecevar <= ecen
+                m = 1  # no salinity stress
+            end 
+            if ecevar >= ecex
+                m = 0  # full salinity stress
+            end 
+        end 
+    end 
+    if m > 1
+        m = 1
+    end 
+    if m < 0
+        m = 0
+    end 
+
+    return m
+end
+
+"""
+    determine_growth_stage!(gvars, dayi, cciprev)
+
+run.f90:4075
+"""
+function determine_growth_stage!(gvars, dayi, cciprev)
+    crop = gvars[:crop]
+    simulation = gvars[:simulation]
+
+    virtualday = dayi - simulation.DelayedDays - crop.Day1
+    if virtualday < 0
+        # before cropping period
+        setparameter!(gvars[:integer_parameters], :stagecode, 0)
+    else
+        if virtualday < crop.DaysToGermination
+            # sown --> emergence OR transplant recovering
+            setparameter!(gvars[:integer_parameters], :stagecode, 1)
+        else
+            # vegetative development
+            setparameter!(gvars[:integer_parameters], :stagecode, 2)
+            if (crop.subkind == :Grain) & (virtualday >= crop.DaysToFlowering) 
+                if virtualday < (crop.DaysToFlowering + crop.LengthFlowering)
+                    # flowering
+                    setparameter!(gvars[:integer_parameters], :stagecode, 3)
+                else
+                    # yield formation
+                    setparameter!(gvars[:integer_parameters], :stagecode, 4)
+                end 
+            end 
+            if (crop.subkind == :Tuber) & (virtualday >= crop.DaysToFlowering)
+                # yield formation
+                setparameter!(gvars[:integer_parameters], :stagecode, 4)
+            end 
+            if (virtualday > crop.DaysToGermination) & (cciprev < eps()) 
+                # no growth stage
+                setparameter!(gvars[:integer_parameters], :stagecode, undef_int)
+            end 
+            if virtualday >= sum(crop.Length[1:4])
+                 # after cropping period
+                setparameter!(gvars[:integer_parameters], :stagecode, 0)
+            end 
+        end 
+    end 
+
+    return nothing
+end
+

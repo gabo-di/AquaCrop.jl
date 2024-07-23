@@ -9,7 +9,7 @@
 # initialsettings.jl:1460
 # what kind of aggregation do we want (note that actually this seems to be controled by the tempertature_record variable) 
 [resultsparameters.aggregationresultsparameters]
-aggregationtype = 0           # Time aggregation for intermediate results (0 = none ; 1 = daily; 2 = 10-daily; 3 = monthly)
+outputaggregate = 0           # Time aggregation for intermediate results (0 = none ; 1 = daily; 2 = 10-daily; 3 = monthly)
 
 
 

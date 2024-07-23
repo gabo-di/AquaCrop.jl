@@ -466,6 +466,7 @@ function checkpoint1()
     transfer = AquaCrop.RepTransfer()
     cut_info_record1 = AquaCrop.RepCutInfoRecord()
     cut_info_record2 = AquaCrop.RepCutInfoRecord()
+    root_zone_salt = AquaCrop.RepRootZoneSalt()
 
     float_parameters = AquaCrop.ParametersContainer(Float64)
     AquaCrop.setparameter!(float_parameters, :eto, 5.0)
@@ -519,12 +520,23 @@ function checkpoint1()
     AquaCrop.setparameter!(float_parameters, :yprevsum, AquaCrop.undef_double)
     AquaCrop.setparameter!(float_parameters, :cgcref, AquaCrop.undef_double)
     AquaCrop.setparameter!(float_parameters, :gddcgcref, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :hi_times_bef, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :hi_times_at1, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :hi_times_at2, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :hi_times_at, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :alfa_hi, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :alfa_hi_adj, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :scor_at1, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :scor_at2, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :stressleaf, AquaCrop.undef_double)
+    AquaCrop.setparameter!(float_parameters, :stresssenescence, AquaCrop.undef_double)
 
     symbol_parameters = AquaCrop.ParametersContainer(Symbol)
     AquaCrop.setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
     AquaCrop.setparameter!(symbol_parameters, :irrimethod, :MSprinkler) # 4
     AquaCrop.setparameter!(symbol_parameters, :timemode, :AllRAW) # 2
     AquaCrop.setparameter!(symbol_parameters, :depthmode, :ToFC) # 0
+    AquaCrop.setparameter!(symbol_parameters, :outputaggregate, AquaCrop.undef_symbol) 
 
     integer_parameters = AquaCrop.ParametersContainer(Int)
     AquaCrop.setparameter!(integer_parameters, :iniperctaw, 50)
@@ -543,6 +555,7 @@ function checkpoint1()
     AquaCrop.setparameter!(integer_parameters, :nrcut, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :suminterval, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :daylastcut, AquaCrop.undef_int)
+    AquaCrop.setparameter!(integer_parameters, :stagecode, AquaCrop.undef_int)
 
     bool_parameters = AquaCrop.ParametersContainer(Bool)
     AquaCrop.setparameter!(bool_parameters, :preday, false)
@@ -554,6 +567,16 @@ function checkpoint1()
     AquaCrop.setparameter!(bool_parameters, :noyear, AquaCrop.undef_bool)
     AquaCrop.setparameter!(bool_parameters, :global_irri_ecw, AquaCrop.undef_bool)
     AquaCrop.setparameter!(bool_parameters, :nomorecrop, AquaCrop.undef_bool)
+    AquaCrop.setparameter!(bool_parameters, :out1Wabal, false)
+    AquaCrop.setparameter!(bool_parameters, :out2Crop, false)
+    AquaCrop.setparameter!(bool_parameters, :out3Prof, false)
+    AquaCrop.setparameter!(bool_parameters, :out4Salt, false)
+    AquaCrop.setparameter!(bool_parameters, :out5CompWC, false)
+    AquaCrop.setparameter!(bool_parameters, :out6CompEC, false)
+    AquaCrop.setparameter!(bool_parameters, :out7Clim, false)
+    AquaCrop.setparameter!(bool_parameters, :outdaily, false)
+    AquaCrop.setparameter!(bool_parameters, :part1Mult, false)
+    AquaCrop.setparameter!(bool_parameters, :part2Eval, false)
 
     array_parameters = AquaCrop.ParametersContainer(Vector{Float64})
     AquaCrop.setparameter!(array_parameters, :Tmin, Float64[])
@@ -607,6 +630,7 @@ function checkpoint1()
         transfer = transfer,
         cut_info_record1 = cut_info_record1,
         cut_info_record2 = cut_info_record2,
+        root_zone_salt = root_zone_salt,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,
@@ -626,6 +650,18 @@ function checkpoint2()
     # OJO this is incorrect in fortran code, they forget to set the temperature in line startuni.f90:864
     # it should be: call SetSimulParam_Tmin(Tmin_temp)
     # gvars[:simulparam].Tmin = 0 
+    
+    AquaCrop.setparameter!(gvars[:symbol_parameters], :outputaggregate, :none)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out1Wabal, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out2Crop, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out3Prof, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out4Salt, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out5CompWC, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out6CompEC, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out7Clim, true) 
+    AquaCrop.setparameter!(gvars[:bool_parameters], :outdaily, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :part1Mult, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :part2Eval, true)
 
     fileok = AquaCrop.RepFileOK(
         Climate_Filename=true,

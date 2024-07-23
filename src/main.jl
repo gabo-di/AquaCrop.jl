@@ -31,18 +31,18 @@ function start_the_program(parentdir=nothing, runtype=nothing)
     for i in eachindex(project_filenames)
         theprojectfile = project_filenames[i]
         theprojecttype = get_project_type(theprojectfile; kwargs...)
-        gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+        gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths, resultsparameters; kwargs...)
         run_simulation!(outputs, gvars, projectinput; kwargs...)
     end
 end # notend
 
 
 """
-    gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+    gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths, resultsparameters; kwargs...)
 
 startunit.f90:535
 """
-function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+function initialize_project(outputs, theprojectfile, theprojecttype, filepaths, resultsparameters; kwargs...)
     canselect = [true]
 
     # check if project file exists
@@ -55,6 +55,8 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
 
     if (theprojecttype != :typenone) & canselect[1]
         gvars = initialize_settings(outputs, filepaths; kwargs...)
+        # this function is to transfer data from resultsparameters to gvars
+        actualize_gvars_resultparameters!(gvars, resultsparameters)
 
         if theprojecttype == :typepro
             # 2. Assign single project file and read its contents
@@ -150,3 +152,25 @@ function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType};
 
     return nothing
 end #notend
+
+"""
+    actualize_gvars_resultparameters!(gvars, resultsparameters)
+
+this function is to transfer data from resultsparameters to gvars
+not part of original code
+"""
+function actualize_gvars_resultparameters!(gvars, resultsparameters)
+    for key in keys(resultsparameters[:dailyresults].parameters)
+        setparameter!(gvars[:bool_parameters], key, resultsparameters[:dailyresults][key])
+    end
+
+    for key in keys(resultsparameters[:aggregationresults].parameters)
+        setparameter!(gvars[:symbol_parameters], key, resultsparameters[:aggregationresults][key])
+    end
+
+    for key in keys(resultsparameters[:particularresults].parameters)
+        setparameter!(gvars[:bool_parameters], key, resultsparameters[:particularresults][key])
+    end
+
+    return nothing
+end
