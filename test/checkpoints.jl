@@ -537,6 +537,7 @@ function checkpoint1()
     AquaCrop.setparameter!(symbol_parameters, :timemode, :AllRAW) # 2
     AquaCrop.setparameter!(symbol_parameters, :depthmode, :ToFC) # 0
     AquaCrop.setparameter!(symbol_parameters, :outputaggregate, AquaCrop.undef_symbol) 
+    AquaCrop.setparameter!(symbol_parameters, :theprojecttype, AquaCrop.undef_symbol) 
 
     integer_parameters = AquaCrop.ParametersContainer(Int)
     AquaCrop.setparameter!(integer_parameters, :iniperctaw, 50)
@@ -652,6 +653,7 @@ function checkpoint2()
     # gvars[:simulparam].Tmin = 0 
     
     AquaCrop.setparameter!(gvars[:symbol_parameters], :outputaggregate, :none)
+    AquaCrop.setparameter!(gvars[:symbol_parameters], :theprojecttype, :typeprm)
     AquaCrop.setparameter!(gvars[:bool_parameters], :out1Wabal, true)
     AquaCrop.setparameter!(gvars[:bool_parameters], :out2Crop, true)
     AquaCrop.setparameter!(gvars[:bool_parameters], :out3Prof, true)

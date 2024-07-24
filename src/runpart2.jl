@@ -928,31 +928,37 @@ function open_climfiles_and_get_data_firstday!(outputs, gvars; kwargs...)
 end
 
 """
-    initialize_run_part2!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+    initialize_run_part2!(outputs, gvars, projectinput::ProjectInputType, nrun; kwargs...)
 
 run.f90:6672
 """
-function initialize_run_part2!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+function initialize_run_part2!(outputs, gvars, projectinput::ProjectInputType, nrun; kwargs...)
     # Part2 (after reading the climate) of the run initialization
     # Calls InitializeSimulationRunPart2
     # Initializes write out for the run
-    integer(int8), intent(in) :: NrRun
-    integer(intEnum), intent(in) :: TheProjectType
 
-    call InitializeSimulationRunPart2()
+    initialize_simulation_run_part2!(outputs, gvars, projectinput; kwargs...)
 
-    if (GetOutDaily()) then
-        call WriteTitleDailyResults(TheProjectType, NrRun)
-    end 
+    # if gvars[:bool_parameters][:outdaily] 
+    #     this writes the lines 2:5 of OUT/OttawaPRMday.OUT
+    #     TODO make a dataframe?
+    #     call WriteTitleDailyResults(TheProjectType, NrRun)
+    # end 
 
-    if (GetPart1Mult()) then
-        call WriteTitlePart1MultResults(TheProjectType, NrRun)
-    end 
+    # if gvars[:bool_parameters][:part1Mult]
+    #     this writes the lines 3:7 of OUT/OttawaPRMharvest.OUT
+    #     TODO make a dataframe? (we do care about these results in Persefone)
+    #     call WriteTitlePart1MultResults(TheProjectType, NrRun)
+    # end 
 
-    if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
-        call CreateEvalData(NrRun)
-    end 
-end #notend
+    
+    # if gvars[:bool_parameters][:part2Eval] & (projectinput.Observations_Filename] != "(None)")
+    #     this file is erased later when we call finalizerun2, is it necessary?
+    #     call CreateEvalData(NrRun)
+    # end 
+    
+    return nothing
+end 
 
 """
     initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectInputType; kwargs...)

@@ -9,7 +9,7 @@ include("checkpoints.jl")
 
     kwargs = (runtype = AquaCrop.FortranRun(),)
 
-    filepaths, results_parameters = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...)
+    filepaths = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...)
     project_filenames = AquaCrop.initialize_project_filename(outputs, filepaths; kwargs...)
     gvars = AquaCrop.initialize_settings(outputs, filepaths; kwargs...)
 
@@ -39,12 +39,12 @@ end
     kwargs = (runtype = AquaCrop.FortranRun(),)
 
 
-    filepaths, resultsparameters = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...)
+    filepaths  = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...)
     project_filenames = AquaCrop.initialize_project_filename(outputs, filepaths; kwargs...)
     i = 1
     theprojectfile = project_filenames[i]
     theprojecttype = AquaCrop.get_project_type(theprojectfile; kwargs...)
-    gvars, projectinput, fileok = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths, resultsparameters; kwargs...)
+    gvars, projectinput, fileok = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
 
 
     gvars_0, projectinput_0, fileok_0 = checkpoint2()

@@ -21,7 +21,8 @@ function start_the_program(parentdir=nothing, runtype=nothing)
         add_output_in_logger!(outputs, "using default FortranRun")
     end
 
-    filepaths, resultsparameters = initialize_the_program(outputs, parentdir; kwargs...) 
+    # the part of get_results_parameters is done when we create gvars
+    filepaths = initialize_the_program(outputs, parentdir; kwargs...) 
     project_filenames = initialize_project_filename(outputs, filepaths; kwargs...)
 
     nprojects = length(project_filenames)
@@ -31,18 +32,18 @@ function start_the_program(parentdir=nothing, runtype=nothing)
     for i in eachindex(project_filenames)
         theprojectfile = project_filenames[i]
         theprojecttype = get_project_type(theprojectfile; kwargs...)
-        gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths, resultsparameters; kwargs...)
+        gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
         run_simulation!(outputs, gvars, projectinput; kwargs...)
     end
 end # notend
 
 
 """
-    gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths, resultsparameters; kwargs...)
+    gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
 
 startunit.f90:535
 """
-function initialize_project(outputs, theprojectfile, theprojecttype, filepaths, resultsparameters; kwargs...)
+function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
     canselect = [true]
 
     # check if project file exists
@@ -56,7 +57,8 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths, 
     if (theprojecttype != :typenone) & canselect[1]
         gvars = initialize_settings(outputs, filepaths; kwargs...)
         # this function is to transfer data from resultsparameters to gvars
-        actualize_gvars_resultparameters!(gvars, resultsparameters)
+        actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
+        setparameter!(gvars[:symbol_parameters], :theprojecttype, theprojecttype)
 
         if theprojecttype == :typepro
             # 2. Assign single project file and read its contents
@@ -141,25 +143,31 @@ end
 run.f90:7779
 """
 function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
-    # maybe set outputfilesa run.f90:7786 OJO
+    # this sets outputfiles run.f90:7786 OJO , but maybe we will use dataframes instead
+    # call InitializeSimulation(TheProjectFile_, TheProjectType)
+ 
     nrruns = gvars[:simulation].NrRuns 
 
     for nrrun in 1:nrruns
         initialize_run_part_1!(outputs, gvars, projectinput[nrrun]; kwargs...)
-        # initialize_climate!()
-
+        initialize_climate!(outputs, gvars; kwargs...)
+        initialize_run_part2!(outputs, gvars, projectinput[nrrun], nrrun; kwargs...)
     end
 
     return nothing
 end #notend
 
 """
-    actualize_gvars_resultparameters!(gvars, resultsparameters)
+    actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
 
 this function is to transfer data from resultsparameters to gvars
 not part of original code
 """
-function actualize_gvars_resultparameters!(gvars, resultsparameters)
+
+function actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
+
+    resultsparameters = get_results_parameters(outputs, filepaths[:simul]; kwargs...)
+
     for key in keys(resultsparameters[:dailyresults].parameters)
         setparameter!(gvars[:bool_parameters], key, resultsparameters[:dailyresults][key])
     end

@@ -499,6 +499,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(symbol_parameters, :timemode, :AllRAW) # 2
     setparameter!(symbol_parameters, :depthmode, :ToFC) # 0
     setparameter!(symbol_parameters, :outputaggregate, undef_symbol)
+    setparameter!(symbol_parameters, :theprojecttype, undef_symbol)
 
     integer_parameters = ParametersContainer(Int)
     setparameter!(integer_parameters, :iniperctaw, 50)
@@ -1575,11 +1576,12 @@ startunit.f90:417
 function initialize_the_program(outputs, parentdir; kwargs...)
     filepaths = default_filepaths(parentdir; kwargs...)
 
-    resultsparameters = get_results_parameters(outputs, filepaths[:simul]; kwargs...)
+    # the part of get_results_parameters is done when we create gvars
+    # resultsparameters = get_results_parameters(outputs, filepaths[:simul]; kwargs...)
 
     # TODO startunit.F90:429  PrepareReport()
 
-    return filepaths, resultsparameters 
+    return filepaths#, resultsparameters 
 end
 
 
