@@ -316,13 +316,13 @@ function get_gwt_set!(gvars, parentdir, daynrin)
     simulation = gvars[:simulation]
     # FileNameFull
     if gvars[:string_parameters][:groundwater_file] != "(None)"
-        filenamefull = gvars[:string_parameters][:groundwater_file]
+        groundwater_file = gvars[:string_parameters][:groundwater_file]
     else
-        filenamefull = parentdir * "GroundWater.AqC"
+        groundwater_file = parentdir * "GroundWater.AqC"
     end 
 
     # Get DayNr1Gwt
-    open(filenamefull, "r") do file
+    open(groundwater_file, "r") do file
         readline(file)
         readline(file)
         readline(file)
@@ -962,6 +962,7 @@ function seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l1
     end 
 
     # 3. Calculate Sum
+    # MARK
     for dayi in 1:l1234
         # 3.1 calculate growing degrees for the day
         if loggi 
@@ -1511,6 +1512,7 @@ function bnormalized(outputs, thedaystoccini, thegddaystoccini,
     end 
 
     # 5. Calculate Bnormalized
+    # MARK
     for dayi in 1:l1234
         # 5.1 growing degrees for dayi
         if loggi 

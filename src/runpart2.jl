@@ -711,7 +711,7 @@ function get_decade_rain_dataset!(rain_dataset, daynri, rain_array, rain_record:
         rain_dataset[nri].DayNr = dnr+nri-1
         rain_dataset[nri].Param = c/ni
     end 
-    for Nri in (ni+1):31
+    for nri in (ni+1):31
         rain_dataset[nri].DayNr = dnr+ni-1
         rain_dataset[nri].Param = 0
     end 
@@ -799,7 +799,7 @@ function get_set_of_three_months_rain(monthi, yeari, rain_array, rain_record)
         if rain_record.NrObs==1
             c2 = c1
             c3 = c1
-        elseif eto_record.NrObs==2
+        elseif rain_record.NrObs==2
             mfile = mfile + 1
             if mfile>12 
                 mfile, yfile = adjust_month_and_year(mfile, yfile)
@@ -862,11 +862,11 @@ function get_set_of_three_months_rain(monthi, yeari, rain_array, rain_record)
                 mfile, yfile = adjust_month_and_year(mfile, yfile)
             end
         end
-        c1 = eto_array[cont]
+        c1 = rain_array[cont]
         cont += 1
-        c2 = eto_array[cont]
+        c2 = rain_array[cont]
         cont += 1
-        c3 = eto_array[cont]
+        c3 = rain_array[cont]
         cont += 1
     end 
 
@@ -997,7 +997,6 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
     setparameter!(gvars[:integer_parameters], :irri_interval, 1)
     # In Versions < 3.2 - Irrigation water
     # quality is not yet recorded on file
-    setparameter!(gvars[:bool_parameters], :global_irri_ecw, true)
     open_irrigation_file!(gvars, projectinput.ParentDir)
 
     # 12. Adjusted time when starting as regrowth
@@ -1549,88 +1548,63 @@ function open_irrigation_file!(gvars, path)
     irrimode = gvars[:symbol_parameters][:irrimode]
 
     if (irrimode == :Manual) | (irrimode == :Generate) 
-        if gvars[:string_parameters][:irri_file] != "(None)"
-            totalname = gvars[:string_parameters][:irri_file]
-        else
-            totalname = joinpath( path, "IrriSchedule.AqC")
-        end 
-        open(totalname, "r") do file
-            readline(file)
-            readline(file)
-            readline(file)
-            setparameter!(gvars[:bool_parameters], :global_irri_ecw, false)
-            for i in 1:6
-                readline(file)
+        Irri_1 = gvars[:array_parameters][:Irri_1]
+        Irri_2 = gvars[:array_parameters][:Irri_2]
+        Irri_3 = gvars[:array_parameters][:Irri_3]
+        Irri_4 = gvars[:array_parameters][:Irri_4]
+        if irrimode == :Manual
+            if gvars[:integer_parameters][:irri_first_daynr] == undef_int
+                dnr = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1 + 1
+            else
+                dnr = gvars[:integer_parameters][:daynri] - gvars[:integer_parameters][:irri_first_daynr] + 1
             end
-            if irrimode == :Manual
-                if gvars[:integer_parameters][:irri_first_daynr] == undef_int
-                    dnr = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1 + 1
+            loopi = true
+            while loopi
+                if length(Irri_1) == 0
+                    irri_info_record1.NoMoreInfo = true
                 else
-                    dnr = gvars[:integer_parameters][:daynri] - gvars[:integer_parameters][:irri_first_daynr] + 1
+                    irri_info_record1.NoMoreInfo = false
+                    ir1 = round(Int, popfirst!(Irri_1))
+                    ir2 = round(Int, popfirst!(Irri_2))
+                    irriecw = popfirst!(Irri_3)
+                    gvars[:simulation].IrriECw = irriecw
+                    irri_info_record1.TimeInfo = ir1
+                    irri_info_record1.DepthInfo = ir2
                 end
-                loopi = true
-                while loopi
-                    splitedline = split(readline(file))
-                    if eof(file)
-                        irri_info_record1.NoMoreInfo = true
-                    else
-                        irri_info_record1.NoMoreInfo = false
-                        if gvars[:bool_parameters][:global_irri_ecw]
-                            ir1 = parse(Int, popfirst!(splitedline))
-                            ir2 = parse(Int, popfirst!(splitedline))
-                        else
-                            ir1 = parse(Int, popfirst!(splitedline))
-                            ir2 = parse(Int, popfirst!(splitedline))
-                            irriecw = parse(Float64, popfirst!(splitedline))
-                            gvars[:simulation].IrriECw = irriecw
-                        end
-                        irri_info_record1.TimeInfo = ir1
-                        irri_info_record1.DepthInfo = ir2
-                    end
-                    if irri_info_record1.NoMoreInfo | (irri_info_record1.TimeInfo>dnr)
-                        loopi = false
-                    end
+                if irri_info_record1.NoMoreInfo | (irri_info_record1.TimeInfo>dnr)
+                    loopi = false
                 end
-            elseif irrimode == :Generate
-                readline(file)
-                readline(file)
-                irri_info_record1.NoMoreInfo = false
-                splitedline = split(readline(file))
-                fromday = parse(Int, popfirst!(splitedline))
-                timeinfo = parse(Int, popfirst!(splitedline))
-                depthinfo = parse(Int, popfirst!(splitedline))
-                irriecw = parse(Float64, popfirst!(splitedline))
-                irri_info_record1.FromDay = fromday 
-                irri_info_record1.TimeInfo = timeinfo 
-                irri_info_record1.DepthInfo = depthinfo 
-                gvars[:simulation].IrriECw = irriecw
+            end
+        elseif irrimode == :Generate
+            irri_info_record1.NoMoreInfo = false
+            fromday = round(Int, popfirst!(Irri_1))
+            timeinfo = round(Int, popfirst!(Irri_1))
+            depthinfo = round(Int, popfirst!(Irri_1))
+            irriecw = popfirst!(Irri_4)
+            irri_info_record1.FromDay = fromday 
+            irri_info_record1.TimeInfo = timeinfo 
+            irri_info_record1.DepthInfo = depthinfo 
+            gvars[:simulation].IrriECw = irriecw
 
-                splitedline = split(readline(file))
-                if eof(file)
-                    irri_info_record1.ToDay = gvars[:crop].DayN - gvars[:crop].Day1 + 1
-                else
-                    irri_info_record2.NoMoreInfo = false
-                    if gvars[:bool_parameters][:global_irri_ecw]
-                        fromday = parse(Int, popfirst!(splitedline))
-                        timeinfo = parse(Int, popfirst!(splitedline))
-                        depthinfo = parse(Int, popfirst!(splitedline))
-                        irri_info_record2.FromDay = fromday 
-                        irri_info_record2.TimeInfo = timeinfo 
-                        irri_info_record2.DepthInfo = depthinfo 
-                    else
-                        fromday = parse(Int, popfirst!(splitedline))
-                        timeinfo = parse(Int, popfirst!(splitedline))
-                        depthinfo = parse(Int, popfirst!(splitedline))
-                        irriecw = parse(Float64, popfirst!(splitedline))
-                        irri_info_record2.FromDay = fromday 
-                        irri_info_record2.TimeInfo = timeinfo 
-                        irri_info_record2.DepthInfo = depthinfo 
-                        gvars[:simulation].IrriECw = irriecw
-                    end 
-                    irri_info_record1.ToDay = irri_info_record2.FromDay - 1
-                end
+            if length(Irri_1)==0
+                irri_info_record1.ToDay = gvars[:crop].DayN - gvars[:crop].Day1 + 1
+            else
+                irri_info_record2.NoMoreInfo = false
+                fromday = Int(popfirst!(Irri_1))
+                timeinfo = Int(popfirst!(Irri_1))
+                depthinfo = Int(popfirst!(Irri_1))
+                irriecw = popfirst!(Irri_4)
+                irri_info_record2.FromDay = fromday 
+                irri_info_record2.TimeInfo = timeinfo 
+                irri_info_record2.DepthInfo = depthinfo 
+                gvars[:simulation].IrriECw = irriecw
+                irri_info_record1.ToDay = irri_info_record2.FromDay - 1
             end
-        end 
+        end
+        setparameter!(gvars[:array_parameters], :Irri_1, Irri_1)
+        setparameter!(gvars[:array_parameters], :Irri_2, Irri_2)
+        setparameter!(gvars[:array_parameters], :Irri_3, Irri_3)
+        setparameter!(gvars[:array_parameters], :Irri_4, Irri_4)
     end 
     return nothing
 end 
@@ -1767,17 +1741,17 @@ run.f90:5937
 function open_harvest_info!(gvars, path; kwargs...)
     if gvars[:string_parameters][:man_file] != "(None)"
         if typeof(kwargs[:runtype]) == FortranRun
-            totalname = gvars[:string_parameters][:man_file]
+            man_file = gvars[:string_parameters][:man_file]
         else
-            totalname = gvars[:string_parameters][:man_file][1:end-5]*".csv"
+            man_file = gvars[:string_parameters][:man_file][1:end-5]*".csv"
         end
     else
-        totalname = joinpath(path, "Cuttings.AqC")
+        man_file = joinpath(path, "Cuttings.AqC")
     end 
 
     Man = Float64[]
     Man_info= Float64[]
-    open(totalname, "r") do file
+    open(man_file, "r") do file
         readline(file)
         if !endswith(".csv")
             readline(file)

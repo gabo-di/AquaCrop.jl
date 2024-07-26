@@ -595,9 +595,9 @@ end
 """
 @kwdef mutable struct RepEffectStress <: AbstractParametersContainer
     "Reduction of CGC (%)"
-    RedCGC::Int = 0 #TODO maybe from timetomaxcanopysf
+    RedCGC::Int = 0 
     "Reduction of CCx (%)"
-    RedCCX::Int = 0 #TODO maybe from timetomaxcanopysf
+    RedCCX::Int = 0 
     "Reduction of WP (%)"
     RedWP::Int = undef_int
     "Average decrease of CCx in mid season (%/day)"
@@ -1239,4 +1239,44 @@ end
     ECswFC::Float64=undef_double
     "stress coefficient for salinity"
     KsSalt::Float64=undef_double
+end
+
+"""
+    plotvarcorp = RepPlotPar()
+
+we set these values since we need them for rootunit.f90:37 AdjustedRootingDepth
+"""
+@kwdef mutable struct RepPlotPar <: AbstractParametersContainer
+    "Undocumented"
+    PotVal::Float64=0
+    "Undocumented"
+    ActVal::Float64=0
+end
+
+"""
+    root_zone_wc = RepRootZoneWC()
+"""
+@kwdef mutable struct RepRootZoneWC <: AbstractParametersContainer
+    "actual soil water content in rootzone [mm]"
+    Actual::Float64=undef_double
+    "soil water content [mm] in rootzone at FC"
+    FC::Float64=undef_double
+    "soil water content [mm] in rootzone at WP"
+    WP::Float64=undef_double
+    "soil water content [mm] in rootzone at Sat"
+    SAT::Float64=undef_double
+    "soil water content [mm] in rootzone at upper Threshold for leaf expansion"
+    Leaf::Float64=undef_double
+    "soil water content [mm] in rootzone at Threshold for stomatal closure"
+    Thresh::Float64=undef_double
+    "soil water content [mm] in rootzone at Threshold for canopy senescence"
+    Sen::Float64=undef_double
+    "actual soil water content [mm] in top soil (= top compartment)"
+    ZtopAct::Float64=undef_double
+    "soil water content [mm] at FC in top soil (= top compartment)"
+    ZtopFC::Float64=undef_double
+    "soil water content [mm] at WP in top soil (= top compartment)"
+    ZtopWP::Float64=undef_double
+    "soil water content [mm] at Threshold for stomatal closure in top soil"
+    ZtopThresh::Float64=undef_double
 end

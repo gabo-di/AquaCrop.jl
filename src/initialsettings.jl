@@ -427,6 +427,8 @@ function initialize_settings(outputs, filepaths; kwargs...)
     cut_info_record1 = RepCutInfoRecord()
     cut_info_record2 = RepCutInfoRecord()
     root_zone_salt = RepRootZoneSalt()
+    root_zone_wc = RepRootZoneWC()
+    plotvarcorp = RepPlotPar()
 
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
@@ -491,6 +493,12 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(float_parameters, :scor_at2, undef_double)
     setparameter!(float_parameters, :stressleaf, undef_double)
     setparameter!(float_parameters, :stresssenescence, undef_double)
+    setparameter!(float_parameters, :tact, 0.0)
+    setparameter!(float_parameters, :tpot, 0.0)
+    setparameter!(float_parameters, :preirri, undef_double)
+    setparameter!(float_parameters, :bin, undef_double)
+    setparameter!(float_parameters, :bout, undef_double)
+    setparameter!(float_parameters, :fracassim, undef_double)
 
 
     symbol_parameters = ParametersContainer(Symbol)
@@ -519,6 +527,8 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(integer_parameters, :suminterval, undef_int)
     setparameter!(integer_parameters, :daylastcut, undef_int)
     setparameter!(integer_parameters, :stagecode, undef_int)
+    setparameter!(integer_parameters, :targettimeval, undef_int)
+    setparameter!(integer_parameters, :targetdepthval, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
@@ -528,7 +538,6 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(bool_parameters, :evapo_entire_soil_surface, undef_bool)
     setparameter!(bool_parameters, :startmode, undef_bool)
     setparameter!(bool_parameters, :noyear, undef_bool)
-    setparameter!(bool_parameters, :global_irri_ecw, undef_bool)
     setparameter!(bool_parameters, :nomorecrop, undef_bool)
     setparameter!(bool_parameters, :out1Wabal, false)
     setparameter!(bool_parameters, :out2Crop, false)
@@ -550,6 +559,10 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(array_parameters, :Rain, Float64[])
     setparameter!(array_parameters, :Man, Float64[])
     setparameter!(array_parameters, :Man_info, Float64[])
+    setparameter!(array_parameters, :Irri_1, Float64[])
+    setparameter!(array_parameters, :Irri_2, Float64[])
+    setparameter!(array_parameters, :Irri_3, Float64[])
+    setparameter!(array_parameters, :Irri_4, Float64[])
 
     string_parameters = ParametersContainer(String)
     setparameter!(string_parameters, :clim_file, undef_str)
@@ -602,6 +615,8 @@ function initialize_settings(outputs, filepaths; kwargs...)
         cut_info_record1 = cut_info_record1,
         cut_info_record2 = cut_info_record2,
         root_zone_salt = root_zone_salt,
+        root_zone_wc = root_zone_wc,
+        plotvarcorp = plotvarcorp,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,
@@ -612,7 +627,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
 end
 
 """
-    crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel)
+    stressout = crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel)
 
 global.f90:1231
 """

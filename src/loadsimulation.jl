@@ -130,7 +130,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         no_irrigation!(gvars)
     else
         irri_file = joinpath([projectinput.ParentDir, projectinput.Irrigation_Directory, projectinput.Irrigation_Filename])
-        load_irri_schedule_info!(gvars, fullname)
+        load_irri_schedule_info!(gvars, irri_file)
     end 
     setparameter!(gvars[:string_parameters], :irri_file, irri_file)
 
@@ -388,18 +388,18 @@ function read_rain_file!(array_parameters::ParametersContainer{T}, rain_file) wh
 end
 
 """
-    load_clim!(record::RepClim, filename; kwargs...)
+    load_clim!(record::RepClim, clim_file; kwargs...)
 
 global.f90:5936
 """
-function load_clim!(record::RepClim, filename; kwargs...)
-    _load_clim!(kwargs[:runtype], record, filename; kwargs...)
+function load_clim!(record::RepClim, clim_file; kwargs...)
+    _load_clim!(kwargs[:runtype], record, clim_file; kwargs...)
     return nothing
 end
 
-function _load_clim!(runtype::FortranRun, record::RepClim, filename; kwargs...)
-    if isfile(filename)
-        open(filename, "r") do file
+function _load_clim!(runtype::FortranRun, record::RepClim, clim_file; kwargs...)
+    if isfile(clim_file)
+        open(clim_file, "r") do file
             readline(file)
             ni = parse(Int,split(readline(file))[1])
             if ni == 1
@@ -419,10 +419,9 @@ function _load_clim!(runtype::FortranRun, record::RepClim, filename; kwargs...)
     return nothing
 end
 
-function _load_clim!(runtype::T, record::RepClim, filename; kwargs...) where {T<:Union{JuliaRun, PersefoneRun}}
-    _filename = filename
-    if isfile(_filename)
-        load_gvars_from_toml!(record, _filename; kwargs...) 
+function _load_clim!(runtype::T, record::RepClim, clim_file; kwargs...) where {T<:Union{JuliaRun, PersefoneRun}}
+    if isfile(clim_file)
+        load_gvars_from_toml!(record, clim_file; kwargs...) 
         record.NrObs = kwargs[:nrobs]
         complete_climate_description!(record)
     end
@@ -1046,9 +1045,8 @@ function _load_crop!(runtype::FortranRun, crop::RepCrop, perennial_period::RepPe
 end
 
 function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file) where {T<:Union{JuliaRun, PersefoneRun}}
-    _filename = crop_file  
-    load_gvars_from_toml!(crop, _filename)
-    load_gvars_from_toml!(perennial_period, _filename)
+    load_gvars_from_toml!(crop, crop_file)
+    load_gvars_from_toml!(perennial_period, crop_file)
     return nothing
 end 
 
@@ -2322,11 +2320,11 @@ function determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_recor
 end
 
 """
-    load_groundwater!(gvars, fullname)
+    load_groundwater!(gvars, groundwater_file)
 
 global.f90:5981
 """
-function load_groundwater!(gvars, fullname)
+function load_groundwater!(gvars, groundwater_file)
     simulparam = gvars[:simulparam]
     simulation = gvars[:simulation]
     atdaynr = simulation.FromDayNr
@@ -2338,8 +2336,8 @@ function load_groundwater!(gvars, fullname)
     daynr1 = 1
     daynr2 = 1
 
-    if isfile(fullname)
-        open(fullname, "r") do file
+    if isfile(groundwater_file)
+        open(groundwater_file, "r") do file
             readline(file)
             readline(file)
 
@@ -2618,12 +2616,12 @@ function no_irrigation!(gvars)
 end 
 
 """
-    load_irri_schedule_info!(gvars, fullname)
+    load_irri_schedule_info!(gvars, irri_file)
 
 global.f90:2860
 """
-function load_irri_schedule_info!(gvars, fullname)
-    open(fullname, "r") do file
+function load_irri_schedule_info!(gvars, irri_file)
+    open(irri_file, "r") do file
         readline(file)
         readline(file)
 
@@ -2687,26 +2685,72 @@ function load_irri_schedule_info!(gvars, fullname)
         if gvars[:symbol_parameters][:irrimode] == :Inet 
             gvars[:simulparam].PercRAW = parse(Int, split(readline(file))[1])
         end 
+
+        # 4. If irigation is :Manual or :Generate we read the rest of the file and save in arrays
+        if gvars[:symbol_parameters][:irrimode] == :Manual 
+            readline(file)
+            readline(file)
+            Irri_1 = Float64[]
+            Irri_2 = Float64[]
+            Irri_3 = Float64[]
+            for line in eachline(file)
+                splitedline = split(line)
+                ir1 = parse(Int, popfirst!(splitedline))
+                ir2 = parse(Int, popfirst!(splitedline))
+                irriecw = parse(Float64, popfirst!(splitedline))
+                push!(Irri_1, ir1)
+                push!(Irri_2, ir2)
+                push!(Irri_3, irriecw)
+            end
+            setparameter!(gvars[:array_parameters], :Irri_1, Irri_1)
+            setparameter!(gvars[:array_parameters], :Irri_2, Irri_2)
+            setparameter!(gvars[:array_parameters], :Irri_3, Irri_3)
+        end
+
+        if gvars[:symbol_parameters][:irrimode] == :Generate 
+            readline(file)
+            readline(file)
+            readline(file)
+            Irri_1 = Float64[]
+            Irri_2 = Float64[]
+            Irri_3 = Float64[]
+            Irri_4 = Float64[]
+            for line in eachline(file)
+                splitedline = split(line)
+                fromday = parse(Int, popfirst!(splitedline))
+                timeinfo = parse(Int, popfirst!(splitedline))
+                depthinfo = parse(Int, popfirst!(splitedline))
+                irriecw = parse(Float64, popfirst!(splitedline))
+                push!(Irri_1, fromday)
+                push!(Irri_2, timeinfo)
+                push!(Irri_3, depthinfo)
+                push!(Irri_4, irriecw)
+            end
+            setparameter!(gvars[:array_parameters], :Irri_1, Irri_1)
+            setparameter!(gvars[:array_parameters], :Irri_2, Irri_2)
+            setparameter!(gvars[:array_parameters], :Irri_3, Irri_3)
+            setparameter!(gvars[:array_parameters], :Irri_4, Irri_4)
+        end
     end
 
     return nothing
 end 
 
 """
-    load_management!(gvars, fullname; kwargs...)
+    load_management!(gvars, man_file; kwargs...)
 
 global.f90:3350
 """
-function load_management!(gvars, fullname; kwargs...)
-    _load_management!(kwargs[:runtype], gvars, fullname) 
+function load_management!(gvars, man_file; kwargs...)
+    _load_management!(kwargs[:runtype], gvars, man_file) 
     return nothing
 end
 
-function _load_management!(runtype::FortranRun, gvars, fullname)
+function _load_management!(runtype::FortranRun, gvars, man_file)
     management = gvars[:management]
     crop = gvars[:crop]
     simulation = gvars[:simulation]
-    open(fullname, "r") do file
+    open(man_file, "r") do file
         readline(file)
         readline(file)
         # mulches
@@ -2793,9 +2837,8 @@ function _load_management!(runtype::FortranRun, gvars, fullname)
     return nothing
 end 
 
-function _load_management!(runtype::T, gvars, fullname) where {T<:Union{JuliaRun, PersefoneRun}}
-    _fullname = fullname
-    load_gvars_from_toml!(gvars[:management], _fullname)
+function _load_management!(runtype::T, gvars, man_file) where {T<:Union{JuliaRun, PersefoneRun}}
+    load_gvars_from_toml!(gvars[:management], man_file)
 
     management = gvars[:management]
     crop = gvars[:crop]
@@ -3234,19 +3277,19 @@ function ececomp(compartment::CompartmentIndividual, gvars)
 end 
 
 """
-    load_offseason!(gvars, fullname)
+    load_offseason!(gvars, offseason_file)
 
 global.f90:5769
 """
-function load_offseason!(gvars, fullname)
+function load_offseason!(gvars, offseason_file)
     management = gvars[:management]
     simulation = gvars[:management]
     irri_before_season = gvars[:irri_before_season]
     irri_after_season = gvars[:irri_after_season]
     irri_ecw = gvars[:irri_ecw]
 
-    if isfile(fullname)
-        open(fullname, "r") do file
+    if isfile(offseason_file)
+        open(offseason_file, "r") do file
             readline(file)
             readline(file)
             management.SoilCoverBefore = parse(Int, split(readline(file))[1])
