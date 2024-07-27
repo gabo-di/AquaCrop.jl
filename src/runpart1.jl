@@ -252,7 +252,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
 end 
 
 """
-    check_for_watertable_in_profile(profilecomp::Vector{CompartmentIndividual}, depthgwtmeter)
+    logi = check_for_watertable_in_profile(profilecomp::Vector{CompartmentIndividual}, depthgwtmeter)
 
 global.f90:1540
 """

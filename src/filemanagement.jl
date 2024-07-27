@@ -2,16 +2,40 @@
 run.f90:7760
 """
 function file_management(outputs, gvars, projectinput::ProjectInputType)
-    wpi = 0
-    harvestnow = false
+    # we create these "lvars" because we need functions that 
+    # returns nothing or does not change anything
+    float_parameters = ParametersContainer(Float64)
+    setparameter!(float_parameters, :wpi,  0.0)
+    setparameter!(float_parameters, :preirri,  0.0)
+    setparameter!(float_parameters, :fracassim, 0.0)
+    setparameter!(float_parameters, :ecinfilt, 0.0)
+    setparameter!(float_parameters, :horizontalwaterflow, 0.0)
+    setparameter!(float_parameters, :horizontalsaltflow, 0.0)
+    setparameter!(float_parameters, :subdrain, 0.0)
+    setparameter!(float_parameters, :infiltratedrain, 0.0)
+    setparameter!(float_parameters, :infiltratedirrigation, 0.0)
+    setparameter!(float_parameters, :infiltratedstorage, 0.0)
+
+    integer_parameters = ParametersContainer(Int)
+    setparameter!(integer_parameters, :targettimeval, 0)
+    setparameter!(integer_parameters, :targetdepthval, 0)
+
+    bool_parameters = ParametersContainer(Bool)
+    setparameter!(bool_parameters, :harvestnow, false)
+
+    lvars = ComponentArray(
+        float_parameters = float_parameters,
+        bool_parameters = bool_parameters,
+        integer_parameters = integer_parameters
+    )
     repeattoday = gvars[:simulation].ToDayNr
 
     loopi = true
     # MARK
     while loopi
-        call AdvanceOneTimeStep(WPi, HarvestNow)
-        call ReadClimateNextDay()
-        call SetGDDVariablesNextDay()
+        advance_one_time_step!(outputs, gvars, lvars, projectinput)
+        # call ReadClimateNextDay()
+        # call SetGDDVariablesNextDay()
         if (gvars[:integer_parameters][:daynri] - 1) == repeattoday
             loopi = false
         end
@@ -20,9 +44,11 @@ function file_management(outputs, gvars, projectinput::ProjectInputType)
 end #notend
 
 """
+    advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType)
+
 run.f90:6747
 """
-function advance_one_time_step(outputs, gvars, projectinput::ProjectInputType, wpi, harvestnow)
+function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType)
     # 1. Get ETo
     if gvars[:string_parameters][:eto_file] == "(None)"
         setparameter!(gvars[:float_parameters], :eto, 5.0)
@@ -51,7 +77,7 @@ function advance_one_time_step(outputs, gvars, projectinput::ProjectInputType, w
 
     # 5. Get Irrigation
     setparameter!(gvars[:float_parameters], :irrigation, 0.0)
-    get_irri_param!(gvars)
+    get_irri_param!(gvars, lvars)
 
     # 6. get virtual time for CC development
     sumgddadjcc = undef_double #real(undef_int, kind=dp)
@@ -190,12 +216,12 @@ function advance_one_time_step(outputs, gvars, projectinput::ProjectInputType, w
             determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth])
         if gvars[:symbol_parameters][:irrimode] == :Inet
             # required to start germination
-            adjust_swc_rootzone!(gvars)
+            adjust_swc_rootzone!(gvars, lvars)
         end 
     end 
 
     # 8. Transfer of Assimilates
-    initialize_transfer_assimilates!(gvars, harvestnow)
+    initialize_transfer_assimilates!(gvars, lvars)
 
     # 9. RUN Soil water balance and actual Canopy Cover
     StressLeaf_temp = GetStressLeaf()
@@ -581,11 +607,11 @@ function get_z_and_ec_gwt!(gvars)
 end
 
 """
-    get_irri_param!(gvars)
+    get_irri_param!(gvars, lvars)
 
 run.f90:6262
 """
-function get_irri_param!(gvars)
+function get_irri_param!(gvars, lvars)
     targettimeval = -999
     targetdepthval = -999
     if (gvars[:integer_parameters][:daynri] < gvars[:crop].Day1) | 
@@ -664,8 +690,8 @@ function get_irri_param!(gvars)
        end 
     end 
 
-    setparameter!(gvars[:integer_parameters], :targettimeval, targettimeval)
-    setparameter!(gvars[:integer_parameters], :targetdepthval, targetdepthval)
+    setparameter!(lvars[:integer_parameters], :targettimeval, targettimeval)
+    setparameter!(lvars[:integer_parameters], :targetdepthval, targetdepthval)
     return nothing
 end 
 
@@ -1094,11 +1120,13 @@ function determine_root_zone_wc!(gvars, rootingdepth)
 end
 
 """
-    adjust_swc_rootzone!(gvars)
+    adjust_swc_rootzone!(gvars, lvars)
 
 run.f90:6348
 """
-function adjust_swc_rootzone!(gvars)
+function adjust_swc_rootzone!(gvars, lvars)
+    compartments = gvars[:compartments]
+
     compi = 0
     sumdepth = 0
     preirri = 0
@@ -1120,17 +1148,16 @@ function adjust_swc_rootzone!(gvars)
         end
     end
 
-    # we create this "gvar" because we need a function that returns nothing or does not change anything
-    setparameter!(gvars[:float_parameters], :preirri, preirri)
+    setparameter!(lvars[:float_parameters], :preirri, preirri)
     return nothing
 end
 
 """
-    initialize_transfer_assimilates!(gvars, harvestnow)
+    initialize_transfer_assimilates!(gvars, lvars)
 
 run.f90:6378
 """
-function initialize_transfer_assimilates!(gvars, harvestnow)
+function initialize_transfer_assimilates!(gvars, lvars)
     crop = gvars[:crop]
     simulation = gvars[:simulation]
     management = gvars[:management]
@@ -1140,11 +1167,13 @@ function initialize_transfer_assimilates!(gvars, harvestnow)
 
     bin = gvars[:float_parameters][:bin]
     bout = gvars[:float_parameters][:bout]
-    fracassim = gvars[:float_parameters][:fracassim]
     assimtomobilize = gvars[:transfer].ToMobilize
     assimmobilized = gvars[:transfer].Bmobilized
     storageon = gvars[:transfer].Store
     mobilizationon = gvars[:transfer].Mobilize
+
+    harvestnow = lvars[:bool_parameters][:harvestnow]
+    fracassim = lvars[:float_parameters][:fracassim]
 
     bin = 0
     bout = 0
@@ -1217,11 +1246,12 @@ function initialize_transfer_assimilates!(gvars, harvestnow)
 
     setparameter!(gvars[:float_parameters], :bin, bin)
     setparameter!(gvars[:float_parameters], :bout, bout)
-    setparameter!(gvars[:float_parameters], :fracassim, fracassim)
     gvars[:transfer].ToMobilize = assimtomobilize
     gvars[:transfer].Bmobilized = assimmobilized
     gvars[:transfer].Store = storageon
     gvars[:transfer].Mobilize = mobilizationon
+
+    setparameter!(lvars[:float_parameters], :fracassim, fracassim)
     return nothing
 end
 

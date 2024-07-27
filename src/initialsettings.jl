@@ -429,6 +429,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     root_zone_salt = RepRootZoneSalt()
     root_zone_wc = RepRootZoneWC()
     plotvarcorp = RepPlotPar()
+    total_salt_content = RepContent()
 
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
@@ -495,10 +496,13 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(float_parameters, :stresssenescence, undef_double)
     setparameter!(float_parameters, :tact, 0.0)
     setparameter!(float_parameters, :tpot, 0.0)
-    setparameter!(float_parameters, :preirri, undef_double)
     setparameter!(float_parameters, :bin, undef_double)
     setparameter!(float_parameters, :bout, undef_double)
-    setparameter!(float_parameters, :fracassim, undef_double)
+    setparameter!(float_parameters, :surf0, undef_double)
+    setparameter!(float_parameters, :ecdrain, undef_double)
+    setparameter!(float_parameters, :eact, 0.0)
+    setparameter!(float_parameters, :epot, 0.0)
+    setparameter!(float_parameters, :tactweedinfested, 0.0) 
 
 
     symbol_parameters = ParametersContainer(Symbol)
@@ -527,8 +531,6 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(integer_parameters, :suminterval, undef_int)
     setparameter!(integer_parameters, :daylastcut, undef_int)
     setparameter!(integer_parameters, :stagecode, undef_int)
-    setparameter!(integer_parameters, :targettimeval, undef_int)
-    setparameter!(integer_parameters, :targetdepthval, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
@@ -617,6 +619,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
         root_zone_salt = root_zone_salt,
         root_zone_wc = root_zone_wc,
         plotvarcorp = plotvarcorp,
+        total_salt_content = total_salt_content,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,
