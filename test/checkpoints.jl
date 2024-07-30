@@ -542,6 +542,8 @@ function checkpoint1()
     AquaCrop.setparameter!(float_parameters, :eact, 0.0) 
     AquaCrop.setparameter!(float_parameters, :epot, 0.0) 
     AquaCrop.setparameter!(float_parameters, :tactweedinfested, 0.0) 
+    AquaCrop.setparameter!(float_parameters, :saltinfiltr, AquaCrop.undef_double) 
+    AquaCrop.setparameter!(float_parameters, :ccitopearlysen, AquaCrop.undef_double) 
 
     symbol_parameters = AquaCrop.ParametersContainer(Symbol)
     AquaCrop.setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
