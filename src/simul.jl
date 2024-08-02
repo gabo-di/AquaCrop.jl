@@ -114,112 +114,106 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
 
     # 11. Determine Tpot and Epot
     # 11.1 Days after Planting
-    if (GetCrop_ModeCycle() == modecycle_Calendardays) then
-        DAP = VirtualTimeCC
+    if gvars[:crop].ModeCycle == :Calendardays
+        dap = virtualtimecc
     else
         # growing degree days - to position correctly where in cycle
-        DAP = SumCalendarDays(roundc(SumGDDadjCC, mold=1), GetCrop_Day1(), &
-                              GetCrop_Tbase(), GetCrop_Tupper(), &
-                              GetSimulParam_Tmin(), GetSimulParam_Tmax())
-        DAP = DAP + GetSimulation_DelayedDays()
+        dap = sum_calendar_days(round(Int, sumgddadjcc), gvars[:crop].Day1, 
+                              gvars[:crop].Tbase, gvars[:crop].Tupper, 
+                              gvars[:simulparam].Tmin, gvars[:simulparam].Tmax,
+                              gvars)
+                              dap = dap + gvars[:simulation].DelayedDays
             # are not considered when working with GDDays
     end 
 
     # 11.2 Calculation
-    Tpot_temp = GetTpot()
-    call CalculateETpot(DAP, GetCrop_DaysToGermination(), &
-                        GetCrop_DaysToFullCanopy(), GetCrop_DaysToSenescence(), &
-                        GetCrop_DaysToHarvest(), DayLastCut, GetCCiActual(), &
-                        GetETo(), GetCrop_KcTop(), GetCrop_KcDecline(), &
-                        GetCrop_CCxAdjusted(), GetCrop_CCxWithered(), &
-                        real(GetCrop_CCEffectEvapLate(), kind=dp), CO2i, &
-                        GDDayi, GetCrop_GDtranspLow(), Tpot_temp, EpotTot)
-    call SetTpot(Tpot_temp)
-    call SetEpot(EpotTot)
-        # adjustment Epot for mulch and partial wetting in next step
-    Crop_pActStom_temp = GetCrop_pActStom()
-    call AdjustpStomatalToETo(GetETo(), Crop_pActStom_temp)
-    call SetCrop_pActStom(Crop_pActStom_temp)
+    tpot, epot = calculate_etpot(dap, gvars[:crop].DaysToGermination, 
+                        gvars[:crop].DaysToFullCanopy, gvars[:crop].DaysToSenescence, 
+                        gvars[:crop].DaysToHarvest, daylastcut,
+                        gvars[:float_parameters][:cciactual], 
+                        gvars[:float_parameters][:eto],
+                        gvars[:crop].KcTop, gvars[:crop].KcDecline, 
+                        gvars[:crop].CCxAdjusted, gvars[:crop].CCxWithered, 
+                        gvars[:crop].CCEffectEvapLate, co2i, 
+                        gddayi, gvars[:crop].GDtranspLow, gvars[:simulation],
+                        gvars[:simulparam])
+    setparameter!(gvars[:float_parameters], :tpot, tpot)
+    setparameter!(gvars[:float_parameters], :epot, epot)
+    # adjustment Epot for mulch and partial wetting in next step
+    pstomatulact = adjust_pstomatal_to_eto(gvars[:float_parameters][:eto],
+                                            gvars[:crop], gvars[:simulparam])
+    gvars[:crop].pActStom = pstomatulact
 
     # 12. Evaporation
-    if (.not. GetPreDay()) then
-        call PrepareStage2()
-            # Initialize Simulation.EvapstartStg2 (REW is gone)
+    if !gvars[:bool_parameters][:preday]
+        prepare_stage2!(gvars) # Initialize Simulation.EvapstartStg2 (REW is gone)
     end 
-    if ((GetRain() > 0._dp) &
-        .or. ((GetIrrigation() > 0._dp) &
-            .and. (GetIrriMode() /= IrriMode_Inet))) then
-        call PrepareStage1()
+    if (gvars[:float_parameters][:rain] > 0 ) |
+        ((gvars[:float_parameters][:irrigation] > 0) & (gvars[:symbol_parameters][:irrimode] != :Inet))
+        prepare_stage1!(gvars)
     end 
-    EvapWCsurf_temp = GetSimulation_EvapWCsurf()
-    Epot_temp = GetEpot()
-    call AdjustEpotMulchWettedSurface(dayi, EpotTot, Epot_temp, EvapWCsurf_temp)
-    call SetEpot(Epot_temp)
-    call SetSimulation_EvapWCsurf(EvapWCsurf_temp)
-    if (((GetRainRecord_DataType() == datatype_Decadely) &
-            .or. (GetRainRecord_DataType() == datatype_Monthly)) &
-        .and. (GetSimulParam_EffectiveRain_RootNrEvap() > 0)) then
+    adjust_epot_mulch_wetted_surface!(gvars)
+    if ((gvars[:rain_record].DataType == :Decadely) | (gvars[:rain_record].DataType == :Monthly)) &
+       (gvars[:simulparam].EffectiveRain.RootNrEvap > 0)
         # reduction soil evaporation
-        call SetEpot(GetEpot() &
-                    * (exp((1._dp/GetSimulParam_EffectiveRain_RootNrEvap())&
-                            *log((GetSoil_REW()+1._dp)/20._dp))))
+        epot = gvars[:float_parameters][:epot] *
+               (exp((1/gvars[:simulparam].EffectiveRain.RootNrEvap)*log((gvars[:soil].REW+1)/20)))
+        setparameter!(gvars[:float_parameters], :epot, epot)
     end 
     # actual evaporation
-    call SetEact(0._dp)
-    if (GetEpot() > 0._dp) then
+    setparameter!(gvars[:float_parameters], :eact, 0.0)
+    if gvars[:float_parameters][:epot] > 0
         # surface water
-        if (GetSurfaceStorage() > 0._dp) then
-            call CalculateEvaporationSurfaceWater
-        end if
+        if gvars[:float_parameters][:surfacestorage] > 0
+            calculate_evaporation_surface_water!(gvars)
+        end 
         # stage 1 evaporation
-        if ((abs(GetEpot() - GetEact()) > 0.0000001_dp) &
-            .and. (GetSimulation_EvapWCsurf() > 0._dp)) then
-            call CalculateSoilEvaporationStage1()
-        end if
+        if (abs(gvars[:float_parameters][:epot] - gvars[:float_parameters][:eact]) > 0.0000001) &
+           (gvars[:simulation].EvapWCsurf > 0)
+            calculate_soil_evaporation_stage1!(gvars)
+        end 
         # stage 2 evaporation
-        if (abs(GetEpot() - GetEact()) > 0.0000001_dp) then
-            call CalculateSoilEvaporationStage2()
-        end if
+        if abs(gvars[:float_parameters][:epot] - gvars[:float_parameters][:eact]) > 0.0000001
+            calculate_soil_evaporation_stage2!(gvars)
+        end 
     end 
     # Reset redcution Epot for 10-day or monthly rainfall data
-    if (((GetRainRecord_DataType() == datatype_Decadely) &
-            .or. (GetRainRecord_DataType() == datatype_Monthly)) &
-        .and. (GetSimulParam_EffectiveRain_RootNrEvap() > 0._dp)) then
-        call SetEpot(GetEpot()&
-                    /(exp((1._dp/GetSimulParam_EffectiveRain_RootNrEvap()) &
-                           *log((GetSoil_REW()+1._dp)/20._dp))))
+    if ((gvars[:rain_record].DataType == :Decadely) | (gvars[:rain_record].DataType == :Monthly)) &
+       (gvars[:simulparam].EffectiveRain.RootNrEvap > 0)
+       epot = gvars[:float_parameters][:epot] /
+               (exp((1/gvars[:simulparam].EffectiveRain.RootNrEvap)*log((gvars[:soil].REW+1)/20)))
+        setparameter!(gvars[:float_parameters], :epot, epot)
     end 
 
 
     # 13. Transpiration
     if !gvars[:bool_parameters][:nomorecrop] & (gvars[:float_parameters][:rooting_depth] > 0.0001)
         if (gvars[:float_parameters][:surfacestorage] > 0) &
-            ((gvars[:crop].AnaeroPoint == 0) | (gvars[:integer_parameters][:daysubmerged] < simulparam.DelayLowOxygen))
-            surface_transpiration(Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
+            ((gvars[:crop].AnaeroPoint == 0) | (gvars[:integer_parameters][:daysubmerged] < gvars[:simulparam].DelayLowOxygen))
+            surface_transpiration!(gvars, coeffb0salt, coeffb1salt, coeffb2salt)
         else
-            calculate_transpiration(GetTpot(), Coeffb0Salt, Coeffb1Salt, Coeffb2Salt)
+            calculate_transpiration!(gvars, gvars[:float_parameters][:tpot], coeffb0salt, coeffb1salt, coeffb2salt)
         end 
     end 
-    if (GetSurfaceStorage() < epsilon(0._dp)) then
-        SetDaySubmerged(0)
+    if gvars[:float_parameters][:surfacestorage] < eps() 
+        setparameter!(gvars[:integer_parameters], :daysubmerged, 0)
     end 
-    FeedbackCC()
+    feedback_cc!(gvars)
 
     # 14. Adjustment to groundwater table
-    if (WaterTableInProfile) then
-        HorizontalInflowGWTable(GetZiAqua()/100._dp, HorizontalSaltFlow, &
-                                     HorizontalWaterFlow)
+    if watertableinprofile
+        horizontal_inflow_gwtable!(gvars, lvars, gvars[:integer_parameters][:ziaqua]/100)
     end 
 
     # 15. Salt concentration
-    ConcentrateSalts()
+    concentrate_salts!(gvars)
 
     # 16. Soil water balance
     control = :end_day
     check_water_salt_balance!(gvars, lvars, dayi, control)
 
     return nothing
-end #notend
+end 
 
 """
     check_water_salt_balance!(gvars, lvars, dayi, control)
@@ -583,7 +577,7 @@ function calculate_runoff!(gvars)
             sumi = calculate_relative_wetness_topsoil(maxdepth, compartments, soil_layers) 
 
             call determinecniandiii(cn2, cn1, cn3)
-            cna = round(int, cn1+(cn3-cn1)*sumi)
+            cna = round(Int, cn1+(cn3-cn1)*sumi)
         else
             cna = cn2 
         end 
@@ -996,11 +990,11 @@ function calculate_infiltration!(gvars, lvars)
             layeri = compartments[compi].Layer
 
             #1. Calculate multiplication factor
-            #====================================
+
             factor = calculate_factor(layeri, compi, soil_layers, compartments)
 
             #2. Calculate theta nul
-            #========================
+
             delta_theta_nul = amount_still_to_store /(1000 * compartments[compi].Thickness *
                               (1-soil_layers[layeri].GravelVol/100))
             delta_theta_sat = calculate_delta_theta(soil_layers[layeri].SAT/100, soil_layers[layeri].FC/100, layeri, soil_layers)
@@ -1020,7 +1014,7 @@ function calculate_infiltration!(gvars, lvars)
             end i
 
             #3. Calculate drain max
-            #========================
+
             drain_max = factor * delta_theta_nul * 1000 * compartments[compi].Thickness *
                              (1-soil_layers[layeri].GravelVol/100)
             if (compartments[compi].Fluxout + drain_max) > soil_layers[layeri].InfRate
@@ -1028,7 +1022,7 @@ function calculate_infiltration!(gvars, lvars)
             end 
 
             #4. Store water
-            #================
+
             diff = theta_nul - compartments[compi].Theta
             if diff > 0
                 compartments[compi].Theta += amount_still_to_store /(1000 * compartments[compi].Thickness *
@@ -1044,7 +1038,7 @@ function calculate_infiltration!(gvars, lvars)
             compartments[compi].Fluxout += amount_still_to_store 
 
             #5. Redistribute excess
-            #========================
+
             excess = amount_still_to_store - drain_max
             if excess < 0
                 excess = 0
@@ -1086,7 +1080,7 @@ function calculate_infiltration!(gvars, lvars)
         end 
 
         #6. Adjust infiltrated water
-        #=============================
+
         if runoff > runoffini
             if management.Bundheight >= 0.01
                 surfacestorage += (runoff  - runoffini)
@@ -2356,7 +2350,7 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
         end 
 
         # 7. no crop as a result of fertiltiy and/or water stress
-        if round(int, 1000*cciactual) <= 0
+        if round(Int, 1000*cciactual) <= 0
             nomorecrop = true
         end 
     end 
@@ -3272,3 +3266,984 @@ function get_cdc_adjusted_no_stress_new(ccx, cdc, ccxadjusted)
     cdcadjusted = cdc * ((ccxadjusted+2.29)/(ccx+2.29))
     return cdcadjusted
 end
+
+"""
+    pstomatulact = adjust_pstomatal_to_eto(meaneto, crop, simulparam)
+
+simul.f90:1084
+"""
+function adjust_pstomatal_to_eto(meaneto, crop, simulparam)
+    if crop.pMethod == :NoCorrection
+            pstomatulact = crop.pdef
+    elseif crop.pMethod == :FAOCorrection
+         pstomatulact = crop.pdef + simulparam.pAdjFAO * (0.04 *(5-meaneto))*log10(10-9*crop.pdef)
+    end 
+    if pstomatulact > 1
+        pstomatulact = 1
+    end 
+    if pstomatulact < 0
+        pstomatulact = 0
+    end 
+
+    return pstomatulact
+end
+
+"""
+    prepare_stage1!(gvars)
+
+simul.f90:4140
+"""
+function prepare_stage1!(gvars)
+    soil = gvars[:soil]
+    simulation = gvars[:simulation]
+
+    if gvars[:float_parameters][:surfacestorage] > 0.0000001
+        simulation.EvapWCsurf = soil.REW
+    else
+        simulation.EvapWCsurf = gvars[:float_parameters][:rain] + 
+                                gvars[:float_parameters][:irrigation] +
+                                gvars[:float_parameters][:runoff] 
+        if simulation.EvapWCsurf > soil.REW
+            simulation.EvapWCsurf = soil.REW
+        end 
+    end 
+    simulation.EvapStartStg2 = undef_int
+    simulation.EvapZ = EvapZmin/100
+    return nothing
+end
+
+"""
+    wx = wc_evap_layer(zlayer, attheta, compartments, soil_layers)
+
+simul.f90:4158
+"""
+function wc_evap_layer(zlayer, attheta, compartments, soil_layers)
+    wx = 0
+    ztot = 0
+    compi = 0
+    while (abs(zlayer-ztot) > 0.0001) & (compi < length(compartments))
+        compi = compi + 1
+        layeri = compartment[compi].Layer
+        if (ztot + compartments[compi].Thickness) > zlayer
+            fracz = (zlayer - ztot)/(compartments[compi].Thickness)
+        else
+            fracz = 1
+        end 
+        if attheta == :AtSAT
+            wx = wx + 10 * soil_layers[layeri].SAT * fracz * compartments[compi].Thickness *
+                      (1 - soil_layers[layeri].GravelVol/100)
+        elseif attheta == :AtFC
+            wx = wx + 10 * soil_layers[layeri].FC * fracz * compartments[compi].Thickness *
+                      (1 - soil_layers[layeri].GravelVol/100)
+        elseif attheta == :AtWP
+            wx = wx + 10 * soil_layers[layeri].WP * fracz * compartments[compi].Thickness *
+                      (1 - soil_layers[layeri].GravelVol/100)
+        else
+            wx = wx + 1000 * compartments[compi].Theta * fracz *
+                    compartments[compi].Thickness * (1 - soil_layers[layeri].GravelVol/100)
+        end 
+        ztot = ztot + fracz * compartments[compi].Thickness
+    end 
+    return wx
+end 
+
+"""
+    prepare_stage2!(gvars)
+
+simul.f90:4212
+"""
+function prepare_stage2!(gvars)
+    simulation = gvars[:simulation]
+    soil = gvars[:soil]
+    compartments = gvars[:compartments]
+    soil_layers = gvars[:soil_layers]
+
+    simulation.EvapZ = EvapZmin/100
+    attheta = :AtSat
+    wsat = wc_evap_layer(simulation.EvapZ, attheta, compartments, soil_layers)
+    attheta = :AtFC
+    wfc = wc_evap_layer(simulation.EvapZ, attheta, compartments, soil_layers)
+    attheta = :AtAct
+    wact = wc_evap_layer(simulation.EvapZ, attheta, compartments, soil_layers)
+
+    if (wact - (wfc-soil.REW)) <= eps()
+        evapstartstg2 = 0
+    else
+        evapstartstg2 = round(Int, 100 * (wact - (wfc-soil.REW))/(wsat - (wfc-soil.REW)))
+    end 
+    simulation.EvapStartStg2 = evapstartstg2
+
+    return nothing
+end
+
+"""
+    adjust_epot_mulch_wetted_surface!(gvars)
+
+simul.f90:4260
+"""
+function adjust_epot_mulch_wetted_surface!(gvars)
+    dayi = gvars[:integer_parameters][:daynri]
+    epottot = gvars[:float_parameters][:epot]
+    surfacestorage = gvars[:float_parameters][:surfacestorage]
+    rain = gvars[:float_parameters][:rain]
+    irrigation = gvars[:float_parameters][:irrigation]
+    management = gvars[:management]
+    simulparam = gvars[:simulparam]
+    crop = gvars[:crop]
+    evapwcsurface = gvars[:simulation].EvapWCsurf
+
+    # 1. Mulches (reduction of EpotTot to Epot)
+    if surfacestorage <= 0.000001
+        if dayi < crop.Day1 # before season
+            epot = epottot * (1 - (management.EffectMulchOffS/100)*(management.SoilCoverBefore/100))
+        else
+            if dayi < crop.Day1+crop.DaysToHarvest # in season
+                epot = epottot * (1  - (management.EffectMulchInS/100) * (management.Mulch/100))
+            else
+                epot = epottot * (1 - (management.EffectMulchOffS/100) * (management.SoilCoverAfter/100))
+            end 
+        end 
+    else
+        epot = epottot # flooded soil surface
+    end 
+
+    # 2a. Entire soil surface wetted ?
+    if irrigation > 0
+        # before season
+        if (dayi < crop.Day1) & (simulparam.IrriFwOffSeason < 100)
+            setparameter!(gvars[:bool_parameters], :evapo_entire_soil_surface, false)
+        end 
+        # in season
+        if (dayi >= crop.Day1) &
+           (dayi < crop.Day1+crop.DaysToHarvest) &
+           (simulparam.IrriFwInSeason < 100)
+            setparameter!(gvars[:bool_parameters], :evapo_entire_soil_surface, false)
+        end 
+        # after season
+        if (dayi >= crop.Day1+crop.DaysToHarvest) & (simulparam.IrriFwOffSeason < 100)
+            setparameter!(gvars[:bool_parameters], :evapo_entire_soil_surface, false)
+        end 
+    end 
+    if (rain > 1) | (surfacestorage > 0)
+        setparameter!(gvars[:bool_parameters], :evapo_entire_soil_surface, true)
+    end 
+    if (dayi >= crop.Day1) &
+       (dayi < crop.Day1+crop.DaysToHarvest) &
+       (gvars[:symbol_parameters][:irrimode] == :Inet
+        setparameter!(gvars[:bool_parameters], :evapo_entire_soil_surface, true)
+    end 
+
+    # 2b. Correction for Wetted surface by Irrigation
+        if !gvars[:bool_parameters][:evapo_entire_soil_surface]
+        if (dayi >= crop.Day1) & (dayi < (crop.Day1+crop.DaysToHarvest)) 
+            # in season
+            evapwcsurface = evapwcsurface * (simulparam.IrriFwInSeason/100)
+            epotirri = epottot * (simulparam.IrriFwInSeason/100)
+        else
+            # off-season
+            evapwcsurface = evapwcsurface * (simulparam.IrriFwOffSeason/100)
+            epotirri = epottot * (simulparam.IrriFwOffSeason/100)
+        end 
+        if gvars[:float_parameters][:eact] > epotirri
+            epotirri = gvars[:float_parameters][:eact]  # eact refers to the previous day
+        end 
+        if epotirri < epot
+            epot = epotirri
+        end 
+    end 
+    
+    gvars[:simulation].EvapWCsurf = evapwcsurface
+    setparameter(gvars[:float_parameters], :epot, epot)
+    return nothing
+end
+
+"""
+    calculate_evaporation_surface_water!(gvars)
+
+simul.f90:4236
+"""
+function calculate_evaporation_surface_water!(gvars)
+    if gvars[:float_parameters][:surfacestorage] > gvars[:float_parameters][:epot]
+        saltsurface = gvars[:float_parameters][:surfacestorage]*gvars[:float_parameters][:ecstorage]*equiv
+        setparameter!(gvars[:float_parameters], :eact, gvars[:float_parameters][:epot])
+        setparameter!(gvars[:float_parameters], :surfacestorage, gvars[:float_parameters][:surfacestorage] - gvars[:float_parameters][:eact])
+        # salinisation of surface storage layer
+        setparameter!(gvars[:float_parameters], :ecstorage, saltsurface/(gvars[:float_parameters][:surfacestorage]*equiv))
+    else
+        setparameter!(gvars[:float_parameters], :eact, gvars[:float_parameters][:surfacestorage])
+        setparameter!(gvars[:float_parameters], :surfacestorage, 0.0) 
+        gvars[:simulation].EvapWCsurf = gvars[:soil].REW
+        gvars[:simulation].EvapZ = EvapZmin/100
+        if gvars[:simulation].EvapWCsurf < 0.0001
+            prepare_stage2!(gvars)
+        else
+            gvars[:simulation].EvapStartStg2 = undef_int
+        end 
+    end 
+    return nothing
+end
+
+"""
+    calculate_soil_evaporation_stage1!(gvars)
+
+4439
+"""
+function calculate_soil_evaporation_stage1!(gvars)
+    stg1 = true
+    eremaining = GetEpot() - GetEact()
+    if gvars[:simulation].EvapWCsurf > eremaining
+        extract_water_from_evap_layer!(gvars, eremaining, evapzmin, stg1)
+    else
+        extract_water_from_evap_layer!(gvars, gvars[:simulation].EvapWCsurf, evapzmin, stg1)
+    end 
+    if gvars[:simulation].EvapWCsurf < 0.0000001
+        prepare_stage2!(gvars)
+    end 
+    return nothing
+end
+
+"""
+    extract_water_from_evap_layer!(gvars, evaptolose, zact, stg1)
+
+simul.f90:4377
+"""
+function extract_water_from_evap_layer!(gvars, evaptolose, zact, stg1)
+    compartments = gvars[:compartments]
+    soil_layers = gvars[:soil_layers]
+    simulation = gvars[:simulation]
+
+    evaplost = 0
+    compi = 0
+    ztot = 0
+    loopi = true
+    while loopi
+        compi = compi + 1
+        if (ztot + compartments[compi].Thickness) > zact
+            fracz = (zact-ztot)/compartments[compi].Thickness
+        else
+            fracz = 1
+        end 
+        wairdry = 10 *
+                  soil_layers[layeri].WP/ *
+                  compartments[compi].Thickness *
+                  (1 - soil_layers[layeri].GravelVol/100)
+        wx = 1000 * compartments[compi].Theta *
+             compartments[compi].Thickness *
+             (1 - soil_layers[layeri].GravelVol/100)
+        availablew = (wx-wairdry)*fracz
+        stilltoextract = (evaptolose-evaplost)
+        if availablew > 0
+            if availablew > stilltoextract
+                eact = gvars[:float_parameters][:eact]
+                setparameter!(gvars[:float_parameters], :eact, eact + stilltoextract)
+                evaplost = evaplost + stilltoextract
+                wx = wx - stilltoextract
+            else
+                eact = gvars[:float_parameters][:eact]
+                setparameter!(gvars[:float_parameters], :eact, eact + availablew)
+                evaplost = evaplost + availablew
+                wx = wx - availablew
+            end 
+            compartments[compi].Theta = wx/(1000 * compartments[compi].Thickness *
+                                         (1 - soil_layers[layeri].GravelVol/100))
+        end 
+        ztot = ztot + fracz * (compartments[compi].Thickness)
+        if (compi >= length(compartments)) |
+           (abs(stilltoextract) < 0.0000001) |
+           (ztot >= 0.999999*zact)
+           loopi = false
+        end
+    end
+    if stg1
+        simulation.EvapWCsurf -= evaplost
+        if abs(evaptolose-evaplost) > 0.0001
+            # not enough water left in the compartment to store WCsurf
+            simulation.EvapWCsurf = 0  
+        end 
+    end 
+    return nothing
+end
+
+"""
+    calculate_soil_evaporation_stage2!(gvars)
+
+simul.f90:4458
+"""
+function  calculate_soil_evaporation_stage2!(gvars)
+    compartments = gvars[:compartments]
+    simulparam = gvars[:simulparam]
+    simulation = gvars[:simulation]
+    soil_layers = gvars[:soil_layers]
+
+    nrofstepsinday = 20
+    fractionwtoexpandz = 0.4
+    thetainievap = Float64[0.0 for _ in 1:11]
+    scellinievap = Int[ 0 for _ in 1:11]
+    # Step 1. Conditions before soil evaporation
+    compi = 1
+    maxsaltexdepth = compartments[compi].Thickness
+    while (maxsaltexdepth < simulparam.EvapZmax) & (compi < length(compartments))
+        compi = compi + 1
+        thetainievap[compi-1] = compartments[compi].Theta
+        scellinievap[compi-1] = active_cells(compartments[compi], soil_layers)
+        maxsaltexdepth = maxsaltexdepth + compartments[compi].Thickness
+    end 
+
+    # Step 2 Soil evaporation
+    stg1 = false
+    eremaining = gvars[:float_parameters][:epot] - gvars[:float_parameters][:eact]
+    wupper, wlower = get_limits_evap_layer(simulation.EvapStartStg2, simulation, compartments, soil_layers)
+    for i in 1:nrofstepsinday
+        attheta = :AtAct
+        wact = wc_evap_layer(simulation.EvapZ, attheta, compartments, soil_layers)
+        wrel = (wact-wlower)/(wupper-wlower)
+        if simulparam.EvapZmax > EvapZmin
+            while (wrel < (fractionwtoexpandz * (simulparam.EvapZmax - (100*simulation.EvapZ))/(simulparam.EvapZmax-EvapZmin))) &
+                  (simulation.EvapZ < simulparam.EvapZmax/100)
+                simulation.EvapZ += 0.001 # add 1 mm
+                wupper, wlower = get_limits_evap_layer(simulation.EvapStartStg2, simulation, compartments, soil_layers)
+                attheta = :AtAct
+                wact = wc_evap_layer(simulation.EvapZ, attheta, compartments, soil_layers)
+                wrel = (wact-wlower)/(wupper-wlower)
+            end 
+            kr = soil_evaporation_reduction_coefficient(wrel, simulparam.EvapDeclineFactor)
+        end 
+        # if abs(gvars[:float_parameters][:eto] - 5) > 0.01
+        #     # correction for evaporative demand
+        #     # adjustment of Kr (not considered yet)
+        # end 
+        elost = kr * (eremaining/nrofstepsinday)
+        extract_water_from_evap_layer!(gvars, elost, simulation.EvapZ, stg1)
+    end 
+
+    # Step 3. Upward salt transport
+    sx = salt_transport_factor(compartment[1].Theta, soil_layers)
+    if sx > 0.01
+        scell1 = active_cells(compartments[1], soil_layers)
+        compi = 2
+        zi = compartments[1].Thickness + compartments[2].Thickness
+        while (round(Int, zi*100) <= round(Int, maxsaltexdepth*100)) &
+              (compi <= length(compartments)) &
+              (round(Int, thetainievap[compi-1]*100000) != round(Int, compartments[compi].Theta*100000))
+            # move salt to compartment 1
+            scellend = active_cells(compartments[compi], soil_layers)
+            boolcell = false
+            layeri = compartments[compi].Layer
+            ul = soil_layers[layeri].UL
+            deltax = soil_layers[layeri].Dx
+            loopi = true
+            while loopi
+                if scellend < scellinievap[compi-1]
+                    saltdisplaced = sx * compartments[compi].Salt[scellinievap[compi-1]]
+                    compartments[compi].Salt[scellinievap[compi-1]] -= saltdisplaced
+                    scellinievap[compi-1] = scellinievap[compi-1] - 1
+                    thetainievap[compi-1] = deltax * scellinievap[compi-1]
+                else
+                    boolcell = true
+                    if scellend == soil_layers[layeri].SCP1
+                        saltdisplaced = sx * compartments[compi].Salt[scellinievap[compi]] *
+                                         (thetainievap[compi-1] - compartments[compi].Theta) /
+                                         (thetainievap[compi-1] - ul)
+                    else
+                        saltdisplaced = sx * compartments[compi].Salt[scellinievap[compi - 1]] *
+                                         (thetainievap[compi-1] - compartments[compi].Theta) /
+                                         (thetainievap[compi-1] - deltax*(scellend-1))
+                    end 
+                    compartments[compi].Salt[scellinievap[compi-1]] -= saltdisplaced
+                end 
+                compartments[1].Salt[scell1] -= saltdisplaced
+                if boolcell
+                    loopi = false
+                end
+            end 
+            compi = compi + 1
+            if compi <= length(compartments) 
+                zi = zi + compartments[compi].Thickness
+            end 
+        end 
+    end 
+
+    return nothing
+end
+
+"""
+    wupper, wlower = get_limits_evap_layer(xproc, simulation, compartments, soil_layers)
+
+simul.f90:4575
+"""
+function get_limits_evap_layer(xproc, simulation, compartments, soil_layers)
+    attheta = :AtSat
+    wsat = wc_evap_layer(simulation.EvapZ, attheta, compartments, soil_layers)
+    attheta = :AtFC
+    wfc = wc_evap_layer(simulation.EvapZ, attheta, compartments, soil_layers)
+    wupper = (xproc/100) * (wsat - (wfc-soil.REW)) + (wfc-soil.REW)
+    attheta = :AtWP
+    wlower = wc_evap_layer(simulation.EvapZ, attheta, compartments, soil_layers)/2
+    return wupper, wlower 
+end
+
+"""
+    s = salt_transport_factor(theta, soil_layers)
+
+simul.f90:4595
+"""
+function salt_transport_factor(theta, soil_layers)
+    if theta <= soil_layers[1].WP/200
+        s = 0
+    else
+        x = (theta*100 - soil_layers[1].WP/2) /
+            (soil_layers[1].SAT - soil_layers[1].WP/2)
+        s = exp(x*log(10)+log(x/10))
+    end 
+    return s
+end
+
+"""
+    s = soil_evaporation_reduction_coefficient(wrel, edecline)
+
+global.f90:2139
+"""
+function soil_evaporation_reduction_coefficient(wrel, edecline)
+    if wrel <= 0.00001
+        s = 0
+    else
+        if wrel >= 0.99999
+            s = 1
+        else
+            s = (exp(edecline*wrel) - 1)/(exp(edecline) - 1)
+        end 
+    end 
+    return s
+end
+
+"""
+    surface_transpiration!(gvars, coeffb0salt, coeffb1salt, coeffb2salt)
+
+simul.f90:1523
+"""
+function surface_transpiration!(gvars, coeffb0salt, coeffb1salt, coeffb2salt)
+    daysubmerged = gvars[:integer_parameters][:daysubmerged]
+    surfacestorage = gvars[:float_parameters][:surfacestorage]
+    tact = gvars[:float_parameters][:tact]
+    ecstorage = gvars[:float_parameters][:ecstorage]
+
+    compartments = gvars[:compartments]
+    simulparam = gvars[:simulparam]
+    simulation = gvars[:simulation]
+    crop = gvars[:crop]
+
+    daysubmerged = daysubmerged + 1
+    for compi in 1:length(compartments)
+        compartment[compi].DayAnaero += 1 
+        if compartments[compi].DayAnaero > simulparam.DelayLowOxygen
+            compartment[compi].DayAnaero = simulparam.DelayLowOxygen
+        end 
+    end 
+    if crop.AnaeroPoint > 0
+        part = 1-daysubmerged/simulparam.DelayLowOxygen
+    else
+        part = 1
+    end 
+    ksreduction = ks_salinity(simulation.SalinityConsidered, crop.ECemin, crop.ECemax, ecstorage, 0)
+    saltsurface = surfacestorage*ecstorage*equiv
+    if surfacestorage > ksreduction*part*tpot
+        surfacestorage = surfacestorage - ksreduction*part*tpot
+        tact = ksreduction*part*tpot
+        # salinisation of surface storage layer
+        ecstorage = saltsurface/(surfacestorage*equiv)
+    else
+        tact = surfacestorage -0.1
+        surfacestorage = 0.1 # zero give error in already updated salt balance
+    end 
+    if tact < ksreduction*part*tpot
+        setparameter!(gvars[:integer_parameters], :daysubmerged, daysubmerged)
+        setparameter!(gvars[:float_parameters], :tact, tact)
+        setparameter!(gvars[:float_parameters], :surfacestorage, surfacestorage)
+        setparameter!(gvars[:float_parameters], :ecstorage, ecstorage)
+
+        tact_temp = tact   #(*protect tact from changes in the next routine*)
+        calculate_transpiration!(gvars, (ksreduction*part*tpot-tact), 
+                                         coeffb0salt, coeffb1salt, coeffb2salt)
+        tact = tact_temp + gvars[:float_parameters][:tact]
+        setparameter!(gvars[:float_parameters], :tact, tact)
+    else 
+        setparameter!(gvars[:integer_parameters], :daysubmerged, daysubmerged)
+        setparameter!(gvars[:float_parameters], :tact, tact)
+        setparameter!(gvars[:float_parameters], :surfacestorage, surfacestorage)
+        setparameter!(gvars[:float_parameters], :ecstorage, ecstorage)
+    end
+    return nothing
+end
+
+"""
+    calculate_transpiration!(gvars, tpot, coeffb0salt, coeffb1salt, coeffb2salt)
+
+simul.f90:1156
+"""
+function calculate_transpiration!(gvars, tpot, coeffb0salt, coeffb1salt, coeffb2salt)
+    daysubmerged = gvars[:integer_parameters][:daysubmerged]
+    irrimode = gvars[:symbol_parameters][:irrimode]
+    simulation = gvars[:simulation]
+    root_zone_wc = gvars[:root_zone_wc]
+    root_zone_salt = gvars[:root_zone_salt]
+    crop = gvars[:crop]
+    simulparam = gvars[:simulparam]
+    compartments = gvars[:compartments]
+    rooting_depth = gvars[:float_parameters][:rooting_depth]
+    irrigation = gvars[:float_parameters][:irrigation]
+
+    tact = 0
+
+    if tpot > 0
+        # 1. maximum transpiration in actual root zone
+        if irrimode == :Inet
+            # salinity stress not considered
+            tpotmax = tpot
+        else
+            determine_root_zone_wc!(gvars, rooting_depth)
+
+            # --- 1. Effect of water stress and ECe (total rootzone)
+            wrelsalt = (root_zone_wc.FC-root_zone_wc.Actual)/ 
+                       (root_zone_wc.FC-root_zone_wc.WP)
+
+            # --- 2. effect of water stress
+            pstomatllact = 1
+            if simulation.SWCtopSoilConsidered == true
+                # top soil is relative wetter than total root zone
+                if root_zone_wc.ZtopAct < (0.999 * root_zone_wc.ZtopThresh)
+                    wrel = (root_zone_wc.ZtopFC - root_zone_wc.ZtopAct)/ 
+                           (root_zone_wc.ZtopFC - root_zone_wc.ZtopWP)
+                    # kssen = ks_any(wrelative, psenact, psenll, crop.KsShapeFactorSenescence) 
+                    redfact = (1 - simulation.EffectStress.RedKsSto/100) * ks_any(wrel, crop.pActStom, pstomatllact, 0.0) # where (0.0) is linear
+                else
+                    redfact = (1 - simulation.EffectStress.RedKsSto/100)
+                end 
+            else
+                # total root zone
+                if root_zone_wc.Actual < (0.999 * root_zone_wc.Thresh)
+                    wrel = (root_zone_wc.FC-root_zone_wc.Actual)/ 
+                            (root_zone_wc.FC-root_zone_wc.WP)
+                    redfact = (1 - simulation.EffectStress.RedKsSto/100) * ks_any(wrel, crop.pActStom, pstomatllact, 0.0) # where (0.0) is linear
+                else
+                    redfact = (1 - simulation.EffectStress.RedKsSto/100)
+                end 
+            end 
+
+            if redfact < 0
+                redfact = 0
+            end 
+            if redfact > 1
+                redfact = 1
+            end 
+
+            # --- 3. Extra effect of ECsw (salt in total root zone is considered)
+            if simulation.SalinityConsidered
+                redfactecsw = adjusted_ks_sto_to_ecsw(crop.ECemin, 
+                              crop.ECemax, crop.ResponseECsw, 
+                              root_zone_salt.ECe, root_zone_salt.ECsw, 
+                              root_zone_salt.ECswFC, wrelsalt, coeffb0salt, 
+                              coeffb1salt, coeffb2salt, redfact, simulation)
+            else
+                redfactecsw = redfact
+            end 
+
+            # --- 4. Conclusion (adjustment of TpotMAX considering Water and Salt stress)
+            tpotmax = redfactecsw * tpot
+
+            # 1.b anaerobic conditions in root zone (total root zone is considered)
+            redfact, dayanaero = determine_root_zone_anaero_conditions(root_zone_wc.SAT, 
+                                              root_zone_wc.Actual, 
+                                              crop.AnaeroPoint, 
+                                              rooting_depth, 
+                                              simulation,
+                                              simulparam)
+            simulation.DayAnaero = dayanaero
+            tpotmax = redfact * tpotmax
+        end 
+
+        # 2. extraction of TpotMax out of the compartments
+        # 2.a initial settings
+        calculate_rootfraction_compartment!(compartments, rooting_depth)
+        calculate_sink_values!(compartments, rooting_depth, irrimode, crop, simulation)
+        compi = 0
+        pre_layer = 0
+        loopi = true
+        while loopi
+            compi = compi + 1
+            layeri = compartments[compi].Layer
+            if layeri > pre_layer
+                theta_critical = calculate_theta_critical(layeri, soil_layers, crop)
+                pre_layer = layeri
+            end 
+            # 2.b calculate alfa
+            if irrimode == :Inet
+                alfa = 1
+            else
+                # effect of water stress and ECe
+                if compartments[compi].Theta >= theta_critical
+                    alfa = (1 - simulation.EffectStress_RedKsSto/100)
+                elseif compartments[compi].Theta > (soil_layers[layeri].WP/100)
+                    if theta_critical > (soil_layers[layeri].WP/100)
+                        wrel = (soil_layers[layeri].FC/100 - compartments[compi].Theta) /
+                                (soil_layers[layeri].FC/100 - soil_layers[layeri].WP/100)
+                        pstomatllact = 1
+                        crop_pActStom_tmp = crop.pActStom
+                        alfa = (1 - simulation.EffectStress.RedKsSto/100) *
+                                ks_any(wrel, crop.pActStom, pstomatllact, crop.KsShapeFactorStomata)
+                    else
+                        alfa = (1 - simulation.EffectStress.RedKsSto/100)
+                    end 
+                else
+                    alfa = 0
+                end 
+                # extra effect of ECsw
+                if simulation.SalinityConsidered
+                    WrelSalt = (soil_layers[layeri].FC/100 - compartments[compi].Theta) /
+                                    (soil_layers[layeri].FC/100 - soil_layers[layeri].WP/100)
+                    compiece = ececomp(compartments[compi], soil_layers, simulparam)
+                    compiecsw = ecswcomp(compartments[compi], false, soil_layers, simulparam)
+                    compiecswfc = ecswcomp(compartments[compi], true, soil_layers, simulparam)
+                    redfactecsw = adjusted_ks_sto_to_ecsw(crop.ECemin, 
+                                  crop.ECemax, crop.ResponseECsw, 
+                                  compiece, compiecsw, compiecswfc, wrelsalt, 
+                                  coeffb0salt, coeffb1salt, coeffb2salt, alfa, simulation)
+                else
+                    redfactecsw = alfa
+                end 
+                alfa = redfactecsw
+            end 
+            if crop.AnaeroPoint > 0
+                alfa, dayanaero = correction_anaeroby(compartments[compi], alfa, daysubmerged, simulparam, soil_layers, crop)
+                compartments[compi].DayAnaero = dayanaero
+            end 
+            # 2.c extract water
+            sinkmm = 1000 * (alfa * compartments[compi].WFactor * compartments[compi].Smax) * compartments[compi].Thickness
+            wtoextract = tpotmax-gettact
+            if wtoextract < sinkmm
+                sinkmm = wtoextract
+            end 
+            compartments[compi].Theta -= sinkmm/(1000*compartments[compi].Thickness* 
+                                            (1 - soil_layers[layeri].GravelVol/100))
+            wtoextract = wtoextract - sinkmm
+            tact += sinkmm
+            if (wtoextract < eps() | (compi == length(compartments))
+                loopi = false
+            end
+        end
+
+
+        # 3. add net irrigation water requirement
+        if irrimode == :Inet
+            # total root zone is considered
+            determine_root_zone_wc!(gvars, rooting_depth)
+            inetthreshold = root_zone_wc.FC - simulparam.PercRAW/100 *(root_zone_wc.FC - root_zone_wc.Thresh)
+            if root_zone_wc.Actual < inetthreshold
+                pre_layer = 0
+                for compi in 1:length(compartments)
+                    layeri = compartments[compi].Layer
+                    if layeri > pre_layer
+                        theta_critical = calculate_theta_critical(layeri, soil_layers, crop)
+                        inetthreshold = soil_layers[layeri].FC/100 - simulparam.PercRAW/100*(soil_layers[layeri].FC/100 - theta_critical)
+                        pre_layer = layeri
+                    end 
+                    deltawc = compartments[compi].WFactor * (inetthreshold - compartments[compi].Theta) *
+                              1000*compartments[compi].Thickness*(1 - soil_layers[layeri].GravelVol/100)
+                    compartments[compi].Theta += DeltaWC/(1000*compartments[compi].Thickness* 
+                                                (1 - soil_layers[layeri].GravelVol(layeri)/100))
+                    irrigation += deltawc
+                end 
+            end 
+        end 
+    end 
+
+    setparameter!(gvars[:float_parameters], :irrigation, irrigation)
+    setparameter!(gvars[:float_parameters], :tact, tact)
+    return nothing
+end
+
+"""
+    redfact, dayanaero = determine_root_zone_anaero_conditions(wsat, wact, anaevol, zr, simulation, simulparam)
+
+simul.f90:1490
+note that we need to do simulation.DayAnaero = dayanaero after calling this function
+"""
+function determine_root_zone_anaero_conditions(wsat, wact, anaevol, zr, simulation, simulparam)
+    dayanaero = simulation.DayAnaero
+    redfact = 1
+    if (anaevol > 0) & (zr > 0)
+        satvol = wsat/(10*zr)
+        actvol = wact/(10*zr)
+        if actvol > satvol
+            actvol = satvol
+        end 
+        if actvol > (satvol-anaevol)
+            dayanaero = dayanaero + 1
+            if dayanaero > simulparam.DelayLowOxygen
+                dayanaero = simulparam.DelayLowOxygen
+            end 
+            redfact = 1 - (1-((satvol - actvol)/anaevol)) * (dayanaero/simulparam.DelayLowOxygen)
+        else
+            dayanaero = 0
+        end 
+    else
+        dayanaero = 0
+    end
+
+    return redfact, dayanaero
+end
+
+"""
+    alfa, dayanaero = correction_anaeroby(compartment, alfa, daysubmerged, simulparam, soil_layers, crop)
+
+simul.f90:1453
+note that we need to do compartment.DayAnaero = dayanaero after calling this function
+"""
+function correction_anaeroby(compartment, alfa, daysubmerged, simulparam, soil_layers, crop)
+
+    dayanaero = compartment.DayAnaero
+    if (daysubmerged >= simulparam.DelayLowOxygen) & (crop.AnaeroPoint > 0)
+        alfaan = 0
+    elseif compartment.Theta > (soil_layers[compartment.Layer].SAT - crop.AnaeroPoint)/100 
+        dayanaero = dayanaero + 1
+        if dayanaero >= simulparam.DelayLowOxygen
+            ini = 0
+            dayanaero = simulparam.DelayLowOxygen
+        else
+            ini = 1
+        end 
+        alfaan = (soil_layers[compartment.Layer].SAT/100 - compartment.theta)/(crop.AnaeroPoint/100)
+        if alfaan < 0
+            alfaan = 0
+        end 
+        if simulparam.DelayLowOxygen > 1
+            alfaan = (ini+(dayanaero-1)*alfaan) /(ini+dayanaero-1)
+        end 
+    else
+        alfaan = 1
+        dayanaero = 0
+    end 
+    if alfa > alfaan
+        alfa = alfaan
+    end 
+
+    return alfa, dayanaero
+end
+
+"""
+    calculate_sink_values!(compartments, rootingdepth, irrimode, crop, simulation)
+
+simul.f90:1407
+"""
+function calculate_sink_values!(compartments, rootingdepth, irrimode, crop, simulation)
+    if irrimode == :Inet
+        sink_value = (crop.SmaxTop + crop.SmaxBot)/2
+        for compi in 1:length(compartments)
+            compartments[compi].Smax = sink_value
+        end 
+    else
+        cumdepth = 0
+        compi = 0
+        sbotcomp = crop.SmaxTop
+        loopi = true
+        while loopi
+            compi = compi + 1
+            stopcomp = sbotcomp
+            cumdepth = cumdepth + compartments[compi].Thickness
+            if cumdepth <= rootingdepth
+                sbotcomp = crop.SmaxBot * simulation.SCor +
+                           (crop.SmaxTop - crop.SmaxBot*simulation.SCor) *
+                           (rootingdepth - cumdepth)/rootingdepth
+            else
+                sbotcomp = crop.SmaxBot*simulation.SCor
+            end 
+            compartments[compi].Smax = (stopcomp + sbotcomp)/2
+            if compartments[compi].Smax > 0.06
+                compartments[compi].Smax = 0.06
+            end 
+            if (cumdepth >= rootingdepth) | (compi == length(compartments))
+                loopi = false
+            end
+        end 
+        for i in (compi + 1):length(compartments)
+            compartments[i].Smax = 0
+        end 
+    end 
+    return nothing
+end
+
+"""
+    calculate_rootfraction_compartment!(compartments, rootingdepth)
+
+simul.f90:1375
+"""
+function calculate_rootfraction_compartment!(compartments, rootingdepth)
+    cumdepth = 0
+    compi = 0
+    loopi = true
+    while loopi
+        compi = compi + 1
+        cumdepth = cumdepth + compartments[compi].Thickness
+        if cumdepth <= rootingdepth
+            compartments[compi].WFactor = 1
+        else
+            frac_value = rootingdepth - (cumdepth - compartments[compi].Thickness)
+            if frac_value > 0
+                compartments[compi].WFactor = frac_value/compartments[compi].Thickness
+            else
+                compartments[compi].WFactor = 0
+            end 
+        end 
+        if (cumdepth >= rootingdepth) | (compi == length(compartments))
+            loopi = false
+        end
+    end 
+    for i in (compi+1):length(compartments)
+        compartments[i].WFactor = 0
+    end 
+    return nothing
+end
+
+"""
+    theta = calculate_theta_critical(layeri, soil_layers, crop)
+
+simul.f90:1362
+"""
+function calculate_theta_critical(layeri, soil_layers, crop)
+
+    theta_taw = soil_layers[layeri].FC/100 - soil_layers[layeri].WP/100
+    theta_critical = soil_layers[layeri].FC/100 - theta_taw * crop.pActStom
+    return theta_critical
+end
+
+"""
+    ksstoout = adjusted_ks_sto_to_ecsw(ecemin, ecemax, responseecsw, ecei, 
+            ecswi, ecswfci, wrel, coeffb0salt, coeffb1salt, coeffb2salt, ksstoin, simulation)
+
+global.f90:2321
+"""
+function adjusted_ks_sto_to_ecsw(ecemin, ecemax, responseecsw, ecei, 
+            ecswi, ecswfci, wrel, coeffb0salt, coeffb1salt, coeffb2salt, ksstoin, simulation)
+
+        if (responseecsw > 0) & (wrel > eps()) & (simulation.SalinityConsidered == true)
+        # adjustment to ecsw considered
+        ecswrel = ecswi - (ecswfci - ecei) + (responseecsw-100)*wrel
+        if (ecswrel > ecemin) & (ecswrel < ecemax)
+            # stomatal closure at ecsw relative
+            localksshapefactorsalt = 3 # convex give best ecsw response
+            kssalti = ks_salinity(simulation.SalinityConsidered, ecemin, 
+                                        ecemax, ecswrel, localksshapefactorsalt)
+            saltstressi = (1-kssalti)*100
+            stoclosure = coeffb0salt + coeffb1salt * saltstressi + coeffb2salt * saltstressi * saltstressi
+            # adjusted kssto
+            ksstoout = (1 - stoclosure/100)
+            if ksstoout < 0
+                ksstoout = 0
+            end 
+            if ksstoout > ksstoin
+                ksstoout = ksstoin
+            end 
+        else
+            if ecswrel >= ecemax
+                ksstoout = 0 # full stress
+            else
+                ksstoout = ksstoin # no extra stress
+            end 
+        end 
+    else
+        ksstoout = ksstoin  # no adjustment to ecsw
+    end 
+    return ksstoout
+end
+
+"""
+    feedback_cc!(gvars)
+
+simul.f90:5348
+"""
+function feedback_cc!(gvars)
+    if ((gvars[:float_parameters][:cciactual] - gvars[:float_parameters][:cciprev]) > 0.005) &
+        # canopy is still developing
+        (gvars[:float_parameters][:tact] < eps())
+        # due to aeration stress or ETo = 0
+        setparameter!(gvars[:float_parameters], :cciactual, gvars[:float_parameters][:cciprev])
+        # no transpiration, no crop developmentc
+    end 
+    return nothing
+end
+
+"""
+    horizontal_inflow_gwtable!(gvars, lvars, depthgwtmeter)
+
+simul.f90:5260
+"""
+function horizontal_inflow_gwtable!(gvars, lvars, depthgwtmeter)
+    horizontalsaltflow = lvars[:float_parameters][:horizontalsaltflow]
+    horizontalwaterflow = lvars[:float_parameters][:horizontalwaterflow]
+
+    compartments = gvars[:compartments]
+    soil_layers = gvars[:soil_layers]
+    simulparam = gvars[:simulparam]
+    eciaqua = gvars[:float_parameters][:eciaqua]
+
+    ztot = 0
+    for compi in 1:length(compartments)
+        ztot = ztot + compartments[compi].Thickness
+        zi = ztot - compartments[compi].Thickness/2
+        layeri = compartments[compi].Layer
+        if zi >= depthgwtmeter
+            # soil water content is at saturation
+            if compartments[compi].Theta < soil_layers[layeri].SAT/100
+                deltaTheta = soil_layers[layeri].SAT/100 - compartments[compi].Theta
+                compartments[compi].Theta = soil_layers[layeri].SAT/100
+                horizontalwaterflow = horizontalwaterflow + 1000 * deltatheta *
+                                      compartments[compi].Thickness * (1 - soil_layers[layeri].GravelVol/100)
+            end 
+            # ECe is equal to the EC of the groundwater table
+            if abs(ececomp(compartments[compi], soil_layers, simulparam) - eciaqua) > 0.0001
+                saltact = 0
+                for celli in 1:soil_layers[layeri].SCP1
+                    saltact = saltact + (compartments[compi].Salt[celli] + compartments[compi].Depo[celli])/100 # Mg/ha
+                end 
+                determine_salt_content!(compartments[compi], soil_layers, simulparam)
+                saltadj = 0
+                for celli in 1:soil_layers[layeri].SCP1
+                    saltadj = saltadj + (compartments[compi].Salt[celli] + compartments[compi].Depo[celli])/100 # Mg/ha
+                end 
+                horizontalsaltflow = horizontalsaltflow + (saltadj - saltact)
+            end 
+        end 
+    end 
+
+    setparameter!(lvars[:float_parameters], :horizontalsaltflow, horizontalsaltflow)
+    setparameter!(lvars[:float_parameters], :horizontalwaterflow, horizontalwaterflow)
+    return nothing
+end
+
+"""
+    concentrate_salts!(gvars)
+
+simul.f90:4343
+"""
+function concentrate_salts!(gvars)
+    compartments = gvars[:compartments]
+    soil_layers = gvars[:soil_layers]
+    for compi in 1:length(compartments)
+        layeri = compartments[compi].Layer
+        salttot = 0.0
+        celwet = active_cells(compartments[compi], soil_layers)
+        if celwet < soil_layers[layeri].SCP1
+            for celi in (celwet+1):soil_layers[layeri].SCP1
+                salttot = salttot + compartments[compi].Salt[celi] + compartments[compi].Depo[celi]
+                compartments[compi].Salt[celi] = 0
+                compartments[compi].Depo[celi] = 0
+            end 
+        end 
+        if salttot > 0
+            compartments[compi].Salt[celwet] += salttot
+            mm = soil_layers[layeri].Dx*1000* compartments[compi].Thickness * (1 - soil_layers[layeri].GravelVol/ 100)
+            salt_solution_deposit!(compartments[compi], simulparam, celwet, mm)
+        end 
+    end 
+    return nothing
+end
+
