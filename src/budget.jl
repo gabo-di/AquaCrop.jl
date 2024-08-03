@@ -1941,9 +1941,9 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
                             ccototal, ccxtotal, gvars[:crop].CGC, 
                             gvars[:crop].GDDCGC, cdctotal, gddcdctotal, 
                             sumgddadjcc, ratdgdd, 
-                            gvars[:simulation].EffectStress_RedCGC, 
-                            gvars[:simulation].EffectStress_RedCCX, 
-                            gvars[:simulation].EffectStress_CDecline, 
+                            gvars[:simulation].EffectStress.RedCGC, 
+                            gvars[:simulation].EffectStress.RedCCX, 
+                            gvars[:simulation].EffectStress.CDecline, 
                             gvars[:crop].ModeCycle, gvars[:simulation])
             else
                 ccxsfcd = ccxsf - (ratdgdd * gvars[:simulation].EffectStress.CDecline/100) *
@@ -2081,8 +2081,8 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
                             ccototal, ccxtotal, gvars[:crop].CGC, cdctotal, 
                             gvars[:crop].GDDCGC, gddcdcadjusted, sumgddadjcc, 
                             gvars[:crop].ModeCycle, 
-                            gvars[:simulation].EffectStress_RedCGC, 
-                            gvars[:simulation].EffectStress_RedCCX,
+                            gvars[:simulation].EffectStress.RedCGC, 
+                            gvars[:simulation].EffectStress.RedCCX,
                             gvars[:simulation])
                     gvars[:crop].CCoAdjusted = ccototal
                     stressleaf = -33 # maximum canopy is reached;
@@ -2116,8 +2116,8 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
                                 cdctotal, gvars[:crop].GDDCGC, 
                                 gddcdcadjusted, sumgddadjcc, 
                                 gvars[:crop].ModeCycle, 
-                                gvars[:simulation].EffectStress_RedCGC, 
-                                gvars[:simulation].EffectStress_RedCCX,
+                                gvars[:simulation].EffectStress.RedCGC, 
+                                gvars[:simulation].EffectStress.RedCCX,
                                 gvars[:simulation])
                     gvars[:crop].CCxAdjusted = cciactual 
                 else
@@ -2130,12 +2130,12 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
                                 gvars[:crop].GDDaysToSenescence, 
                                 gvars[:crop].GDDaysToHarvest, 
                                 ccototal, 
-                                gvars[:crop].CCxAdjusted/(1- gvars[:simulation].EffectStress_RedCCx/100), 
+                                gvars[:crop].CCxAdjusted/(1- gvars[:simulation].EffectStress.RedCCx/100), 
                                 gvars[:crop].CGC, cdctotal, gvars[:crop].GDDCGC, 
                                 gddcdcadjusted, sumgddadjcc, 
                                 gvars[:crop].ModeCycle, 
-                                gvars[:simulation].EffectStress_RedCGC, 
-                                gvars[:simulation].EffectStress_RedCCX,
+                                gvars[:simulation].EffectStress.RedCGC, 
+                                gvars[:simulation].EffectStress.RedCCX,
                                 gvars[:simulation])
                 end 
                 if getcciactual > ccxsfcd
@@ -2322,12 +2322,12 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
                                 gvars[:crop].GDDaysToSenescence, 
                                 gvars[:crop].GDDaysToHarvest, 
                                 ccototal, 
-                                gvars[:crop].CCxAdjusted/(1 - gvars[:simulation].EffectStress_RedCCx/100), 
+                                gvars[:crop].CCxAdjusted/(1 - gvars[:simulation].EffectStress.RedCCx/100), 
                                 gvars[:crop].CGC, cdctotal, gvars[:crop].GDDCGC, 
                                 gddcdcadjusted,sumgddadjcc, 
                                 gvars[:crop].ModeCycle, 
-                                gvars[:simulation].EffectStress_RedCGC, 
-                                gvars[:simulation].EffectStress_RedCCX,
+                                gvars[:simulation].EffectStress.RedCGC, 
+                                gvars[:simulation].EffectStress.RedCCX,
                                 gvars[:simulation])
                 end 
                 timesenescence = 0  # no early senescence or back to normal
@@ -2646,9 +2646,9 @@ function determine_cci!(gvars, ccxtotal, ccototal, fracassim,
                             ccototal, ccxtotal, gvars[:crop].CGC, 
                             gvars[:crop].GDDCGC, cdctotal, gddcdctotal, 
                             gvars[:simulation].SumGDD, 1, 
-                            gvars[:simulation].EffectStress_RedCGC, 
-                            gvars[:simulation].EffectStress_RedCCX, 
-                            gvars[:simulation].EffectStress_CDecline, 
+                            gvars[:simulation].EffectStress.RedCGC, 
+                            gvars[:simulation].EffectStress.RedCCX, 
+                            gvars[:simulation].EffectStress.CDecline, 
                             gvars[:crop].ModeCycle,
                             gvars[:simulation])
             else
@@ -2848,8 +2848,8 @@ function determine_cci!(gvars, ccxtotal, ccototal, fracassim,
                             gvars[:crop].CGC, cdctotal, gvars[:crop].GDDCGC, 
                             gddcdctotal, gvars[:simulation].SumGDD, 
                             gvars[:crop].ModeCycle, 
-                            gvars[:simulation].EffectStress_RedCGC, 
-                            gvars[:simulation].EffectStress_RedCCX,
+                            gvars[:simulation].EffectStress.RedCGC, 
+                            gvars[:simulation].EffectStress.RedCCX,
                             gvars[:simulation])
                 end 
                 if cciactual > ccxsfcd
@@ -3881,7 +3881,7 @@ function calculate_transpiration!(gvars, tpot, coeffb0salt, coeffb1salt, coeffb2
             else
                 # effect of water stress and ECe
                 if compartments[compi].Theta >= theta_critical
-                    alfa = (1 - simulation.EffectStress_RedKsSto/100)
+                    alfa = (1 - simulation.EffectStress.RedKsSto/100)
                 elseif compartments[compi].Theta > (soil_layers[layeri].WP/100)
                     if theta_critical > (soil_layers[layeri].WP/100)
                         wrel = (soil_layers[layeri].FC/100 - compartments[compi].Theta) /

@@ -1618,7 +1618,7 @@ function bnormalized(outputs, thedaystoccini, thegddaystoccini,
                 fccx = 1 # only for non perennials (no self-thinning)
                 if deltaweedstress != 0 
                     deltaweedstress_local = deltaweedstress
-                    weedcorrection = get_weed_rc(daycc, sumgddforplot, fccx,
+                    weedcorrection, deltaweedstress_local = get_weed_rc(daycc, sumgddforplot, fccx,
                         weedstress, management.WeedAdj,
                         deltaweedstress_local, l12sf, l123, 
                         gddl12sf, gddl123, themodecycle)
@@ -1820,7 +1820,7 @@ function cc_at_time(dayi, ccoin, cgcin, ccxin)
 end
 
 """
-    weedrcdaycalc = get_weed_rc(theday, gddayi, fccx, tempweedrcinput, tempweedadj,
+    weedrcdaycalc, tempweeddeltarc = get_weed_rc(theday, gddayi, fccx, tempweedrcinput, tempweedadj,
                             tempweeddeltarc, l12sf, templ123, gddl12sf, 
                             tempgddl123, themodecycle)
 

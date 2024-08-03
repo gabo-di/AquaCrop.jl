@@ -248,32 +248,20 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
     determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
 
     # 11. Biomass and yield
-    if ((GetRootingDepth() > 0._dp) .and. (GetNoMoreCrop() .eqv. .false.)) then
+    if (gvars[:float_parameters][:rooting_depth] > 0) & (gvars[:bool_parameters][:nomorecrop] == false)
         SWCtopSoilConsidered_temp = gvars[:simulation].SWCtopSoilConsidered()
-        call DetermineRootZoneWC(GetRootingDepth(), SWCtopSoilConsidered_temp)
-        call SetSimulation_SWCtopSoilConsidered(SWCtopSoilConsidered_temp)
+        determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth])
         # temperature stress affecting crop transpiration
-        if (GetCCiActual() <= 0.0000001_dp) then
-             KsTr = 1._dp
+        if gvars[:float_parameters][:cciactual] <= 0.0000001
+             kstr = 1
         else
-             KsTr = KsTemperature(0._dp, gvars[:crop].GDtranspLow(), GetGDDayi())
-        end if
-        call SetStressTot_Temp(((GetStressTot_NrD() - 1._dp)*GetStressTot_Temp() + &
-                     100._dp*(1._dp-KsTr))/real(GetStressTot_NrD(), kind=dp))
+            kstr = ks_temperature(0, gvars[:crop].GDtranspLow, gvars[:float_parameters][:gddayi])
+        end 
+        gvars[:stresstot].Temp = ((gvars[:stresstot].NrD - 1)*gvars[:stresstot].Temp + 100*(1-kstr))/gvars[:stresstot].NrD
         # soil salinity stress
-         ECe_temp = GetRootZoneSalt_ECe()
-         ECsw_temp = GetRootZoneSalt_ECsw()
-         ECswFC_temp = GetRootZoneSalt_ECswFC()
-         KsSalt_temp = GetRootZoneSalt_KsSalt()
-         call DetermineRootZoneSaltContent(GetRootingDepth(), ECe_temp, &
-                 ECsw_temp, ECswFC_temp, KsSalt_temp)
-         call SetRootZoneSalt_ECe(ECe_temp)
-         call SetRootZoneSalt_ECsw(ECsw_temp)
-         call SetRootZoneSalt_ECswFC(ECswFC_temp)
-         call SetRootZoneSalt_KsSalt(KsSalt_temp)
-         call SetStressTot_Salt(((GetStressTot_NrD() - 1._dp)*GetStressTot_Salt()&
-                + 100._dp*(1._dp-GetRootZoneSalt_KsSalt()))/&
-                   real(GetStressTot_NrD(), kind=dp))
+        determine_root_zone_salt_content!(gvars, gvars[:float_parameters][:rooting_depth])
+        gvars[:stresstot].Salt = ((gvars[:stresstot].NrD - 1)*gvars[:stresstot].Salt +
+                                 100*(1-gvars[:root_zone_salt].KsSalt))/gvars[:stresstot].NrD
          # Biomass and yield
          Store_temp = GetTransfer_Store()
          Mobilize_temp = GetTransfer_Mobilize()
@@ -349,10 +337,10 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
          call SetalfaHIAdj(alfaHIAdj_temp)
     else
          # SenStage = undef_int #GDL, 20220423, not used
-         call SetWeedRCi(real(undef_int, kind=dp)) # no crop and no weed infestation
-         call SetCCiActualWeedInfested(0._dp) # no crop
-         call SetTactWeedInfested(0._dp) # no crop
-    end if
+         setparameter!(gvars[:float_parameters], :weedrci, undef_double)  # no crop and no weed infestation
+         setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.0)  # no crop
+         setparameter!(gvars[:float_parameters], :tactweedinfested, 0.0)  # no crop
+    end 
 
     # 12. Reset after RUN
     if (GetPreDay() .eqv. .false.) then
@@ -515,8 +503,8 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             gvars[:crop].CGC(), GetCDCTotal(), &
             gvars[:crop].GDDCGC(), GetGDDCDCTotal(), &
             SumGDDadjCC, gvars[:crop].ModeCycle(), &
-            gvars[:simulation].EffectStress_RedCGC(), &
-            gvars[:simulation].EffectStress_RedCCX())
+            gvars[:simulation].EffectStress.RedCGC(), &
+            gvars[:simulation].EffectStress.RedCCX())
     else
         call GetPotValSF((VirtualTimeCC+gvars[:simulation].DelayedDays() + 1), &
                SumGDDAdjCC, PotValSF)
@@ -1384,5 +1372,654 @@ function fadjusted_for_co2(co2i, wpi, percenta)
     # 6. final adjustment
     fadjustedforco2 = 1 + ftype*(fco2-1)
     return fadjustedforco2
+end
+
+"""
+simul.f90:528
+"""
+function determinebiomassandyield(dayi, eto, tminonday, tmaxonday, co2i, 
+                                    gddayi, tact, sumkctop, cgcref, gddcgcref, 
+                                    coeffb0, coeffb1, coeffb2, fracbiomasspotsf, 
+                                    coeffb0salt, coeffb1salt, coeffb2salt, 
+                                    averagesaltstress, sumgddadjcc, cctot, 
+                                    fracassim, virtualtimecc, suminterval, 
+                                    biomass, biomasspot, biomassunlim, 
+                                    biomasstot, yieldpart, wpi, hitimesbef, 
+                                    scorat1, scorat2, hitimesat1, hitimesat2, 
+                                    hitimesat, alfa, alfamax, sumkctopstress, 
+                                    sumkci, 
+                                    weedrci, ccw, trw, stresssfadjnew, 
+                                    previousstresslevel, storeassimilates, 
+                                    mobilizeassimilates, assimtomobilize, 
+                                    assimmobilized, bin, bout)
+
+    integer(int32), intent(in) :: dayi
+    real(dp), intent(in) :: ETo
+    real(dp), intent(in) :: TminOnDay
+    real(dp), intent(in) :: TmaxOnDay
+    real(dp), intent(in) :: CO2i
+    real(dp), intent(in) :: GDDayi
+    real(dp), intent(in) :: Tact
+    real(dp), intent(in) :: SumKcTop
+    real(dp), intent(in) :: CGCref
+    real(dp), intent(in) :: GDDCGCref
+    real(dp), intent(in) :: Coeffb0
+    real(dp), intent(in) :: Coeffb1
+    real(dp), intent(in) :: Coeffb2
+    real(dp), intent(in) :: FracBiomassPotSF
+    real(dp), intent(in) :: Coeffb0Salt
+    real(dp), intent(in) :: Coeffb1Salt
+    real(dp), intent(in) :: Coeffb2Salt
+    real(dp), intent(in) :: AverageSaltStress
+    real(dp), intent(in) :: SumGDDadjCC
+    real(dp), intent(in) :: CCtot
+    real(dp), intent(inout) :: FracAssim
+    integer(int32), intent(in) :: VirtualTimeCC
+    integer(int32), intent(in) :: SumInterval
+    real(dp), intent(inout) :: Biomass
+    real(dp), intent(inout) :: BiomassPot
+    real(dp), intent(inout) :: BiomassUnlim
+    real(dp), intent(inout) :: BiomassTot
+    real(dp), intent(inout) :: YieldPart
+    real(dp), intent(inout) :: WPi
+    real(dp), intent(inout) :: HItimesBEF
+    real(dp), intent(inout) :: ScorAT1
+    real(dp), intent(inout) :: ScorAT2
+    real(dp), intent(inout) :: HItimesAT1
+    real(dp), intent(inout) :: HItimesAT2
+    real(dp), intent(inout) :: HItimesAT
+    real(dp), intent(inout) :: alfa
+    real(dp), intent(inout) :: alfaMax
+    real(dp), intent(inout) :: SumKcTopStress
+    real(dp), intent(inout) :: SumKci
+    real(dp), intent(inout) :: WeedRCi
+    real(dp), intent(inout) :: CCw
+    real(dp), intent(inout) :: Trw
+    integer(int8), intent(inout) :: StressSFadjNEW
+    integer(int8), intent(inout) :: PreviousStressLevel
+    logical, intent(inout) :: StoreAssimilates
+    logical, intent(inout) :: MobilizeAssimilates
+    real(dp), intent(inout) :: AssimToMobilize
+    real(dp), intent(inout) :: AssimMobilized
+    real(dp), intent(inout) :: Bin
+    real(dp), intent(inout) :: Bout
+
+
+
+
+    temprange = 5
+    k = 2
+
+    # 0. Reference HarvestIndex for that day (alfa in percentage) + Information on PercentLagPhase (for estimate WPi)
+    if (gvars[:crop].subkind == :Tuber) | (gvars[:crop].subkind == :Grain) |
+       (gvars[:crop].subkind == :Vegetative) | (gvars[:crop].subkind == :Forage)
+        # DaysToFlowering corresponds with Tuberformation
+        # OJO note that we do not have parenthesis in the original Fortran code then the order 
+        # of boolean operators might change
+        if((gvars[:crop].subkind == :Vegetative) & (gvars[:crop].Planting == :Regrowth)) |
+          ((gvars[:crop].subkind == :Forage) & (gvars[:crop].Planting == :Regrowth)) 
+            alfa = gvars[:crop].HI
+        else
+            hifinal_temp = gvars[:simulation].HIfinal
+            alfa, hifinal_temp, percentlagphase = harvest_index_day(dayi-gvars[:crop].Day1, gvars[:crop].DaysToFlowering, &
+                                   gvars[:crop].HI, gvars[:crop].dHIdt, GetCCiactual, &
+                                   gvars[:crop].CCxAdjusted, gvars[:crop].CCxWithered, gvars[:simulparam].PercCCxHIfinal, &
+                                   gvars[:crop].Planting, hifinal_temp, crop, simulation)
+            gvars[:simulation].HIfinal = hifinal_temp
+        end
+    end
+
+
+    wpi = gvars[:crop].WP/100
+
+    # 1. biomass
+    if eto > 0
+        # 1.1 WPi for that day
+        # 1.1a - given WPi
+        wpi = gvars[:crop].WP/100
+        # 1.1b - adjustment WPi for reproductive stage (works with calendar days)
+        if ((gvars[:crop].subkind == :Tuber) | (gvars[:crop].subkind == :Grain)) & (alfa > 0)
+            # WPi switch to WP for reproductive stage
+            fswitch = 1
+            daysyieldformation = round(Int, gvars[:crop].HI/gvars[:crop].dHIdt)
+            if daysyieldformation > 0
+                if gvars[:crop].DeterminancyLinked
+                    fswitch = percentlagphase/100
+                else
+                    dayiafterflowering = dayi - gvars[:simulation].DelayedDays - gvars[:crop].Day1 - gvars[:crop].DaysToFlowering
+                    if dayiafterflowering < (daysyieldformation/3)
+                        fswitch = dayiafterflowering/(daysyieldformation/3)
+                    end
+                end
+            end
+            wpi =  wpi * (1 - (1-gvars[:crop].WPy/100)*fswitch)  # switch in Lag Phase
+        end
+
+
+        # 1.1c - adjustment WPi for CO2
+        if round(Int, 100*co2i) /= round(Int, 100*CO2Ref)
+            wpi = wpi * fadjusted_for_co2(co2i, gvars[:crop].WP, gvars[:crop].AdaptedToCO2)
+        end
+
+
+        # 1.1d - adjustment WPi for Soil Fertility
+        wpsf = wpi          # no water stress, but fertility stress
+        wpunlim = wpi       # no water stress, no fertiltiy stress
+        if gvars[:simulation].EffectStress.RedWP > 0 # Reductions are zero if no fertility stress
+            # water stress and fertility stress
+            if sumkci/sumkctopstress < 1
+                if eto > 0
+                    sumkci = sumkci + tact/eto
+                end
+                if sumkci > 0
+                    wpi = wpi * (1 - (gvars[:simulation].EffectStress.RedWP/100) * exp(k*log(sumkci/sumkctopstress)) )
+                end
+            else
+                wpi = wpi * (1 - gvars[:simulation].EffectStress.RedWP/100)
+            end
+        elseif eto > 0
+            sumkci = sumkci + tact/eto
+        end
+
+
+        # 1.2 actual biomass
+        if (gvars[:simulation].RCadj > 0) & (round(Int, cctot*10000) > 0)
+            # weed infestation
+            # green canopy cover of the crop in weed-infested field
+            if gvars[:management].WeedDeltaRC != 0
+                if gvars[:crop].subkind == :Forage
+                    fccx = multiplier_ccx_self_thinning(gvars[:simulation].YearSeason, gvars[:crop].YearCCx, gvars[:crop].CCxRoot)
+                else
+                    fccx = 1
+                end
+                wdrc_temp = gvars[:management].WeedDeltaRC
+                weedrci, wdrc_temp = get_weed_rc(virtualtimecc, sumgddadjcc, fccx, 
+                                                gvars[:simulation].RCadj, gvars[:management].WeedAdj, wdrc_temp, 
+                                                gvars[:crop].DaysToFullCanopySF, gvars[:crop].DaysToSenescence, 
+                                                gvars[:crop].GDDaysToFullCanopySF, gvars[:crop].GDDaysToSenescence, 
+                                                gvars[:crop].ModeCycle)
+                gvars[:management].WeedDeltaRC = wdrc_temp
+            else
+                weedrci = gvars[:simulation].RCadj
+            end
+            ccw = cctot * (1-weedrci/100)
+            # correction for micro-advection
+            cctotstar = 1.72*cctot - 1*(cctot*cctot) + 0.30*(cctot*cctot*cctot)
+            if cctotstar < 0
+                cctotstar = 0
+            end
+            if cctotstar > 1
+                cctotstar = 1
+            end
+            if ccw > 0.0001
+                ccwstar = ccw + (cctotstar - cctot)
+            else
+                ccwstar = 0
+            end
+            # crop transpiration in weed-infested field
+            if cctotstar <= 0.0001
+                trw = 0
+            else
+                trw = tact * (ccwstar/cctotstar)
+            end
+            # crop biomass in weed-infested field
+            biomass = biomass + wpi *(trw/eto)  # ton/ha
+        else
+            weedrci = 0.0
+            ccw = cctot
+            trw = tact
+            biomass = biomass + wpi *(tact/eto)  # ton/ha
+        end
+
+        # Transfer of assimilates
+        if gvars[:crop].subkind == :Forage
+            # only for perennial herbaceous forage crops
+            # 1. Mobilize assimilates at start of season
+            if mobilizeassimilates 
+                # mass to mobilize
+                bin = fracassim * wpi *(trw/eto)  # ton/ha
+                if (assimmobilized + bin) > assimtomobilize
+                    bin = assimtomobilize - assimmobilized
+                end
+                # cumulative mass mobilized
+                assimmobilized = assimmobilized + bin
+                # switch mobilize off when all mass is transfered
+                if round(Int, 1000*assimtomobilize) <= round(Int, 1000 *assimmobilized)
+                    mobilizeassimilates = false
+                end
+            end
+            # 2. Store assimilates at end of season
+            if storeassimilates 
+                # mass to store
+                bout = fracassim * wpi *(trw/eto)  # ton/ha
+                # cumulative mass stored
+                gvars[:simulation].Storage.Btotal +=  bout
+            end
+        end
+
+        biomass = biomass + bin - bout  # ton/ha ! correction for transferred assimilates
+
+        # actual total biomass (crop and weeds)
+        biomasstot = biomasstot + wpi *(tact/eto)  # ton/ha  for dynamic adjustment of soil fertility stress
+        biomasstot = biomasstot + bin - bout # correction for transferred assimilates
+
+        # 1.3 potential biomass - unlimited soil fertiltiy
+        biomassunlim = biomassunlim + bin - bout # correction for transferred assimilates
+    end
+
+    # 1.4 potential biomass for given soil fertility
+    biomasspot =  fracbiomasspotsf * biomassunlim # ton/ha
+
+    # 2. yield
+    tmax1 = undef_int
+    if (gvars[:crop].subkind == :Tuber) | (gvars[:crop].subkind == :Grain)
+        # DaysToFlowering corresponds with Tuberformation
+        if dayi > (gvars[:simulation].DelayedDays + gvars[:crop].Day1 + gvars[:crop].DaysToFlowering)
+            # calculation starts when flowering has started
+
+            # 2.2 determine HImultiplier at the start of flowering
+            # effect of water stress before flowering (HItimesBEF)
+            if hitimesbef < - 0.1
+                # i.e. undefined at the start of flowering
+                if biomasspot < 0.0001
+                    hitimesbef = 1
+                else
+                    ratiobm = biomass/biomasspot
+                    # not correct if weed infestation and no fertility stress
+                    # for that case biomasspot might be larger (but cannot be calculated since wp is unknown)
+                    if ratiobm > 1
+                        ratiobm = 1
+                    end
+                    rbm = bm_range(gvars[:crop].HIincrease)
+                    hitimesbef = hi_multiplier(ratiobm, rbm, gvars[:crop].HIincrease)
+                end
+                if gvars[:float_parameters][:cciactual] <= 0.01
+                    if (gvars[:crop].CCxWithered > 0) &
+                       (gvars[:float_parameters][:cciactual] < gvars[:crop].CCxWithered)
+                        hitimesbef = 0 # no green canopy cover left at start of flowering;
+                    else
+                        hitimesbef = 1
+                    end
+                end
+            end
+
+            # 2.3 Relative water content for that day
+            determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth]
+            if gvars[:simulation].SWCtopSoilConsidered # top soil is relative wetter than total root zone
+                wrel = (gvars[:root_zone_wc].ZtopFC - gvars[:root_zone_wc].ZtopAct)/ 
+                       (gvars[:root_zone_wc].ZtopFC - gvars[:root_zone_wc].ZtopWP) # top soil
+            else
+                wrel = (gvars[:root_zone_wc].FC - gvars[:root_zone_wc].Actual)/ 
+                       (gvars[:root_zone_wc].FC - gvars[:root_zone_wc].WP) # total root zone
+            end
+
+            # 2.4 Failure of Pollination during flowering (alfaMax in percentage)
+            if gvars[:crop].subkind == :Grain # - only valid for fruit/grain crops (flowers)
+                if (dayi <= (gvars[:simulation].DelayedDays + gvars[:crop].Day1 + 
+                             gvars[:crop].DaysToFlowering + gvars[:crop].LengthFlowering)) & # calculation limited to flowering period
+                   ((gvars[:float_parameters][:cciactual]*100) > gvars[:simulparam].PercCCxHIfinal)
+                    # sufficient green canopy remains
+                    # 2.4a - Fraction of flowers which are flowering on day  (fFlor)
+                    fflor = fraction_flowering(dayi, gvars[:crop], gvars[:simulation])
+                    # 2.4b - Ks(pollination) water stress
+                    pll = 1
+                    croppol_temp = gvars[:crop].pPollination
+                    kspolws = ks_any(wrel, croppol_temp, pll, 0)
+                    # 2.4c - Ks(pollination) cold stress
+                    kspolcs = ks_temperature(gvars[:crop].Tcold-temprange, gvars[:crop].Tcold, tminonday)
+                    # 2.4d - Ks(pollination) heat stress
+                    kspolhs = ks_temperature(gvars[:crop].Theat+temprange, gvars[:crop].Theat, tmaxonday)
+                    # 2.4e - Adjust alfa
+                    kspol = kspolws
+                    if kspol > kspolcs
+                        kspol = kspolcs
+                    end
+                    if kspol > kspolhs
+                        kspol = kspolhs
+                    end
+                    alfamax = alfamax + (kspol * (1 + gvars[:crop].fExcess/100) * fflor * gvars[:crop].HI)
+                    if alfamax > gvars[:crop].HI
+                        alfamax = gvars[:crop].HI
+                    end
+                end
+            else
+                alfamax = gvars[:crop].HI # for Tuber crops (no flowering)
+            end
+
+            # 2.5 determine effect of water stress affecting leaf expansion after flowering
+            # from start flowering till end of determinancy
+            if gvars[:crop].DeterminancyLinked
+                tmax1 = round(Int, gvars[:crop].LengthFlowering/2)
+            else
+                tmax1 = gvars[:crop].DaysToSenescence - gvars[:crop].DaysToFlowering
+            end
+            if (hitimesbef > 0.99) & # there is green canopy cover at start of flowering;
+               (dayi <= (gvars[:simulation].DelayedDays + gvars[:crop].Day1 +
+                         gvars[:crop].DaysToFlowering+ tmax1)) & # and not yet end period
+                (tmax1 > 0) & # otherwise no effect
+                (round(Int, gvars[:crop].aCoeff) != undef_int) & # otherwise no effect
+                # possible precision issue in pascal code
+                # added -epsilon(0) for zero-diff with pascal version output
+                (gvars[:float_parameters][:cciactual] > (0.001-eps())) # and as long as green canopy cover remains (for correction to stresses)
+                # determine KsLeaf
+                pleafulact, pleafllact adjust_pleaf_to_eto(eto, crop, simulparam)
+                ksleaf = ks_any(wrel, pleafulact, pleafllact, gvars[:crop].KsShapeFactorLeaf)
+                # daily correction
+                dcor = (1 + (1-ksleaf)/gvars[:crop].aCoeff)
+                # weighted correction
+                scorat1 = scorat1 + dcor/tmax1
+                daycor = dayi - (gvars[:simulation].DelayedDays + gvars[:crop].Day1 + gvars[:crop].DaysToFlowering)
+                hitimesat1  = (tmax1*1/daycor) * scorat1
+            end
+
+            # 2.6 determine effect of water stress affecting stomatal closure after flowering
+            # during yield formation
+            if gvars[:crop].dHIdt > 99
+                tmax2 = 0
+            else
+                tmax2 = round(Int, gvars[:crop].HI/gvars[:crop].dHIdt)
+            end
+            if (hitimesbef > 0.99) & # there is green canopy cover at start of flowering;
+               (dayi <= (gvars[:simulation].DelayedDays + gvars[:crop].Day1 +
+                         gvars[:crop].DaysToFlowering + tmax2)) & # and not yet end period
+               (tmax2 > 0) & # otherwise no effect
+               (round(Int, gvars[:crop].bCoeff) != undef_int) & # otherwise no effect
+                # possible precision issue in pascal code
+                # added -epsilon(0) for zero-diff with pascal version output
+                (gvars[:float_parameters][:cciactual] > (0.001-eps())) # and as long as green canopy cover remains (for correction to stresses)
+                # determine KsStomatal
+                pstomatulact = adjust_pstomatal_to_eto(eto, crop, simulparam)
+                pll = 1
+                ksstomatal = ks_any(wrel, pstomatulact, pll, gvars[:crop].KsShapeFactorStomata)
+                # daily correction
+                if ksstomatal > 0.001
+                    dcor = (exp(0.10*log(ksstomatal))) * (1-(1-ksstomatal)/gvars[:crop].bCoeff)
+                else
+                    dcor = 0
+                end
+                # weighted correction
+                scorat2 = scorat2 + dcor/tmax2
+                daycor = dayi - (gvars[:simulation].DelayedDays + gvars[:crop].Day1 + gvars[:crop].DaysToFlowering)
+                hitimesat2  = (tmax2*1/daycor) * scorat2
+            end
+
+            # 2.7 total multiplier after flowering
+            if (tmax2 == 0) & (tmax1 == 0)
+                hitimesat = 1
+            else
+                if tmax2 == 0
+                    hitimesat = hitimesat1
+                else
+                    if tmax1 == 0
+                        hitimesat = hitimesat2
+                    elseif tmax1 <= tmax2
+                        hitimesat = hitimesat2 * ((tmax1*hitimesat1 + (tmax2-tmax1))/tmax2)
+                        if round(Int, gvars[:crop].bCoeff) == undef_int
+                            hitimesat = hitimesat1
+                        end
+                        if round(Int, gvars[:crop].aCoeff) == undef_int
+                            hitimesat = hitimesat2
+                        end
+                    else
+                        hitimesat = hitimesat1 * ((tmax2*hitimesat2 + (tmax1-tmax2))/tmax1)
+                        if round(Int, gvars[:crop].bCoeff) == undef_int
+                            hitimesat = hitimesat1
+                        end
+                        if round(Int, gvars[:crop].aCoeff) == undef_int
+                            hitimesat = hitimesat2
+                        end
+                    end
+                end
+            end
+
+            # 2.8 Limit HI to allowable maximum increase
+            HItimesTotal = HItimesBEF * HItimesAT
+            if (HItimesTotal > (1 +(gvars[:crop].DHImax/100))) then
+                HItimesTotal = 1 +(gvars[:crop].DHImax/100)
+            end
+
+            # 2.9 Yield
+            if (alfaMax >= alfa) then
+                YieldPart = Biomass * HItimesTotal*(alfa/100)
+            else
+                YieldPart = Biomass * HItimesTotal*(alfaMax/100)
+            end
+        end
+    end
+
+    # 2bis. yield leafy vegetable crops and forage crops
+    if (gvars[:crop].subkind == :Vegetative) | (gvars[:crop].subkind == :Forage)
+        if dayi >= (gvars[:simulation].DelayedDays + gvars[:crop].Day1 + gvars[:crop].DaysToFlowering)
+            # calculation starts at crop day 1 (since days to flowering is 0)
+            if round(Int, 100*eto)> 0
+                # with correction for transferred assimilates
+                if gvars[:simulation].RCadj > 0
+                    yieldpart = yieldpart + (wpi*(trw/eto) + bin - bout) * (alfa/100)
+                else
+                    yieldpart = yieldpart + (wpi*(tact/eto) + bin - bout) * (alfa/100)
+                end
+            end
+        end
+    end
+
+
+    # 3. Dynamic adjustment of soil fertility stress
+    if (gvars[:management].FertilityStress > 0) & (biomassunlim > 0.001) & gvars[:crop].StressResponse.Calibrated
+        bioadj = 100 * (fracbiomasspotsf + (fracbiomasspotsf - biomasstot/biomassunlim))
+        if bioadj >= 100
+            stresssfadjnew = 0
+        else
+            if bioadj <= eps()
+                stresssfadjnew = 80
+            else
+                stresssfadjnew = round(Int, coeffb0 + coeffb1*bioadj + coeffb2*bioadj*bioadj) 
+                if stresssfadjnew < 0
+                    stresssfadjnew = gvars[:management].FertilityStress
+                end
+                if stresssfadjnew > 80
+                    stresssfadjnew = 80
+                end
+            end
+            if stresssfadjnew > gvars[:management].FertilityStress
+                stresssfadjnew = gvars[:management].FertilityStress
+            end
+        end
+        if (gvars[:crop].subkind == :Grain) & gvars[:crop].DeterminancyLinked &
+           (dayi > (gvars[:simulation].DelayedDays + gvars[:crop].Day1 +
+                    gvars[:crop].DaysToFlowering + tmax1))
+            # potential vegetation period is exceeded
+            if stresssfadjnew < previousstresslevel
+                stresssfadjnew = previousstresslevel
+            end
+            if stresssfadjnew > gvars[:management].FertilityStress
+                stresssfadjnew = gvars[:management].FertilityStress
+            end
+        end
+    else
+        if (gvars[:management].FertilityStress == 0) |
+            !gvars[:crop].StressResponser.Calibrated
+            # no (calibrated) soil fertility stress
+            stresssfadjnew = 0
+        else
+            # BiomassUnlim is too small
+            stresssfadjnew = gvars[:management].FertilityStress
+        end
+    end
+
+    previousstresslevel = stresssfadjnew
+    sumkctopstress = (1 - stresssfadjnew/100) * sumkctop
+
+
+    return nothing
+end
+
+"""
+    yeari = year_weighing_factor(cropfirstdaynr)
+    
+simul.f90:1073
+"""
+function year_weighing_factor(cropfirstdaynr)
+    dayi, monthi, yeari = determine_date(cropfirstdaynr)
+    return Yeari
+end
+
+"""
+    fi = fraction_period(diflor, crop)
+
+simul.f90:1050
+"""
+function fraction_period(diflor, crop)
+    if diflor <= eps() 
+        fi = 0
+    else
+        timeperc = 100 * (diflor * 1/crop.LengthFlowering)
+        if timeperc > 100
+            fi = 1
+        else
+            fi = 0.00558 * exp(0.63*log(timeperc)) - 0.000969 * timeperc - 0.00383
+            if fi < 0
+                fi = 0
+            end 
+        end 
+    end 
+    return fi
+end
+
+"""
+    f = fraction_flowering(dayi, crop, simulation)
+
+simul.f90:1025
+"""
+function fraction_flowering(dayi, crop, simulation)
+  if crop.LengthFlowering <= 1
+      f = 1
+  else
+      DiFlor = dayi - (simulation.DelayedDays + crop.Day1 + crop.DaysToFlowering)
+      f2 = fraction_period(diflor, crop)
+      diflor = (dayi-1) - (simulation.DelayedDays + crop.Day1 + crop.DaysToFlowering)
+      f1 = fraction_period(diflor, crop)
+      if abs(f1-f2) < 0.0000001
+          f = 0
+      else
+          f = (100 * ((f1+f2)/2)/crop.LengthFlowering)
+      end 
+  end 
+  return f
+end 
+
+"""
+    hiday, hifinal, percentlagphase = harvest_index_day(dap, daystoflower, himax, dhidt, cci, 
+                                  ccxadjusted, theccxwithered, 
+                                  percccxhifinal, tempplanting, 
+                                  hifinal,
+                                  crop, simulation)
+
+global.f90:5530
+"""
+function harvest_index_day(dap, daystoflower, himax, dhidt, cci, 
+                                  ccxadjusted, theccxwithered, 
+                                  percccxhifinal, tempplanting, 
+                                  hifinal,
+                                  crop, simulation)
+
+
+    dhidt_local = dhidt
+    t = dap - simulation.DelayedDays - daystoflower
+    # Simulation.WPyON := false;
+    percentlagphase = 0
+    if t <= 0
+        hiday = 0
+    else
+        if (crop.subkind == :Vegetative) & (tempplanting == :Regrowth)
+            dhidt_local = 100
+        end
+        if (crop.subkind == :Forage) & (tempplanting == :Regrowth)
+            dhidt_local = 100
+        end
+        if dhidt_local > 99
+            hiday = himax
+            percentlagphase = 100
+        else
+            higc = harvest_index_growth_coefficient(himax, dhidt_local)
+            tswitch, higclinear = get_day_switch_to_linear(himax, dhidt_local, higc)
+            if t < tswitch
+                percentlagphase = round(int, 100 * t/tswitch)
+                hiday = (hio*himax)/ (hio+(himax-hio)*exp(-higc*t))
+            else
+                percentlagphase = 100
+                if (crop.subkind == :Tuber) | (crop.subkind == :Vegetative) | (crop.subkind == :Forage)
+                    # continue with logistic equation
+                    hiday = (hio*himax)/ (hio+(himax-hio)*exp(-higc*t))
+                    if hiday >= 0.9799*himax
+                        hiday = himax
+                    end
+                else
+                    # switch to linear increase
+                    hiday = (hio*himax)/ (hio+(himax-hio)*exp(-higc*tswitch))
+                    hiday = hiday + higclinear*(t-tswitch)
+                end
+            end
+            if hiday > himax
+                hiday = himax
+            end
+            if hiday <= (hio + 0.4)
+                hiday = 0
+            end
+            if (himax - hiday) < 0.4
+                hiday = himax
+            end
+        end
+
+        # adjust HIfinal if required for inadequate photosynthesis (unsufficient green canopy)
+        tmax = round(Int, himax/dhidt_local)
+        if (hifinal == himax) & (t <= tmax) & ((cci+eps()) <= (percccxhifinal/100)) &
+           (theccxwithered > eps()) & (cci < theccxwithered) & (crop.subkind != :Vegetative) &
+           (crop.subkind != :Forage)) 
+            hifinal = round(Int, hiday)
+        end
+        if hiday > hifinal
+            hiday = hifinal
+        end
+    end
+    return hiday, hifinal, percentlagphase
+end
+
+"""
+    bmr = bm_range(hiadj)
+
+global.f90:2278
+"""
+function bm_range(hiadj)
+    if hiadj <= 0
+        bmr = 0
+    else
+        bmr = (log(hiadj)/0.0562)/100
+    end 
+    if bmr > 1
+        bmr = 1
+    end 
+    return bmr
+end
+
+"""
+    himultiplier = hi_multiplier(ratiobm, rangebm, hiadj)
+
+global.f90:2295
+"""
+function hi_multiplier(ratiobm, rangebm, hiadj)
+    rini = 1 - rangebm
+    rend = 1
+    rmax = rini + (2/3) * (rend-rini)
+    if ratiobm <= rini
+        himultiplier = 1
+    elseif ratiobm <= rmax 
+        himultiplier = 1 + (1 + sin(pi*(1.5-(ratiobm-rini)/(rmax-rini))))*(hiadj/200)
+    elseif ratiobm <= rend
+        himultiplier = 1 + (1 + sin(pi*(0.5+(ratiobm-rmax)/(rend-rmax))))*(hiadj/200)
+    else
+        himultiplier = 1
+    end 
+
+    return himultiplier
 end
 

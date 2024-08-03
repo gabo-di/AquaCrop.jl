@@ -505,6 +505,8 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(float_parameters, :tactweedinfested, 0.0) 
     setparameter!(float_parameters, :saltinfiltr, undef_double) 
     setparameter!(float_parameters, :ccitopearlysen, undef_double) 
+    setparameter!(float_parameters, :weedrci, undef_double) 
+    setparameter!(float_parameters, :cciactualweedinfested, undef_double) 
 
 
     symbol_parameters = ParametersContainer(Symbol)
