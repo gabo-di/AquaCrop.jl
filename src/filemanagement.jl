@@ -224,51 +224,28 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
     initialize_transfer_assimilates!(gvars, lvars)
 
     # 9. RUN Soil water balance and actual Canopy Cover
-    StressLeaf_temp = GetStressLeaf()
-    StressSenescence_temp = GetStressSenescence()
-    TimeSenescence_temp = GetTimeSenescence()
-    NoMoreCrop_temp = GetNoMoreCrop()
-    call BUDGET_module(gvars[:integer_parameters][:daynri], TargetTimeVal, TargetDepthVal, &
-           VirtualTimeCC, GetSumInterval(), GetDayLastCut(), &
-           GetStressTot_NrD(), GetTadj(), GetGDDTadj(), GetGDDayi(), &
-           GetCGCref(), GetGDDCGCref(), &
-           GetCO2i(), GetCCxTotal(), GetCCoTotal(), GetCDCTotal(), &
-           GetGDDCDCTotal(), SumGDDadjCC, &
-           GetCoeffb0Salt(), GetCoeffb1Salt(), GetCoeffb2Salt(), &
-           GetStressTot_Salt(), &
-           GetDayFraction(), GetGDDayFraction(), FracAssim, &
-           GetStressSFadjNEW(), GetTransfer_Store(), GetTransfer_Mobilize(), &
-           StressLeaf_temp, StressSenescence_temp, TimeSenescence_temp, &
-           NoMoreCrop_temp, TESTVAL)
-    call SetStressLeaf(StressLeaf_temp)
-    call SetStressSenescence(StressSenescence_temp)
-    call SetTimeSenescence(TimeSenescence_temp)
-    call SetNoMoreCrop(NoMoreCrop_temp)
+    budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
 
     # consider Pre-irrigation (6.) if IrriMode = Inet
-    if ((GetRootingDepth() > 0._dp) .and. (gvars[:integer_parameters][:daynri] == gvars[:crop].Day1()) &
-        .and. (GetIrriMode() == IrriMode_Inet)) then
-         call SetIrrigation(GetIrrigation() + PreIrri)
-         call SetSumWabal_Irrigation(GetSumWaBal_Irrigation() + PreIrri)
-         PreIrri = 0._dp
-     end if
+    if (gvars[:float_parameters][:rooting_depth] > 0) & (gvars[:integer_parameters][:daynri] == gvars[:crop].Day1) &
+       (gvars[:symbol_parameters][:irrimode] == :Inet)
+        irrigation = gvars[:float_parameters][:irrigation]
+        preirri = lvars[:float_parameters][:preirri]
+        setparameter!(gvars[:float_parameters], :irrigation, irrigation + preirri)
+        setparameter!(lvars[:float_parameters], :preirri, 0.0)
+     end 
 
      # total number of days in the season
-     if (GetCCiActual() > 0._dp) then
-         if (GetStressTot_NrD() < 0) then
-            call SetStressTot_NrD(1)
-          else
-            call SetStressTot_NrD(GetStressTot_NrD() + 1)
-           end if
-     end if
+     if gvars[:float_parameters][:cciactual] > 0
+         if gvars[:stresstot].NrD < 0
+            gvars[:stresstot].NrD = 1
+        else
+            gvars[:stresstot].NrD += 1
+        end 
+     end 
 
     # 10. Potential biomass
-    BiomassUnlim_temp = GetSumWaBal_BiomassUnlim()
-    CCxWitheredTpotNoS_temp = GetCCxWitheredTpotNoS()
-    call DeterminePotentialBiomass(VirtualTimeCC, SumGDDadjCC, &
-         GetCO2i(), GetGDDayi(), CCxWitheredTpotNoS_temp, BiomassUnlim_temp)
-    call SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp)
-    call SetSumWaBal_BiomassUnlim(BiomassUnlim_temp)
+    determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
 
     # 11. Biomass and yield
     if ((GetRootingDepth() > 0._dp) .and. (GetNoMoreCrop() .eqv. .false.)) then
@@ -1253,5 +1230,159 @@ function initialize_transfer_assimilates!(gvars, lvars)
 
     setparameter!(lvars[:float_parameters], :fracassim, fracassim)
     return nothing
+end
+
+"""
+    determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
+
+simul.f90:453
+"""
+function determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
+
+    co2i = gvars[:float_parameters][:co2i]
+    gddayi = gvars[:float_parameters][:gddayi]
+    biomassunlim = gvars[:sumwabal].BiomassUnlim
+    ccxwitheredtpotnos = gvars[:float_parameters][:ccxwitheredtpotnos]
+
+    simulation = gvars[:simulation]
+    crop = gvars[:crop]
+    simulparam = gvars[:simulparam]
+
+    # potential biomass - unlimited soil fertiltiy
+    # 1. - CCi
+    ccipot = canopy_cover_no_stress_sf(virtualtimecc + simulation.DelayedDays + 1, 
+                                  crop.DaysToGermination, crop.DaysToSenescence, 
+                                  crop.DaysToHarvest, crop.GDDaysToGermination, 
+                                  crop.GDDaysToSenescence, crop.GDDaysToHarvest, 
+                                  crop.CCo, crop.CCx, crop.CGC, 
+                                  crop.CDC, crop.GDDCGC, crop.GDDCDC, 
+                                  sumgddadjcc, crop.ModeCycle, 0, 0, simulation)
+    if ccipot < 0
+        ccipot = 0
+    end 
+    if ccipot > ccxwitheredtpotnos
+        ccxwitheredtpotnos = ccipot
+    end 
+
+    # 2. - Calculation of Tpot
+    if crop.ModeCycle == :CalendarDays
+        dap = virtualtimecc
+    else
+        # growing degree days
+        dap = sum_calendar_days(sumgddadjcc, crop.Day1, crop.Tbase, 
+                    crop.Tupper, simulparam.Tmin, simulparam.Tmax, gvars)
+        dap = dap + simulation.DelayedDays # are not considered when working with GDDays
+    end 
+    tpotforb, epottotforb = calculate_etpot(dap, crop.DaysToGermination, crop.DaysToFullCanopy, 
+                   crop.DaysToSenescence, crop.DaysToHarvest, 0, ccipot, 
+                   gvars[:float_parameters][:eto],
+                   crop.KcTop, crop.KcDecline, crop.CCx, 
+                   CCxWitheredTpotNoS, crop.CCEffectEvapLate, co2i, gddayi, 
+                   crop.GDtranspLow, simulation, simulparam)
+
+    # 3. - WPi for that day
+    # 3a - given WPi
+    wpi = crop.WP/100
+    # 3b - WPi decline in reproductive stage  (works with calendar days)
+    if ((crop.subkind == :Grain) | (crop.subkind == :Tuber)) &
+       (crop.WPy < 100) & (crop.dHIdt > 0) & (virtualtimecc >= crop.DaysToFlowering)
+        # WPi in reproductive stage
+        fswitch = 1
+        daysyieldformation = round(Int, crop.HI/crop.dHIdt)
+        dayiafterflowering = virtualtimecc - crop.DaysToFlowering
+        if (daysyieldformation > 0) & (dayiafterflowering < (daysyieldformation/3))
+            fswitch = dayiafterflowering/(daysyieldformation/3)
+        end 
+        wpi =  wpi * (1 - (1-crop.WPy/100)*fswitch)
+    end 
+    # 3c - adjustment WPi for CO2
+    if round(Int, 100*co2i) != round(Int, 100*co2ref)
+        wpi = wpi * fadjusted_for_co2(co2i, crop.WP, crop.AdaptedToCO2)
+    end 
+
+    # 4. - Potential Biomass
+    if gvars[:float_parameters][:eto] > 0
+        biomassunlim = biomassunlim + wpi * tpotforb/gvars[:float_parameters][:eto] # ton/ha
+    end 
+
+    setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, ccxwitheredtpotnos)
+    gvars[:sumwabal].BiomassUnlim = biomassunlim
+    return nothing
+end
+
+"""
+    fadjustedforco2 = fadjusted_for_co2(co21, wpi, percenta)
+
+global.f90:2749
+"""
+function fadjusted_for_co2(co2i, wpi, percenta)
+    # 1. Correction for crop type: fType
+    if wpi >= 40
+        ftype = 0 # no correction for c4 crops
+    else
+        if wpi <= 20
+            ftype = 1 # full correction for c3 crops
+        else
+            ftype = (40-wpi)/(40-20)
+        end 
+    end 
+
+    # 2. crop sink strength coefficient: fsink
+    fsink = percenta/100
+    if fsink < 0
+        fsink = 0 # based on face expirements
+    end 
+    if fsink > 1
+        fsink = 1 # theoretical adjustment
+    end 
+
+    # 3. correction coefficient for co2: fco2old
+    fco2old = undef_int
+    if co2i <= 550
+        # 3.1 weighing factor for co2
+        if co2i <= CO2Ref
+            fw = 0
+        else
+            if co2i >= 550
+                fw = 1
+            else
+                fw = 1 - (550 - co2i)/(550 - CO2Ref)
+            end 
+        end 
+
+        # 3.2 adjustment for co2
+        fco2old = (co2i/CO2Ref)/(1+(co2i-CO2Ref)*((1-fw)*0.000138&
+            + fw*(0.000138*fsink + 0.001165*(1-fsink))))
+    end 
+
+    # 4. adjusted correction coefficient for co2: fco2adj
+    fco2adj = undef_int
+    if co2i > CO2Ref
+        # 4.1 shape factor
+        fshape = -4.61824 - 3.43831*fsink - 5.32587*fsink*fsink
+
+        # 4.2 adjustment for co2
+        if co2i >= 2000
+            fco2adj = 1.58  # maximum is reached
+        else
+            co2rel = (co2i-CO2Ref)/(2000-CO2Ref)
+            fco2adj = 1 + 0.58 * ((exp(co2rel*fshape) - 1)/&
+                (exp(fshape) - 1))
+        end 
+    end 
+
+    # 5. selected adjusted coefficient for co2: fco2
+    if co2i <= CO2Ref
+        fco2 = fco2old
+    else
+        fco2 = fco2adj
+        if (co2i <= 550) & (fco2old < fco2adj)
+            fco2 = fco2old
+        end 
+    end 
+
+    # 6. final adjustment
+    fadjustedforco2 = 1 + ftype*(fco2-1)
+    return fadjustedforco2
 end
 

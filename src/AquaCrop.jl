@@ -14,7 +14,7 @@ include("loadsimulation.jl")
 include("runpart1.jl")
 include("runpart2.jl")
 include("filemanagement.jl")
-include("simul.jl")
+include("budget.jl")
 include("FieldCrop.jl")
 include("main.jl")
 
