@@ -263,78 +263,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
         gvars[:stresstot].Salt = ((gvars[:stresstot].NrD - 1)*gvars[:stresstot].Salt +
                                  100*(1-gvars[:root_zone_salt].KsSalt))/gvars[:stresstot].NrD
          # Biomass and yield
-         Store_temp = GetTransfer_Store()
-         Mobilize_temp = GetTransfer_Mobilize()
-         ToMobilize_temp = GetTransfer_ToMobilize()
-         Bmobilized_temp = GetTransfer_Bmobilized()
-         Biomass_temp = GetSumWaBal_Biomass()
-         BiomassPot_temp = GetSumWaBal_BiomassPot()
-         BiomassUnlim_temp = GetSumWaBal_BiomassUnlim()
-         BiomassTot_temp = GetSumWaBal_BiomassTot()
-         YieldPart_temp = GetSumWaBal_YieldPart()
-         TactWeedInfested_temp = GetTactWeedInfested()
-         PreviousStressLevel_temp = GetPreviousStressLevel()
-         StressSFadjNEW_temp = GetStressSFadjNEW()
-         CCxWitheredTpotNoS_temp = GetCCxWitheredTpotNoS()
-         Bin_temp = GetBin()
-         Bout_temp = GetBout()
-         SumKcTopStress_temp = GetSumKcTopStress()
-         SumKci_temp = GetSumKci()
-         WeedRCi_temp = GetWeedRCi()
-         CCiActualWeedInfested_temp = GetCCiActualWeedInfested()
-         HItimesBEF_temp = GetHItimesBEF()
-         ScorAT1_temp = GetScorAT1()
-         ScorAT2_temp = GetScorAT2()
-         HItimesAT1_temp = GetHItimesAT1()
-         HItimesAT2_temp = GetHItimesAT2()
-         HItimesAT_temp = GetHItimesAT()
-         alfaHI_temp = GetalfaHI()
-         alfaHIAdj_temp = GetalfaHIAdj()
-         call DetermineBiomassAndYield(gvars[:integer_parameters][:daynri], GetETo(), GetTmin(), &
-               GetTmax(), GetCO2i(), GetGDDayi(), GetTact(), GetSumKcTop(), &
-               GetCGCref(), GetGDDCGCref(), GetCoeffb0(), GetCoeffb1(), &
-               GetCoeffb2(), GetFracBiomassPotSF(), &
-               GetCoeffb0Salt(), GetCoeffb1Salt(), GetCoeffb2Salt(), &
-               GetStressTot_Salt(), SumGDDadjCC, GetCCiActual(), &
-               FracAssim, VirtualTimeCC, GetSumInterval(), &
-               Biomass_temp, BiomassPot_temp, BiomassUnlim_temp, &
-               BiomassTot_temp, YieldPart_temp, WPi, &
-               HItimesBEF_temp, ScorAT1_temp, ScorAT2_temp, &
-               HItimesAT1_temp, HItimesAT2_temp, HItimesAT_temp, &
-               alfaHI_temp, alfaHIAdj_temp, &
-               SumKcTopStress_temp, SumKci_temp, &
-               WeedRCi_temp, CCiActualWeedInfested_temp, &
-               TactWeedInfested_temp, StressSFadjNEW_temp, &
-               PreviousStressLevel_temp, Store_temp, &
-               Mobilize_temp, ToMobilize_temp, &
-               Bmobilized_temp, Bin_temp, Bout_temp, TESTVALY)
-         call SetTransfer_Store(Store_temp)
-         call SetTransfer_Mobilize(Mobilize_temp)
-         call SetTransfer_ToMobilize(ToMobilize_temp)
-         call SetTransfer_Bmobilized(Bmobilized_temp)
-         call SetSumWaBal_Biomass(Biomass_temp)
-         call SetSumWaBal_BiomassPot(BiomassPot_temp)
-         call SetSumWaBal_BiomassUnlim(BiomassUnlim_temp)
-         call SetSumWaBal_BiomassTot(BiomassTot_temp)
-         call SetSumWaBal_YieldPart(YieldPart_temp)
-         call SetTactWeedInfested(TactWeedInfested_temp)
-         call SetBin(Bin_temp)
-         call SetBout(Bout_temp)
-         call SetPreviousStressLevel(int(PreviousStressLevel_temp, kind=int32))
-         call SetStressSFadjNEW(int(StressSFadjNEW_temp, kind=int32))
-         call SetCCxWitheredTpotNoS(CCxWitheredTpotNoS_temp)
-         call SetSumKcTopStress(SumKcTopStress_temp)
-         call SetSumKci(SumKci_temp)
-         call SetWeedRCi(WeedRCi_temp)
-         call SetCCiActualWeedInfested(CCiActualWeedInfested_temp)
-         call SetHItimesBEF(HItimesBEF_temp)
-         call SetScorAT1(ScorAT1_temp)
-         call SetScorAT2(ScorAT2_temp)
-         call SetHItimesAT1(HItimesAT1_temp)
-         call SetHItimesAT2(HItimesAT2_temp)
-         call SetHItimesAT(HItimesAT_temp)
-         call SetalfaHI(alfaHI_temp)
-         call SetalfaHIAdj(alfaHIAdj_temp)
+         determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc) 
     else
          # SenStage = undef_int #GDL, 20220423, not used
          setparameter!(gvars[:float_parameters], :weedrci, undef_double)  # no crop and no weed infestation
@@ -343,172 +272,179 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
     end 
 
     # 12. Reset after RUN
-    if (GetPreDay() .eqv. .false.) then
-        call SetPreviousDayNr(gvars[:simulation].FromDayNr() - 1)
-    end if
-    call SetPreDay(.true.)
-    if (gvars[:integer_parameters][:daynri] >= gvars[:crop].Day1()) then
-        call SetCCiPrev(GetCCiActual())
-        if (GetZiprev() < GetRootingDepth()) then
-            call SetZiprev(GetRootingDepth())
+    if gvars[:bool_parameters][:preday] == false
+        setparameter!(gvars[:integer_parameters], :previoussdaynr, gvars[:simulation].FromDayNr - 1)
+    end 
+    setparameter!(gvars[:bool_parameters], :preday, true)
+    if gvars[:integer_parameters][:daynri] >= gvars[:crop].Day1
+        setparameter!(gvars[:float_parameters], :cciprev, gvars[:float_parameters][:cciactual])
+        if gvars[:float_parameters][:ziprev] < gvars[:float_parameters][:rooting_depth] 
+            setparameter!(gvars[:float_parameters], :ziprev, gvars[:float_parameters][:rooting_depth])
             # IN CASE groundwater table does not affect root development
-        end if
-        call SetSumGDDPrev(gvars[:simulation].SumGDD())
-    end if
-    if (TargetTimeVal == 1) then
-        call SetIrriInterval(0)
-    end if
+        end 
+        setparameter!(gvars[:float_parameters], :sumgddprev, gvars[:simulation].SumGDD)
+    end 
+    if lvars[:integer_parameters][:targettimeval] == 1
+        setparameter!(gvars[:integer_parameters], :irri_interval, 0)
+    end 
 
     # 13. Cuttings
-    if (GetManagement_Cuttings_Considered()) then
-        HarvestNow = .false.
-        DayInSeason = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1() + 1
-        call SetSumInterval(GetSumInterval() + 1)
-        call SetSumGDDcuts( GetSumGDDcuts() + GetGDDayi())
-        select case (GetManagement_Cuttings_Generate())
-        case (.false.)
-            if (GetManagement_Cuttings_FirstDayNr() /= undef_int) then
+    if gvars[:management].Cuttings.Considered
+        setparameter!(lvars[:bool_parameters], :harvestnow, false)
+        dayinseason = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1 + 1
+        suminterval = gvars[:integer_parameters][:suminterval]
+        setparameter!(gvars[:integer_parameters], :suminterval, suminterval + 1 )
+        sumgddcuts = gvars[:float_parameters][:sumgddcuts]
+        gddayi = gvars[:float_parameters][:gddayi]
+        setparameter!(gvars[:float_parameters], :sumgddcuts, sumgddcuts + gddayi)
+
+        if gvars[:management].Cuttings.Generate == false
+            if gvars[:management].Cuttings.FirstDayNr != undef_int 
                # adjust DayInSeason
-                DayInSeason = gvars[:integer_parameters][:daynri] - &
-                     GetManagement_Cuttings_FirstDayNr() + 1
-            end if
-            if ((DayInSeason >= GetCutInfoRecord1_FromDay()) .and. &
-                (GetCutInfoRecord1_NoMoreInfo() .eqv. .false.)) then
-                HarvestNow = .true.
-                call GetNextHarvest()
-            end if
-            if (GetManagement_Cuttings_FirstDayNr() /= undef_int) then
+                dayinseason = gvars[:integer_parameters][:daynri] - gvars[:management].Cuttings.FirstDayNr + 1
+            end 
+            if (dayinseason >= gvars[:cut_info_record1].FromDay) &
+                (gvars[:cut_info_record1].NoMoreInfo == false)
+                setparameter!(lvars[:bool_parameters], :harvestnow, true)
+                get_next_harvest!(gvars)
+            end 
+            if gvars[:management].Cuttings.FirstDayNr != undef_int 
                # reset DayInSeason
-                DayInSeason = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1() + 1
-            end if
-        case (.true.)
-            if ((DayInSeason > GetCutInfoRecord1_ToDay()) .and. &
-                (GetCutInfoRecord1_NoMoreInfo() .eqv. .false.)) then
-                call GetNextHarvest()
-            end if
-            select case (GetManagement_Cuttings_Criterion())
-            case (TimeCuttings_IntDay)
-                if ((GetSumInterval() >= GetCutInfoRecord1_IntervalInfo()) &
-                     .and. (DayInSeason >= GetCutInfoRecord1_FromDay()) &
-                     .and. (DayInSeason <= GetCutInfoRecord1_ToDay())) then
-                    HarvestNow = .true.
-                end if
-            case (TimeCuttings_IntGDD)
-                if ((GetSumGDDcuts() >= GetCutInfoRecord1_IntervalGDD()) &
-                     .and. (DayInSeason >= GetCutInfoRecord1_FromDay()) &
-                     .and. (DayInSeason <= GetCutInfoRecord1_ToDay())) then
-                    HarvestNow = .true.
-                end if
-            case (TimeCuttings_DryB)
-                if (((GetSumWabal_Biomass() - GetBprevSum()) >= &
-                      GetCutInfoRecord1_MassInfo()) &
-                     .and. (DayInSeason >= GetCutInfoRecord1_FromDay()) &
-                     .and. (DayInSeason <= GetCutInfoRecord1_ToDay())) then
-                    HarvestNow = .true.
-                end if
-            case (TimeCuttings_DryY)
-                if (((GetSumWabal_YieldPart() - GetYprevSum()) >= &
-                      GetCutInfoRecord1_MassInfo()) &
-                    .and. (DayInSeason >= GetCutInfoRecord1_FromDay()) &
-                    .and. (DayInSeason <= GetCutInfoRecord1_ToDay())) then
-                    HarvestNow = .true.
-                end if
-            case (TimeCuttings_FreshY)
+                dayinseason = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1 + 1
+            end 
+        else
+            if (dayinseason > gvars[:cut_info_record1].ToDay) &
+                (gvars[:cut_info_record1].NoMoreInfo == false)
+                get_next_harvest!(gvars)
+            end 
+            if gvars[:management].Cuttings.Criterion == :IntDay
+                if (gvars[:integer_parameters][:suminterval] >= gvars[:cut_info_record1].IntervalInfo) &
+                   (dayinseason >= gvars[:cut_info_record1].FromDay) &
+                   (dayinseason <= gvars[:cut_info_record1].ToDay)
+                    setparameter!(lvars[:bool_parameters], :harvestnow, true)
+                end 
+            elseif gvars[:management].Cuttings.Criterion == :IntGDD
+                if (gvars[:float_parameters][:sumgddcuts] >= gvars[:cut_info_record1].IntervalGDD) &
+                   (dayinseason >= gvars[:cut_info_record1].FromDay) &
+                   (dayinseason <= gvars[:cut_info_record1].ToDay)
+                    setparameter!(lvars[:bool_parameters], :harvestnow, true)
+                end 
+            elseif gvars[:management].Cuttings.Criterion == :DryB
+                if ((gvars[:sumwabal].Biomass - gvars[:float_parameters][:bprevsum]) >= gvars[:cut_info_record1].MassInfo) &
+                   (dayinseason >= gvars[:cut_info_record1].FromDay) &
+                   (dayinseason <= gvars[:cut_info_record1].ToDay)
+                    setparameter!(lvars[:bool_parameters], :harvestnow, true)
+                end 
+            elseif gvars[:management].Cuttings.Criterion == :DryY
+                if ((gvars[:sumwabal].YieldPart - gvars[:float_parameters][:yprevsum]) >= gvars[:cut_info_record1].MassInfo) &
+                   (dayinseason >= gvars[:cut_info_record1].FromDay) &
+                   (dayinseason <= gvars[:cut_info_record1].ToDay)
+                    setparameter!(lvars[:bool_parameters], :harvestnow, true)
+                end 
+            elseif gvars[:management].Cuttings.Criterion == :FreshY
                 # OK if Crop.DryMatter = undef_int (not specified) HarvestNow
                 # remains false
-                if ((((GetSumWaBal_YieldPart() - GetYprevSum())/&
-                    (gvars[:crop].DryMatter()/100._dp)) >= &
-                     GetCutInfoRecord1_MassInfo()) &
-                    .and. (DayInSeason >= GetCutInfoRecord1_FromDay()) &
-                    .and. (DayInSeason <= GetCutInfoRecord1_ToDay())) then
-                    HarvestNow = .true.
-                end if
-            end select
-        end select
-        if (HarvestNow .eqv. .true.) then
-            call SetNrCut(GetNrCut() + 1)
-            call SetDayLastCut(DayInSeason)
-            if (GetCCiPrev() > (GetManagement_Cuttings_CCcut()/100._dp)) then
-                call SetCCiPrev(GetManagement_Cuttings_CCcut()/100._dp)
+                if (((gvars[:sumwabal].YieldPart - gvars[:float_parameters][:yprevsum])/
+                    (gvars[:crop].DryMatter/100)) >= gvars[:cut_info_record1].MassInfo) &
+                   (dayinseason >= gvars[:cut_info_record1].FromDay) &
+                   (dayinseason <= gvars[:cut_info_record1].ToDay)
+                    setparameter!(lvars[:bool_parameters], :harvestnow, true)
+                end 
+            end 
+        end 
+        if lvars[:bool_parameters][:harvestnow] 
+            nrcut = gvars[:integer_parameters][:nrcut]
+            setparameter!(gvars[:integer_parameters], :nrcut, nrcut + 1)
+            setparameter!(gvars[:integer_parameters], :daylastcut, dayinseason)
+            if gvars[:float_parameters][:cciprev] > (gvars[:management].Cuttings.CCcut/100)
+                setparameter!(gvars[:float_parameters], :cciprev, gvars[:management].Cuttings.CCcut/100)
                 # ook nog CCwithered
-                call SetCrop_CCxWithered(0._dp)  # or CCiPrev ??
-                call SetCCxWitheredTpotNoS(0._dp)
-                   # for calculation Maximum Biomass unlimited soil fertility
-                call SetCrop_CCxAdjusted(GetCCiPrev()) # new
-            end if
+                gvars[:crop].CCxWithered = 0  # or CCiPrev ??
+                setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, 0.0) 
+                # for calculation Maximum Biomass unlimited soil fertility
+                gvars[:crop].CCxAdjusted = gvars[:float_parameters][:cciprev] # new
+            end 
+            # OUTPUT
             # Record harvest
-            if (GetPart1Mult()) then
-                call RecordHarvest(GetNrCut(), DayInSeason)
-            end if
+            # if gvars[:bool_parameters][:part1Mult]
+            #     RecordHarvest(GetNrCut(), DayInSeason)
+            # end 
             # Reset
-            call SetSumInterval(0)
-            call SetSumGDDcuts(0._dp)
-            call SetBprevSum(GetSumWaBal_Biomass())
-            call SetYprevSum(GetSumWaBal_YieldPart())
-        end if
-    end if
+            setparameter!(gvars[:integer_parameters], :suminterval, 0)
+            setparameter!(gvars[:float_parameters], :sumgddcuts, 0)
+            setparameter!(gvars[:float_parameters], :bprevsum, gvars[:sumwabal].Biomass)
+            setparameter!(gvars[:float_parameters], :yprevsum, gvars[:sumwabal].YieldPart)
+        end 
+    end 
 
     # 14. Write results
     # 14.a Summation
-    call SetSumETo( GetSumETo() + GetETo())
-    call SetSumGDD( GetSumGDD() + GetGDDayi())
+    sumeto = gvars[:float_parameters][:sumeto]
+    eto = gvars[:float_parameters][:eto]
+    setparameter!(gvars[:float_parameters], :sumeto, sumeto + eto)
+
+    sumgdd = gvars[:float_parameters][:sumgdd]
+    gddayi = gvars[:float_parameters][:gddayi]
+    setparameter!(gvars[:float_parameters], :sumgdd, sumgdd + gddayi)
     # 14.b Stress totals
-    if (GetCCiActual() > 0._dp) then
+    if gvars[:float_parameters][:cciactual] > 0
         # leaf expansion growth
-        if (GetStressLeaf() > - 0.000001_dp) then
-            call SetStressTot_Exp(((GetStressTot_NrD() - 1._dp)*GetStressTot_Exp() &
-                     + GetStressLeaf())/real(GetStressTot_NrD(), kind=dp))
-        end if
+        if gvars[:float_parameters][:stressleaf] > - 0.000001
+            gvars[:stresstot].Exp = ((gvars[:stresstot].NrD - 1)*gvars[:stresstot].Exp +
+                                     gvars[:float_parameters][:stressleaf])/(gvars[:stresstot].NrD)
+        end 
         # stomatal closure
-        if (GetTpot() > 0._dp) then
-            StressStomata = 100._dp *(1._dp - GetTact()/GetTpot())
-            if (StressStomata > - 0.000001_dp) then
-                call SetStressTot_Sto(((GetStressTot_NrD() - 1._dp) &
-                    * GetStressTot_Sto() + StressStomata) / &
-                    real(GetStressTot_NrD(), kind=dp))
-            end if
-        end if
-    end if
+        if gvars[:float_parameters][:tpot] > 0
+            stressstomata = 100 *(1 - gvars[:float_parameters][:tact]/gvars[:float_parameters][:tpot])
+            if stressstomata > - 0.000001
+                gvars[:stresstot].Sto = ((gvars[:stresstot].NrD - 1) *
+                                         gvars[:stresstot].Sto + stressstomata) / (gvars[:stresstot].NrD)
+            end 
+        end 
+    end 
     # weed stress
-    if (GetWeedRCi() > - 0.000001_dp) then
-        call SetStressTot_Weed(((GetStressTot_NrD() - 1._dp)*GetStressTot_Weed() &
-             + GetWeedRCi())/real(GetStressTot_NrD(), kind=dp))
-    end if
+    if gvars[:float_parameters][:weedrci] > - 0.000001
+        gvars[:stresstot].Weed =  ((gvars[:stresstot].NrD - 1)*gvars[:stresstot].Weed +
+                                     gvars[:float_parameters][:weedrci])/(gvars[:stresstot].NrD)
+    end 
     # 14.c Assign crop parameters
-    call SetPlotVarCrop_ActVal(GetCCiActual()/&
-             GetCCxCropWeedsNoSFstress() * 100._dp)
-    call SetPlotVarCrop_PotVal(100._dp * (1._dp/GetCCxCropWeedsNoSFstress()) * &
-           CanopyCoverNoStressSF((VirtualTimeCC+gvars[:simulation].DelayedDays() &
-             + 1), gvars[:crop].DaysToGermination(), gvars[:crop].DaysToSenescence(), &
-             gvars[:crop].DaysToHarvest(), gvars[:crop].GDDaysToGermination(), &
-             gvars[:crop].GDDaysToSenescence(), gvars[:crop].GDDaysToHarvest(), &
-             (GetfWeedNoS()*gvars[:crop].CCo()), (GetfWeedNoS()*gvars[:crop].CCx()), &
-             GetCGCref(), &
-             (gvars[:crop].CDC()*(GetfWeedNoS()*gvars[:crop].CCx() + 2.29_dp)/&
-             (gvars[:crop].CCx() + 2.29_dp)),&
-             GetGDDCGCref(), &
-             (gvars[:crop].GDDCDC()*(GetfWeedNoS()*gvars[:crop].CCx() + 2.29_dp)/&
-             (gvars[:crop].CCx() + 2.29_dp)), &
-             SumGDDadjCC, gvars[:crop].ModeCycle(), 0_int8, 0_int8))
-    if ((VirtualTimeCC+gvars[:simulation].DelayedDays() + 1) <= &
-         gvars[:crop].DaysToFullCanopySF()) then
+    gvars[:plotvarcrop].ActVal = gvars[:float_parameters][:cciactual]/gvars[:float_parameters][:ccxcropweedsnosfstress] * 100
+    gvars[:plotvarcrop].PotVal = 100 * (1/gvars[:float_parameters][:ccxcropweedsnosfstress]) * 
+                                   canopy_cover_no_stress_sf(virtualtimecc+gvars[:simulation].DelayedDays + 1,
+                                     gvars[:crop].DaysToGermination, gvars[:crop].DaysToSenescence, 
+                                     gvars[:crop].DaysToHarvest, gvars[:crop].GDDaysToGermination, 
+                                     gvars[:crop].GDDaysToSenescence, gvars[:crop].GDDaysToHarvest, 
+                                     gvars[:float_parameters][:fweednos]*gvars[:crop].CCo, 
+                                     gvars[:float_parameters][:fweednos]*gvars[:crop].CCx, 
+                                     gvars[:float_parameters][:cgcref], 
+                                     gvars[:crop].CDC*(gvars[:float_parameters][:fweednos]*gvars[:crop].CCx + 2.29)/(gvars[:crop].CCx + 2.29),
+                                     gvars[:float_parameters][:gddcgcref], 
+                                     gvars[:crop].GDDCDC*(gvars[:float_parameters][:fweednos]*gvars[:crop].CCx + 2.29)/(gvars[:crop].CCx + 2.29), 
+                                     sumgddadjcc, gvars[:crop].ModeCycle, 0, 0,
+                                     gvars[:simulation])
+    if (virtualtimecc+gvars[:simulation].DelayedDays + 1) <= gvars[:crop].DaysToFullCanopySF
         # not yet canopy decline with soil fertility stress
-        PotValSF = 100._dp * (1._dp/GetCCxCropWeedsNoSFstress()) * &
-           CanopyCoverNoStressSF((VirtualTimeCC + &
-            gvars[:simulation].DelayedDays() + 1), &
-            gvars[:crop].DaysToGermination(), &
-            gvars[:crop].DaysToSenescence(), gvars[:crop].DaysToHarvest(), &
-            gvars[:crop].GDDaysToGermination(), gvars[:crop].GDDaysToSenescence(), &
-            gvars[:crop].GDDaysToHarvest(),  GetCCoTotal(), GetCCxTotal(), &
-            gvars[:crop].CGC(), GetCDCTotal(), &
-            gvars[:crop].GDDCGC(), GetGDDCDCTotal(), &
-            SumGDDadjCC, gvars[:crop].ModeCycle(), &
-            gvars[:simulation].EffectStress.RedCGC(), &
-            gvars[:simulation].EffectStress.RedCCX())
+        potvalsf = 100 * (1/gvars[:float_parameters][:ccxcropweedsnosfstress]) * 
+                           canopy_cover_no_stress_sf(
+                            virtualtimecc + gvars[:simulation].DelayedDays + 1, 
+                            gvars[:crop].DaysToGermination, 
+                            gvars[:crop].DaysToSenescence, gvars[:crop].DaysToHarvest, 
+                            gvars[:crop].GDDaysToGermination, gvars[:crop].GDDaysToSenescence, 
+                            gvars[:crop].GDDaysToHarvest,
+                            gvars[:float_parameters][:ccototal],
+                            gvars[:float_parameters][:ccxtotal],
+                            gvars[:crop].CGC,
+                            gvars[:float_parameters][:cdctotal],
+                            gvars[:crop].GDDCGC,
+                            gvars[:float_parameters][:gddcdctotal],
+                            sumgddadjcc, gvars[:crop].ModeCycle, 
+                            gvars[:simulation].EffectStress.RedCGC, 
+                            gvars[:simulation].EffectStress.RedCCX,
+                            gvars[:simulation])
     else
-        call GetPotValSF((VirtualTimeCC+gvars[:simulation].DelayedDays() + 1), &
-               SumGDDAdjCC, PotValSF)
-    end if
+        potvalsf = get_potvalsf(virtualtimecc+gvars[:simulation].DelayedDays + 1, sumgddadjcc, gvars)
+    end 
+
     # 14.d Print ---------------------------------------
     if (GetOutputAggregate() > 0) then
         call CheckForPrint(GetTheProjectFile())
@@ -1375,76 +1311,62 @@ function fadjusted_for_co2(co2i, wpi, percenta)
 end
 
 """
+    determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc) 
+
 simul.f90:528
 """
-function determinebiomassandyield(dayi, eto, tminonday, tmaxonday, co2i, 
-                                    gddayi, tact, sumkctop, cgcref, gddcgcref, 
-                                    coeffb0, coeffb1, coeffb2, fracbiomasspotsf, 
-                                    coeffb0salt, coeffb1salt, coeffb2salt, 
-                                    averagesaltstress, sumgddadjcc, cctot, 
-                                    fracassim, virtualtimecc, suminterval, 
-                                    biomass, biomasspot, biomassunlim, 
-                                    biomasstot, yieldpart, wpi, hitimesbef, 
-                                    scorat1, scorat2, hitimesat1, hitimesat2, 
-                                    hitimesat, alfa, alfamax, sumkctopstress, 
-                                    sumkci, 
-                                    weedrci, ccw, trw, stresssfadjnew, 
-                                    previousstresslevel, storeassimilates, 
-                                    mobilizeassimilates, assimtomobilize, 
-                                    assimmobilized, bin, bout)
+function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc) 
 
-    integer(int32), intent(in) :: dayi
-    real(dp), intent(in) :: ETo
-    real(dp), intent(in) :: TminOnDay
-    real(dp), intent(in) :: TmaxOnDay
-    real(dp), intent(in) :: CO2i
-    real(dp), intent(in) :: GDDayi
-    real(dp), intent(in) :: Tact
-    real(dp), intent(in) :: SumKcTop
-    real(dp), intent(in) :: CGCref
-    real(dp), intent(in) :: GDDCGCref
-    real(dp), intent(in) :: Coeffb0
-    real(dp), intent(in) :: Coeffb1
-    real(dp), intent(in) :: Coeffb2
-    real(dp), intent(in) :: FracBiomassPotSF
-    real(dp), intent(in) :: Coeffb0Salt
-    real(dp), intent(in) :: Coeffb1Salt
-    real(dp), intent(in) :: Coeffb2Salt
-    real(dp), intent(in) :: AverageSaltStress
-    real(dp), intent(in) :: SumGDDadjCC
-    real(dp), intent(in) :: CCtot
-    real(dp), intent(inout) :: FracAssim
-    integer(int32), intent(in) :: VirtualTimeCC
-    integer(int32), intent(in) :: SumInterval
-    real(dp), intent(inout) :: Biomass
-    real(dp), intent(inout) :: BiomassPot
-    real(dp), intent(inout) :: BiomassUnlim
-    real(dp), intent(inout) :: BiomassTot
-    real(dp), intent(inout) :: YieldPart
-    real(dp), intent(inout) :: WPi
-    real(dp), intent(inout) :: HItimesBEF
-    real(dp), intent(inout) :: ScorAT1
-    real(dp), intent(inout) :: ScorAT2
-    real(dp), intent(inout) :: HItimesAT1
-    real(dp), intent(inout) :: HItimesAT2
-    real(dp), intent(inout) :: HItimesAT
-    real(dp), intent(inout) :: alfa
-    real(dp), intent(inout) :: alfaMax
-    real(dp), intent(inout) :: SumKcTopStress
-    real(dp), intent(inout) :: SumKci
-    real(dp), intent(inout) :: WeedRCi
-    real(dp), intent(inout) :: CCw
-    real(dp), intent(inout) :: Trw
-    integer(int8), intent(inout) :: StressSFadjNEW
-    integer(int8), intent(inout) :: PreviousStressLevel
-    logical, intent(inout) :: StoreAssimilates
-    logical, intent(inout) :: MobilizeAssimilates
-    real(dp), intent(inout) :: AssimToMobilize
-    real(dp), intent(inout) :: AssimMobilized
-    real(dp), intent(inout) :: Bin
-    real(dp), intent(inout) :: Bout
+    dayi = gvars[:integer_parameters][:daynri]
+    eto = gvars[:float_parameters][:eto]
+    tminonday = gvars[:float_parameters][:tmin]
+    tmaxonday = gvars[:float_parameters][:tmax]
+    co2i = gvars[:float_parameters][:co2i]
+    gddayi = gvars[:float_parameters][:gddayi]
+    tact = gvars[:float_parameters][:tact]
+    sumkctop = gvars[:float_parameters][:sumkctop]
+    cgcref = gvars[:float_parameters][:cgcref]
+    gddcgcref = gvars[:float_parameters][:gddcgcref]
+    coeffb0 = gvars[:float_parameters][:coeffb0]
+    coeffb1 = gvars[:float_parameters][:coeffb1]
+    coeffb2 = gvars[:float_parameters][:coeffb2]
+    fracbiomasspotsf = gvars[:float_parameters][:fracbiomasspotsf]
+    coeffb0salt = gvars[:float_parameters][:coeffb0salt]
+    coeffb1salt = gvars[:float_parameters][:coeffb1salt]
+    coeffb2salt = gvars[:float_parameters][:coeffb2salt]
+    averagesaltstress = gvars[:stresstot].Salt
+    cctot = gvars[:float_parameters][:cciactual]
+    suminterval  = gvars[:integer_parameters][:suminterval]
 
+    biomass = gvars[:sumwabal].Biomass
+    biomasspot = gvars[:sumwabal].BiomassPot
+    biomassunlim = gvars[:sumwabal].BiomassUnlim
+    biomasstot = gvars[:sumwabal].BiomassTot
+    yieldpart = gvars[:sumwabal].YieldPart
+    hitimesbef = gvars[:float_parameters][:hi_times_bef]
+    scorat1 = gvars[:float_parameters][:scor_at1]
+    scorat2 = gvars[:float_parameters][:scor_at2]
+    hitimesat1 = gvars[:float_parameters][:hi_times_at1]
+    hitimesat2 = gvars[:float_parameters][:hi_times_at2]
+    hitimesat = gvars[:float_parameters][:hi_times_at]
+    alfa = gvars[:float_parameters][:alfa_hi]
+    alfamax = gvars[:float_parameters][:alfa_hi_adj]
+    sumkctopstress = gvars[:float_parameters][:sumkctop_stress]
+    sumkci = gvars[:float_parameters][:sumkci]
+    weedrci = gvars[:float_parameters][:weedrci]
+    ccw = gvars[:float_parameters][:cciactualweedinfested]
+    trw = gvars[:float_parameters][:tactweedinfested]
+    stresssfadjnew = gvars[:float_parameters][:stress_sf_adj_new]
+    previousstresslevel = gvars[:float_parameters][:previous_stress_level]
+    storeassimilates = gvars[:transfer].Store
+    mobilizeassimilates = gvars[:transfer].Mobilize
+    assimtomobilize = gvars[:transfer].ToMobilize
+    assimmobilized = gvars[:transfer].Bmobilized
+    bin = gvars[:float_parameters][:bin]
+    bout = gvars[:float_parameters][:bout]
 
+    fracassim = lvars[:float_parameters][:fracassim]
+    wpi = lvars[:float_parameters][:wpi]
 
 
     temprange = 5
@@ -1849,6 +1771,35 @@ function determinebiomassandyield(dayi, eto, tminonday, tmaxonday, co2i,
     previousstresslevel = stresssfadjnew
     sumkctopstress = (1 - stresssfadjnew/100) * sumkctop
 
+    gvars[:sumwabal].Biomass = biomass
+    gvars[:sumwabal].BiomassPot = biomasspot
+    gvars[:sumwabal].BiomassUnlim = biomassunlim
+    gvars[:sumwabal].BiomassTot = biomasstot
+    gvars[:sumwabal].YieldPart = yieldpart
+    gvars[:transfer].Store = storeassimilates
+    gvars[:transfer].Mobilize = mobilizeassimilates
+    gvars[:transfer].ToMobilize = assimtomobilize
+    gvars[:transfer].Bmobilized = assimmobilized
+    setparameter!(gvars[:float_parameters], :hi_times_bef, hitimesbef)
+    setparameter!(gvars[:float_parameters], :scor_at1, scorat1)
+    setparameter!(gvars[:float_parameters], :scor_at2, scorat2)
+    setparameter!(gvars[:float_parameters], :hi_times_at1, hitimesat1)
+    setparameter!(gvars[:float_parameters], :hi_times_at2, hitimesat2)
+    setparameter!(gvars[:float_parameters], :hi_times_at, hitimesat)
+    setparameter!(gvars[:float_parameters], :alfa_hi, alfa)
+    setparameter!(gvars[:float_parameters], :alfa_hi_adj, alfamax)
+    setparameter!(gvars[:float_parameters], :sumkctop_stress, sumkctopstress)
+    setparameter!(gvars[:float_parameters], :sumkci, sumkci)
+    setparameter!(gvars[:float_parameters], :weedrci, weedrci)
+    setparameter!(gvars[:float_parameters], :cciactualweedinfested, ccw)
+    setparameter!(gvars[:float_parameters], :tactweedinfested, trw)
+    setparameter!(gvars[:float_parameters], :stress_sf_adj_new, stresssfadjnew)
+    setparameter!(gvars[:float_parameters], :previous_stress_level, previousstresslevel)
+    setparameter!(gvars[:float_parameters], :bin, bin)
+    setparameter!(gvars[:float_parameters], :bout, bout)
+
+    setparameter!(lvars[:float_parameters], :fracassim, fracassim)
+    setparameter!(lvars[:float_parameters], :wpi, wpi)
 
     return nothing
 end
@@ -2021,5 +1972,40 @@ function hi_multiplier(ratiobm, rangebm, hiadj)
     end 
 
     return himultiplier
+end
+
+"""
+    potvalsf = get_potvalsf(dap, sumgddadjcc, gvars)
+
+run.f90:6468
+"""
+function get_potvalsf(dap, sumgddadjcc, gvars)
+    crop = gvars[:crop]
+    simulation = gvars[:simulation]
+
+    ratdgdd = 1
+    if (crop.ModeCycle == :GDDays) &
+       (crop.GDDaysToFullCanopySF < crop.GDDaysToSenescence)
+        ratdgdd = (crop.DaysToSenescence-crop.DaysToFullCanopySF)/(crop.GDDaysToSenescence-crop.GDDaysToFullCanopySF)
+    end 
+
+    potvalsf = cci_no_water_stress_sf(dap, crop.DaysToGermination, 
+                    crop.DaysToFullCanopySF, crop.DaysToSenescence, 
+                    crop.DaysToHarvest, crop.GDDaysToGermination, 
+                    crop.GDDaysToFullCanopySF, crop.GDDaysToSenescence, 
+                    crop.GDDaysToHarvest,
+                    gvars[:float_parameters][:ccototal],
+                    gvars[:float_parameters][:ccxtotal], 
+                    crop.CGC, crop.GDDCGC,
+                    gvars[:float_parameters][:cdctotal],
+                    gvars[:float_parameters][:gddcdctotal],
+                    sumgddadjcc, ratdgdd, 
+                    simulation.EffectStress_RedCGC, 
+                    simulation.EffectStress_RedCCX, 
+                    simulation.EffectStress_CDecline, crop.ModeCycle,
+                    simulation)
+    potvalsf = 100 * (1/gvars[:float_parameters][:ccxcropweedsnosfstress]) * potvalsf
+
+    return potvalsf
 end
 

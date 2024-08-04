@@ -468,7 +468,7 @@ function checkpoint1()
     cut_info_record2 = AquaCrop.RepCutInfoRecord()
     root_zone_salt = AquaCrop.RepRootZoneSalt()
     root_zone_wc = AquaCrop.RepRootZoneWC()
-    plotvarcorp = AquaCrop.RepPlotPar()
+    plotvarcrop = AquaCrop.RepPlotPar()
     total_salt_content = AquaCrop.RepContent()
 
     float_parameters = AquaCrop.ParametersContainer(Float64)
@@ -573,6 +573,7 @@ function checkpoint1()
     AquaCrop.setparameter!(integer_parameters, :suminterval, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :daylastcut, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :stagecode, AquaCrop.undef_int)
+    AquaCrop.setparameter!(integer_parameters, :previoussdaynr, AquaCrop.undef_int)
 
     bool_parameters = AquaCrop.ParametersContainer(Bool)
     AquaCrop.setparameter!(bool_parameters, :preday, false)
@@ -652,7 +653,7 @@ function checkpoint1()
         cut_info_record2 = cut_info_record2,
         root_zone_salt = root_zone_salt,
         root_zone_wc = root_zone_wc,
-        plotvarcorp = plotvarcorp,
+        plotvarcrop = plotvarcrop,
         total_salt_content = total_salt_content,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,

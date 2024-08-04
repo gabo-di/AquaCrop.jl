@@ -428,7 +428,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     cut_info_record2 = RepCutInfoRecord()
     root_zone_salt = RepRootZoneSalt()
     root_zone_wc = RepRootZoneWC()
-    plotvarcorp = RepPlotPar()
+    plotvarcrop = RepPlotPar()
     total_salt_content = RepContent()
 
     # 12. Simulation run
@@ -535,6 +535,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(integer_parameters, :suminterval, undef_int)
     setparameter!(integer_parameters, :daylastcut, undef_int)
     setparameter!(integer_parameters, :stagecode, undef_int)
+    setparameter!(integer_parameters, :previoussdaynr, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
@@ -622,7 +623,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
         cut_info_record2 = cut_info_record2,
         root_zone_salt = root_zone_salt,
         root_zone_wc = root_zone_wc,
-        plotvarcorp = plotvarcorp,
+        plotvarcrop = plotvarcrop,
         total_salt_content = total_salt_content,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
