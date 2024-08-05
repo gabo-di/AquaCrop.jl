@@ -939,12 +939,14 @@ function initialize_run_part2!(outputs, gvars, projectinput::ProjectInputType, n
 
     initialize_simulation_run_part2!(outputs, gvars, projectinput; kwargs...)
 
+    # OUTPUT
     # if gvars[:bool_parameters][:outdaily] 
     #     this writes the lines 2:5 of OUT/OttawaPRMday.OUT
     #     TODO make a dataframe?
     #     call WriteTitleDailyResults(TheProjectType, NrRun)
     # end 
 
+    # OUTPUT
     # if gvars[:bool_parameters][:part1Mult]
     #     this writes the lines 3:7 of OUT/OttawaPRMharvest.OUT
     #     TODO make a dataframe? (we do care about these results in Persefone)
@@ -952,7 +954,8 @@ function initialize_run_part2!(outputs, gvars, projectinput::ProjectInputType, n
     # end 
 
     
-    # if gvars[:bool_parameters][:part2Eval] & (projectinput.Observations_Filename] != "(None)")
+    # OUTPUT
+    # if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
     #     this file is erased later when we call finalizerun2, is it necessary?
     #     call CreateEvalData(NrRun)
     # end 

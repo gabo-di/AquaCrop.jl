@@ -552,7 +552,6 @@ function checkpoint1()
     AquaCrop.setparameter!(symbol_parameters, :irrimethod, :MSprinkler) # 4
     AquaCrop.setparameter!(symbol_parameters, :timemode, :AllRAW) # 2
     AquaCrop.setparameter!(symbol_parameters, :depthmode, :ToFC) # 0
-    AquaCrop.setparameter!(symbol_parameters, :outputaggregate, AquaCrop.undef_symbol) 
     AquaCrop.setparameter!(symbol_parameters, :theprojecttype, AquaCrop.undef_symbol) 
 
     integer_parameters = AquaCrop.ParametersContainer(Int)
@@ -574,6 +573,7 @@ function checkpoint1()
     AquaCrop.setparameter!(integer_parameters, :daylastcut, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :stagecode, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :previoussdaynr, AquaCrop.undef_int)
+    AquaCrop.setparameter!(integer_parameters, :outputaggregate, AquaCrop.undef_int) 
 
     bool_parameters = AquaCrop.ParametersContainer(Bool)
     AquaCrop.setparameter!(bool_parameters, :preday, false)
@@ -620,6 +620,7 @@ function checkpoint1()
     AquaCrop.setparameter!(string_parameters, :man_file, "(None)")
     AquaCrop.setparameter!(string_parameters, :irri_file, "(None)")
     AquaCrop.setparameter!(string_parameters, :offseason_file, "(None)")
+    AquaCrop.setparameter!(string_parameters, :observations_file, "(None)")
     AquaCrop.setparameter!(string_parameters, :swcini_file, AquaCrop.undef_str)
 
 
@@ -675,7 +676,7 @@ function checkpoint2()
     # it should be: call SetSimulParam_Tmin(Tmin_temp)
     # gvars[:simulparam].Tmin = 0 
     
-    AquaCrop.setparameter!(gvars[:symbol_parameters], :outputaggregate, :none)
+    AquaCrop.setparameter!(gvars[:integer_parameters], :outputaggregate, 0)
     AquaCrop.setparameter!(gvars[:symbol_parameters], :theprojecttype, :typeprm)
     AquaCrop.setparameter!(gvars[:bool_parameters], :out1Wabal, true)
     AquaCrop.setparameter!(gvars[:bool_parameters], :out2Crop, true)

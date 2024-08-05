@@ -152,6 +152,10 @@ function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType};
         initialize_run_part_1!(outputs, gvars, projectinput[nrrun]; kwargs...)
         initialize_climate!(outputs, gvars; kwargs...)
         initialize_run_part2!(outputs, gvars, projectinput[nrrun], nrrun; kwargs...)
+        file_management(outputs, gvars, projectinput[nrrun]; kwargs...)
+        # OUTPUT
+        # call FinalizeRun1(NrRun, GetTheProjectFile(), TheProjectType)
+        # call FinalizeRun2(NrRun, TheProjectType)
     end
 
     return nothing
@@ -173,7 +177,7 @@ function actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
     end
 
     for key in keys(resultsparameters[:aggregationresults].parameters)
-        setparameter!(gvars[:symbol_parameters], key, resultsparameters[:aggregationresults][key])
+        setparameter!(gvars[:integer_parameters], key, resultsparameters[:aggregationresults][key])
     end
 
     for key in keys(resultsparameters[:particularresults].parameters)

@@ -337,18 +337,18 @@ function load_resultsparameters_from_toml(auxparfile)
     aggregationresultsparameters = aux["resultsparameters"]["aggregationresultsparameters"]
     aggregationtype = aggregationresultsparameters["outputaggregate"]
     if aggregationtype == 1
-        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = "daily"
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = 1 #"daily"
     elseif aggregationtype == 2
-        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = "daily_10"
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = 2 #"daily_10"
     elseif aggregationtype == 3
-        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = "monthly"
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = 3 #"monthly"
     else
-        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = "none"
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = 4 #"none"
     end
 
 
 
-    aggregationresultsparameters = ParametersContainer(Symbol)
+    aggregationresultsparameters = ParametersContainer(Int)
     actualize_with_dict!(aggregationresultsparameters, aux["resultsparameters"]["aggregationresultsparameters"])
 
     dailyresultsparameters = ParametersContainer(Bool)

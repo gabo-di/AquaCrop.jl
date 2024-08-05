@@ -1,7 +1,9 @@
 """
+    file_management(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+
 run.f90:7760
 """
-function file_management(outputs, gvars, projectinput::ProjectInputType)
+function file_management(outputs, gvars, projectinput::ProjectInputType; kwargs...)
     # we create these "lvars" because we need functions that 
     # returns nothing or does not change anything
     float_parameters = ParametersContainer(Float64)
@@ -34,14 +36,14 @@ function file_management(outputs, gvars, projectinput::ProjectInputType)
     # MARK
     while loopi
         advance_one_time_step!(outputs, gvars, lvars, projectinput)
-        # call ReadClimateNextDay()
-        # call SetGDDVariablesNextDay()
+        read_climate_nextday!(outputs, gvars)
+        set_gdd_variables_nextday!(gvars)
         if (gvars[:integer_parameters][:daynri] - 1) == repeattoday
             loopi = false
         end
     end
     return nothing
-end #notend
+end
 
 """
     advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType)
@@ -446,37 +448,38 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
     end 
 
     # 14.d Print ---------------------------------------
-    if (GetOutputAggregate() > 0) then
-        call CheckForPrint(GetTheProjectFile())
-    end if
-    if (GetOutDaily()) then
-        call WriteDailyResults((gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays() &
-                                - gvars[:crop].Day1()+1), WPi)
-    end if
-    if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
-        call WriteEvaluationData((gvars[:integer_parameters][:daynri]-gvars[:simulation].DelayedDays()-gvars[:crop].Day1()+1))
-    end if
+    if gvars[:integer_parameters][:outputaggregate] > 0
+        check_for_print!(gvars)
+    end 
+    # OUTPUT
+    # if gvars[:bool_parameters][:outdaily] 
+    #     call WriteDailyResults((gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays() &
+    #                             - gvars[:crop].Day1()+1), WPi)
+    # end
+    # if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
+    #     call WriteEvaluationData((gvars[:integer_parameters][:daynri]-gvars[:simulation].DelayedDays()-gvars[:crop].Day1()+1))
+    # end 
 
     # 15. Prepare Next day
     # 15.a Date
-    call SetDayNri(gvars[:integer_parameters][:daynri] + 1)
+    setparameter!(gvars[:integer_parameters], :daynri, gvars[:integer_parameters][:daynri] + 1)
     # 15.b Irrigation
-    if (gvars[:integer_parameters][:daynri] == gvars[:crop].Day1()) then
-        call SetIrriInterval(1)
+    if gvars[:integer_parameters][:daynri] == gvars[:crop].Day1
+        setparameter!(gvars[:integer_parameters], :irri_interval, 1)
     else
-        call SetIrriInterval(GetIrriInterval() + 1)
-    end if
+        setparameter!(gvars[:integer_parameters], :irri_interval, gvars[:integer_parameters][:irri_interval] + 1)
+    end 
     # 15.c Rooting depth
     # 15.bis extra line for standalone
-    if (GetOutDaily()) then
-        call DetermineGrowthStage(gvars[:integer_parameters][:daynri], GetCCiPrev())
-    end if
+    if gvars[:bool_parameters][:outdaily]
+        determine_growth_stage!(gvars, gvars[:integer_parameters][:daynri], gvars[:float_parameters][:cciprev])
+    end
     # 15.extra - reset ageing of Kc at recovery after full senescence
-    if (gvars[:simulation].SumEToStress() >= 0.1_dp) then
-       call SetDayLastCut(gvars[:integer_parameters][:daynri])
-    end if
+    if gvars[:simulation].SumEToStress >= 0.1
+        setparameter!(gvars[:integer_parameters], :daylastcut, gvars[:integer_parameters][:daynri])
+    end 
     return nothing
-end #notend
+end 
 
 """
     get_z_and_ec_gwt!(gvars)
@@ -2007,5 +2010,182 @@ function get_potvalsf(dap, sumgddadjcc, gvars)
     potvalsf = 100 * (1/gvars[:float_parameters][:ccxcropweedsnosfstress]) * potvalsf
 
     return potvalsf
+end
+
+"""
+    check_for_print!(gvars)
+
+run.f90:3476
+"""
+function check_for_print!(gvars)
+    daynr, monthn, yearn = determine_date(gvars[:integer_parameters][:daynri]
+
+    if gvars[:integer_parameters][:outputaggregate] == 1
+        # 1: daily output
+        biomassday = gvars[:sumwabal].Biomass - gvars[:previoussum].Biomass
+        bunlimday = gvars[:sumwabal].BiomassUnlim - gvars[:previoussum].BiomassUnlim
+        saltin = gvars[:sumwabal].SaltIn - gvars[:previoussum].SaltIn
+        saltout = gvars[:sumwabal].SaltOut - gvars[:previoussum].SaltOut
+        crsalt = gvars[:sumwabal].CRsalt - gvars[:previoussum].CRsalt
+        # OUTPUT
+        # call WriteTheResults(int(undef_int,kind=int8), DayN, MonthN, YearN, DayN, MonthN, &
+        #                      YearN, GetRain(), GetETo(), GetGDDayi(), GetIrrigation(), &
+        #                      GetInfiltrated(), GetRunoff(), GetDrain(), &
+        #                      GetCRwater(), GetEact(), GetEpot(), GetTact(), &
+        #                      GetTactWeedInfested(), GetTpot(), SaltIn, SaltOut, &
+        #                      CRsalt, BiomassDay, BUnlimDay, GetBin(), GetBout(), &
+        #                      TheProjectFile)
+        gvars[:previoussum].Biomass = gvars[:sumwabal].Biomass
+        gvars[:previoussum].BiomassUnlim = gvars[:sumwabal].BiomassUnlim
+        gvars[:previoussum].SaltIn = gvars[:sumwabal].SaltIn
+        gvars[:previoussum].SaltOut = gvars[:sumwabal].SaltOut
+        gvars[:previoussum].CRsalt = gvars[:sumwabal].CRsalt
+
+    else
+        # 2 or 3: 10-day or monthly output
+        writenow = false
+        dayendm = DaysInMonth[monthn]
+        if isleapyear(yearn) & (monthn == 2)
+            dayendm = 29
+        end
+        if dayn == dayendm
+            writenow = true  # 10-day and month
+        end
+        if (gvars[:integer_parameters][:outputaggregate] == 2) & ((dayn == 10) | (dayn == 20))
+            writenow = true # 10-day
+        end
+        if writenow
+            write_intermediate_period!(gvars)
+        end
+    end
+    return nothing
+end
+
+"""
+    write_intermediate_period!(gvars)
+
+run.f90:6088
+"""
+function write_intermediate_period!(gvars)
+    # determine intermediate results
+    call DetermineDate((GetPreviousDayNr()+1), Day1, Month1, Year1)
+    call DetermineDate(GetDayNri(), DayN, MonthN, YearN)
+
+    rper = gvars[:sumwabal].Rain - gvars[:previoussum].Rain
+    etoper = gvars[:float_parameters][:sumeto] - gvars[:float_parameters][:previoussumeto]
+    gddper = gvars[:float_parameters][:sumgdd] - gvars[:float_parameters][:previoussumgdd]
+    irriper = gvars[:sumwabal].Irrigation - gvars[:previoussum].Irrigation
+    infiltper = gvars[:sumwabal].Infiltrated - gvars[:previoussum].Infiltrated
+    eper = gvars[:sumwabal].Eact - gvars[:previoussum].Eact
+    exper = gvars[:sumwabal].Epot - gvars[:previoussum].Epot
+    trper = gvars[:sumwabal].Tact - gvars[:previoussum].Tact
+    trwper = gvars[:sumwabal].TrW - gvars[:previoussum].TrW
+    trxper = gvars[:sumwabal].Tpot - gvars[:previoussum].Tpot
+    drainper = gvars[:sumwabal].Drain - gvars[:previoussum].Drain
+    biomassper = gvars[:sumwabal].Biomass - gvars[:previoussum].Biomass
+    bunlimper = gvars[:sumwabal].BiomassUnlim - gvars[:previoussum].BiomassUnlim
+
+    roper = gvars[:sumwabal].Runoff - gvars[:previoussum].Runoff
+    crwper = gvars[:sumwabal].CRwater - gvars[:previoussum].CRwater
+    salinper = gvars[:sumwabal].SaltIn - gvars[:previoussum].SaltIn
+    saloutper = gvars[:sumwabal].SaltOut - gvars[:previoussum].SaltOut
+    salcrper = gvars[:sumwabal].CRsalt - gvars[:previoussum].CRsalt
+
+    bmobper = gvars[:transfer].Bmobilized - gvars[:float_parameters][:previousbmob]
+    bstoper = gvars[:simulation].Storage.Btotal - gvars[:float_parameters][:previousbsto]
+
+    # OUTPUT
+    # write
+    # call WriteTheResults(int(undef_int, kind=int8), Day1, Month1, Year1, DayN, &
+    #                      MonthN, YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
+    #                      ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
+    #                      TrxPer, SalInPer, SalOutPer, SalCRPer, BiomassPer, &
+    #                      BUnlimPer, BmobPer, BstoPer, TheProjectFile)
+
+    # reset previous sums
+    setparameter!(gvars[:integer_parameters], :previousdaynr, gvars[:integer_parameters][:daynri])
+    gvars[:previoussum].Rain = gvars[:sumwabal].Rain
+    setparameter!(gvars[:float_parameters], :previoussumeto, gvars[:float_parameters][:sumeto])
+    setparameter!(gvars[:float_parameters], :previoussumgdd, gvars[:float_parameters][:sumgdd])
+    gvars[:previoussum].Irrigation = gvars[:sumwabal].Irrigation
+    gvars[:previoussum].Infiltrated = gvars[:sumwabal].Infiltrated
+    gvars[:previoussum].Eact = gvars[:sumwabal].Eact
+    gvars[:previoussum].Epot = gvars[:sumwabal].Epot
+    gvars[:previoussum].Tact = gvars[:sumwabal].Tact
+    gvars[:previoussum].TrW = gvars[:sumwabal].TrW
+    gvars[:previoussum].Tpot = gvars[:sumwabal].Tpot
+    gvars[:previoussum].Drain = gvars[:sumwabal].Drain
+    gvars[:previoussum].Biomass = gvars[:sumwabal].Biomass
+    gvars[:previoussum].BiomassPot = gvars[:sumwabal].BiomassPot
+    gvars[:previoussum].BiomassUnlim = gvars[:sumwabal].BiomassUnlim
+
+    gvars[:previoussum].Runoff = gvars[:sumwabal].Runoff
+    gvars[:previoussum].CRwater = gvars[:sumwabal].CRwater
+    gvars[:previoussum].SaltIn = gvars[:sumwabal].SaltIn
+    gvars[:previoussum].SaltOut = gvars[:sumwabal].SaltOut
+    gvars[:previoussum].CRsalt = gvars[:sumwabal].CRsalt
+
+    setparameter!(gvars[:float_parameters], :previousbmob, gvars[:transfer].Bmobilized)
+    setparameter!(gvars[:float_parameters], :previousbsto,  gvars[:simulation].Storage.Btotal)
+
+    return nothing
+end
+
+"""
+    read_climate_nextday!(outputs, gvars)
+
+run.f90:7345
+"""
+function read_climate_nextday!(outputs, gvars)
+    # Read Climate next day, Get GDDays and update SumGDDays
+    i = gvars[:integer_parameters][:daynri]
+    if i <= gvars[:simulation].ToDayNr]
+        if gvars[:bool_parameters][:eto_file_exists]
+            eto = read_output_from_etodatasim(outputs, i)
+            setparameter!(gvars[:float_parameters], :eto, eto)
+        end
+        if gvars[:bool_parameters][:rain_file_exists]
+            rain = read_output_from_raindatasim(outputs, i)
+            setparameter!(gvars[:float_parameters], :rain, rain)
+        end
+        if gvars[:bool_parameters][:temperature_file_exists]
+            tmin, tmax = read_output_from_tempdatasim(outputs, i)
+            setparameter!(gvars[:float_parameters], :tmin, tmin)
+            setparameter!(gvars[:float_parameters], :tmax, tmax)
+        else
+            tmin = gvars[:simulparam].Tmin
+            tmax = gvars[:simulparam].Tmax
+            setparameter!(gvars[:float_parameters], :tmin, tmin)
+            setparameter!(gvars[:float_parameters], :tmax, tmax)
+        end
+    end 
+
+    return nothing
+end
+
+"""
+    set_gdd_variables_nextday!(gvars)
+
+run.f90:7376
+"""
+function set_gdd_variables_nextday!(gvars)
+    crop = gvars[:crop]
+    simulparam = gvars[:simulparam]
+    simulation = gvars[:simulation]
+    daynri = gvars[:integer_parameters][:daynri]
+    gddayi = gvars[:float_parameters][:gddayi]
+    if daynri <= simulation.ToDayNr
+        gddayi = degrees_day(crop.Tbase, crop.Tupper, 
+                                gvars[:float_parameters][:tmin],
+                                gvars[:float_parameters][:tmax],
+                                simulparam.GDDMethod)
+        setparameter!(gvars[:float_parameters], :gddayi, gddayi) 
+
+        if daynri >= crop.Day1
+            simulation.SumGDD = simulation.SumGDD + gddayi
+            simulation.SumGDDfromDay1 = simulation.SumGDDfromDay1 + gddayi
+        end 
+    end 
+    return nothing
 end
 

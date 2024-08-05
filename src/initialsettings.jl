@@ -514,7 +514,6 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(symbol_parameters, :irrimethod, :MSprinkler) # 4
     setparameter!(symbol_parameters, :timemode, :AllRAW) # 2
     setparameter!(symbol_parameters, :depthmode, :ToFC) # 0
-    setparameter!(symbol_parameters, :outputaggregate, undef_symbol)
     setparameter!(symbol_parameters, :theprojecttype, undef_symbol)
 
     integer_parameters = ParametersContainer(Int)
@@ -536,6 +535,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(integer_parameters, :daylastcut, undef_int)
     setparameter!(integer_parameters, :stagecode, undef_int)
     setparameter!(integer_parameters, :previoussdaynr, undef_int)
+    setparameter!(integer_parameters, :outputaggregate, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
@@ -590,6 +590,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(string_parameters, :man_file, "(None)")
     setparameter!(string_parameters, :irri_file, "(None)")
     setparameter!(string_parameters, :offseason_file, "(None)")
+    setparameter!(string_parameters, :observations_file, "(None)")
     setparameter!(string_parameters, :swcini_file, undef_str)
 
 
@@ -1656,13 +1657,13 @@ function _get_results_parameters(runtype::FortranRun, outputs, path::String)
         open(filename_a, "r") do file
             aggregationtype = strip(readline(file))[1]
             if aggregationtype == '1'
-                setparameter!(aggregationresultsparameters, :outputaggregate, :daily)
+                setparameter!(aggregationresultsparameters, :outputaggregate, 1)# :daily)
             elseif aggregationtype == '2'
-                setparameter!(aggregationresultsparameters, :outputaggregate, :daily_10)
+                setparameter!(aggregationresultsparameters, :outputaggregate, 2) #:daily_10)
             elseif  aggregationtype == '3'
-                setparameter!(aggregationresultsparameters, :outputaggregate, :monthly)
+                setparameter!(aggregationresultsparameters, :outputaggregate, 3) #:monthly)
             else
-                setparameter!(aggregationresultsparameters, :outputaggregate, :none)
+                setparameter!(aggregationresultsparameters, :outputaggregate, 0) #:none)
             end
         end
     end
