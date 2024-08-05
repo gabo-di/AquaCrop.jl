@@ -42,11 +42,11 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
 
     # 1. ETo file
     if gvars[:bool_parameters][:eto_file_exists]
-        if eto_record.DataType == :Daily
+        if eto_record.Datatype == :Daily
             i = fromsimday - eto_record.FromDayNr + 1
             eto = ETo[i]
 
-        elseif eto_record.DataType == :Decadely
+        elseif eto_record.Datatype == :Decadely
             get_decade_eto_dataset!(eto_dataset, fromsimday, ETo, eto_record)
             i = 1
             while eto_dataset[i].DayNr != fromsimday
@@ -55,7 +55,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
             eto = eto_dataset[i].Param
             # setparameter!(gvars[:float_parameters], :eto, eto)
 
-        elseif eto_record.DataType == :Monthly
+        elseif eto_record.Datatype == :Monthly
             get_monthly_eto_dataset!(eto_dataset, fromsimday, ETo, eto_record)
             i = 1
             while eto_dataset[i].DayNr != fromsimday
@@ -71,14 +71,14 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
 
         # next days of simulation period
         for runningday in (fromsimday + 1):tosimday
-            if eto_record.DataType == :Daily
+            if eto_record.Datatype == :Daily
                 i += 1
                 if i==length(ETo)
                     i = 1
                 end
                 eto = ETo[i]
 
-            elseif eto_record.DataType == :Decadely
+            elseif eto_record.Datatype == :Decadely
                 if runningday>eto_dataset[31].DayNr
                     get_decade_eto_dataset!(eto_dataset, runningday,
                                             ETo, 
@@ -90,7 +90,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
                 end 
                 eto = eto_dataset[i].Param 
 
-            elseif eto_record.DataType == :Monthly
+            elseif eto_record.Datatype == :Monthly
                 if runningday>eto_dataset[31].DayNr
                     get_monthly_eto_dataset!(eto_dataset, runningday,
                                              ETo,
@@ -108,11 +108,11 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
 
     # 2. Rain File
     if gvars[:bool_parameters][:rain_file_exists]
-        if rain_record.DataType == :Daily
+        if rain_record.Datatype == :Daily
             i = fromsimday - rain_record.FromDayNr + 1
             rain = Rain[i]
 
-        elseif rain_record.DataType == :Decadely
+        elseif rain_record.Datatype == :Decadely
             get_decade_rain_dataset!(rain_dataset, fromsimday, ETo, rain_record)
             i = 1
             while rain_dataset[i].DayNr != fromsimday
@@ -121,7 +121,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
             rain = rain_dataset[i].Param
             # setparameter!(gvars[:float_parameters], :rain, rain)
 
-        elseif rain_record.DataType == :Monthly
+        elseif rain_record.Datatype == :Monthly
             get_monthly_rain_dataset!(rain_dataset, fromsimday, Rain, rain_record)
             i = 1
             while rain_dataset[i].DayNr != fromsimday
@@ -137,14 +137,14 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
 
         # next days of simulation period
         for runningday in (fromsimday + 1):tosimday
-            if rain_record.DataType == :Daily
+            if rain_record.Datatype == :Daily
                 i += 1
                 if i==length(Rain)
                     i = 1
                 end
                 rain = Rain[i]
 
-            elseif rain_record.DataType == :Decadely
+            elseif rain_record.Datatype == :Decadely
                 if runningday>rain_dataset[31].DayNr
                     get_decade_rain_dataset!(rain_dataset, runningday,
                                             Rain, 
@@ -156,7 +156,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
                 end 
                 rain = rain_dataset[i].Param 
 
-            elseif rain_record.DataType == :Monthly
+            elseif rain_record.Datatype == :Monthly
                 if runningday>rain_dataset[31].DayNr
                     get_monthly_rain_dataset!(rain_dataset, runningday,
                                              Rain,
@@ -174,14 +174,14 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
 
     # 3. Temperature file
     if gvars[:bool_parameters][:temperature_file_exists]
-        if temperature_record.DataType == :Daily
+        if temperature_record.Datatype == :Daily
             i = fromsimday - temperature_record.FromDayNr + 1
             tlow = Tmin[i]
             thigh = Tmax[i]
             # setparameter!(gvars[:float_parameters], :tmin, tlow)
             # setparameter!(gvars[:float_parameters], :tmax, thigh)
 
-        elseif temperature_record.DataType == :Decadely
+        elseif temperature_record.Datatype == :Decadely
             get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, fromsimday,
                                             (Tmin, Tmax), 
                                             temperature_record)
@@ -194,7 +194,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
             # setparameter!(gvars[:float_parameters], :tmin, tlow)
             # setparameter!(gvars[:float_parameters], :tmax, thigh)
 
-        elseif temperature_record.DataType == :Monthly
+        elseif temperature_record.Datatype == :Monthly
             get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, fromsimday,
                                             (Tmin, Tmax), 
                                             temperature_record)
@@ -213,7 +213,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
 
         # next days of simulation period
         for runningday in (fromsimday + 1):tosimday
-            if temperature_record.DataType == :Daily
+            if temperature_record.Datatype == :Daily
                 i += 1
                 if i==length(Tmin)
                     i = 1
@@ -221,7 +221,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
                 tlow = Tmin[i]
                 thigh = Tmax[i]
 
-            elseif temperature_record.DataType == :Decadely
+            elseif temperature_record.Datatype == :Decadely
                 if runningday>tmin_dataset[31].DayNr
                     get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
                                                     (Tmin, Tmax), 
@@ -234,7 +234,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
                 tlow = tmin_dataset[i].Param 
                 thigh = tmax_dataset[i].Param 
 
-            elseif temperature_record.DataType == :Monthly
+            elseif temperature_record.Datatype == :Monthly
                 if runningday>tmin_dataset[31].DayNr
                     get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
                                                      (Tmin, Tmax), 
@@ -1510,7 +1510,7 @@ function get_sumgdd_before_simulation!(gvars)
 
     if gvars[:string_parameters][:temperature_file]=="(None)"
         dgrd =  degrees_day(gvars[:crop].Tbase, gvars[:crop].Tupper,
-                            gvars.[:simulparam].Tmin, gvars[:simulparam].Tmax,
+                            gvars[:simulparam].Tmin, gvars[:simulparam].Tmax,
                             gvars[:simulparam].GDDMethod)
         sumgdd  = (daynri - gvars[:crop].Day1 + 1) * dgrd
         if sumgdd < 0 

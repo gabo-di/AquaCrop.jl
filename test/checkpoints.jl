@@ -1367,6 +1367,70 @@ function checkpoint4()
         end
     end
 
+    open(pwd()*"/testcase/OUTPUTS/EToDatasim_1") do file
+        for line in eachline(file)
+            eto = parse(Float64, line)
+            AquaCrop.add_output_in_etodatasim!(outputs, eto)
+        end
+    end
+
+    open(pwd()*"/testcase/OUTPUTS/RainDatasim_1") do file
+        for line in eachline(file)
+            rain = parse(Float64, line)
+            AquaCrop.add_output_in_raindatasim!(outputs, rain)
+        end
+    end
+
+    return outputs, gvars, projectinput
+end
+
+function checkpoint5()
+    outputs, gvars, projectinput = checkpoint4()
+
+    AquaCrop.setparameter!(gvars[:float_parameters], :eto, 3.9)
+    AquaCrop.setparameter!(gvars[:float_parameters], :rain, 0.1)
+    AquaCrop.setparameter!(gvars[:float_parameters], :tmin, 10.0)
+    AquaCrop.setparameter!(gvars[:float_parameters], :tmax, 22.7)
+    AquaCrop.setparameter!(gvars[:float_parameters], :gddayi, 11.35) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumeto, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumgdd, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumgddprev, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :dayfraction, AquaCrop.undef_double) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :gddayfraction, AquaCrop.undef_double) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :timesenescence, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :ziprev, AquaCrop.undef_double) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :rooting_depth, 0.3) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumgddcuts, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cgcref, 0.14184615384615384) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :gddcgcref, 0.012) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :surfacestorage, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :ecstorage, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :hi_times_bef, AquaCrop.undef_double) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :hi_times_at1, 1.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :hi_times_at2, 1.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :hi_times_at, 1.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :alfa_hi, AquaCrop.undef_double) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :alfa_hi_adj, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :scor_at1, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :scor_at2, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :stressleaf, AquaCrop.undef_double) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :stresssenescence, AquaCrop.undef_double) 
+
+    AquaCrop.setparameter!(gvars[:integer_parameters], :irri_interval, 1) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :tadj, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :gddtadj, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :nrcut, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :suminterval, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :daylastcut, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :stagecode, 1) 
+
+    AquaCrop.setparameter!(gvars[:bool_parameters], :global_irri_ecw, true) 
+    AquaCrop.setparameter!(gvars[:bool_parameters], :nomorecrop, false) 
+
     return outputs, gvars, projectinput
 end
 

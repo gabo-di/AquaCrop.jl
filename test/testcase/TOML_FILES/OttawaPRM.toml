@@ -98,7 +98,7 @@ OffSeason_Filename = "(None)"
 OffSeason_Directory = "(None)"
 Observations_Info = "-- 10. Field data (OBS) file"
 Observations_Filename = "OttawaOBS.toml"
-Observations_Directory = ""
+Observations_Directory =  "" 
 
 [[projectinput]]
 Simulation_YearSeason = 3         # Year number of cultivation (Non-seeding/planting year)
@@ -147,7 +147,7 @@ OffSeason_Filename = "(None)"
 OffSeason_Directory = "(None)"
 Observations_Info = "-- 10. Field data (OBS) file"
 Observations_Filename = "OttawaOBS.toml"
-Observations_Directory = ""
+Observations_Directory =  "" 
 
 
 

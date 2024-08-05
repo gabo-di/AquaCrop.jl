@@ -1651,7 +1651,7 @@ end
 
 function _get_results_parameters(runtype::FortranRun, outputs, path::String)
     #startunit.f90:282
-    aggregationresultsparameters = ParametersContainer(Symbol)
+    aggregationresultsparameters = ParametersContainer(Int)
     filename_a = joinpath(path, "AggregationResults.SIM")
     if isfile(filename_a) 
         open(filename_a, "r") do file

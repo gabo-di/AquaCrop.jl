@@ -293,7 +293,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     if projectinput.Observations_Filename=="(None)"
         observations_file = projectinput.Observations_Filename
     else
-        observations_file = joinpath([projectinput.ParentDir, projectinput.OffSeason_Directory, projectinput.Observations_Filename])
+        observations_file = joinpath([projectinput.ParentDir, projectinput.Observations_Directory, projectinput.Observations_Filename])
     end
     setparameter!(gvars[:string_parameters], :observations_file, observations_file)
 
@@ -357,6 +357,7 @@ function read_eto_file!(array_parameters::ParametersContainer{T}, eto_file) wher
             push!(ETo, eto)
         end
     end
+    println("\nCCCCCCCCC", length(ETo), "\nCCCCCCCC")
 
     setparameter!(array_parameters, :ETo, ETo)
     return nothing

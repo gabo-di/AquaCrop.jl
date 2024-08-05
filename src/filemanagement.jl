@@ -1293,8 +1293,7 @@ function fadjusted_for_co2(co2i, wpi, percenta)
             fco2adj = 1.58  # maximum is reached
         else
             co2rel = (co2i-CO2Ref)/(2000-CO2Ref)
-            fco2adj = 1 + 0.58 * ((exp(co2rel*fshape) - 1)/&
-                (exp(fshape) - 1))
+            fco2adj = 1 + 0.58 * ((exp(co2rel*fshape) - 1)/(exp(fshape) - 1))
         end 
     end 
 
@@ -1386,10 +1385,11 @@ function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc)
             alfa = gvars[:crop].HI
         else
             hifinal_temp = gvars[:simulation].HIfinal
-            alfa, hifinal_temp, percentlagphase = harvest_index_day(dayi-gvars[:crop].Day1, gvars[:crop].DaysToFlowering, &
-                                   gvars[:crop].HI, gvars[:crop].dHIdt, GetCCiactual, &
-                                   gvars[:crop].CCxAdjusted, gvars[:crop].CCxWithered, gvars[:simulparam].PercCCxHIfinal, &
-                                   gvars[:crop].Planting, hifinal_temp, crop, simulation)
+            alfa, hifinal_temp, percentlagphase = harvest_index_day(dayi-gvars[:crop].Day1, gvars[:crop].DaysToFlowering, 
+                                   gvars[:crop].HI, gvars[:crop].dHIdt,
+                                   gvars[:float_parameters][:cCiactual], 
+                                   gvars[:crop].CCxAdjusted, gvars[:crop].CCxWithered, gvars[:simulparam].PercCCxHIfinal, 
+                                   gvars[:crop].Planting, hifinal_temp, gvars[:crop], gvars[:simulation])
             gvars[:simulation].HIfinal = hifinal_temp
         end
     end
@@ -1422,7 +1422,7 @@ function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc)
 
 
         # 1.1c - adjustment WPi for CO2
-        if round(Int, 100*co2i) /= round(Int, 100*CO2Ref)
+        if round(Int, 100*co2i) != round(Int, 100*CO2Ref)
             wpi = wpi * fadjusted_for_co2(co2i, gvars[:crop].WP, gvars[:crop].AdaptedToCO2)
         end
 
@@ -1569,7 +1569,7 @@ function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc)
             end
 
             # 2.3 Relative water content for that day
-            determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth]
+            determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth])
             if gvars[:simulation].SWCtopSoilConsidered # top soil is relative wetter than total root zone
                 wrel = (gvars[:root_zone_wc].ZtopFC - gvars[:root_zone_wc].ZtopAct)/ 
                        (gvars[:root_zone_wc].ZtopFC - gvars[:root_zone_wc].ZtopWP) # top soil
@@ -1627,7 +1627,7 @@ function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc)
                 # added -epsilon(0) for zero-diff with pascal version output
                 (gvars[:float_parameters][:cciactual] > (0.001-eps())) # and as long as green canopy cover remains (for correction to stresses)
                 # determine KsLeaf
-                pleafulact, pleafllact adjust_pleaf_to_eto(eto, crop, simulparam)
+                pleafulact, pleafllact = adjust_pleaf_to_eto(eto, gvars[:crop], gvars[:simulparam])
                 ksleaf = ks_any(wrel, pleafulact, pleafllact, gvars[:crop].KsShapeFactorLeaf)
                 # daily correction
                 dcor = (1 + (1-ksleaf)/gvars[:crop].aCoeff)
@@ -1928,7 +1928,7 @@ function harvest_index_day(dap, daystoflower, himax, dhidt, cci,
         tmax = round(Int, himax/dhidt_local)
         if (hifinal == himax) & (t <= tmax) & ((cci+eps()) <= (percccxhifinal/100)) &
            (theccxwithered > eps()) & (cci < theccxwithered) & (crop.subkind != :Vegetative) &
-           (crop.subkind != :Forage)) 
+           (crop.subkind != :Forage) 
             hifinal = round(Int, hiday)
         end
         if hiday > hifinal
@@ -2018,7 +2018,7 @@ end
 run.f90:3476
 """
 function check_for_print!(gvars)
-    daynr, monthn, yearn = determine_date(gvars[:integer_parameters][:daynri]
+    dayn, monthn, yearn = determine_date(gvars[:integer_parameters][:daynri])
 
     if gvars[:integer_parameters][:outputaggregate] == 1
         # 1: daily output
@@ -2068,8 +2068,8 @@ run.f90:6088
 """
 function write_intermediate_period!(gvars)
     # determine intermediate results
-    call DetermineDate((GetPreviousDayNr()+1), Day1, Month1, Year1)
-    call DetermineDate(GetDayNri(), DayN, MonthN, YearN)
+    day1, month1, year1 =  determine_date(gvars[:integer_parameters][:previousdaynr]+1)
+    dayn, monthn, yearn =  determine_date(gvars[:integer_parameters][:daynri])
 
     rper = gvars[:sumwabal].Rain - gvars[:previoussum].Rain
     etoper = gvars[:float_parameters][:sumeto] - gvars[:float_parameters][:previoussumeto]
@@ -2139,7 +2139,7 @@ run.f90:7345
 function read_climate_nextday!(outputs, gvars)
     # Read Climate next day, Get GDDays and update SumGDDays
     i = gvars[:integer_parameters][:daynri]
-    if i <= gvars[:simulation].ToDayNr]
+    if i <= gvars[:simulation].ToDayNr
         if gvars[:bool_parameters][:eto_file_exists]
             eto = read_output_from_etodatasim(outputs, i)
             setparameter!(gvars[:float_parameters], :eto, eto)
