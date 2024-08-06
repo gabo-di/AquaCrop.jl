@@ -677,7 +677,9 @@ function checkpoint2()
     # gvars[:simulparam].Tmin = 0 
     
     AquaCrop.setparameter!(gvars[:integer_parameters], :outputaggregate, 0)
+
     AquaCrop.setparameter!(gvars[:symbol_parameters], :theprojecttype, :typeprm)
+
     AquaCrop.setparameter!(gvars[:bool_parameters], :out1Wabal, true)
     AquaCrop.setparameter!(gvars[:bool_parameters], :out2Crop, true)
     AquaCrop.setparameter!(gvars[:bool_parameters], :out3Prof, true)
@@ -688,6 +690,24 @@ function checkpoint2()
     AquaCrop.setparameter!(gvars[:bool_parameters], :outdaily, true)
     AquaCrop.setparameter!(gvars[:bool_parameters], :part1Mult, true)
     AquaCrop.setparameter!(gvars[:bool_parameters], :part2Eval, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :part2Eval, true)
+
+    AquaCrop.setparameter!(gvars[:string_parameters], :man_file, 
+            joinpath(pwd(), "testcase/DATA/Ottawa.MAN"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :observations_file, 
+            joinpath(pwd(), "testcase/OBS/Ottawa.OBS"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :rain_file, 
+            joinpath(pwd(), "testcase/DATA/Ottawa.PLU"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :temperature_file, 
+            joinpath(pwd(), "testcase/DATA/Ottawa.Tnx"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :eto_file, 
+            joinpath(pwd(), "testcase/DATA/Ottawa.ETo"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :prof_file, 
+            joinpath(pwd(), "testcase/DATA/Ottawa.SOL"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :CO2_file, 
+            joinpath(pwd(), "testcase/SIMUL/MaunaLoa.CO2"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :clim_file,  "EToRainTempFile")
+    AquaCrop.setparameter!(gvars[:string_parameters], :swcini_file,  "(None)")
 
     fileok = AquaCrop.RepFileOK(
         Climate_Filename=true,
@@ -1295,6 +1315,48 @@ function checkpoint3()
     AquaCrop.setparameter!(gvars[:bool_parameters], :eto_file_exists, true) 
     AquaCrop.setparameter!(gvars[:bool_parameters], :rain_file_exists, true) 
 
+
+    Tmin = Float64[]
+    Tmax = Float64[]
+    open(joinpath(pwd(), "testcase/DATA/Ottawa.Tnx")) do file
+        for _ in 1:8
+            readline(file)
+        end
+        for line in eachline(file)
+            splitedline = split(line)
+            tmin = parse(Float64,popfirst!(splitedline))
+            tmax = parse(Float64,popfirst!(splitedline))
+            push!(Tmin, tmin)
+            push!(Tmax, tmax)
+        end
+    end
+    AquaCrop.setparameter!(gvars[:array_parameters], :Tmin, Tmin)
+    AquaCrop.setparameter!(gvars[:array_parameters], :Tmax, Tmax)
+
+    ETo = Float64[]
+    open(joinpath(pwd(), "testcase/DATA/Ottawa.ETo")) do file
+        for _ in 1:8
+            readline(file)
+        end
+        for line in eachline(file)
+            eto = parse(Float64, line)
+            push!(ETo, eto)
+        end
+    end
+    AquaCrop.setparameter!(gvars[:array_parameters], :ETo, ETo)
+
+    Rain = Float64[]
+    open(joinpath(pwd(), "testcase/DATA/Ottawa.PLU")) do file
+        for _ in 1:8
+            readline(file)
+        end
+        for line in eachline(file)
+            rain = parse(Float64, line)
+            push!(Rain, rain)
+        end
+    end
+    AquaCrop.setparameter!(gvars[:array_parameters], :Rain, Rain)
+    
     return gvars, projectinput
 end
 
@@ -1358,7 +1420,7 @@ function checkpoint4()
     AquaCrop.setparameter!(gvars[:float_parameters], :gddcdctotal, 0.006)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccototal, 0.05)
 
-    open(pwd()*"/testcase/OUTPUTS/TCropsim_1") do file
+    open(joinpath(pwd(), "testcase/OUTPUTS/TCropsim_1")) do file
         for line in eachline(file)
             splitedline = split(line)
             tlow = parse(Float64, popfirst!(splitedline))
@@ -1367,14 +1429,14 @@ function checkpoint4()
         end
     end
 
-    open(pwd()*"/testcase/OUTPUTS/EToDatasim_1") do file
+    open(joinpath(pwd(), "testcase/OUTPUTS/EToDatasim_1")) do file
         for line in eachline(file)
             eto = parse(Float64, line)
             AquaCrop.add_output_in_etodatasim!(outputs, eto)
         end
     end
 
-    open(pwd()*"/testcase/OUTPUTS/RainDatasim_1") do file
+    open(joinpath(pwd(), "testcase/OUTPUTS/RainDatasim_1")) do file
         for line in eachline(file)
             rain = parse(Float64, line)
             AquaCrop.add_output_in_raindatasim!(outputs, rain)
@@ -1430,6 +1492,36 @@ function checkpoint5()
 
     AquaCrop.setparameter!(gvars[:bool_parameters], :global_irri_ecw, true) 
     AquaCrop.setparameter!(gvars[:bool_parameters], :nomorecrop, false) 
+
+    gvars[:simulation].SumGDD = 11.35
+    gvars[:simulation].SumGDDfromDay1 = 11.35
+    gvars[:simulation].Storage.Btotal = 0 
+    gvars[:simulation].Storage.Season = 1 
+    gvars[:simulation].Storage.CropString = "DEFAULT.CRO" 
+    gvars[:simulation].SCor = 1 
+    gvars[:simulation].HIfinal = 100
+
+    gvars[:crop].CCxAdjusted = 0.95
+    gvars[:crop].CCoAdjusted = 0.05
+    gvars[:crop].CCxWithered = 0
+
+    gvars[:stresstot].Salt = 0
+
+    gvars[:cut_info_record1].NoMoreInfo = false
+    gvars[:cut_info_record1].FromDay = 194
+    gvars[:cut_info_record1].MassInfo = 0 
+    gvars[:cut_info_record1].IntervalInfo = 0 
+
+    gvars[:cut_info_record2].NoMoreInfo = false
+    gvars[:cut_info_record2].MassInfo = 0 
+    gvars[:cut_info_record2].IntervalInfo = 0 
+
+    gvars[:root_zone_salt].KsSalt = 1
+    gvars[:root_zone_salt].ECe = 0
+    gvars[:root_zone_salt].ECsw = 0
+    gvars[:root_zone_salt].ECswFC = 0
+
+    #Man
 
     return outputs, gvars, projectinput
 end

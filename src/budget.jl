@@ -1551,7 +1551,7 @@ function calculate_salt_content!(gvars, lvars, dayi)
     celi = active_cells(compartments[1], soil_layers)
     layeri = compartments[1].Layer
     sm2 = soil_layers[layeri].SaltMobility[celi]/4
-    ecsw2 = ecswcomp(compartments[1], false, soil_layers, simulparam)
+    ecsw2 = ecswcomp(compartments[1], false, gvars)
     mm2 = compartments[1].Theta * 1000 * compartments[1].Thickness *
           (1 - soil_layers[layeri].GravelVol/100)
     for compi in 2:length(compartments) 
@@ -1562,7 +1562,7 @@ function calculate_salt_content!(gvars, lvars, dayi)
         mm1 = mm2
         celi = active_cells(compartments[compi], soil_layers)
         sm2 = soil_layers[layeri].SaltMobility[celi]/4
-        ecsw2 = ecswcomp(compartments[compi], false, soil_layers, simulparam) # not at fc
+        ecsw2 = ecswcomp(compartments[compi], false, gvars) # not at fc
         mm2 = compartments[compi].Theta * 1000 * compartments[compi].Thickness *
               (1 - soil_layers[layeri].GravelVol/100)
         ecsw = (ecsw1*mm1+ecsw2*mm2)/(mm1+mm2)
@@ -3889,9 +3889,9 @@ function calculate_transpiration!(gvars, tpot, coeffb0salt, coeffb1salt, coeffb2
                 if simulation.SalinityConsidered
                     wrelsalt = (soil_layers[layeri].FC/100 - compartments[compi].Theta) /
                                     (soil_layers[layeri].FC/100 - soil_layers[layeri].WP/100)
-                    compiece = ececomp(compartments[compi], soil_layers, simulparam)
-                    compiecsw = ecswcomp(compartments[compi], false, soil_layers, simulparam)
-                    compiecswfc = ecswcomp(compartments[compi], true, soil_layers, simulparam)
+                    compiece = ececomp(compartments[compi], gvars)
+                    compiecsw = ecswcomp(compartments[compi], false, gvars)
+                    compiecswfc = ecswcomp(compartments[compi], true, gvars)
                     redfactecsw = adjusted_ks_sto_to_ecsw(crop.ECemin, 
                                   crop.ECemax, crop.ResponseECsw, 
                                   compiece, compiecsw, compiecswfc, wrelsalt, 
@@ -4188,7 +4188,7 @@ function horizontal_inflow_gwtable!(gvars, lvars, depthgwtmeter)
                                       compartments[compi].Thickness * (1 - soil_layers[layeri].GravelVol/100)
             end 
             # ECe is equal to the EC of the groundwater table
-            if abs(ececomp(compartments[compi], soil_layers, simulparam) - eciaqua) > 0.0001
+            if abs(ececomp(compartments[compi], gvars) - eciaqua) > 0.0001
                 saltact = 0
                 for celli in 1:soil_layers[layeri].SCP1
                     saltact = saltact + (compartments[compi].Salt[celli] + compartments[compi].Depo[celli])/100 # Mg/ha

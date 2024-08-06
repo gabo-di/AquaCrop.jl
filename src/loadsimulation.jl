@@ -357,7 +357,6 @@ function read_eto_file!(array_parameters::ParametersContainer{T}, eto_file) wher
             push!(ETo, eto)
         end
     end
-    println("\nCCCCCCCCC", length(ETo), "\nCCCCCCCC")
 
     setparameter!(array_parameters, :ETo, ETo)
     return nothing

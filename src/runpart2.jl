@@ -438,7 +438,7 @@ function get_monthly_eto_dataset!(eto_dataset, daynri, eto_array, eto_record::Re
         dayn = dayn + 1
     end 
 
-    aover3, bover2, c = get_interpolation_parameters(c1min, c2min, c3min)
+    aover3, bover2, c = get_interpolation_parameters(c1, c2, c3)
     for dayi in 1:dayn
         t2 = t1 + 1
         eto_dataset[dayi].DayNr = dnr+dayi-1
@@ -1160,7 +1160,7 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
     # 13.2 specified CCini (%)
     if (gvars[:simulation].CCini > 0) &
         (round(Int, 10000*gvars[:float_parameters][:cciprev]) > 0) &
-        (round(Int, gvars[:simulation].CCini) != round(Int, 100*gvars[:float_parameters][:CCiPrev])) 
+        (round(Int, gvars[:simulation].CCini) != round(Int, 100*gvars[:float_parameters][:cciprev])) 
         # 13.2a Minimum CC
         ccinimin = 100 * (gvars[:crop].SizeSeedling/10000) *
                     (gvars[:crop].PlantingDens/10000)
@@ -1283,6 +1283,7 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
         # NOT NEEDED since RootingDepth is calculated in the RUN by considering
         # Ziprev
     else
+        gvars[:simulation].SCor = 1
         rooting_depth = actual_rooting_depth(
               gvars[:integer_parameters][:daynri]-gvars[:crop].Day1+1,
               gvars[:crop].DaysToGermination, 
@@ -1294,7 +1295,8 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
               gvars[:crop].RootMin,
               gvars[:crop].RootMax,
               gvars[:crop].RootShape,
-              gvars[:crop].ModeCycle)
+              gvars[:crop].ModeCycle,
+              gvars)
         setparameter!(gvars[:float_parameters], :rooting_depth, rooting_depth)
     end 
 
@@ -1457,7 +1459,7 @@ function get_sumgdd_before_simulation!(gvars)
             while dayx < daynri
                 dayx = dayx + 1
                 if dayx>tmin_dataset[31].DayNr
-                    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
+                    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, dayx,
                                                     (Tmin, Tmax), 
                                                     gvars[:temperature_record])
                     i = 0
@@ -1478,7 +1480,7 @@ function get_sumgdd_before_simulation!(gvars)
                                             (Tmin, Tmax), 
                                             gvars[:temperature_record])
             i = 1
-            while tmin_dataset[1].DayNr != crop_firstday
+            while tmin_dataset[1].DayNr != dayx 
                 i += 1
             end
             tmin = tmin_dataset[i].Param 
@@ -1492,7 +1494,7 @@ function get_sumgdd_before_simulation!(gvars)
             while dayx < daynri
                 dayx = dayx + 1
                 if dayx>tmin_dataset[31].DayNr
-                    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
+                    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, dayx,
                                                     (Tmin, Tmax), 
                                                     gvars[:temperature_record])
                     i = 0
@@ -1623,11 +1625,12 @@ must set simulation.SCor = 1  before calling this function
 function actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax, 
                               sumgdd, zmin, zmax, shapefactor, typedays, gvars)
     soil_layers = gvars[:soil_layers]
+    soil = gvars[:soil]
 
     if typedays == :GDDays
-        zr = actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, gvars)
+        zr = actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, shapefactor, gvars)
     else
-        zr = actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, gvars)
+        zr = actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, shapefactor, gvars)
     end
 
     # restrictive soil layer this is donw before calling this function
@@ -1644,11 +1647,11 @@ function actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax,
 end 
 
 """
-    ardd = actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, gvars)
+    ardd = actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, shapefactor, gvars)
 
 global.f90:7306
 """
-function actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, gvars)
+function actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, shapefactor, gvars)
     simulation = gvars[:simulation]
     simulparam = gvars[:simulparam]
 
@@ -1684,11 +1687,11 @@ function actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, gvars)
 end 
 
 """
-    ardg = actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, gvars)
+    ardg = actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, shapefactor, gvars)
 
 global.f90:7346
 """
-function actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, gvars)
+function actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, shapefactor, gvars)
     simulation = gvars[:simulation]
     simulparam = gvars[:simulparam]
 
@@ -1756,7 +1759,7 @@ function open_harvest_info!(gvars, path; kwargs...)
     Man_info= Float64[]
     open(man_file, "r") do file
         readline(file)
-        if !endswith(".csv")
+        if !endswith(man_file, ".csv")
             readline(file)
             if gvars[:string_parameters][:man_file] != "(None)"
                 for i in 1:10
@@ -1799,7 +1802,7 @@ function get_next_harvest!(gvars)
     Man = gvars[:array_parameters][:Man]
     Man_info = gvars[:array_parameters][:Man_info]
 
-    if management.Cuttings.Generate
+    if !management.Cuttings.Generate
         if length(Man)>0
             fromday = popfirst!(Man)
             cut_info_record1.FromDay = fromday
@@ -1870,7 +1873,7 @@ function get_next_harvest!(gvars)
                 end 
                 if cut_info_record2.FromDay <= cut_info_record1.FromDay 
                     # CutInfoRecord2 becomes CutInfoRecord1
-                    cut_info_record1.FromDay <= cut_info_record2.FromDay 
+                    cut_info_record1.FromDay = cut_info_record2.FromDay 
                     if management.Cuttings.Criterion == :IntDay
                         cut_info_record1.IntervalInfo = cut_info_record2.IntervalInfo
                     elseif management.Cuttings.Criterion == :IntGDD
@@ -1907,7 +1910,7 @@ function get_next_harvest!(gvars)
                 end 
                 cut_info_record1.ToDay = crop.DaysToHarvest
                 if management.Cuttings.NrDays != undef_int
-                    if  cut_info_record1.ToDay > (management.Cuttings.Day1 + management.Cuttings.NrDays - 1)
+                    if cut_info_record1.ToDay > (management.Cuttings.Day1 + management.Cuttings.NrDays - 1)
                         cut_info_record1.ToDay = management.Cuttings.Day1 + management.Cuttings.NrDays - 1 
                     end 
                 end 
@@ -1935,7 +1938,7 @@ function determine_root_zone_salt_content!(gvars, rootingdepth)
     zrecsw = 0
     zrecswfc = 0
     zrkssalt = 1
-    if rootingdepth >= gvar[:crop].RootMin
+    if rootingdepth >= gvars[:crop].RootMin
         loopi = true
         while loopi
             compi = compi + 1
@@ -1951,14 +1954,14 @@ function determine_root_zone_salt_content!(gvars, rootingdepth)
                 end 
             end 
             factor = factor * (compartments[compi].Thickness)/rootingdepth # weighting factor
-            zrece = zrece + factor * ececomp(compartments[compi], gvars[:soil_layers], gvars[:simulparam])
-            zrecsw = zrecsw + factor * ecswcomp(compartments[compi], false, gvars[:soil_layers], gvars[:simulparam]) # not at FC
-            zrecswfc = zrecswfc + factor * ecswcomp(compartments[compi], true, gvars[:soil_layers], gvars[:simulparam]) # at FC
+            zrece = zrece + factor * ececomp(compartments[compi], gvars)
+            zrecsw = zrecsw + factor * ecswcomp(compartments[compi], false, gvars) # not at FC
+            zrecswfc = zrecswfc + factor * ecswcomp(compartments[compi], true, gvars) # at FC
             if (cumdepth >= rootingdepth) | (compi == length(compartments)) 
                 loopi = false
             end
         end 
-        if (gvars[:crop].ECemin /= undef_int) & (gvars[:crop].ECemax /= undef_int) &
+        if (gvars[:crop].ECemin != undef_int) & (gvars[:crop].ECemax != undef_int) &
                                     (gvars[:crop].ECemin < gvars[:crop].ECemax)
             zrkssalt = ks_salinity(true, gvars[:crop].ECemin, gvars[:crop].ECemax, zrece, 0) 
         else
@@ -1979,39 +1982,18 @@ function determine_root_zone_salt_content!(gvars, rootingdepth)
     return nothing
 end 
 
-"""
-    ecc = ececomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
-
-global.f90:2523
-"""
-function ececomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
-    volsat = soil_layers[compartment.Layer].SAT
-    totsalt = 0
-    for i in 1:soil_layers[compartment.Layer].SCP1
-        totsalt = totsalt + compartment[i].Salt + compartment[i].Depo # g/m2
-    end 
-
-    denominator = volsat*10 * compartment.Thickness * 
-                  (1 - soil_layers[compartment.Layer].GravelVol/100)
-    totsalt = totsalt / denominator  # g/l
-
-    if totsalt > simulparam.SaltSolub
-        totsalt = simulparam.SaltSolub
-    end 
-
-    ecc = totsalt / equiv # dS/m
-    return ecc
-end 
 
 """
-    ecs = ecswcomp(compartment::CompartmentIndividual, atfc, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
+    ecs = ecswcomp(compartment::CompartmentIndividual, atfc, gvars)
 
 global.f90:2547
 """
-function ecswcomp(compartment::CompartmentIndividual, atfc, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
+function ecswcomp(compartment::CompartmentIndividual, atfc, gvars)
+    soil_layers = gvars[:soil_layers]
+    simulparam = gvars[:simulparam]
     totsalt = 0
     for i in 1:soil_layers[compartment.Layer].SCP1
-        totsalt = totsalt + compartment[i].Salt + compartment[i].Depo # g/m2
+        totsalt = totsalt + compartment.Salt[i] + compartment.Depo[i] # g/m2
     end 
     if atfc == true
         totsalt = totsalt / (soil_layers[compartment.Layer].FC * 10 * compartment.Thickness *

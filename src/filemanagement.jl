@@ -772,6 +772,7 @@ function adjusted_rooting_depth!(gvars)
 
 
     if ziprev == undef_double
+        gvars[:simulation].SCor = 1
         zi = actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax,
                                 sumgdd, zmin, zmax, shapefactor, typedays, gvars)
     else
@@ -786,12 +787,14 @@ function adjusted_rooting_depth!(gvars)
         end 
 
         # -- 1.2 Calculate ZiMax
+        gvars[:simulation].SCor = 1
         zimax = actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax,
                                 sumgdd, zmin, zmax, shapefactor, typedays, gvars)
         # -- 1.3 Restore effect of restrive soil layer(s)
         gvars[:soil].RootMax = zlimit 
 
         # 2. increase (dZ) at time t
+        gvars[:simulation].SCor = 1
         ziunlimm1 = actual_rooting_depth(dap-1, l0, lzmax, l1234, gddl0, gddlzmax,
                                 sumgddprev, zmin, zmax, shapefactor, typedays, gvars)
         ziunlim = zimax 
