@@ -50,16 +50,16 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
     calculate_drainage!(gvars)
 
     # 4. Runoff
-    if gvars[:management].Bundheight < 0.001
+    if gvars[:management].BundHeight < 0.001
         setparameter!(gvars[:integer_parameters], :daysubmerged, 0)
-        if gvars[:management].RunoffON & (gvars[:float_parameters][:rain] > 0.1)
+        if gvars[:management].RunoffOn & (gvars[:float_parameters][:rain] > 0.1)
             calculate_runoff!(gvars)
         end 
     end 
 
     # 5. Infiltration (Rain and Irrigation)
-    if (gvars[:rain_record].DataType == :decadely) |
-       (gvars[:rain_record].DataType == :Monthly)
+    if (gvars[:rain_record].Datatype == :decadely) |
+       (gvars[:rain_record].Datatype == :Monthly)
         calculate_effective_rainfall!(gvars, lvars)
     end 
     if (gvars[:symbol_parameters][:irrimode] == :Generate) &
@@ -67,7 +67,7 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
        (targettimeval_loc != -999)
         calculate_irrigation!(gvars, lvars, targettimeval_loc, targetdepthval)
     end 
-    if gvars[:management].Bundheight >= 0.01
+    if gvars[:management].BundHeight >= 0.01
         calculate_surfacestorage!(gvars, lvars, dayi)
     else
         calculate_extra_runoff!(gvars, lvars)
@@ -153,7 +153,7 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
         prepare_stage1!(gvars)
     end 
     adjust_epot_mulch_wetted_surface!(gvars)
-    if ((gvars[:rain_record].DataType == :Decadely) | (gvars[:rain_record].DataType == :Monthly)) &
+    if ((gvars[:rain_record].Datatype == :Decadely) | (gvars[:rain_record].Datatype == :Monthly)) &
        (gvars[:simulparam].EffectiveRain.RootNrEvap > 0)
         # reduction soil evaporation
         epot = gvars[:float_parameters][:epot] *
@@ -178,7 +178,7 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
         end 
     end 
     # Reset redcution Epot for 10-day or monthly rainfall data
-    if ((gvars[:rain_record].DataType == :Decadely) | (gvars[:rain_record].DataType == :Monthly)) &
+    if ((gvars[:rain_record].Datatype == :Decadely) | (gvars[:rain_record].Datatype == :Monthly)) &
        (gvars[:simulparam].EffectiveRain.RootNrEvap > 0)
        epot = gvars[:float_parameters][:epot] /
                (exp((1/gvars[:simulparam].EffectiveRain.RootNrEvap)*log((gvars[:soil].REW+1)/20)))
@@ -295,6 +295,8 @@ function check_water_salt_balance!(gvars, lvars, dayi, control)
         runoff = gvars[:float_parameters][:runoff]
         eact = gvars[:float_parameters][:eact]
         epot = gvars[:float_parameters][:epot]
+        tpot = gvars[:float_parameters][:tpot]
+        tactweedinfested = gvars[:float_parameters][:tactweedinfested]
         tact = gvars[:float_parameters][:tact]
         rain = gvars[:float_parameters][:rain]
         irrigation = gvars[:float_parameters][:irrigation]
@@ -518,7 +520,7 @@ function calculate_delta_theta(theta_in, thetaadjfc, nrlayer, soil_layers)
     if theta <= thetaadjfc/100
         deltax = 0
     else
-        DeltaX = soil_layers[nrlayer].Tau * (theta_sat - theta_fc) * 
+        deltax = soil_layers[nrlayer].tau * (theta_sat - theta_fc) * 
                  (exp(theta - theta_fc) - 1) / (exp(theta_sat - theta_fc) - 1)
         if (theta - deltax) < thetaadjfc
             deltax = theta - thetaadjfc
@@ -535,7 +537,7 @@ simul.f90:1598
 function calculate_theta(delta_theta, thetaadjfc, nrlayer, soil_layers)
     theta_sat = soil_layers[nrlayer].SAT / 100
     theta_fc = soil_layers[nrlayer].FC / 100
-    tau = soil_layers[nrlayer].Tau
+    tau = soil_layers[nrlayer].tau
     if delta_theta <= eps()
         thetax = thetaadjfc
     elseif tau > 0
@@ -568,9 +570,9 @@ function calculate_runoff!(gvars)
 
     maxdepth = simulparam.RunoffDepth
 
-    cn2 = round(Int, soil.CNvalue * (100 + management.CNcorrection)/100)
+    cn2 = round(Int, soil.CNValue * (100 + management.CNcorrection)/100)
 
-    if rain_record.DataType == :Daily
+    if rain_record.Datatype == :Daily
         if simulparam.CNcorrection
             calculate_weighting_factors!(maxdepth, compartments)
             sumi = calculate_relative_wetness_topsoil(maxdepth, compartments, soil_layers) 
@@ -592,7 +594,7 @@ function calculate_runoff!(gvars)
         setparameter!(gvars[:float_parameters], :runoff, term^2 / (shower + (1 - simulparam.IniAbstract/100) * s))
     end 
     if (gvars[:float_parameters][:runoff] > 0) &
-       ((rain_record.DataType == :Decadely) | (rain_record.DataType == :Monthly))
+       ((rain_record.Datatype == :Decadely) | (rain_record.Datatype == :Monthly))
         if gvars[:float_parameters][:runoff] >= shower
             setparameter!(gvars[:float_parameters], :runoff, rain)
         else
@@ -756,7 +758,7 @@ function calculate_effective_rainfall!(gvars, lvars)
             end
         end 
         if subdrain > drainmax
-            if management.Bundheight < 0.001
+            if management.BundHeight < 0.001
                 setparameter!(gvars[:float_parameters], :runoff, runoff + subdrain - drainmax)
             end 
             subdrain = drainmax
@@ -773,7 +775,6 @@ end
 simul.f90:1940
 """
 function calculate_irrigation!(gvars, lvars, targettimeval, targetdepthval)
-    subdrain = lvars[:float_parameters][:subdrain]
 
     # total root zone is considered
     determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth])
@@ -840,7 +841,7 @@ function calculate_surfacestorage!(gvars, lvars, dayi)
 
     infiltratedrain = 0
     infiltratedirrigation = 0
-    if rain_record.DataType == :Daily
+    if rain_record.Datatype == :Daily
         sumi = surfacestorage + irrigation + rain
     else
         sumi = surfacestorage + irrigation + rain - runoff - subdrain
@@ -864,7 +865,7 @@ function calculate_surfacestorage!(gvars, lvars, dayi)
             infiltratedstorage = soil_layers[compartments[1].Layer].InfRate
             surfacestorage = sumi - infiltratedstorage
         else
-            if rain_record.DataType == :Daily
+            if rain_record.Datatype == :Daily
                 infiltratedstorage = sumi
             else
                 infiltratedstorage = surfacestorage + irrigation
@@ -969,7 +970,7 @@ function calculate_infiltration!(gvars, lvars)
 
     # calculate_infiltration
     # A -  INFILTRATION versus STORAGE in Rootzone (= EffecRain)
-    if gvars[:rain_record]DataType == :Daily
+    if gvars[:rain_record].Datatype == :Daily
         amount_still_to_store = infiltratedrain + infiltratedirrigation + infiltratedstorage
         effecrain = 0.
     else
@@ -1080,7 +1081,7 @@ function calculate_infiltration!(gvars, lvars)
         #6. Adjust infiltrated water
 
         if runoff > runoffini
-            if management.Bundheight >= 0.01
+            if management.BundHeight >= 0.01
                 surfacestorage += (runoff  - runoffini)
                 infiltratedstorage = infiltratedstorage - (runoff-runoffini)
                 if surfacestorage > management.BundHeight*1000
@@ -1236,7 +1237,7 @@ function calculate_infiltration!(gvars, lvars)
             if infiltratedrain > 0
                 infiltratedrain = infiltratedrain - amount_still_to_store
             end 
-            if management.Bundheight >= 0.01
+            if management.BundHeight >= 0.01
                 surfacestorage += amount_still_to_store
                 if surfacestorage > management.BundHeight*1000
                     runoff += (surfacestorage - management.BundHeight*1000)
@@ -1782,7 +1783,7 @@ function effect_soil_fertility_salinity_stress!(gvars, stresssfadjnew, coeffb0sa
         # Soil Salinity
         ccxredd = round(Int, coeffb0salt + coeffb1salt * saltstress +
                              coeffb2salt * saltstress * saltstress)
-        if (ccxredd < 0) | (saltstress <= 0.1) | (gvars[:simulation].SalinityConsidered() == false)
+        if (ccxredd < 0) | (saltstress <= 0.1) | (gvars[:simulation].SalinityConsidered == false)
             salinityeffectstress = RepEffectStress()
             no_effect_stress!(salinityeffectstress)
         else
@@ -1809,22 +1810,22 @@ function effect_soil_fertility_salinity_stress!(gvars, stresssfadjnew, coeffb0sa
                                                   gvars[:crop].ModeCycle) 
         end 
         # Assign integrated effect of the stresses
-        gvars[:simulation].EffectSTress.RedWP = fertilityeffectstress.RedWP
-        gvars[:simulation].EffectSTress.RedKsSto = salinityeffectstress.RedKsSto
+        gvars[:simulation].EffectStress.RedWP = fertilityeffectstress.RedWP
+        gvars[:simulation].EffectStress.RedKsSto = salinityeffectstress.RedKsSto
         if fertilityeffectstress.RedCGC > salinityeffectstress.RedCGC
-            gvars[:simulation].EffectSTress.RedCGC = fertilityeffectstress.RedCGC
+            gvars[:simulation].EffectStress.RedCGC = fertilityeffectstress.RedCGC
         else
-            gvars[:simulation].EffectSTress.RedCGC = salinityeffectstress.RedCGC
+            gvars[:simulation].EffectStress.RedCGC = salinityeffectstress.RedCGC
         end 
         if fertilityeffectstress.RedCCX > salinityeffectstress.RedCCX
-            gvars[:simulation].EffectSTress.RedCCX = fertilityeffectstress.RedCCX
+            gvars[:simulation].EffectStress.RedCCX = fertilityeffectstress.RedCCX
         else
-            gvars[:simulation].EffectSTress.RedCCX = salinityeffectstress.RedCCX
+            gvars[:simulation].EffectStress.RedCCX = salinityeffectstress.RedCCX
         end 
         if fertilityeffectstress.CDecline > salinityeffectstress.CDecline
-            gvars[:simulation].EffectSTress.CDecline = fertilityeffectstress.CDecline
+            gvars[:simulation].EffectStress.CDecline = fertilityeffectstress.CDecline
         else
-            gvars[:simulation].EffectSTress.CDecline = salinityeffectstress.CDecline
+            gvars[:simulation].EffectStress.CDecline = salinityeffectstress.CDecline
         end 
         # adjust time to maximum canopy cover
         l12sf, redcgc, redccx, _ = time_to_max_canopy_sf(
@@ -1894,7 +1895,7 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
     stressleaf = gvars[:float_parameters][:stressleaf]
     stresssenescence = gvars[:float_parameters][:stresssenescence]
     timesenescence = gvars[:float_parameters][:timesenescence]
-    nomorecrop = gvars[:float_parameters][:nomorecrop]
+    nomorecrop = gvars[:bool_parameters][:nomorecrop]
     cciactual = gvars[:float_parameters][:cciactual]
     cciprev = gvars[:float_parameters][:cciprev]
     ccitopearlysen = gvars[:float_parameters][:ccitopearlysen]
@@ -2226,7 +2227,7 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
                 if ccitopearlysen < 0.001
                     if (gvars[:simulation].SumEToStress > gvars[:crop].SumEToDelaySenescence) |
                        (abs(gvars[:crop].SumEToDelaySenescence) < eps())
-                        CCiSen = 0 # no crop anymore
+                        ccisen = 0 # no crop anymore
                     else
                         if ccdormant > gvars[:crop].CCo
                             ccisen = gvars[:crop].CCo + (1 - gvars[:simulation].SumEToStress /
@@ -2357,7 +2358,7 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
     setparameter!(gvars[:float_parameters], :stressleaf, stressleaf)
     setparameter!(gvars[:float_parameters], :stresssenescence, stresssenescence)
     setparameter!(gvars[:float_parameters], :timesenescence, timesenescence)
-    setparameter!(gvars[:float_parameters], :nomorecrop, nomorecrop)
+    setparameter!(gvars[:bool_parameters], :nomorecrop, nomorecrop)
     setparameter!(gvars[:float_parameters], :cciactual, cciactual)
     setparameter!(gvars[:float_parameters], :cciprev, cciprev)
     setparameter!(gvars[:float_parameters], :ccitopearlysen, ccitopearlysen)
@@ -2577,7 +2578,7 @@ simul.f90:1106
 function adjust_psenescence_to_eto(etomean, timesenescence, withbeta, crop, simulparam)
     psenact = crop.pSenescence
     if crop.pMethod == :FAOCorrection
-        pSenAct = crop.pSenescence + simulparam.pAdjFAO * 0.04*(5-etomean) * log10(10-9*crop.pSenescence)
+        psenact = crop.pSenescence + simulparam.pAdjFAO * 0.04*(5-etomean) * log10(10-9*crop.pSenescence)
         if (timesenescence > 0.0001) & withbeta
             psenact = psenact * (1-simulparam.Beta/100)
         end 
@@ -3511,7 +3512,7 @@ function extract_water_from_evap_layer!(gvars, evaptolose, zact, stg1)
             fracz = 1
         end 
         wairdry = 10 *
-                  soil_layers[layeri].WP/ *
+                  soil_layers[layeri].WP/2 *
                   compartments[compi].Thickness *
                   (1 - soil_layers[layeri].GravelVol/100)
         wx = 1000 * compartments[compi].Theta *
@@ -3858,6 +3859,7 @@ function calculate_transpiration!(gvars, tpot, coeffb0salt, coeffb1salt, coeffb2
         compi = 0
         pre_layer = 0
         loopi = true
+        theta_critical = 0
         while loopi
             compi = compi + 1
             layeri = compartments[compi].Layer
@@ -4000,7 +4002,7 @@ function correction_anaeroby(compartment, alfa, daysubmerged, simulparam, soil_l
         else
             ini = 1
         end 
-        alfaan = (soil_layers[compartment.Layer].SAT/100 - compartment.theta)/(crop.AnaeroPoint/100)
+        alfaan = (soil_layers[compartment.Layer].SAT/100 - compartment.Theta)/(crop.AnaeroPoint/100)
         if alfaan < 0
             alfaan = 0
         end 

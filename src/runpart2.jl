@@ -172,84 +172,85 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
         end
     end 
 
+    # OJO we will use tcropsim
     # 3. Temperature file
-    if gvars[:bool_parameters][:temperature_file_exists]
-        if temperature_record.Datatype == :Daily
-            i = fromsimday - temperature_record.FromDayNr + 1
-            tlow = Tmin[i]
-            thigh = Tmax[i]
-            # setparameter!(gvars[:float_parameters], :tmin, tlow)
-            # setparameter!(gvars[:float_parameters], :tmax, thigh)
-
-        elseif temperature_record.Datatype == :Decadely
-            get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, fromsimday,
-                                            (Tmin, Tmax), 
-                                            temperature_record)
-            i = 1
-            while tmin_dataset[i].DayNr != fromsimday
-                i = i+1
-            end
-            tlow = tmin_dataset[i].Param 
-            thigh = tmax_dataset[i].Param 
-            # setparameter!(gvars[:float_parameters], :tmin, tlow)
-            # setparameter!(gvars[:float_parameters], :tmax, thigh)
-
-        elseif temperature_record.Datatype == :Monthly
-            get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, fromsimday,
-                                            (Tmin, Tmax), 
-                                            temperature_record)
-            i = 1
-            while tmin_dataset[1].DayNr != fromsimday 
-                i += 1
-            end
-            tlow = tmin_dataset[i].Param 
-            thigh = tmax_dataset[i].Param 
-            # setparameter!(gvars[:float_parameters], :tmin, tlow)
-            # setparameter!(gvars[:float_parameters], :tmax, thigh)
-        end 
-
-        # we do no create TempData.SIM but we use outputs variable
-        add_output_in_tempdatasim!(outputs, tlow, thigh)
-
-        # next days of simulation period
-        for runningday in (fromsimday + 1):tosimday
-            if temperature_record.Datatype == :Daily
-                i += 1
-                if i==length(Tmin)
-                    i = 1
-                end
-                tlow = Tmin[i]
-                thigh = Tmax[i]
-
-            elseif temperature_record.Datatype == :Decadely
-                if runningday>tmin_dataset[31].DayNr
-                    get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
-                                                    (Tmin, Tmax), 
-                                                    temperature_record)
-                end
-                i = 1
-                while tmin_dataset[1].DayNr != runningday
-                    i += 1
-                end 
-                tlow = tmin_dataset[i].Param 
-                thigh = tmax_dataset[i].Param 
-
-            elseif temperature_record.Datatype == :Monthly
-                if runningday>tmin_dataset[31].DayNr
-                    get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
-                                                     (Tmin, Tmax), 
-                                                     temperature_record)
-                end 
-                i = 1 
-                while tmin_dataset[1].DayNr != runningday
-                    i += 1
-                end
-                tlow = tmin_dataset[i].Param 
-                thigh = tmax_dataset[i].Param 
-            end
-            add_output_in_tempdatasim!(outputs, tlow, thigh)
-        end
-    end 
+    # if gvars[:bool_parameters][:temperature_file_exists]
+    #     if temperature_record.Datatype == :Daily
+    #         i = fromsimday - temperature_record.FromDayNr + 1
+    #         tlow = Tmin[i]
+    #         thigh = Tmax[i]
+    #         # setparameter!(gvars[:float_parameters], :tmin, tlow)
+    #         # setparameter!(gvars[:float_parameters], :tmax, thigh)
+    #
+    #     elseif temperature_record.Datatype == :Decadely
+    #         get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, fromsimday,
+    #                                         (Tmin, Tmax), 
+    #                                         temperature_record)
+    #         i = 1
+    #         while tmin_dataset[i].DayNr != fromsimday
+    #             i = i+1
+    #         end
+    #         tlow = tmin_dataset[i].Param 
+    #         thigh = tmax_dataset[i].Param 
+    #         # setparameter!(gvars[:float_parameters], :tmin, tlow)
+    #         # setparameter!(gvars[:float_parameters], :tmax, thigh)
+    #
+    #     elseif temperature_record.Datatype == :Monthly
+    #         get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, fromsimday,
+    #                                         (Tmin, Tmax), 
+    #                                         temperature_record)
+    #         i = 1
+    #         while tmin_dataset[1].DayNr != fromsimday 
+    #             i += 1
+    #         end
+    #         tlow = tmin_dataset[i].Param 
+    #         thigh = tmax_dataset[i].Param 
+    #         # setparameter!(gvars[:float_parameters], :tmin, tlow)
+    #         # setparameter!(gvars[:float_parameters], :tmax, thigh)
+    #     end 
+    #
+    #     # we do no create TempData.SIM but we use outputs variable
+    #     add_output_in_tempdatasim!(outputs, tlow, thigh)
+    #
+    #     # next days of simulation period
+    #     for runningday in (fromsimday + 1):tosimday
+    #         if temperature_record.Datatype == :Daily
+    #             i += 1
+    #             if i==length(Tmin)
+    #                 i = 1
+    #             end
+    #             tlow = Tmin[i]
+    #             thigh = Tmax[i]
+    #
+    #         elseif temperature_record.Datatype == :Decadely
+    #             if runningday>tmin_dataset[31].DayNr
+    #                 get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
+    #                                                 (Tmin, Tmax), 
+    #                                                 temperature_record)
+    #             end
+    #             i = 1
+    #             while tmin_dataset[1].DayNr != runningday
+    #                 i += 1
+    #             end 
+    #             tlow = tmin_dataset[i].Param 
+    #             thigh = tmax_dataset[i].Param 
+    #
+    #         elseif temperature_record.Datatype == :Monthly
+    #             if runningday>tmin_dataset[31].DayNr
+    #                 get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
+    #                                                  (Tmin, Tmax), 
+    #                                                  temperature_record)
+    #             end 
+    #             i = 1 
+    #             while tmin_dataset[1].DayNr != runningday
+    #                 i += 1
+    #             end
+    #             tlow = tmin_dataset[i].Param 
+    #             thigh = tmax_dataset[i].Param 
+    #         end
+    #         add_output_in_tempdatasim!(outputs, tlow, thigh)
+    #     end
+    # end 
 
     return nothing
 end 
@@ -911,12 +912,14 @@ function open_climfiles_and_get_data_firstday!(outputs, gvars; kwargs...)
     if gvars[:bool_parameters][:temperature_file_exists]
         if firstdaynr == simulation.FromDayNr
             i = 1
-            tlow, thigh = read_output_from_tempdatasim(outputs, i) 
+            # tlow, thigh = read_output_from_tempdatasim(outputs, i) 
+            tlow, thigh = read_output_from_tcropsim(outputs, i) 
             setparameter!(gvars[:float_parameters], :tmin, tlow)
             setparameter!(gvars[:float_parameters], :tmax, thigh)
         else
             i = firstdaynr - simulation.FromDayNr + 1
-            tlow, thigh = read_output_from_tempdatasim(outputs, i) 
+            # tlow, thigh = read_output_from_tempdatasim(outputs, i) 
+            tlow, thigh = read_output_from_tcropsim(outputs, i) 
             setparameter!(gvars[:float_parameters], :tmin, tlow)
             setparameter!(gvars[:float_parameters], :tmax, thigh)
         end 

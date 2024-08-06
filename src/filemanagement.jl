@@ -1,9 +1,9 @@
 """
-    file_management(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+    file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
 
 run.f90:7760
 """
-function file_management(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+function file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
     # we create these "lvars" because we need functions that 
     # returns nothing or does not change anything
     float_parameters = ParametersContainer(Float64)
@@ -251,7 +251,6 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
 
     # 11. Biomass and yield
     if (gvars[:float_parameters][:rooting_depth] > 0) & (gvars[:bool_parameters][:nomorecrop] == false)
-        SWCtopSoilConsidered_temp = gvars[:simulation].SWCtopSoilConsidered()
         determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth])
         # temperature stress affecting crop transpiration
         if gvars[:float_parameters][:cciactual] <= 0.0000001
@@ -410,8 +409,8 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
                                      gvars[:float_parameters][:weedrci])/(gvars[:stresstot].NrD)
     end 
     # 14.c Assign crop parameters
-    gvars[:plotvarcrop].ActVal = gvars[:float_parameters][:cciactual]/gvars[:float_parameters][:ccxcropweedsnosfstress] * 100
-    gvars[:plotvarcrop].PotVal = 100 * (1/gvars[:float_parameters][:ccxcropweedsnosfstress]) * 
+    gvars[:plotvarcrop].ActVal = gvars[:float_parameters][:cciactual]/gvars[:float_parameters][:ccxcrop_weednosf_stress] * 100
+    gvars[:plotvarcrop].PotVal = 100 * (1/gvars[:float_parameters][:ccxcrop_weednosf_stress]) * 
                                    canopy_cover_no_stress_sf(virtualtimecc+gvars[:simulation].DelayedDays + 1,
                                      gvars[:crop].DaysToGermination, gvars[:crop].DaysToSenescence, 
                                      gvars[:crop].DaysToHarvest, gvars[:crop].GDDaysToGermination, 
@@ -426,7 +425,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
                                      gvars[:simulation])
     if (virtualtimecc+gvars[:simulation].DelayedDays + 1) <= gvars[:crop].DaysToFullCanopySF
         # not yet canopy decline with soil fertility stress
-        potvalsf = 100 * (1/gvars[:float_parameters][:ccxcropweedsnosfstress]) * 
+        potvalsf = 100 * (1/gvars[:float_parameters][:ccxcrop_weednosf_stress]) * 
                            canopy_cover_no_stress_sf(
                             virtualtimecc + gvars[:simulation].DelayedDays + 1, 
                             gvars[:crop].DaysToGermination, 
@@ -487,6 +486,7 @@ end
 run.f90:6159
 """
 function get_z_and_ec_gwt!(gvars)
+    ziaqua = gvars[:integer_parameters][:ziaqua]
     ziin = ziaqua
     if gvars[:gwtable].DNr1 == gvars[:gwtable].DNr2
         ziaqua  = gvars[:gwtable].Z1
@@ -516,6 +516,9 @@ end
 run.f90:6262
 """
 function get_irri_param!(gvars, lvars)
+    irri_info_record1 = gvars[:irri_info_record1]
+    irri_info_record2 = gvars[:irri_info_record2]
+
     targettimeval = -999
     targetdepthval = -999
     if (gvars[:integer_parameters][:daynri] < gvars[:crop].Day1) | 
@@ -560,13 +563,13 @@ function get_irri_param!(gvars, lvars)
         # get TargetValues
         targetdepthval = gvars[:irri_info_record1].DepthInfo
         if gvars[:symbol_parameters][:timemode] == :AllDepl
-            targettimeval = gvars[:irri_info_record1]_TimeInfo
+            targettimeval = gvars[:irri_info_record1].TimeInfo
 
         elseif gvars[:symbol_parameters][:timemode] == :AllRAW
-            targettimeval = gvars[:irri_info_record1]_TimeInfo
+            targettimeval = gvars[:irri_info_record1].TimeInfo
 
         elseif gvars[:symbol_parameters][:timemode] == :FixInt
-            targettimeval = gvars[:irri_info_record1]_TimeInfo
+            targettimeval = gvars[:irri_info_record1].TimeInfo
             if targettimeval > gvars[:integer_parameters][:irri_interval] # do not yet irrigate
                 targettimeval = 0
             elseif targettimeval == gvars[:integer_parameters][:irri_interval]  # irrigate
@@ -581,7 +584,7 @@ function get_irri_param!(gvars, lvars)
             end 
 
         elseif gvars[:symbol_parameters][:timemode] == :WaterBetweenBunds
-            targettimeval = gvars[:irri_info_record1]_TimeInfo
+            targettimeval = gvars[:irri_info_record1].TimeInfo
             if (gvars[:management].BundHeight >= 0.01) &
                (gvars[:symbol_parameters][:depthmode] == :FixDepth) &
                (targettimeval < (1000 * gvars[:management].BundHeight)) &
@@ -617,7 +620,7 @@ function irri_out_season(gvars)
             irrievents[i] = gvars[:irri_after_season][i]
         end 
     end 
-    if (dnr < 1) then
+    if dnr < 1
         irri = 0
     else
         theend = false
@@ -625,7 +628,7 @@ function irri_out_season(gvars)
         loopi = true
         while loopi
             nri = nri + 1
-            if irrievents[nri].DayNr == DNr
+            if irrievents[nri].DayNr == dnr
                 irri = irrievents[nri].Param
                 theend = true
             else
@@ -654,18 +657,18 @@ function irri_manual!(gvars)
     else
         dnr = gvars[:integer_parameters][:daynri] - gvars[:integer_parameters][:irri_first_daynr] + 1
     end 
-    if irri_info_record.NoMoreInfo
+    if irri_info_record1.NoMoreInfo
         irri = 0
     else
         irri = 0
-        if irri_info_record.TimeInfo == dnr
+        if irri_info_record1.TimeInfo == dnr
             Irri_1 = gvars[:array_parameters][:Irri_1]
             Irri_2 = gvars[:array_parameters][:Irri_2]
             Irri_3 = gvars[:array_parameters][:Irri_3]
 
-            irri = irri_info_record.DepthInfo
+            irri = irri_info_record1.DepthInfo
             if length(Irri_1) == 0
-                irri_info_record.NoMoreInfo = true
+                irri_info_record1.NoMoreInfo = true
             else
                 ir1 = round(Int, popfirst!(Irri_1))
                 ir2 = round(Int, popfirst!(Irri_2))
@@ -673,7 +676,7 @@ function irri_manual!(gvars)
                 gvars[:simulation].IrriECw = irriecw
                 irri_info_record1.TimeInfo = ir1
                 irri_info_record1.DepthInfo = ir2
-                irri_info_record.NoMoreInfo = false 
+                irri_info_record1.NoMoreInfo = false 
             end 
             setparameter!(gvars[:array_parameters], :Irri_1, Irri_1)
             setparameter!(gvars[:array_parameters], :Irri_2, Irri_2)
@@ -731,7 +734,7 @@ function ccini_total_from_time_to_ccini(tempdaystoccini, tempgddaystoccini,
         tempccini = cci_no_water_stress_sf(daycc, l0, l12sf, l123, l1234, gddl0, 
                                        gddl12sf, gddl123, gddl1234, 
                                        (cco*fweed), (ccx*fweed), cgc, gddcgc, 
-                                       (cdc*(fweed*ccx+2.29)/(ccx+2.29_dp)), 
+                                       (cdc*(fweed*ccx+2.29)/(ccx+2.29)), 
                                        (gddcdc*(fweed*ccx+2.29)/(ccx+2.29)), 
                                        sumgddforccini, ratdgdd, sfredcgc, 
                                        sfredccx, sfcdecline, themodecycle, simulation)
@@ -891,6 +894,7 @@ function determine_root_zone_wc!(gvars, rootingdepth)
     soil_layers = gvars[:soil_layers]
     crop = gvars[:crop]
     simulparam = gvars[:simulparam]
+    simulation = gvars[:simulation]
 
     # calculate SWC in root zone
     cumdepth = 0
@@ -1033,6 +1037,9 @@ run.f90:6348
 """
 function adjust_swc_rootzone!(gvars, lvars)
     compartments = gvars[:compartments]
+    soil_layers = gvars[:soil_layers]
+    simulparam = gvars[:simulparam]
+    crop = gvars[:crop]
 
     compi = 0
     sumdepth = 0
@@ -1207,7 +1214,7 @@ function determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
                    crop.DaysToSenescence, crop.DaysToHarvest, 0, ccipot, 
                    gvars[:float_parameters][:eto],
                    crop.KcTop, crop.KcDecline, crop.CCx, 
-                   CCxWitheredTpotNoS, crop.CCEffectEvapLate, co2i, gddayi, 
+                   ccxwitheredtpotnos, crop.CCEffectEvapLate, co2i, gddayi, 
                    crop.GDtranspLow, simulation, simulparam)
 
     # 3. - WPi for that day
@@ -1226,7 +1233,7 @@ function determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
         wpi =  wpi * (1 - (1-crop.WPy/100)*fswitch)
     end 
     # 3c - adjustment WPi for CO2
-    if round(Int, 100*co2i) != round(Int, 100*co2ref)
+    if round(Int, 100*co2i) != round(Int, 100*CO2Ref)
         wpi = wpi * fadjusted_for_co2(co2i, crop.WP, crop.AdaptedToCO2)
     end 
 
@@ -1281,7 +1288,7 @@ function fadjusted_for_co2(co2i, wpi, percenta)
         end 
 
         # 3.2 adjustment for co2
-        fco2old = (co2i/CO2Ref)/(1+(co2i-CO2Ref)*((1-fw)*0.000138&
+        fco2old = (co2i/CO2Ref)/(1+(co2i-CO2Ref)*((1-fw)*0.000138
             + fw*(0.000138*fsink + 0.001165*(1-fsink))))
     end 
 
@@ -1656,7 +1663,7 @@ function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc)
                 # added -epsilon(0) for zero-diff with pascal version output
                 (gvars[:float_parameters][:cciactual] > (0.001-eps())) # and as long as green canopy cover remains (for correction to stresses)
                 # determine KsStomatal
-                pstomatulact = adjust_pstomatal_to_eto(eto, crop, simulparam)
+                pstomatulact = adjust_pstomatal_to_eto(eto, gvars[:crop], gvars[:simulparam])
                 pll = 1
                 ksstomatal = ks_any(wrel, pstomatulact, pll, gvars[:crop].KsShapeFactorStomata)
                 # daily correction
@@ -1701,16 +1708,16 @@ function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc)
             end
 
             # 2.8 Limit HI to allowable maximum increase
-            HItimesTotal = HItimesBEF * HItimesAT
-            if (HItimesTotal > (1 +(gvars[:crop].DHImax/100))) then
-                HItimesTotal = 1 +(gvars[:crop].DHImax/100)
+            hitimestotal = hitimesbef * hitimesat
+            if hitimestotal > (1 +(gvars[:crop].DHImax/100))
+                hitimestotal = 1 +(gvars[:crop].DHImax/100)
             end
 
             # 2.9 Yield
-            if (alfaMax >= alfa) then
-                YieldPart = Biomass * HItimesTotal*(alfa/100)
+            if alfamax >= alfa
+                yieldpart = biomass * hitimestotal*(alfa/100)
             else
-                YieldPart = Biomass * HItimesTotal*(alfaMax/100)
+                yieldpart = biomass * hitimestotal*(alfamax/100)
             end
         end
     end
@@ -1817,7 +1824,7 @@ simul.f90:1073
 """
 function year_weighing_factor(cropfirstdaynr)
     dayi, monthi, yeari = determine_date(cropfirstdaynr)
-    return Yeari
+    return yeari
 end
 
 """
@@ -1851,7 +1858,7 @@ function fraction_flowering(dayi, crop, simulation)
   if crop.LengthFlowering <= 1
       f = 1
   else
-      DiFlor = dayi - (simulation.DelayedDays + crop.Day1 + crop.DaysToFlowering)
+      diflor = dayi - (simulation.DelayedDays + crop.Day1 + crop.DaysToFlowering)
       f2 = fraction_period(diflor, crop)
       diflor = (dayi-1) - (simulation.DelayedDays + crop.Day1 + crop.DaysToFlowering)
       f1 = fraction_period(diflor, crop)
@@ -1879,6 +1886,7 @@ function harvest_index_day(dap, daystoflower, himax, dhidt, cci,
                                   hifinal,
                                   crop, simulation)
 
+    hio = 1
 
     dhidt_local = dhidt
     t = dap - simulation.DelayedDays - daystoflower
@@ -1900,7 +1908,7 @@ function harvest_index_day(dap, daystoflower, himax, dhidt, cci,
             higc = harvest_index_growth_coefficient(himax, dhidt_local)
             tswitch, higclinear = get_day_switch_to_linear(himax, dhidt_local, higc)
             if t < tswitch
-                percentlagphase = round(int, 100 * t/tswitch)
+                percentlagphase = round(Int, 100 * t/tswitch)
                 hiday = (hio*himax)/ (hio+(himax-hio)*exp(-higc*t))
             else
                 percentlagphase = 100
@@ -2006,11 +2014,11 @@ function get_potvalsf(dap, sumgddadjcc, gvars)
                     gvars[:float_parameters][:cdctotal],
                     gvars[:float_parameters][:gddcdctotal],
                     sumgddadjcc, ratdgdd, 
-                    simulation.EffectStress_RedCGC, 
-                    simulation.EffectStress_RedCCX, 
-                    simulation.EffectStress_CDecline, crop.ModeCycle,
+                    simulation.EffectStress.RedCGC, 
+                    simulation.EffectStress.RedCCX, 
+                    simulation.EffectStress.CDecline, crop.ModeCycle,
                     simulation)
-    potvalsf = 100 * (1/gvars[:float_parameters][:ccxcropweedsnosfstress]) * potvalsf
+    potvalsf = 100 * (1/gvars[:float_parameters][:ccxcrop_weednosf_stress]) * potvalsf
 
     return potvalsf
 end
@@ -2141,8 +2149,8 @@ run.f90:7345
 """
 function read_climate_nextday!(outputs, gvars)
     # Read Climate next day, Get GDDays and update SumGDDays
-    i = gvars[:integer_parameters][:daynri]
-    if i <= gvars[:simulation].ToDayNr
+    if gvars[:integer_parameters][:daynri] <= gvars[:simulation].ToDayNr
+        i = gvars[:integer_parameters][:daynri] - gvars[:simulation].FromDayNr + 1
         if gvars[:bool_parameters][:eto_file_exists]
             eto = read_output_from_etodatasim(outputs, i)
             setparameter!(gvars[:float_parameters], :eto, eto)
@@ -2152,7 +2160,8 @@ function read_climate_nextday!(outputs, gvars)
             setparameter!(gvars[:float_parameters], :rain, rain)
         end
         if gvars[:bool_parameters][:temperature_file_exists]
-            tmin, tmax = read_output_from_tempdatasim(outputs, i)
+            # tmin, tmax = read_output_from_tempdatasim(outputs, i)
+            tmin, tmax = read_output_from_tcropsim(outputs, i)
             setparameter!(gvars[:float_parameters], :tmin, tmin)
             setparameter!(gvars[:float_parameters], :tmax, tmax)
         else

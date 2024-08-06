@@ -152,7 +152,7 @@ function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType};
         initialize_run_part_1!(outputs, gvars, projectinput[nrrun]; kwargs...)
         initialize_climate!(outputs, gvars; kwargs...)
         initialize_run_part2!(outputs, gvars, projectinput[nrrun], nrrun; kwargs...)
-        file_management(outputs, gvars, projectinput[nrrun]; kwargs...)
+        file_management!(outputs, gvars, projectinput[nrrun]; kwargs...)
         # OUTPUT
         # call FinalizeRun1(NrRun, GetTheProjectFile(), TheProjectType)
         # call FinalizeRun2(NrRun, TheProjectType)

@@ -3122,6 +3122,10 @@ function active_cells(compartment::CompartmentIndividual, soil_layers::Vector{So
     return celi
 end 
 
+function active_cells(compartment::CompartmentIndividual, soil_layers::Vector{AbstractParametersContainer})
+    return active_cells(compartment, SoilLayerIndividual[s for s in soil_layers])
+end
+
 """
     salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepParam, i, mm)
 

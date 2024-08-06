@@ -182,7 +182,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
         ccxcrop_weednosf_stress = round(Int, (100*gvars[:crop].CCx*fweednos + 0.49))/100 # reference for plot with weed
         setparameter!(gvars[:float_parameters], :ccxcrop_weednosf_stress, ccxcrop_weednosf_stress)
         if gvars[:management].FertilityStress > 0
-            fWeed = 1
+            fweed = 1
             if (fi > 0) & (gvars[:crop].subkind == :Forage) 
                 cweed = 1
                 if fi > 0.005
@@ -1375,6 +1375,7 @@ end
 global.f90:2988
 """
 function get_day_switch_to_linear(himax, dhidt, higc)
+    hio = 1
     tmax = round(Int, himax/dhidt)
     ti = 0
     him1 = hio
@@ -2153,7 +2154,7 @@ function crop_stress_parameters_soil_salinity(ccxred, ccdistortion,
                     gddcgcadjmin = gddcgcadjmax
                 end 
                 if ccxred < 10  # smooth start required
-                    gddcgcadj = gddcgcadjmax - (gddcgcadjmax-gddcgcadjmin)*(exp(real(ccxred, kind=dp))/exp(10))*(ccdistortion/100)
+                    gddcgcadj = gddcgcadjmax - (gddcgcadjmax-gddcgcadjmin)*(exp(ccxred)/exp(10))*(ccdistortion/100)
                 else
                     gddcgcadj = gddcgcadjmax - (gddcgcadjmax-gddcgcadjmin)*(ccdistortion/100)
                 end 

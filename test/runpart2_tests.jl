@@ -25,6 +25,4 @@ include("checkpoints.jl")
     @test isapprox(gvars[:cut_info_record1], gvars_0[:cut_info_record1])
     @test isapprox(gvars[:cut_info_record2], gvars_0[:cut_info_record2])
     @test isapprox(gvars[:root_zone_salt], gvars_0[:root_zone_salt])
-
-
 end

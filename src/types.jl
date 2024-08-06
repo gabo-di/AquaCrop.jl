@@ -100,8 +100,8 @@ end
 
 sets an entry in parameterscontainer. 
 """
-function setparameter!(parameterscontainer::ParametersContainer{T}, parameterkey::Symbol, parameter::T) where {T}
-    parameterscontainer.parameters[parameterkey] = parameter
+function setparameter!(parameterscontainer::ParametersContainer{T}, parameterkey::Symbol, parameter::T1) where {T, T1}
+    parameterscontainer.parameters[parameterkey] = T(parameter)
     return nothing
 end
 
