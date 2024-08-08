@@ -7,23 +7,23 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs
     # we create these "lvars" because we need functions that 
     # returns nothing or does not change anything
     float_parameters = ParametersContainer(Float64)
-    setparameter!(float_parameters, :wpi,  0.0)
-    setparameter!(float_parameters, :preirri,  0.0)
-    setparameter!(float_parameters, :fracassim, 0.0)
-    setparameter!(float_parameters, :ecinfilt, 0.0)
-    setparameter!(float_parameters, :horizontalwaterflow, 0.0)
-    setparameter!(float_parameters, :horizontalsaltflow, 0.0)
-    setparameter!(float_parameters, :subdrain, 0.0)
-    setparameter!(float_parameters, :infiltratedrain, 0.0)
-    setparameter!(float_parameters, :infiltratedirrigation, 0.0)
-    setparameter!(float_parameters, :infiltratedstorage, 0.0)
+    setparameter!(float_parameters, :wpi,  0.0) #here
+    setparameter!(float_parameters, :preirri,  0.0) #advance_one_time_step
+    setparameter!(float_parameters, :fracassim, 0.0) #advance_one_time_step
+    setparameter!(float_parameters, :ecinfilt, 0.0) #budget_module
+    setparameter!(float_parameters, :horizontalwaterflow, 0.0) #budget_module
+    setparameter!(float_parameters, :horizontalsaltflow, 0.0) #budget_module
+    setparameter!(float_parameters, :subdrain, 0.0) #budget_module
+    setparameter!(float_parameters, :infiltratedrain, 0.0) #budget_module
+    setparameter!(float_parameters, :infiltratedirrigation, 0.0) #budget_module
+    setparameter!(float_parameters, :infiltratedstorage, 0.0) #budget_module
 
     integer_parameters = ParametersContainer(Int)
-    setparameter!(integer_parameters, :targettimeval, 0)
-    setparameter!(integer_parameters, :targetdepthval, 0)
+    setparameter!(integer_parameters, :targettimeval, 0) #advance_one_time_step
+    setparameter!(integer_parameters, :targetdepthval, 0) #advance_one_time_step
 
     bool_parameters = ParametersContainer(Bool)
-    setparameter!(bool_parameters, :harvestnow, false)
+    setparameter!(bool_parameters, :harvestnow, false) #here
 
     lvars = ComponentArray(
         float_parameters = float_parameters,
@@ -51,6 +51,12 @@ end
 run.f90:6747
 """
 function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType)
+    # reset values since they are local variables
+    setparameter!(lvars[:float_parameters], :preirri,  0.0)
+    setparameter!(lvars[:float_parameters], :fracassim, 0.0)
+    setparameter!(lvars[:integer_parameters], :targettimeval, 0)
+    setparameter!(lvars[:integer_parameters], :targetdepthval, 0)
+
     # 1. Get ETo
     if gvars[:string_parameters][:eto_file] == "(None)"
         setparameter!(gvars[:float_parameters], :eto, 5.0)
@@ -76,10 +82,12 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             adjust_for_watertable!(gvars)
         end 
     end 
+    #@infiltrate
 
     # 5. Get Irrigation
     setparameter!(gvars[:float_parameters], :irrigation, 0.0)
     get_irri_param!(gvars, lvars)
+    #@infiltrate
 
     # 6. get virtual time for CC development
     sumgddadjcc = undef_double #real(undef_int, kind=dp)
@@ -187,6 +195,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             setparameter!(gvars[:float_parameters], :cciprev, gvars[:float_parameters][:ccototal])
         end 
     end 
+    #@infiltrate
 
     # 7. Rooting depth AND Inet day 1
     if ((gvars[:crop].ModeCycle == :CalendarDays) &
@@ -221,9 +230,11 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             adjust_swc_rootzone!(gvars, lvars)
         end 
     end 
+    #@infiltrate
 
     # 8. Transfer of Assimilates
     initialize_transfer_assimilates!(gvars, lvars)
+    #@infiltrate
 
     # 9. RUN Soil water balance and actual Canopy Cover
     budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
@@ -233,6 +244,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
        (gvars[:symbol_parameters][:irrimode] == :Inet)
         irrigation = gvars[:float_parameters][:irrigation]
         preirri = lvars[:float_parameters][:preirri]
+        gvars[:sumwabal].Irrigation += preirri
         setparameter!(gvars[:float_parameters], :irrigation, irrigation + preirri)
         setparameter!(lvars[:float_parameters], :preirri, 0.0)
      end 
@@ -245,9 +257,11 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             gvars[:stresstot].NrD += 1
         end 
      end 
+     #@infiltrate
 
     # 10. Potential biomass
     determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
+    #@infiltrate
 
     # 11. Biomass and yield
     if (gvars[:float_parameters][:rooting_depth] > 0) & (gvars[:bool_parameters][:nomorecrop] == false)
@@ -271,6 +285,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
          setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.0)  # no crop
          setparameter!(gvars[:float_parameters], :tactweedinfested, 0.0)  # no crop
     end 
+    #@infiltrate
 
     # 12. Reset after RUN
     if gvars[:bool_parameters][:preday] == false
@@ -377,6 +392,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             setparameter!(gvars[:float_parameters], :yprevsum, gvars[:sumwabal].YieldPart)
         end 
     end 
+    #@infiltrate
 
     # 14. Write results
     # 14.a Summation
@@ -458,6 +474,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
     # if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
     #     call WriteEvaluationData((gvars[:integer_parameters][:daynri]-gvars[:simulation].DelayedDays()-gvars[:crop].Day1()+1))
     # end 
+    #@infiltrate
 
     # 15. Prepare Next day
     # 15.a Date

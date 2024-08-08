@@ -149,6 +149,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
     end
 
     # Maximum sum Kc (for reduction WP in season if soil fertility stress)
+    gvars[:simulation].DelayedDays = 0 #note that we need to do this before calling seasonal_sum_of_kcpot
     sumkctop = seasonal_sum_of_kcpot(outputs, gvars[:crop].DaysToCCini,
             gvars[:crop].GDDaysToCCini, gvars[:crop].DaysToGermination,
             gvars[:crop].DaysToFullCanopy, gvars[:crop].DaysToSenescence,

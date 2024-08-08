@@ -32,6 +32,14 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
     targetdepthval = lvars[:integer_parameters][:targetdepthval]
     fracassim = lvars[:float_parameters][:fracassim]
 
+    # reset values since they are local variables
+    setparameter!(lvars[:float_parameters], :ecinfilt, 0.0)
+    setparameter!(lvars[:float_parameters], :horizontalwaterflow, 0.0)
+    setparameter!(lvars[:float_parameters], :horizontalsaltflow, 0.0)
+    setparameter!(lvars[:float_parameters], :subdrain, 0.0)
+    setparameter!(lvars[:float_parameters], :infiltratedrain, 0.0)
+    setparameter!(lvars[:float_parameters], :infiltratedirrigation, 0.0)
+    setparameter!(lvars[:float_parameters], :infiltratedstorage, 0.0)
 
     targettimeval_loc = targettimeval
     stresssfadjnew_loc = stresssfadjnew
@@ -39,6 +47,7 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
     # 1. Soil water balance
     control = :begin_day
     check_water_salt_balance!(gvars, lvars, dayi, control) 
+    #@infiltrate
 
 
     # 2. Adjustments in presence of Groundwater table
@@ -48,6 +57,7 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
 
     # 3. Drainage
     calculate_drainage!(gvars)
+    #@infiltrate
 
     # 4. Runoff
     if gvars[:management].BundHeight < 0.001
@@ -73,12 +83,15 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
         calculate_extra_runoff!(gvars, lvars)
     end 
     calculate_infiltration!(gvars, lvars)
+    #@infiltrate
 
     # 6. Capillary Rise
     calculate_capillary_rise!(gvars) 
+    #@infiltrate
 
     # 7. Salt balance
     calculate_salt_content!(gvars, lvars, dayi)
+    #@infiltrate
 
 
     # 8. Check Germination
@@ -93,6 +106,7 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
                                                nrdaygrow, stresstotsaltprev, 
                                                virtualtimecc)
     end 
+    #@infiltrate
 
 
     # 10. Canopy Cover (CC)
@@ -111,6 +125,7 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
                               cdctotal, dayfraction, gddcdctotal)
         end 
     end 
+    #@infiltrate
 
     # 11. Determine Tpot and Epot
     # 11.1 Days after Planting
@@ -122,8 +137,8 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
                               gvars[:crop].Tbase, gvars[:crop].Tupper, 
                               gvars[:simulparam].Tmin, gvars[:simulparam].Tmax,
                               gvars)
-                              dap = dap + gvars[:simulation].DelayedDays
-            # are not considered when working with GDDays
+        dap = dap + gvars[:simulation].DelayedDays
+        # are not considered when working with GDDays
     end 
 
     # 11.2 Calculation
@@ -143,6 +158,8 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
     pstomatulact = adjust_pstomatal_to_eto(gvars[:float_parameters][:eto],
                                             gvars[:crop], gvars[:simulparam])
     gvars[:crop].pActStom = pstomatulact
+    #@infiltrate
+
 
     # 12. Evaporation
     if !gvars[:bool_parameters][:preday]
@@ -184,6 +201,7 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
                (exp((1/gvars[:simulparam].EffectiveRain.RootNrEvap)*log((gvars[:soil].REW+1)/20)))
         setparameter!(gvars[:float_parameters], :epot, epot)
     end 
+    #@infiltrate
 
 
     # 13. Transpiration
@@ -199,6 +217,7 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
         setparameter!(gvars[:integer_parameters], :daysubmerged, 0)
     end 
     feedback_cc!(gvars)
+    #@infiltrate
 
     # 14. Adjustment to groundwater table
     if watertableinprofile
@@ -309,11 +328,12 @@ function check_water_salt_balance!(gvars, lvars, dayi, control)
                                                 (gvars[:total_water_content].EndDay + drain + runoff + eact + 
                                                 tact + surf1 - rain - irrigation -crwater - horizontalwaterflow)
 
-        gvars[:total_salt_content].ErrorDay = gvars[:total_salt_content].ErrorDay - gvars[:total_salt_content].EndDay +
+        gvars[:total_salt_content].ErrorDay = gvars[:total_salt_content].BeginDay - gvars[:total_salt_content].EndDay +
                                               infiltratedirrigation * ecw * equiv /100 + 
                                               infiltratedstorage * ecinfilt * equiv/100 -
                                               drain * ecdrain *equiv/100 + 
                                               crsalt/100 + horizontalsaltflow
+                                        
         
         gvars[:sumwabal].Epot += epot
         gvars[:sumwabal].Tpot += tpot 
@@ -347,7 +367,6 @@ function check_water_salt_balance!(gvars, lvars, dayi, control)
 
     setparameter!(gvars[:float_parameters], :surf0, surf0)
     setparameter!(gvars[:float_parameters], :ecdrain, ecdrain)
-
     
     setparameter!(lvars[:float_parameters], :ecinfilt, ecinfilt)
     setparameter!(lvars[:float_parameters], :horizontalwaterflow, horizontalwaterflow)
@@ -484,8 +503,6 @@ function calculate_drainage!(gvars)
             end
             # redistribute excess
         end 
-
-    #Do-loop
     end 
     setparameter!(gvars[:float_parameters], :drain, drainsum)
 
@@ -780,7 +797,7 @@ function calculate_irrigation!(gvars, lvars, targettimeval, targetdepthval)
     determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth])
     zrwc = gvars[:root_zone_wc].Actual - gvars[:float_parameters][:epot] - gvars[:float_parameters][:tpot] +
            gvars[:float_parameters][:rain] - gvars[:float_parameters][:runoff] - lvars[:float_parameters][:subdrain] 
-           if gvars[:symbol_parameters][:timemode] == :AllDep
+    if gvars[:symbol_parameters][:timemode] == :AllDep
         if (gvars[:root_zone_wc].FC - zrwc) >= targettimeval
             targettimeval = 1
         else
@@ -1953,7 +1970,7 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
                 ccxsfcd = 0
             end 
         end 
-        stressleaf = undef_int
+        stressleaf = undef_double #undef_int
         if (abs(sumgddadjcc - gvars[:crop].GDDaysToGermination) < eps()) & (gvars[:crop].DaysToCCini == 0)
             cciprev = ccototal
         end 
@@ -2089,7 +2106,7 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
                 end 
                 if cciactual > ccxsfcd
                     cciactual = ccxsfcd
-                    StressLeaf = -33 # maximum canopy is reached;
+                    stressleaf = -33 # maximum canopy is reached;
                 end 
             end 
             gvars[:crop].CCxAdjusted = cciactual
@@ -2143,7 +2160,7 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
                 end 
             # late season
             else
-                stresssenescence = undef_int # to avoid display of zero stress in late season
+                stresssenescence = undef_double #undef_int # to avoid display of zero stress in late season
                 if gvars[:crop].CCxAdjusted > ccxsfcd
                     gvars[:crop].CCxAdjusted = ccxsfcd
                 end 
@@ -2660,7 +2677,7 @@ function determine_cci!(gvars, ccxtotal, ccototal, fracassim,
                 ccxsfcd = 0
             end 
         end 
-        stressleaf = undef_int
+        stressleaf = undef_double #undef_int
         if virtualtimecc == gvars[:crop].DaysToGermination
             cciprev = ccototal
         end 
@@ -2857,7 +2874,7 @@ function determine_cci!(gvars, ccxtotal, ccototal, fracassim,
                 end 
                 # late season
             else
-                stresssenescence = undef_int
+                stresssenescence = undef_double # undef_int
                 # to avoid display of zero stress in late season
                 if gvars[:crop].CCxAdjusted > ccxsfcd
                     gvars[:crop].CCxAdjusted = ccxsfcd
@@ -3316,7 +3333,7 @@ function wc_evap_layer(zlayer, attheta, compartments, soil_layers)
         else
             fracz = 1
         end 
-        if attheta == :AtSAT
+        if attheta == :AtSat
             wx = wx + 10 * soil_layers[layeri].SAT * fracz * compartments[compi].Thickness *
                       (1 - soil_layers[layeri].GravelVol/100)
         elseif attheta == :AtFC
@@ -3473,7 +3490,7 @@ end
 """
     calculate_soil_evaporation_stage1!(gvars)
 
-4439
+simul.f90:4439
 """
 function calculate_soil_evaporation_stage1!(gvars)
     stg1 = true
@@ -3956,7 +3973,7 @@ end
     redfact, dayanaero = determine_root_zone_anaero_conditions(wsat, wact, anaevol, zr, simulation, simulparam)
 
 simul.f90:1490
-note that we need to do simulation.DayAnaero = dayanaero after calling this function
+note that we must do simulation.DayAnaero = dayanaero after calling this function
 """
 function determine_root_zone_anaero_conditions(wsat, wact, anaevol, zr, simulation, simulparam)
     dayanaero = simulation.DayAnaero
@@ -3987,7 +4004,7 @@ end
     alfa, dayanaero = correction_anaeroby(compartment, alfa, daysubmerged, simulparam, soil_layers, crop)
 
 simul.f90:1453
-note that we need to do compartment.DayAnaero = dayanaero after calling this function
+note that we must do compartment.DayAnaero = dayanaero after calling this function
 """
 function correction_anaeroby(compartment, alfa, daysubmerged, simulparam, soil_layers, crop)
 
