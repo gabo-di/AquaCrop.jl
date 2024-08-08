@@ -82,12 +82,10 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             adjust_for_watertable!(gvars)
         end 
     end 
-    #@infiltrate
 
     # 5. Get Irrigation
     setparameter!(gvars[:float_parameters], :irrigation, 0.0)
     get_irri_param!(gvars, lvars)
-    #@infiltrate
 
     # 6. get virtual time for CC development
     sumgddadjcc = undef_double #real(undef_int, kind=dp)
@@ -195,7 +193,6 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             setparameter!(gvars[:float_parameters], :cciprev, gvars[:float_parameters][:ccototal])
         end 
     end 
-    #@infiltrate
 
     # 7. Rooting depth AND Inet day 1
     if ((gvars[:crop].ModeCycle == :CalendarDays) &
@@ -230,11 +227,9 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             adjust_swc_rootzone!(gvars, lvars)
         end 
     end 
-    #@infiltrate
 
     # 8. Transfer of Assimilates
     initialize_transfer_assimilates!(gvars, lvars)
-    #@infiltrate
 
     # 9. RUN Soil water balance and actual Canopy Cover
     budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
@@ -257,11 +252,9 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             gvars[:stresstot].NrD += 1
         end 
      end 
-     #@infiltrate
 
     # 10. Potential biomass
     determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
-    #@infiltrate
 
     # 11. Biomass and yield
     if (gvars[:float_parameters][:rooting_depth] > 0) & (gvars[:bool_parameters][:nomorecrop] == false)
@@ -285,7 +278,6 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
          setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.0)  # no crop
          setparameter!(gvars[:float_parameters], :tactweedinfested, 0.0)  # no crop
     end 
-    #@infiltrate
 
     # 12. Reset after RUN
     if gvars[:bool_parameters][:preday] == false
@@ -392,7 +384,6 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             setparameter!(gvars[:float_parameters], :yprevsum, gvars[:sumwabal].YieldPart)
         end 
     end 
-    #@infiltrate
 
     # 14. Write results
     # 14.a Summation
@@ -474,7 +465,6 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
     # if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
     #     call WriteEvaluationData((gvars[:integer_parameters][:daynri]-gvars[:simulation].DelayedDays()-gvars[:crop].Day1()+1))
     # end 
-    #@infiltrate
 
     # 15. Prepare Next day
     # 15.a Date

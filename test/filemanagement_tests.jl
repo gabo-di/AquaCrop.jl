@@ -4,7 +4,8 @@ using Test
 include("checkpoints.jl")
 
 @testset "Advance one time step" begin
-
+    # break run.f90:7772
+    
     kwargs = (runtype = AquaCrop.FortranRun(), )
 
     outputs, gvars, projectinput = checkpoint5()
@@ -46,6 +47,7 @@ include("checkpoints.jl")
     @test isapprox(gvars[:crop], gvars_0[:crop])
     @test isapprox(gvars[:simulation], gvars_0[:simulation])
     @test isapprox(gvars[:soil], gvars_0[:soil])
+    @test isapprox(gvars[:soil_layers], gvars_0[:soil_layers])
     @test isapprox(gvars[:compartments], gvars_0[:compartments])
     @test isapprox(gvars[:management], gvars_0[:management])
     @test isapprox(gvars[:total_water_content], gvars_0[:total_water_content])
@@ -61,27 +63,41 @@ include("checkpoints.jl")
     @test isapprox(gvars[:root_zone_wc], gvars_0[:root_zone_wc])
     @test isapprox(gvars[:root_zone_salt], gvars_0[:root_zone_salt])
     @test isapprox(gvars[:transfer], gvars_0[:transfer])
-
-    # OBS FALTA!!
-
 end
 
-# @testset "Filemanagement Complete" begin
-#
-#     kwargs = (runtype = AquaCrop.FortranRun(), )
-#
-#     outputs, gvars, projectinput = checkpoint5()
-#
-#     outputs_0, gvars_0, _ = checkpoint7()
-#
-#     i = 1
-#     AquaCrop.file_management!(outputs, gvars, projectinput[i]; kwargs...)
-#
-#     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
-#     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
-#     @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
-#
-#     @test isapprox(gvars[:crop], gvars_0[:crop])
-#     @test isapprox(gvars[:simulation], gvars_0[:simulation])
-#     # OBS FALTA!!
-# end
+@testset "Filemanagement Complete" begin
+    # break run.f90:7800
+
+    kwargs = (runtype = AquaCrop.FortranRun(), )
+
+    outputs, gvars, projectinput = checkpoint5()
+
+    outputs_0, gvars_0, _ = checkpoint7()
+
+    i = 1
+    AquaCrop.file_management!(outputs, gvars, projectinput[i]; kwargs...)
+
+    @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
+    @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
+    @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
+
+    @test isapprox(gvars[:crop], gvars_0[:crop])
+    @test isapprox(gvars[:simulation], gvars_0[:simulation])
+    @test isapprox(gvars[:soil], gvars_0[:soil])
+    @test isapprox(gvars[:soil_layers], gvars_0[:soil_layers])
+    @test isapprox(gvars[:compartments], gvars_0[:compartments])
+    @test isapprox(gvars[:management], gvars_0[:management])
+    @test isapprox(gvars[:total_water_content], gvars_0[:total_water_content])
+    @test isapprox(gvars[:total_salt_content], gvars_0[:total_salt_content])
+    @test isapprox(gvars[:stresstot], gvars_0[:stresstot])
+    @test isapprox(gvars[:sumwabal], gvars_0[:sumwabal])
+    @test isapprox(gvars[:previoussum], gvars_0[:previoussum])
+    @test isapprox(gvars[:irri_info_record1], gvars_0[:irri_info_record1])
+    @test isapprox(gvars[:irri_info_record2], gvars_0[:irri_info_record2])
+    @test isapprox(gvars[:cut_info_record1], gvars_0[:cut_info_record1])
+    @test isapprox(gvars[:cut_info_record2], gvars_0[:cut_info_record2])
+    @test isapprox(gvars[:gwtable], gvars_0[:gwtable])
+    @test isapprox(gvars[:root_zone_wc], gvars_0[:root_zone_wc])
+    @test isapprox(gvars[:root_zone_salt], gvars_0[:root_zone_salt])
+    @test isapprox(gvars[:transfer], gvars_0[:transfer])
+end

@@ -47,7 +47,6 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
     # 1. Soil water balance
     control = :begin_day
     check_water_salt_balance!(gvars, lvars, dayi, control) 
-    #@infiltrate
 
 
     # 2. Adjustments in presence of Groundwater table
@@ -57,7 +56,6 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
 
     # 3. Drainage
     calculate_drainage!(gvars)
-    #@infiltrate
 
     # 4. Runoff
     if gvars[:management].BundHeight < 0.001
@@ -83,15 +81,12 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
         calculate_extra_runoff!(gvars, lvars)
     end 
     calculate_infiltration!(gvars, lvars)
-    #@infiltrate
 
     # 6. Capillary Rise
     calculate_capillary_rise!(gvars) 
-    #@infiltrate
 
     # 7. Salt balance
     calculate_salt_content!(gvars, lvars, dayi)
-    #@infiltrate
 
 
     # 8. Check Germination
@@ -106,7 +101,6 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
                                                nrdaygrow, stresstotsaltprev, 
                                                virtualtimecc)
     end 
-    #@infiltrate
 
 
     # 10. Canopy Cover (CC)
@@ -125,7 +119,6 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
                               cdctotal, dayfraction, gddcdctotal)
         end 
     end 
-    #@infiltrate
 
     # 11. Determine Tpot and Epot
     # 11.1 Days after Planting
@@ -158,7 +151,6 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
     pstomatulact = adjust_pstomatal_to_eto(gvars[:float_parameters][:eto],
                                             gvars[:crop], gvars[:simulparam])
     gvars[:crop].pActStom = pstomatulact
-    #@infiltrate
 
 
     # 12. Evaporation
@@ -201,7 +193,6 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
                (exp((1/gvars[:simulparam].EffectiveRain.RootNrEvap)*log((gvars[:soil].REW+1)/20)))
         setparameter!(gvars[:float_parameters], :epot, epot)
     end 
-    #@infiltrate
 
 
     # 13. Transpiration
@@ -217,7 +208,6 @@ function budget_module!(gvars, lvars, virtualtimecc, sumgddadjcc)
         setparameter!(gvars[:integer_parameters], :daysubmerged, 0)
     end 
     feedback_cc!(gvars)
-    #@infiltrate
 
     # 14. Adjustment to groundwater table
     if watertableinprofile
