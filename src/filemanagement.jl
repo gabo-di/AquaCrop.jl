@@ -32,10 +32,16 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs
     )
     repeattoday = gvars[:simulation].ToDayNr
 
+    cont = 0
     loopi = true
     # MARK
     while loopi
+        cont += 1
         advance_one_time_step!(outputs, gvars, lvars, projectinput)
+        # println(cont, "   ", gvars[:float_parameters][:rain]
+        #             , "   ", gvars[:float_parameters][:infiltrated]
+        #             , "   ", gvars[:float_parameters][:runoff]
+        #             , "   ", gvars[:float_parameters][:drain])
         read_climate_nextday!(outputs, gvars)
         set_gdd_variables_nextday!(gvars)
         if (gvars[:integer_parameters][:daynri] - 1) == repeattoday
@@ -261,7 +267,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
         determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth])
         # temperature stress affecting crop transpiration
         if gvars[:float_parameters][:cciactual] <= 0.0000001
-             kstr = 1
+            kstr = 1
         else
             kstr = ks_temperature(0, gvars[:crop].GDtranspLow, gvars[:float_parameters][:gddayi])
         end 
