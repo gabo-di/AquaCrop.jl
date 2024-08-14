@@ -152,12 +152,13 @@ function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType};
         initialize_run_part_1!(outputs, gvars, projectinput[nrrun]; kwargs...)
         initialize_climate!(outputs, gvars; kwargs...)
         initialize_run_part2!(outputs, gvars, projectinput[nrrun], nrrun; kwargs...)
+        @infiltrate
         file_management!(outputs, gvars, projectinput[nrrun]; kwargs...)
-        # OUTPUT
-        # call FinalizeRun1(NrRun, GetTheProjectFile(), TheProjectType)
-        # call FinalizeRun2(NrRun, TheProjectType)
+        finalize_run1!(gvars; kwargs...)
+        finalize_run2!(outputs, gvars; kwargs...)
     end
-
+    # here we can flush more variables ? 
+    # call FinalizeSimulation()
     return nothing
 end #notend
 
@@ -183,6 +184,132 @@ function actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
     for key in keys(resultsparameters[:particularresults].parameters)
         setparameter!(gvars[:bool_parameters], key, resultsparameters[:particularresults][key])
     end
+
+    return nothing
+end
+
+"""
+    finalize_run1!(gvars; kwargs...)
+    
+run.f90:7390
+"""
+function finalize_run1!(gvars; kwargs...)
+    daynri = gvars[:integer_parameters][:daynri]
+    # 16. Finalise
+    if (daynri-1) == gvars[:simulation].ToDayNr
+        # multiple cuttings
+        if gvars[:bool_parameters][:part1Mult]
+            if gvars[:management].Cuttings.HarvestEnd
+                # final harvest at crop maturity
+                nrcut = gvars[:integer_parameters][:nrcut]
+                setparameter!(gvars[:integer_parameters], :nrcut, nrcut + 1)
+                # OUTPUT
+                # call RecordHarvest(GetNrCut(), &
+                #                   (GetDayNri() - GetCrop_Day1()+1))
+            end 
+            # OUTPUT
+            # call RecordHarvest((9999), &
+            #      (GetDayNri() - GetCrop_Day1()+1)) # last line at end of season
+        end 
+        # intermediate results
+        outputaggregate = gvars[:integer_parameters][:outputaggregate]
+        if (outputaggregate == 2) | (outputaggregate == 3) & # 10-day and monthly results
+            ((daynri-1) > gvars[:integer_parameters][:previousdaynr]) 
+            setparameter!(gvars[:integer_parameters], :daynri, daynri - 1)
+            write_intermediate_period!(gvars)
+        end 
+        write_sim_period!(gvars)
+    end 
+
+    return nothing
+end
+
+"""
+    write_sim_period!(gvars)
+
+run.f90:6064
+"""
+function write_sim_period!(gvars)
+    # Start simulation run
+    day1, month1, year1 = determine_date(gvars[:simulation].FromDayNr)
+    # End simulation run
+    dayn, monthn, yearn = determine_date(gvars[:simulation].ToDayNr)
+    # OUTPUT
+    # call WriteTheResults(NrRun, Day1, Month1, Year1, DayN, MonthN, YearN, &
+    #                     GetSumWaBal_Rain(), GetSumETo(), GetSumGDD(), &
+    #                     GetSumWaBal_Irrigation(), GetSumWaBal_Infiltrated(), &
+    #                     GetSumWaBal_Runoff(), GetSumWaBal_Drain(), &
+    #                     GetSumWaBal_CRwater(), GetSumWaBal_Eact(), &
+    #                     GetSumWaBal_Epot(), GetSumWaBal_Tact(), &
+    #                     GetSumWaBal_TrW(), GetSumWaBal_Tpot(), &
+    #                     GetSumWaBal_SaltIn(), GetSumWaBal_SaltOut(), &
+    #                     GetSumWaBal_CRsalt(), GetSumWaBal_Biomass(), &
+    #                     GetSumWaBal_BiomassUnlim(), GetTransfer_Bmobilized(), &
+    #                     GetSimulation_Storage_Btotal(), TheProjectFile)
+    return nothing
+end
+
+"""
+run.f90:4355
+"""
+function finalize_run2!(outputs, gvars; kwargs...)
+    close_climate!(outputs, gvars; kwargs...)
+    close_irrigation!(gvars; kwargs...)
+    close_management!(gvars; kwargs...)
+
+    # OUTPUT 
+    # if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
+    #     call CloseEvalDataPerformEvaluation(NrRun)
+    # end if
+end
+
+"""
+    close_climate!(outputs, gvars; kwargs...)
+
+delete the climate data from gvars arrays and outputs arrays
+"""
+function close_climate!(outputs, gvars; kwargs...)
+    setparameter!(gvars[:array_parameters], :Tmin, Float64[])
+    setparameter!(gvars[:array_parameters], :Tmax, Float64[])
+    setparameter!(gvars[:array_parameters], :ETo, Float64[])
+    setparameter!(gvars[:array_parameters], :Rain, Float64[])
+
+    setparameter!(gvars[:float_parameters], :tmin, undef_double)
+    setparameter!(gvars[:float_parameters], :tmax, undef_double)
+    setparameter!(gvars[:float_parameters], :eto, undef_double)
+    setparameter!(gvars[:float_parameters], :rain, undef_double)
+
+    flush_output_tcropsim!(outputs)
+    flush_output_etodatasim!(outputs)
+    flush_output_raindatasim!(outputs)
+end
+
+"""
+    close_irrigation!(gvars; kwargs...)
+
+delete the irrigation data from gvars arrays
+"""
+function close_irrigation!(gvars; kwargs...)
+    setparameter!(gvars[:array_parameters], :Irri_1, Float64[])
+    setparameter!(gvars[:array_parameters], :Irri_2, Float64[])
+    setparameter!(gvars[:array_parameters], :Irri_3, Float64[])
+    setparameter!(gvars[:array_parameters], :Irri_4, Float64[])
+
+    setparameter!(gvars[:float_parameters], :irrigation, 0.0)
+    
+    return nothing
+end
+
+"""
+    close_management!(gvars; kwargs...)
+
+delete the management data from gvars arrays
+"""
+function close_management!(gvars; kwargs...)
+    setparameter!(gvars[:array_parameters], :Man, Float64[])
+    setparameter!(gvars[:array_parameters], :Man_info, Float64[])
+
+    setparameter!(gvars[:integer_parameters], :nrcut, 0)
 
     return nothing
 end

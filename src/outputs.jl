@@ -39,6 +39,14 @@ function read_output_from_logger(outputs, i::Int)
     return outputs[:logger][i]
 end
 
+"""
+    flush_output_logger!(outputs)
+"""
+function flush_output_logger!(outputs)
+    outputs[:logger] = String[]
+    return nothing
+end
+
 
 """
     add_output_in_tcropsim!(outputs, tlow::T, thigh::T) where T<:Number
@@ -57,6 +65,17 @@ function read_output_from_tcropsim(outputs, i::Int)
 end
 
 """
+    flush_output_tcropsim!(outputs)
+"""
+function flush_output_tcropsim!(outputs)
+    outputs[:tcropsim] = Dict(
+                            :tlow => Float64[],
+                            :thigh => Float64[])
+    return nothing
+end
+
+
+"""
     add_output_in_etodatasim!(outputs, eto::T) where T<:Number
 """
 function add_output_in_etodatasim!(outputs, eto::T) where T<:Number
@@ -72,6 +91,15 @@ function read_output_from_etodatasim(outputs, i::Int)
 end
 
 """
+    flush_output_etodatasim!(outputs)
+"""
+function flush_output_etodatasim!(outputs)
+    outputs[:etodatasim] = Float64[]
+    return nothing
+end
+
+
+"""
     add_output_in_raindatasim!(outputs, rain::T) where T<:Number
 """
 function add_output_in_raindatasim!(outputs, rain::T) where T<:Number
@@ -85,6 +113,15 @@ end
 function read_output_from_raindatasim(outputs, i::Int)
     return outputs[:raindatasim][i]
 end
+
+"""
+    flush_output_raindatasim!(outputs)
+"""
+function flush_output_raindatasim!(outputs)
+    outputs[:raindatasim] = Float64[]
+    return nothing
+end
+
 
 """
     add_output_in_tempdatasim!(outputs, tlow::T, thigh::T) where T<:Number

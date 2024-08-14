@@ -38,10 +38,10 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs
     while loopi
         cont += 1
         advance_one_time_step!(outputs, gvars, lvars, projectinput)
-        # println(cont, "   ", gvars[:integer_parameters][:stress_sf_adj_new]
-        #             , "   ", gvars[:compartments][1].Theta 
-        #             , "   ", gvars[:simulation].EffectStress.RedCGC
-        #             , "   ", gvars[:root_zone_wc].Actual)
+        println(cont, "   ", gvars[:integer_parameters][:daynri]
+                    , "   ", gvars[:float_parameters][:cciprev] 
+                    , "   ", gvars[:float_parameters][:drain]
+                    , "   ", gvars[:float_parameters][:rain])
         read_climate_nextday!(outputs, gvars)
         set_gdd_variables_nextday!(gvars)
         if (gvars[:integer_parameters][:daynri] - 1) == repeattoday
@@ -1219,7 +1219,7 @@ function determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
         dap = virtualtimecc
     else
         # growing degree days
-        dap = sum_calendar_days(sumgddadjcc, crop.Day1, crop.Tbase, 
+        dap = sum_calendar_days(round(Int, sumgddadjcc), crop.Day1, crop.Tbase, 
                     crop.Tupper, simulparam.Tmin, simulparam.Tmax, gvars)
         dap = dap + simulation.DelayedDays # are not considered when working with GDDays
     end 
@@ -1410,7 +1410,7 @@ function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc)
             hifinal_temp = gvars[:simulation].HIfinal
             alfa, hifinal_temp, percentlagphase = harvest_index_day(dayi-gvars[:crop].Day1, gvars[:crop].DaysToFlowering, 
                                    gvars[:crop].HI, gvars[:crop].dHIdt,
-                                   gvars[:float_parameters][:cCiactual], 
+                                   gvars[:float_parameters][:cciactual], 
                                    gvars[:crop].CCxAdjusted, gvars[:crop].CCxWithered, gvars[:simulparam].PercCCxHIfinal, 
                                    gvars[:crop].Planting, hifinal_temp, gvars[:crop], gvars[:simulation])
             gvars[:simulation].HIfinal = hifinal_temp
