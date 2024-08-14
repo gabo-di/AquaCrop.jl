@@ -38,10 +38,10 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs
     while loopi
         cont += 1
         advance_one_time_step!(outputs, gvars, lvars, projectinput)
-        # println(cont, "   ", gvars[:float_parameters][:rain]
-        #             , "   ", gvars[:float_parameters][:infiltrated]
-        #             , "   ", gvars[:float_parameters][:runoff]
-        #             , "   ", gvars[:float_parameters][:drain])
+        # println(cont, "   ", gvars[:integer_parameters][:stress_sf_adj_new]
+        #             , "   ", gvars[:compartments][1].Theta 
+        #             , "   ", gvars[:simulation].EffectStress.RedCGC
+        #             , "   ", gvars[:root_zone_wc].Actual)
         read_climate_nextday!(outputs, gvars)
         set_gdd_variables_nextday!(gvars)
         if (gvars[:integer_parameters][:daynri] - 1) == repeattoday
@@ -1381,8 +1381,8 @@ function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc)
     weedrci = gvars[:float_parameters][:weedrci]
     ccw = gvars[:float_parameters][:cciactualweedinfested]
     trw = gvars[:float_parameters][:tactweedinfested]
-    stresssfadjnew = gvars[:float_parameters][:stress_sf_adj_new]
-    previousstresslevel = gvars[:float_parameters][:previous_stress_level]
+    stresssfadjnew = gvars[:integer_parameters][:stress_sf_adj_new]
+    previousstresslevel = gvars[:integer_parameters][:previous_stress_level]
     storeassimilates = gvars[:transfer].Store
     mobilizeassimilates = gvars[:transfer].Mobilize
     assimtomobilize = gvars[:transfer].ToMobilize
@@ -1819,8 +1819,8 @@ function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc)
     setparameter!(gvars[:float_parameters], :weedrci, weedrci)
     setparameter!(gvars[:float_parameters], :cciactualweedinfested, ccw)
     setparameter!(gvars[:float_parameters], :tactweedinfested, trw)
-    setparameter!(gvars[:float_parameters], :stress_sf_adj_new, stresssfadjnew)
-    setparameter!(gvars[:float_parameters], :previous_stress_level, previousstresslevel)
+    setparameter!(gvars[:integer_parameters], :stress_sf_adj_new, stresssfadjnew)
+    setparameter!(gvars[:integer_parameters], :previous_stress_level, previousstresslevel)
     setparameter!(gvars[:float_parameters], :bin, bin)
     setparameter!(gvars[:float_parameters], :bout, bout)
 

@@ -379,7 +379,7 @@ function calculate_drainage!(gvars)
         # 1. Calculate drainage of compartment
         # ====================================
         layeri = compartments[compi].Layer
-        if compartments[compi].Theta > compartments[compi].FCadj
+        if compartments[compi].Theta > compartments[compi].FCadj/100
             delta_theta = calculate_delta_theta(compartments[compi].Theta, compartments[compi].FCadj/100, layeri, soil_layers)
         else
             delta_theta = 0
@@ -482,7 +482,7 @@ function calculate_drainage!(gvars)
                 if compartments[pre_nr].Theta > soil_layers[layeri].SAT/100
                     excess = (compartments[pre_nr].Theta - soil_layers[layeri].SAT/100) *
                               1000 * compartments[pre_nr].Thickness *
-                              (1-soil_layers[compartments[pre_nr].Layer].GravelVol/100)
+                              (1-soil_layers[layeri].GravelVol/100)
                     compartments[pre_nr].Theta = soil_layers[layeri].SAT/100
                 else
                     excess = 0
@@ -495,7 +495,6 @@ function calculate_drainage!(gvars)
         end 
     end 
     setparameter!(gvars[:float_parameters], :drain, drainsum)
-
     return nothing
 end 
 
@@ -2104,7 +2103,7 @@ function determine_cci_gdd!(gvars, ccxtotal, ccototal,
         # 3. Canopy can no longer develop
         # (Mid-season (from tFinalCCx) or Late season stage)
         else
-            StressLeaf = -33 # maximum canopy is reached;
+            stressleaf = -33 # maximum canopy is reached;
             if gvars[:crop].CCxAdjusted < 0
                 gvars[:crop].CCxAdjusted = cciprev 
             end 
