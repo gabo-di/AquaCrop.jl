@@ -10,16 +10,16 @@ function start_outputs()
                     :thigh => Float64[])
     etodatasim = Float64[]
     raindatasim = Float64[]
-    # tempdatasim = Dict(
-    #                 :tlow => Float64[],
-    #                 :thigh => Float64[])
+    tempdatasim = Dict(
+                    :tlow => Float64[],
+                    :thigh => Float64[])
 
     return Dict( 
         :logger => logger,
         :tcropsim => tcropsim,
         :etodatasim => etodatasim,
         :raindatasim => raindatasim,
-        # :tempdatasim => tempdatasim,
+        :tempdatasim => tempdatasim,
     )
 end
 
@@ -137,4 +137,14 @@ end
 """
 function read_output_from_tempdatasim(outputs, i::Int)
     return outputs[:tempdatasim][:tlow][i], outputs[:tempdatasim][:thigh][i]
+end
+
+"""
+    flush_output_tempdatasim!(outputs)
+"""
+function flush_output_tempdatasim!(outputs)
+    outputs[:tempdatasim] = Dict(
+                            :tlow => Float64[],
+                            :thigh => Float64[])
+    return nothing
 end

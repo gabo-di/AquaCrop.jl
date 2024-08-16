@@ -55,7 +55,7 @@ end
     AquaCrop.adjust_compartments!(gvars)
     gvars[:sumwabal] = AquaCrop.RepSum()
     AquaCrop.reset_previous_sum!(gvars)
-    AquaCrop.initialize_run_part_1!(outputs, gvars, projectinput[i]; kwargs...)
+    AquaCrop.initialize_run_part1!(outputs, gvars, projectinput[i]; kwargs...)
 
 
     @test isapprox(gvars[:simulation], gvars_0[:simulation])

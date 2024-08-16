@@ -44,7 +44,7 @@ abstract type AbstractParametersContainer end
 
 Base.length(p::AbstractParametersContainer) = 1
 
-function _isapprox(a, b; kwargs...)
+function Base.isapprox(a::T, b::T; kwargs...) where T<:AbstractParametersContainer
     ans = true
     for field in fieldnames(typeof(a))
         if isapprox(getfield(a, field), getfield(b, field); kwargs...)
@@ -60,9 +60,10 @@ function _isapprox(a, b; kwargs...)
     return ans 
 end
 
-Base.isapprox(a::T, b::T; kwargs...) where {T<:AbstractParametersContainer} = _isapprox(a, b, kwargs...)
 
-Base.isapprox(a::Vector{T}, b::Vector{T}; kwargs...) where {T<:AbstractParametersContainer} = all([_isapprox(aa, bb; kwargs...) for (aa, bb) in zip(a, b)])
+function Base.isapprox(a::Vector{T}, b::Vector{T}; kwargs...) where {T<:AbstractParametersContainer} 
+    all([Base.isapprox(aa, bb; kwargs...) for (aa, bb) in zip(a, b)])
+end
 
 """
     pc = ParametersContainer(T)
@@ -569,7 +570,6 @@ end
     Depo::Vector{Float64} = zeros(Float64, 11)
 end
 
-Base.isapprox(a::CompartmentIndividual, b::CompartmentIndividual; kwargs...) = _isapprox(a, b; kwargs...)
 
 """
     iniswc = RepIniSWC()

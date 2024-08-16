@@ -19,7 +19,7 @@ include("checkpoints.jl")
     theprojectfile = project_filenames[i]
     theprojecttype = AquaCrop.get_project_type(theprojectfile; kwargs...)
     gvars, projectinput, fileok = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
-    AquaCrop.initialize_run_part_1!(outputs, gvars, projectinput[i]; kwargs...)
+    AquaCrop.initialize_run_part1!(outputs, gvars, projectinput[i]; kwargs...)
 
 
     @test isapprox(gvars[:simulparam], gvars_0[:simulparam])

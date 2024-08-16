@@ -38,10 +38,6 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs
     while loopi
         cont += 1
         advance_one_time_step!(outputs, gvars, lvars, projectinput)
-        println(cont, "   ", gvars[:integer_parameters][:daynri]
-                    , "   ", gvars[:float_parameters][:cciprev] 
-                    , "   ", gvars[:float_parameters][:drain]
-                    , "   ", gvars[:float_parameters][:rain])
         read_climate_nextday!(outputs, gvars)
         set_gdd_variables_nextday!(gvars)
         if (gvars[:integer_parameters][:daynri] - 1) == repeattoday
@@ -368,6 +364,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
         end 
         if lvars[:bool_parameters][:harvestnow] 
             nrcut = gvars[:integer_parameters][:nrcut]
+
             setparameter!(gvars[:integer_parameters], :nrcut, nrcut + 1)
             setparameter!(gvars[:integer_parameters], :daylastcut, dayinseason)
             if gvars[:float_parameters][:cciprev] > (gvars[:management].Cuttings.CCcut/100)
@@ -1785,7 +1782,7 @@ function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc)
         end
     else
         if (gvars[:management].FertilityStress == 0) |
-            !gvars[:crop].StressResponser.Calibrated
+            !gvars[:crop].StressResponse.Calibrated
             # no (calibrated) soil fertility stress
             stresssfadjnew = 0
         else
@@ -2173,8 +2170,8 @@ function read_climate_nextday!(outputs, gvars)
             setparameter!(gvars[:float_parameters], :rain, rain)
         end
         if gvars[:bool_parameters][:temperature_file_exists]
-            # tmin, tmax = read_output_from_tempdatasim(outputs, i)
-            tmin, tmax = read_output_from_tcropsim(outputs, i)
+            tmin, tmax = read_output_from_tempdatasim(outputs, i)
+            # tmin, tmax = read_output_from_tcropsim(outputs, i)
             setparameter!(gvars[:float_parameters], :tmin, tmin)
             setparameter!(gvars[:float_parameters], :tmax, tmax)
         else

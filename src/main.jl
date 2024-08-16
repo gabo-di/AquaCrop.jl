@@ -149,10 +149,10 @@ function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType};
     nrruns = gvars[:simulation].NrRuns 
 
     for nrrun in 1:nrruns
-        initialize_run_part_1!(outputs, gvars, projectinput[nrrun]; kwargs...)
+        initialize_run_part1!(outputs, gvars, projectinput[nrrun]; kwargs...)
         initialize_climate!(outputs, gvars; kwargs...)
         initialize_run_part2!(outputs, gvars, projectinput[nrrun], nrrun; kwargs...)
-        @infiltrate
+        # @infiltrate
         file_management!(outputs, gvars, projectinput[nrrun]; kwargs...)
         finalize_run1!(gvars; kwargs...)
         finalize_run2!(outputs, gvars; kwargs...)
@@ -282,6 +282,7 @@ function close_climate!(outputs, gvars; kwargs...)
     flush_output_tcropsim!(outputs)
     flush_output_etodatasim!(outputs)
     flush_output_raindatasim!(outputs)
+    flush_output_tempdatasim!(outputs)
 end
 
 """
