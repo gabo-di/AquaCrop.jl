@@ -421,11 +421,22 @@ function initialize_settings(outputs, filepaths; kwargs...)
     # 11.3 Extra variables for run
     gwtable = RepGwTable()
     stresstot = RepStressTot()
+    irri_info_record1 = RepIrriInfoRecord()
+    irri_info_record2 = RepIrriInfoRecord()
+    transfer = RepTransfer()
+    cut_info_record1 = RepCutInfoRecord()
+    cut_info_record2 = RepCutInfoRecord()
+    root_zone_salt = RepRootZoneSalt()
+    root_zone_wc = RepRootZoneWC()
+    plotvarcrop = RepPlotPar()
+    total_salt_content = RepContent()
 
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
     setparameter!(float_parameters, :eto, 5.0)
     setparameter!(float_parameters, :rain, 0.0)
+    setparameter!(float_parameters, :tmin, undef_double)
+    setparameter!(float_parameters, :tmax, undef_double)
     setparameter!(float_parameters, :irrigation, 0.0)
     setparameter!(float_parameters, :surfacestorage, 0.0)
     setparameter!(float_parameters, :ecstorage, 0.0)
@@ -459,12 +470,51 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(float_parameters, :cdctotal, undef_double)
     setparameter!(float_parameters, :gddcdctotal, undef_double)
     setparameter!(float_parameters, :ccototal, undef_double)
+    setparameter!(float_parameters, :sumgddprev, undef_double)
+    setparameter!(float_parameters, :gddayi, undef_double)
+    setparameter!(float_parameters, :dayfraction, undef_double)
+    setparameter!(float_parameters, :gddayfraction, undef_double)
+    setparameter!(float_parameters, :cciprev, undef_double)
+    setparameter!(float_parameters, :cciactual, undef_double)
+    setparameter!(float_parameters, :timesenescence, undef_double)
+    setparameter!(float_parameters, :ziprev, undef_double)
+    setparameter!(float_parameters, :rooting_depth, undef_double)
+    setparameter!(float_parameters, :sumgddcuts, undef_double)
+    setparameter!(float_parameters, :bprevsum, undef_double)
+    setparameter!(float_parameters, :yprevsum, undef_double)
+    setparameter!(float_parameters, :cgcref, undef_double)
+    setparameter!(float_parameters, :gddcgcref, undef_double)
+    setparameter!(float_parameters, :hi_times_bef, undef_double)
+    setparameter!(float_parameters, :hi_times_at1, undef_double)
+    setparameter!(float_parameters, :hi_times_at2, undef_double)
+    setparameter!(float_parameters, :hi_times_at, undef_double)
+    setparameter!(float_parameters, :alfa_hi, undef_double)
+    setparameter!(float_parameters, :alfa_hi_adj, undef_double)
+    setparameter!(float_parameters, :scor_at1, undef_double)
+    setparameter!(float_parameters, :scor_at2, undef_double)
+    setparameter!(float_parameters, :stressleaf, undef_double)
+    setparameter!(float_parameters, :stresssenescence, undef_double)
+    setparameter!(float_parameters, :tact, 0.0)
+    setparameter!(float_parameters, :tpot, 0.0)
+    setparameter!(float_parameters, :bin, undef_double)
+    setparameter!(float_parameters, :bout, undef_double)
+    setparameter!(float_parameters, :surf0, undef_double)
+    setparameter!(float_parameters, :ecdrain, undef_double)
+    setparameter!(float_parameters, :eact, 0.0)
+    setparameter!(float_parameters, :epot, 0.0)
+    setparameter!(float_parameters, :tactweedinfested, 0.0) 
+    setparameter!(float_parameters, :saltinfiltr, undef_double) 
+    setparameter!(float_parameters, :ccitopearlysen, undef_double) 
+    setparameter!(float_parameters, :weedrci, undef_double) 
+    setparameter!(float_parameters, :cciactualweedinfested, undef_double) 
+
 
     symbol_parameters = ParametersContainer(Symbol)
     setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
     setparameter!(symbol_parameters, :irrimethod, :MSprinkler) # 4
     setparameter!(symbol_parameters, :timemode, :AllRAW) # 2
     setparameter!(symbol_parameters, :depthmode, :ToFC) # 0
+    setparameter!(symbol_parameters, :theprojecttype, undef_symbol)
 
     integer_parameters = ParametersContainer(Int)
     setparameter!(integer_parameters, :iniperctaw, 50)
@@ -477,17 +527,49 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(integer_parameters, :previous_stress_level, undef_int)
     setparameter!(integer_parameters, :stress_sf_adj_new, undef_int)
     setparameter!(integer_parameters, :daynri, undef_int)
+    setparameter!(integer_parameters, :irri_interval, undef_int)
+    setparameter!(integer_parameters, :tadj, undef_int)
+    setparameter!(integer_parameters, :gddtadj, undef_int)
+    setparameter!(integer_parameters, :nrcut, undef_int)
+    setparameter!(integer_parameters, :suminterval, undef_int)
+    setparameter!(integer_parameters, :daylastcut, undef_int)
+    setparameter!(integer_parameters, :stagecode, undef_int)
+    setparameter!(integer_parameters, :previoussdaynr, undef_int)
+    setparameter!(integer_parameters, :outputaggregate, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)
     setparameter!(bool_parameters, :temperature_file_exists, undef_bool)
+    setparameter!(bool_parameters, :eto_file_exists, undef_bool)
+    setparameter!(bool_parameters, :rain_file_exists, undef_bool)
     setparameter!(bool_parameters, :evapo_entire_soil_surface, undef_bool)
     setparameter!(bool_parameters, :startmode, undef_bool)
     setparameter!(bool_parameters, :noyear, undef_bool)
+    setparameter!(bool_parameters, :nomorecrop, undef_bool)
+    setparameter!(bool_parameters, :out1Wabal, false)
+    setparameter!(bool_parameters, :out2Crop, false)
+    setparameter!(bool_parameters, :out3Prof, false)
+    setparameter!(bool_parameters, :out4Salt, false)
+    setparameter!(bool_parameters, :out5CompWC, false)
+    setparameter!(bool_parameters, :out6CompEC, false)
+    setparameter!(bool_parameters, :out7Clim, false)
+    setparameter!(bool_parameters, :outdaily, false)
+    setparameter!(bool_parameters, :part1Mult, false)
+    setparameter!(bool_parameters, :part2Eval, false)
+
+    
 
     array_parameters = ParametersContainer(Vector{Float64})
     setparameter!(array_parameters, :Tmin, Float64[])
     setparameter!(array_parameters, :Tmax, Float64[])
+    setparameter!(array_parameters, :ETo, Float64[])
+    setparameter!(array_parameters, :Rain, Float64[])
+    setparameter!(array_parameters, :Man, Float64[])
+    setparameter!(array_parameters, :Man_info, Float64[])
+    setparameter!(array_parameters, :Irri_1, Float64[])
+    setparameter!(array_parameters, :Irri_2, Float64[])
+    setparameter!(array_parameters, :Irri_3, Float64[])
+    setparameter!(array_parameters, :Irri_4, Float64[])
 
     string_parameters = ParametersContainer(String)
     setparameter!(string_parameters, :clim_file, undef_str)
@@ -508,6 +590,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(string_parameters, :man_file, "(None)")
     setparameter!(string_parameters, :irri_file, "(None)")
     setparameter!(string_parameters, :offseason_file, "(None)")
+    setparameter!(string_parameters, :observations_file, "(None)")
     setparameter!(string_parameters, :swcini_file, undef_str)
 
 
@@ -534,6 +617,15 @@ function initialize_settings(outputs, filepaths; kwargs...)
         crop_file_set = crop_file_set,
         gwtable = gwtable,
         stresstot = stresstot,
+        irri_info_record1 = irri_info_record1,
+        irri_info_record2 = irri_info_record2,
+        transfer = transfer,
+        cut_info_record1 = cut_info_record1,
+        cut_info_record2 = cut_info_record2,
+        root_zone_salt = root_zone_salt,
+        root_zone_wc = root_zone_wc,
+        plotvarcrop = plotvarcrop,
+        total_salt_content = total_salt_content,
         float_parameters = float_parameters,
         symbol_parameters = symbol_parameters,
         integer_parameters = integer_parameters,
@@ -544,7 +636,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
 end
 
 """
-    crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel)
+    stressout = crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel)
 
 global.f90:1231
 """
@@ -1508,11 +1600,12 @@ startunit.f90:417
 function initialize_the_program(outputs, parentdir; kwargs...)
     filepaths = default_filepaths(parentdir; kwargs...)
 
-    resultsparameters = get_results_parameters(outputs, filepaths[:simul]; kwargs...)
+    # the part of get_results_parameters is done when we create gvars
+    # resultsparameters = get_results_parameters(outputs, filepaths[:simul]; kwargs...)
 
     # TODO startunit.F90:429  PrepareReport()
 
-    return filepaths, resultsparameters 
+    return filepaths#, resultsparameters 
 end
 
 
@@ -1558,28 +1651,28 @@ end
 
 function _get_results_parameters(runtype::FortranRun, outputs, path::String)
     #startunit.f90:282
-    aggregationresultsparameters = ParametersContainer(Symbol)
-    filename = joinpath(path, "AggregationResults.SIM")
-    if isfile(filename) 
-        open(filename, "r") do file
+    aggregationresultsparameters = ParametersContainer(Int)
+    filename_a = joinpath(path, "AggregationResults.SIM")
+    if isfile(filename_a) 
+        open(filename_a, "r") do file
             aggregationtype = strip(readline(file))[1]
             if aggregationtype == '1'
-                setparameter!(aggregationresultsparameters, :outputaggregate, :daily)
+                setparameter!(aggregationresultsparameters, :outputaggregate, 1)# :daily)
             elseif aggregationtype == '2'
-                setparameter!(aggregationresultsparameters, :outputaggregate, :daily_10)
+                setparameter!(aggregationresultsparameters, :outputaggregate, 2) #:daily_10)
             elseif  aggregationtype == '3'
-                setparameter!(aggregationresultsparameters, :outputaggregate, :monthly)
+                setparameter!(aggregationresultsparameters, :outputaggregate, 3) #:monthly)
             else
-                setparameter!(aggregationresultsparameters, :outputaggregate, :seasonal)
+                setparameter!(aggregationresultsparameters, :outputaggregate, 0) #:none)
             end
         end
     end
 
     #startunit.f90:188
     dailyresultsparameters = ParametersContainer(Bool)
-    filename = join(path, "DailyResults.SIM")
-    if isfile(filename) 
-        open(filename, "r") do file
+    filename_d = joinpath(path, "DailyResults.SIM")
+    if isfile(filename_d) 
+        open(filename_d, "r") do file
             for line in eachline(file)
                 if isempty(line)
                     break
@@ -1605,16 +1698,18 @@ function _get_results_parameters(runtype::FortranRun, outputs, path::String)
                 | dailyresultsparameters[:out3Prof] | dailyresultsparameters[:out4Salt]
                 | dailyresultsparameters[:out5CompWC] | dailyresultsparameters[:out6CompEC]
                 | dailyresultsparameters[:out7Clim])
-                setparameter!(dailyresultsparameters, :outdailyresults, true)
+                setparameter!(dailyresultsparameters, :outdaily, true)
+            else
+                setparameter!(dailyresultsparameters, :outdaily, false)
             end
         end
     end
 
     #startunit.f90:248
     particularresultsparameters = ParametersContainer(Bool)
-    filename = join(path, "ParticularResults.SIM")
-    if isfile(filename) 
-        open(filename, "r") do file
+    filename_p = joinpath(path, "ParticularResults.SIM")
+    if isfile(filename_p) 
+        open(filename_p, "r") do file
             for line in eachline(file)
                 if isempty(line)
                     break
@@ -1632,7 +1727,7 @@ function _get_results_parameters(runtype::FortranRun, outputs, path::String)
 
     return ComponentArray(aggregationresults=aggregationresultsparameters,
                 dailyresults=dailyresultsparameters,
-                paricularresults=particularresultsparameters)
+                particularresults=particularresultsparameters)
 end
 
 function _get_results_parameters(runtype::T, outputs, path::String) where {T<:Union{JuliaRun, PersefoneRun}}

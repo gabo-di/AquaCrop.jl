@@ -1,26 +1,9 @@
 """
-    run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
-
-run.f90:7779
-"""
-function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
-    # maybe set outputfilesa run.f90:7786 OJO
-    nrruns = gvars[:simulation].NrRuns 
-
-    for nrrun in 1:nrruns
-        initialize_run_part_1!(outputs, gvars, projectinput[nrrun]; kwargs...)
-
-    end
-
-    return nothing
-end #notend
-
-"""
-    initialize_run_part_1!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+    initialize_run_part1!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
 
 run.f90:6590
 """
-function initialize_run_part_1!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+function initialize_run_part1!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
     load_simulation_project!(outputs, gvars, projectinput; kwargs...)
     adjust_compartments!(gvars) #TODO check if neccesary
     # reset sumwabal and previoussum
@@ -166,6 +149,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
     end
 
     # Maximum sum Kc (for reduction WP in season if soil fertility stress)
+    gvars[:simulation].DelayedDays = 0 #note that we need to do this before calling seasonal_sum_of_kcpot
     sumkctop = seasonal_sum_of_kcpot(outputs, gvars[:crop].DaysToCCini,
             gvars[:crop].GDDaysToCCini, gvars[:crop].DaysToGermination,
             gvars[:crop].DaysToFullCanopy, gvars[:crop].DaysToSenescence,
@@ -199,7 +183,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
         ccxcrop_weednosf_stress = round(Int, (100*gvars[:crop].CCx*fweednos + 0.49))/100 # reference for plot with weed
         setparameter!(gvars[:float_parameters], :ccxcrop_weednosf_stress, ccxcrop_weednosf_stress)
         if gvars[:management].FertilityStress > 0
-            fWeed = 1
+            fweed = 1
             if (fi > 0) & (gvars[:crop].subkind == :Forage) 
                 cweed = 1
                 if fi > 0.005
@@ -269,7 +253,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
 end 
 
 """
-    check_for_watertable_in_profile(profilecomp::Vector{CompartmentIndividual}, depthgwtmeter)
+    logi = check_for_watertable_in_profile(profilecomp::Vector{CompartmentIndividual}, depthgwtmeter)
 
 global.f90:1540
 """
@@ -333,13 +317,13 @@ function get_gwt_set!(gvars, parentdir, daynrin)
     simulation = gvars[:simulation]
     # FileNameFull
     if gvars[:string_parameters][:groundwater_file] != "(None)"
-        filenamefull = gvars[:string_parameters][:groundwater_file]
+        groundwater_file = gvars[:string_parameters][:groundwater_file]
     else
-        filenamefull = parentdir * "GroundWater.AqC"
+        groundwater_file = parentdir * "GroundWater.AqC"
     end 
 
     # Get DayNr1Gwt
-    open(filenamefull, "r") do file
+    open(groundwater_file, "r") do file
         readline(file)
         readline(file)
         readline(file)
@@ -489,35 +473,38 @@ function temperature_file_covering_crop_period!(outputs, gvars, crop_firstday, c
     tmin_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
     tmax_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
 
+    Tmin = gvars[:array_parameters][:Tmin]
+    Tmax = gvars[:array_parameters][:Tmax]
+
     if gvars[:bool_parameters][:temperature_file_exists]
         # open file and find first day of cropping period
         if gvars[:temperature_record].Datatype == :Daily
             # Tmin and Tmax arrays contain the TemperatureFilefull data
             i = crop_firstday - gvars[:temperature_record].FromDayNr + 1
-            tlow = gvars[:array_parameters][:Tmin][i]
-            thigh = gvars[:array_parameters][:Tmax][i]
+            tlow = Tmin[i]
+            thigh = Tmax[i]
         
         elseif gvars[:temperature_record].Datatype == :Decadely
             get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, crop_firstday,
-                                            gvars[:string_parameters][:temperature_file],
+                                            (Tmin, Tmax), 
                                             gvars[:temperature_record])
             i = 1
             while tmin_dataset[1].DayNr != crop_firstday
                 i += 1
             end
-            tlow = gvars[:array_parameters][:Tmin][i]
-            thigh = gvars[:array_parameters][:Tmax][i]
+            tlow = tmin_dataset[i].Param 
+            thigh = tmax_dataset[i].Param 
 
         elseif gvars[:temperature_record].Datatype == :Monthly
             get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, crop_firstday,
-                                            gvars[:string_parameters][:temperature_file],
+                                            (Tmin, Tmax), 
                                             gvars[:temperature_record])
             i = 1
             while tmin_dataset[1].DayNr != crop_firstday
                 i += 1
             end
-            tlow = gvars[:array_parameters][:Tmin][i]
-            thigh = gvars[:array_parameters][:Tmax][i]
+            tlow = tmin_dataset[i].Param 
+            thigh = tmax_dataset[i].Param 
         end
 
         # we are not creating the TCrop.SIM for now but we use outputs variable
@@ -530,34 +517,34 @@ function temperature_file_covering_crop_period!(outputs, gvars, crop_firstday, c
                 if i==length(gvars[:array_parameters][:Tmin]) 
                     i = 1
                 end 
-                tlow = gvars[:array_parameters][:Tmin][i]
-                thigh = gvars[:array_parameters][:Tmax][i]
+                tlow = Tmin[i]
+                thigh = Tmax[i]
 
             elseif gvars[:temperature_record].Datatype == :Decadely
                 if runningday>tmin_dataset[31].DayNr
                     get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
-                                                    gvars[:string_parameters][:temperature_file],
+                                                    (Tmin, Tmax), 
                                                     gvars[:temperature_record])
                 end
                 i = 1
                 while tmin_dataset[1].DayNr != runningday
                     i += 1
                 end 
-                tlow = gvars[:array_parameters][:Tmin][i]
-                thigh = gvars[:array_parameters][:Tmax][i]
+                tlow = tmin_dataset[i].Param 
+                thigh = tmax_dataset[i].Param 
 
             elseif gvars[:temperature_record].Datatype == :Monthly
                 if runningday>tmin_dataset[31].DayNr
                     get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
-                                                    gvars[:string_parameters][:temperature_file],
-                                                    gvars[:temperature_record])
+                                                     (Tmin, Tmax), 
+                                                     gvars[:temperature_record])
                 end 
-                i =1 
+                i = 1 
                 while tmin_dataset[1].DayNr != runningday
                     i += 1
                 end
-                tlow = gvars[:array_parameters][:Tmin][i]
-                thigh = gvars[:array_parameters][:Tmax][i]
+                tlow = tmin_dataset[i].Param 
+                thigh = tmax_dataset[i].Param 
             end
 
             add_output_in_tcropsim!(outputs, tlow, thigh)
@@ -976,6 +963,7 @@ function seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l1
     end 
 
     # 3. Calculate Sum
+    # MARK
     for dayi in 1:l1234
         # 3.1 calculate growing degrees for the day
         if loggi 
@@ -1388,6 +1376,7 @@ end
 global.f90:2988
 """
 function get_day_switch_to_linear(himax, dhidt, higc)
+    hio = 1
     tmax = round(Int, himax/dhidt)
     ti = 0
     him1 = hio
@@ -1525,6 +1514,7 @@ function bnormalized(outputs, thedaystoccini, thegddaystoccini,
     end 
 
     # 5. Calculate Bnormalized
+    # MARK
     for dayi in 1:l1234
         # 5.1 growing degrees for dayi
         if loggi 
@@ -1630,7 +1620,7 @@ function bnormalized(outputs, thedaystoccini, thegddaystoccini,
                 fccx = 1 # only for non perennials (no self-thinning)
                 if deltaweedstress != 0 
                     deltaweedstress_local = deltaweedstress
-                    weedcorrection = get_weed_rc(daycc, sumgddforplot, fccx,
+                    weedcorrection, deltaweedstress_local = get_weed_rc(daycc, sumgddforplot, fccx,
                         weedstress, management.WeedAdj,
                         deltaweedstress_local, l12sf, l123, 
                         gddl12sf, gddl123, themodecycle)
@@ -1832,7 +1822,7 @@ function cc_at_time(dayi, ccoin, cgcin, ccxin)
 end
 
 """
-    weedrcdaycalc = get_weed_rc(theday, gddayi, fccx, tempweedrcinput, tempweedadj,
+    weedrcdaycalc, tempweeddeltarc = get_weed_rc(theday, gddayi, fccx, tempweedrcinput, tempweedadj,
                             tempweeddeltarc, l12sf, templ123, gddl12sf, 
                             tempgddl123, themodecycle)
 
@@ -2165,7 +2155,7 @@ function crop_stress_parameters_soil_salinity(ccxred, ccdistortion,
                     gddcgcadjmin = gddcgcadjmax
                 end 
                 if ccxred < 10  # smooth start required
-                    gddcgcadj = gddcgcadjmax - (gddcgcadjmax-gddcgcadjmin)*(exp(real(ccxred, kind=dp))/exp(10))*(ccdistortion/100)
+                    gddcgcadj = gddcgcadjmax - (gddcgcadjmax-gddcgcadjmin)*(exp(ccxred)/exp(10))*(ccdistortion/100)
                 else
                     gddcgcadj = gddcgcadjmax - (gddcgcadjmax-gddcgcadjmin)*(ccdistortion/100)
                 end 

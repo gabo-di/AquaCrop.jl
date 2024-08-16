@@ -329,11 +329,26 @@ function load_resultsparameters_from_toml(auxparfile)
         | dailyresultsparameters["out3Prof"] | dailyresultsparameters["out4Salt"]
         | dailyresultsparameters["out5CompWC"] | dailyresultsparameters["out6CompEC"]
         | dailyresultsparameters["out7Clim"])
-        aux["resultsparameters"]["dailyresultsparameters"]["outdailyresults"] = true
+        aux["resultsparameters"]["dailyresultsparameters"]["outdaily"] = true
+    else
+        aux["resultsparameters"]["dailyresultsparameters"]["outdaily"] = false 
+    end
+
+    aggregationresultsparameters = aux["resultsparameters"]["aggregationresultsparameters"]
+    aggregationtype = aggregationresultsparameters["outputaggregate"]
+    if aggregationtype == 1
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = 1 #"daily"
+    elseif aggregationtype == 2
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = 2 #"daily_10"
+    elseif aggregationtype == 3
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = 3 #"monthly"
+    else
+        aux["resultsparameters"]["aggregationresultsparameters"]["outputaggregate"] = 0 #"none"
     end
 
 
-    aggregationresultsparameters = ParametersContainer(Symbol)
+
+    aggregationresultsparameters = ParametersContainer(Int)
     actualize_with_dict!(aggregationresultsparameters, aux["resultsparameters"]["aggregationresultsparameters"])
 
     dailyresultsparameters = ParametersContainer(Bool)
@@ -344,7 +359,7 @@ function load_resultsparameters_from_toml(auxparfile)
 
     return ComponentArray(aggregationresults=aggregationresultsparameters,
                 dailyresults=dailyresultsparameters,
-                paricularresults=particularresultsparameters)
+                particularresults=particularresultsparameters)
 end
 
 function load_projectfilenames_from_toml(auxparfile)
@@ -364,20 +379,3 @@ function load_projectinput_from_toml(auxparfile, parentdir)
 
     return projectinput
 end
-
-# MISSING maybe ?
-# resultsparameters.aggregationresultsparameters   initialsettings.jl:1460  (add to main!!)
-# resultsparameters.dailyresultsparameters         initialsettings.jl:1478  (add to main!!)
-# resultsparameters.particularresultsparameters    initialsettings.jl:1513  (add to main!!)
-# project_filenames    initialsettings.jl:1403    (add to main!!)
-# soil               initialsettings.jl.1047 (add to main!!)
-# soillayer          initialsettings.jl.1047 (add to main!!)
-# crop               loadsimulation.jl.608 (add to main!!)
-# perennial_period   loadsimulation.jl.608 (add to main!!)
-# simulparam         initialsettings.jl:86 (add to main!!)
-# management         loadsimulation.jl:2615 (add to main!!)
-# projectinput       initialsettings.jl:212 (add to main!!)
-# -----------        initialsettings.jl:58  (add to main!!)
-# record             loadsimulation.jl.314 (add to main!!)
-# co2                runsim.jl:581         (add to main!!) 
-#

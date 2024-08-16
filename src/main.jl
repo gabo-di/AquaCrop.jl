@@ -21,7 +21,8 @@ function start_the_program(parentdir=nothing, runtype=nothing)
         add_output_in_logger!(outputs, "using default FortranRun")
     end
 
-    filepaths, resultsparameters = initialize_the_program(outputs, parentdir; kwargs...) 
+    # the part of get_results_parameters is done when we create gvars
+    filepaths = initialize_the_program(outputs, parentdir; kwargs...) 
     project_filenames = initialize_project_filename(outputs, filepaths; kwargs...)
 
     nprojects = length(project_filenames)
@@ -34,6 +35,8 @@ function start_the_program(parentdir=nothing, runtype=nothing)
         gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
         run_simulation!(outputs, gvars, projectinput; kwargs...)
     end
+
+    # finalize_the_program()
 end # notend
 
 
@@ -55,6 +58,9 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
 
     if (theprojecttype != :typenone) & canselect[1]
         gvars = initialize_settings(outputs, filepaths; kwargs...)
+        # this function is to transfer data from resultsparameters to gvars
+        actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
+        setparameter!(gvars[:symbol_parameters], :theprojecttype, theprojecttype)
 
         if theprojecttype == :typepro
             # 2. Assign single project file and read its contents
@@ -132,3 +138,181 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
     return  gvars, projectinput, fileok
 end
 
+
+"""
+    run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
+
+run.f90:7779
+"""
+function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
+    # this sets outputfiles run.f90:7786 OJO , but maybe we will use dataframes instead
+    # call InitializeSimulation(TheProjectFile_, TheProjectType)
+ 
+    nrruns = gvars[:simulation].NrRuns 
+
+    for nrrun in 1:nrruns
+        initialize_run_part1!(outputs, gvars, projectinput[nrrun]; kwargs...)
+        initialize_climate!(outputs, gvars; kwargs...)
+        initialize_run_part2!(outputs, gvars, projectinput[nrrun], nrrun; kwargs...)
+        # @infiltrate
+        file_management!(outputs, gvars, projectinput[nrrun]; kwargs...)
+        finalize_run1!(gvars; kwargs...)
+        finalize_run2!(outputs, gvars; kwargs...)
+    end
+    # here we can flush more variables ? 
+    # call FinalizeSimulation()
+    return nothing
+end #notend
+
+"""
+    actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
+
+this function is to transfer data from resultsparameters to gvars
+not part of original code
+"""
+
+function actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
+
+    resultsparameters = get_results_parameters(outputs, filepaths[:simul]; kwargs...)
+
+    for key in keys(resultsparameters[:dailyresults].parameters)
+        setparameter!(gvars[:bool_parameters], key, resultsparameters[:dailyresults][key])
+    end
+
+    for key in keys(resultsparameters[:aggregationresults].parameters)
+        setparameter!(gvars[:integer_parameters], key, resultsparameters[:aggregationresults][key])
+    end
+
+    for key in keys(resultsparameters[:particularresults].parameters)
+        setparameter!(gvars[:bool_parameters], key, resultsparameters[:particularresults][key])
+    end
+
+    return nothing
+end
+
+"""
+    finalize_run1!(gvars; kwargs...)
+    
+run.f90:7390
+"""
+function finalize_run1!(gvars; kwargs...)
+    daynri = gvars[:integer_parameters][:daynri]
+    # 16. Finalise
+    if (daynri-1) == gvars[:simulation].ToDayNr
+        # multiple cuttings
+        if gvars[:bool_parameters][:part1Mult]
+            if gvars[:management].Cuttings.HarvestEnd
+                # final harvest at crop maturity
+                nrcut = gvars[:integer_parameters][:nrcut]
+                setparameter!(gvars[:integer_parameters], :nrcut, nrcut + 1)
+                # OUTPUT
+                # call RecordHarvest(GetNrCut(), &
+                #                   (GetDayNri() - GetCrop_Day1()+1))
+            end 
+            # OUTPUT
+            # call RecordHarvest((9999), &
+            #      (GetDayNri() - GetCrop_Day1()+1)) # last line at end of season
+        end 
+        # intermediate results
+        outputaggregate = gvars[:integer_parameters][:outputaggregate]
+        if (outputaggregate == 2) | (outputaggregate == 3) & # 10-day and monthly results
+            ((daynri-1) > gvars[:integer_parameters][:previousdaynr]) 
+            setparameter!(gvars[:integer_parameters], :daynri, daynri - 1)
+            write_intermediate_period!(gvars)
+        end 
+        write_sim_period!(gvars)
+    end 
+
+    return nothing
+end
+
+"""
+    write_sim_period!(gvars)
+
+run.f90:6064
+"""
+function write_sim_period!(gvars)
+    # Start simulation run
+    day1, month1, year1 = determine_date(gvars[:simulation].FromDayNr)
+    # End simulation run
+    dayn, monthn, yearn = determine_date(gvars[:simulation].ToDayNr)
+    # OUTPUT
+    # call WriteTheResults(NrRun, Day1, Month1, Year1, DayN, MonthN, YearN, &
+    #                     GetSumWaBal_Rain(), GetSumETo(), GetSumGDD(), &
+    #                     GetSumWaBal_Irrigation(), GetSumWaBal_Infiltrated(), &
+    #                     GetSumWaBal_Runoff(), GetSumWaBal_Drain(), &
+    #                     GetSumWaBal_CRwater(), GetSumWaBal_Eact(), &
+    #                     GetSumWaBal_Epot(), GetSumWaBal_Tact(), &
+    #                     GetSumWaBal_TrW(), GetSumWaBal_Tpot(), &
+    #                     GetSumWaBal_SaltIn(), GetSumWaBal_SaltOut(), &
+    #                     GetSumWaBal_CRsalt(), GetSumWaBal_Biomass(), &
+    #                     GetSumWaBal_BiomassUnlim(), GetTransfer_Bmobilized(), &
+    #                     GetSimulation_Storage_Btotal(), TheProjectFile)
+    return nothing
+end
+
+"""
+run.f90:4355
+"""
+function finalize_run2!(outputs, gvars; kwargs...)
+    close_climate!(outputs, gvars; kwargs...)
+    close_irrigation!(gvars; kwargs...)
+    close_management!(gvars; kwargs...)
+
+    # OUTPUT 
+    # if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
+    #     call CloseEvalDataPerformEvaluation(NrRun)
+    # end if
+end
+
+"""
+    close_climate!(outputs, gvars; kwargs...)
+
+delete the climate data from gvars arrays and outputs arrays
+"""
+function close_climate!(outputs, gvars; kwargs...)
+    setparameter!(gvars[:array_parameters], :Tmin, Float64[])
+    setparameter!(gvars[:array_parameters], :Tmax, Float64[])
+    setparameter!(gvars[:array_parameters], :ETo, Float64[])
+    setparameter!(gvars[:array_parameters], :Rain, Float64[])
+
+    setparameter!(gvars[:float_parameters], :tmin, undef_double)
+    setparameter!(gvars[:float_parameters], :tmax, undef_double)
+    setparameter!(gvars[:float_parameters], :eto, undef_double)
+    setparameter!(gvars[:float_parameters], :rain, undef_double)
+
+    flush_output_tcropsim!(outputs)
+    flush_output_etodatasim!(outputs)
+    flush_output_raindatasim!(outputs)
+    flush_output_tempdatasim!(outputs)
+end
+
+"""
+    close_irrigation!(gvars; kwargs...)
+
+delete the irrigation data from gvars arrays
+"""
+function close_irrigation!(gvars; kwargs...)
+    setparameter!(gvars[:array_parameters], :Irri_1, Float64[])
+    setparameter!(gvars[:array_parameters], :Irri_2, Float64[])
+    setparameter!(gvars[:array_parameters], :Irri_3, Float64[])
+    setparameter!(gvars[:array_parameters], :Irri_4, Float64[])
+
+    setparameter!(gvars[:float_parameters], :irrigation, 0.0)
+    
+    return nothing
+end
+
+"""
+    close_management!(gvars; kwargs...)
+
+delete the management data from gvars arrays
+"""
+function close_management!(gvars; kwargs...)
+    setparameter!(gvars[:array_parameters], :Man, Float64[])
+    setparameter!(gvars[:array_parameters], :Man_info, Float64[])
+
+    setparameter!(gvars[:integer_parameters], :nrcut, 0)
+
+    return nothing
+end

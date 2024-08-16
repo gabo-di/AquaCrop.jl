@@ -44,7 +44,7 @@ abstract type AbstractParametersContainer end
 
 Base.length(p::AbstractParametersContainer) = 1
 
-function _isapprox(a, b; kwargs...)
+function Base.isapprox(a::T, b::T; kwargs...) where T<:AbstractParametersContainer
     ans = true
     for field in fieldnames(typeof(a))
         if isapprox(getfield(a, field), getfield(b, field); kwargs...)
@@ -60,9 +60,10 @@ function _isapprox(a, b; kwargs...)
     return ans 
 end
 
-Base.isapprox(a::T, b::T; kwargs...) where {T<:AbstractParametersContainer} = _isapprox(a, b, kwargs...)
 
-Base.isapprox(a::Vector{T}, b::Vector{T}; kwargs...) where {T<:AbstractParametersContainer} = all([_isapprox(aa, bb; kwargs...) for (aa, bb) in zip(a, b)])
+function Base.isapprox(a::Vector{T}, b::Vector{T}; kwargs...) where {T<:AbstractParametersContainer} 
+    all([Base.isapprox(aa, bb; kwargs...) for (aa, bb) in zip(a, b)])
+end
 
 """
     pc = ParametersContainer(T)
@@ -100,8 +101,8 @@ end
 
 sets an entry in parameterscontainer. 
 """
-function setparameter!(parameterscontainer::ParametersContainer{T}, parameterkey::Symbol, parameter::T) where {T}
-    parameterscontainer.parameters[parameterkey] = parameter
+function setparameter!(parameterscontainer::ParametersContainer{T}, parameterkey::Symbol, parameter::T1) where {T, T1}
+    parameterscontainer.parameters[parameterkey] = T(parameter)
     return nothing
 end
 
@@ -569,7 +570,6 @@ end
     Depo::Vector{Float64} = zeros(Float64, 11)
 end
 
-Base.isapprox(a::CompartmentIndividual, b::CompartmentIndividual; kwargs...) = _isapprox(a, b; kwargs...)
 
 """
     iniswc = RepIniSWC()
@@ -595,9 +595,9 @@ end
 """
 @kwdef mutable struct RepEffectStress <: AbstractParametersContainer
     "Reduction of CGC (%)"
-    RedCGC::Int = 0 #TODO maybe from timetomaxcanopysf
+    RedCGC::Int = 0 
     "Reduction of CCx (%)"
-    RedCCX::Int = 0 #TODO maybe from timetomaxcanopysf
+    RedCCX::Int = 0 
     "Reduction of WP (%)"
     RedWP::Int = undef_int
     "Average decrease of CCx in mid season (%/day)"
@@ -1179,3 +1179,104 @@ end
     SaltSquare::Float64=undef_double
 end
 
+"""
+    irri_info = RepIrriInfoRecord()
+"""
+@kwdef mutable struct RepIrriInfoRecord <: AbstractParametersContainer
+    "Undocumented"
+    NoMoreInfo::Bool=undef_bool
+    "Undocumented"
+    FromDay::Int=undef_int
+    "Undocumented"
+    ToDay::Int=undef_int
+    "Undocumented"
+    TimeInfo::Int=undef_int
+    "Undocumented"
+    DepthInfo::Int=undef_int
+end
+
+"""
+    transfer = RepTransfer()
+"""
+@kwdef mutable struct RepTransfer <: AbstractParametersContainer
+    "transfer of assimilates from above ground parts to root system is active"
+    Store::Bool=undef_bool
+    "transfer of assimialtes from root system to above ground parts is active"
+    Mobilize::Bool=undef_bool
+    "Total mass of assimilates (ton/ha) to mobilize at start of the season"
+    ToMobilize::Float64=undef_double
+    "Cumulative sum of assimilates (ton/ha) mobilized form root system"
+    Bmobilized::Float64=undef_double
+end
+
+"""
+    cut_info = RepCutInfoRecord()
+"""
+@kwdef mutable struct RepCutInfoRecord <: AbstractParametersContainer 
+    "Undocumented"
+    NoMoreInfo::Bool=undef_bool
+    "Undocumented"
+    FromDay::Int=undef_int
+    "Undocumented"
+    ToDay::Int=undef_int
+    "Undocumented"
+    IntervalInfo::Int=undef_int
+    "Undocumented"
+    IntervalGDD::Float64=undef_double
+    "Undocumented"
+    MassInfo::Float64=undef_double
+end
+
+"""
+    root_zone_salt = RepRootZoneSalt()
+"""
+@kwdef mutable struct RepRootZoneSalt <: AbstractParametersContainer
+    "Electrical conductivity of the saturated soil-paste extract (dS/m)"
+    ECe::Float64=undef_double
+    "Electrical conductivity of the soil water (dS/m)"
+    ECsw::Float64=undef_double
+    "Electrical conductivity of the soil water at Field Capacity(dS/m)"
+    ECswFC::Float64=undef_double
+    "stress coefficient for salinity"
+    KsSalt::Float64=undef_double
+end
+
+"""
+    plotvarcorp = RepPlotPar()
+
+we set these values since we need them for rootunit.f90:37 AdjustedRootingDepth
+"""
+@kwdef mutable struct RepPlotPar <: AbstractParametersContainer
+    "Undocumented"
+    PotVal::Float64=0
+    "Undocumented"
+    ActVal::Float64=0
+end
+
+"""
+    root_zone_wc = RepRootZoneWC()
+"""
+@kwdef mutable struct RepRootZoneWC <: AbstractParametersContainer
+    "actual soil water content in rootzone [mm]"
+    Actual::Float64=undef_double
+    "soil water content [mm] in rootzone at FC"
+    FC::Float64=undef_double
+    "soil water content [mm] in rootzone at WP"
+    WP::Float64=undef_double
+    "soil water content [mm] in rootzone at Sat"
+    SAT::Float64=undef_double
+    "soil water content [mm] in rootzone at upper Threshold for leaf expansion"
+    Leaf::Float64=undef_double
+    "soil water content [mm] in rootzone at Threshold for stomatal closure"
+    Thresh::Float64=undef_double
+    "soil water content [mm] in rootzone at Threshold for canopy senescence"
+    Sen::Float64=undef_double
+    "actual soil water content [mm] in top soil (= top compartment)"
+    ZtopAct::Float64=undef_double
+    "soil water content [mm] at FC in top soil (= top compartment)"
+    ZtopFC::Float64=undef_double
+    "soil water content [mm] at WP in top soil (= top compartment)"
+    ZtopWP::Float64=undef_double
+    "soil water content [mm] at Threshold for stomatal closure in top soil"
+    ZtopThresh::Float64=undef_double
+end
