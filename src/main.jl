@@ -35,6 +35,8 @@ function start_the_program(parentdir=nothing, runtype=nothing)
         gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
         run_simulation!(outputs, gvars, projectinput; kwargs...)
     end
+
+    # finalize_the_program()
 end # notend
 
 

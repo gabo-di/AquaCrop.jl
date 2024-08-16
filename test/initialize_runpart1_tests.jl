@@ -42,7 +42,7 @@ include("checkpoints.jl")
     # @test isapprox(gvars[:array_parameters][:Tmin], gvars_0[:array_parameters][:Tmin])
 end
 
-@testset "Simulation Run Part 1" begin
+@testset "Initialize Run Part 1" begin
     outputs = AquaCrop.start_outputs()
 
     kwargs = (runtype = AquaCrop.FortranRun(),)

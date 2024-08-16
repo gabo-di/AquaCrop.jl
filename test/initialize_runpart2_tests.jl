@@ -3,7 +3,7 @@ using Test
 
 include("checkpoints.jl")
 
-@testset "Simulation Run Part 2" begin
+@testset "Initialize Run Part 2" begin
 
     kwargs = (runtype = AquaCrop.FortranRun(), )
 
