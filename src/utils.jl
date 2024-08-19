@@ -45,3 +45,10 @@ function isleapyear(year)
     return leapyear
 end
 
+"""
+    ton
+
+metric tonelad 1 ton = 1000 kg
+Dimension: 𝐌
+"""
+@unit ton "ton" ton 1000kg false true
