@@ -51,4 +51,19 @@ end
 metric tonelad 1 ton = 1000 kg
 Dimension: 𝐌
 """
-@unit ton "ton" ton 1000kg false true
+@unit ton "ton" ton 1000u"kg" false true
+
+const mm_ = Unit{:Meter, 𝐋}(-3, 1//1)
+const m_ = Unit{:Meter, 𝐋}(0, 1//1)
+const m_i2 = Unit{:Meter, 𝐋}(0, -2//1)
+const m_i3 = Unit{:Meter, 𝐋}(0, -3//1)
+const m_i1 = Unit{:Meter, 𝐋}(0, -1//1)
+const d_ = Unit{:Day, 𝐓}(0, 1//1)
+const K_ = Unit{:Kelvin, 𝚯}(0, 1//1)
+const ppm_ = Unit{:Permillion, NoDims}(0, 1//1)
+const ha_ = Unit{:Are, 𝐋^2}(2, 1//1)
+const ha_i1 = Unit{:Are, 𝐋^2}(2, -1//1)
+const dS_ = Unit{:Siemens, 𝐈^2*𝐓^3*𝐋^-2*𝐌^-1}(-1, 1//1)
+const kg_ = Unit{:Gram, 𝐌}(3, 1//1)
+const g_ = Unit{:Gram, 𝐌}(0, 1//1)
+const ton_ = Unit{:ton, 𝐌}(0, 1//1)

@@ -3,8 +3,8 @@ module AquaCrop
 using ComponentArrays
 using TOML
 using DataFrames
-using Unitful: Quantity, FreeUnits, 𝐋, 𝚯, 𝐓, 𝐈, 𝐌, NoDims
-using Unitful: g, kg, d, K, mm, ha, m, ppm, dS 
+using Unitful: Quantity, FreeUnits, Unit, 𝐋, 𝚯, 𝐓, 𝐈, 𝐌, NoDims
+using Unitful
 using Dates
 
 
