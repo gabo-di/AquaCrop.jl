@@ -110,10 +110,10 @@ end
     getparameter(parameterscontainer::ParametersContainer{T}, parameterkey::Symbol)
 
 gets the  parameterkey from parameterscontainer
-if  parameterkey does not exist returns missing. 
 """
 function getparameter(parameterscontainer::ParametersContainer, parameterkey::Symbol)
-    get(parameterscontainer.parameters, parameterkey, missing)
+    # get(parameterscontainer.parameters, parameterkey, missing)
+    getindex(parameterscontainer.parameters, parameterkey)
 end
 
 Base.getindex(parameterscontainer::ParametersContainer, parameterkey::Symbol) = getparameter(parameterscontainer, parameterkey)

@@ -13,7 +13,7 @@ include("checkpoints.jl")
     outputs_0, gvars_0, _ = checkpoint10()
 
     i = 2
-    AquaCrop.finalize_run1!(gvars; kwargs...)
+    AquaCrop.finalize_run1!(outputs, gvars, i; kwargs...)
     AquaCrop.finalize_run2!(outputs, gvars; kwargs...)
     AquaCrop.initialize_run_part1!(outputs, gvars, projectinput[i]; kwargs...) 
     AquaCrop.initialize_climate!(outputs, gvars; kwargs...)
@@ -64,7 +64,7 @@ end
     outputs_0, gvars_0, _ = checkpoint11()
 
     i = 2
-    AquaCrop.file_management!(outputs, gvars, projectinput[i]; kwargs...)
+    AquaCrop.file_management!(outputs, gvars, projectinput[i], i; kwargs...)
 
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
@@ -103,12 +103,12 @@ end
     outputs_0, gvars_0, _ = checkpoint12()
 
     i = 3
-    AquaCrop.finalize_run1!(gvars; kwargs...)
+    AquaCrop.finalize_run1!(outputs, gvars, i; kwargs...)
     AquaCrop.finalize_run2!(outputs, gvars; kwargs...)
     AquaCrop.initialize_run_part1!(outputs, gvars, projectinput[i]; kwargs...) 
     AquaCrop.initialize_climate!(outputs, gvars; kwargs...)
     AquaCrop.initialize_run_part2!(outputs, gvars, projectinput[i], i; kwargs...)
-    AquaCrop.file_management!(outputs, gvars, projectinput[i]; kwargs...)
+    AquaCrop.file_management!(outputs, gvars, projectinput[i], i; kwargs...)
 
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
