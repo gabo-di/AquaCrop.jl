@@ -258,11 +258,6 @@ function finalize_run2!(outputs, gvars; kwargs...)
     close_climate!(outputs, gvars; kwargs...)
     close_irrigation!(gvars; kwargs...)
     close_management!(gvars; kwargs...)
-
-    # OUTPUT 
-    # if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
-    #     call CloseEvalDataPerformEvaluation(NrRun)
-    # end if
 end
 
 """

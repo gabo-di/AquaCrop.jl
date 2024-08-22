@@ -23,6 +23,8 @@ include("checkpoints.jl")
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
     @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
+    @test isapprox(length(gvars[:array_parameters][:Man]), length(gvars_0[:array_parameters][:Man]))
+    @test isapprox(length(gvars[:array_parameters][:DaynrEval]), length(gvars_0[:array_parameters][:DaynrEval]))
 
     @test isapprox(gvars[:crop], gvars_0[:crop])
     @test isapprox(gvars[:simulation], gvars_0[:simulation])
@@ -70,6 +72,8 @@ end
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
     @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
+    @test isapprox(length(gvars[:array_parameters][:Man]), length(gvars_0[:array_parameters][:Man]))
+    @test isapprox(length(gvars[:array_parameters][:DaynrEval]), length(gvars_0[:array_parameters][:DaynrEval]))
 
     @test isapprox(gvars[:crop], gvars_0[:crop])
     @test isapprox(gvars[:simulation], gvars_0[:simulation])
@@ -91,6 +95,7 @@ end
     @test isapprox(gvars[:root_zone_salt], gvars_0[:root_zone_salt])
     @test isapprox(gvars[:transfer], gvars_0[:transfer])
     @test isapprox(gvars[:plotvarcrop], gvars_0[:plotvarcrop])
+
 end
 
 @testset "Third run finalize" begin
@@ -114,6 +119,8 @@ end
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
     @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
+    @test isapprox(length(gvars[:array_parameters][:Man]), length(gvars_0[:array_parameters][:Man]))
+    @test isapprox(length(gvars[:array_parameters][:DaynrEval]), length(gvars_0[:array_parameters][:DaynrEval]))
 
     @test isapprox(gvars[:crop], gvars_0[:crop])
     @test isapprox(gvars[:simulation], gvars_0[:simulation])
@@ -143,4 +150,5 @@ end
     @test isapprox(gvars[:plotvarcrop], gvars_0[:plotvarcrop])
     @test isapprox(gvars[:perennial_period], gvars_0[:perennial_period])
     @test isapprox(gvars[:crop_file_set], gvars_0[:crop_file_set])
+
 end

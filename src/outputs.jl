@@ -159,6 +159,22 @@ function start_outputs()
         "CO2" => Quantity{Float64, NoDims, FreeUnits{(ppm_,), NoDims, nothing}}[],
     )
 
+    evaldataout = DataFrame(
+        "RunNr" => Int[],
+        "Date" => Date[],
+        "DAP" => Int[],
+        "Stage" => Int[],
+        "CCsim" => Float64[],
+        "CCobs" => Float64[],
+        "CCstd" => Float64[],
+        "Bsim" => Quantity{Float64, 𝐌 /𝐋^2, FreeUnits{(ha_i1, ton_), 𝐌 /𝐋^2, nothing}}[],
+        "Bobs" => Quantity{Float64, 𝐌 /𝐋^2, FreeUnits{(ha_i1, ton_), 𝐌 /𝐋^2, nothing}}[],
+        "Bstd" => Quantity{Float64, 𝐌 /𝐋^2, FreeUnits{(ha_i1, ton_), 𝐌 /𝐋^2, nothing}}[],
+        "SWCsim" => Quantity{Float64, 𝐋, FreeUnits{(mm_,), 𝐋, nothing}}[],
+        "SWCobs" => Quantity{Float64, 𝐋, FreeUnits{(mm_,), 𝐋, nothing}}[],
+        "SWCstd" => Quantity{Float64, 𝐋, FreeUnits{(mm_,), 𝐋, nothing}}[],
+    )
+
     return Dict( 
         :logger => logger,
         :tcropsim => tcropsim,
@@ -167,7 +183,8 @@ function start_outputs()
         :tempdatasim => tempdatasim,
         :seasonout => seasonout,
         :harvestsout => harvestsout,
-        :dayout => dayout
+        :dayout => dayout,
+        :evaldataout => evaldataout
     )
 end
 
@@ -511,5 +528,46 @@ end
 """
 function flush_output_dayout!(outputs)
     empty!(outputs[:dayout])
+    return nothing
+end
+
+"""
+    add_output_in_evaldataout!(outputs, arr)
+"""
+function add_output_in_evaldataout!(outputs, arr)
+    if length(arr) == 15
+        new_row = Dict(
+            "RunNr" => arr[1],
+            "Date" => Date(arr[2], arr[3], arr[4]),
+            "DAP" => arr[5],
+            "Stage" => arr[6],
+            "CCsim" => arr[7],
+            "CCobs" => arr[8],
+            "CCstd" => arr[9],
+            "Bsim" => arr[10]*ton*u"ha^-1",
+            "Bobs" => arr[11]*ton*u"ha^-1",
+            "Bstd" => arr[12]*ton*u"ha^-1",
+            "SWCsim" => arr[13]*u"mm",
+            "SWCobs" => arr[14]*u"mm",
+            "SWCstd" => arr[15]*u"mm",
+        )
+
+        push!(outputs[:evaldataout], new_row)
+    end
+    return nothing
+end
+
+"""
+    read_output_from_evaldataout(outputs, i::Int)
+"""
+function read_output_from_evaldataout(outputs, i::Int)
+    return outputs[:evaldataout, i]
+end
+
+"""
+    flush_output_evaldataout!(outputs)
+"""
+function flush_output_evaldataout!(outputs)
+    empty!(outputs[:evaldataout])
     return nothing
 end

@@ -464,10 +464,10 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
         dap = gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays - gvars[:crop].Day1 + 1
         write_daily_results!(outputs, gvars, dap, wpi, nrrun)
     end
-    # OUTPUT
-    # if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
-    #     call WriteEvaluationData((gvars[:integer_parameters][:daynri]-gvars[:simulation].DelayedDays()-gvars[:crop].Day1()+1))
-    # end 
+    if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
+        dap = gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays - gvars[:crop].Day1 + 1
+        write_evaluation_data!(outputs, gvars, dap, nrrun)
+    end 
 
     # 15. Prepare Next day
     # 15.a Date
@@ -2700,3 +2700,105 @@ function record_harvest!(outputs, gvars, nrcut, dayinseason, nrrun)
     return nothing
 end
 
+"""
+    write_evaluation_data!(outputs, gvars, dap, nrrun)
+
+run.f90:6498
+"""
+function write_evaluation_data!(outputs, gvars, dap, nrrun)
+    if length(gvars[:array_parameters][:DaynrEval]) > 0
+        if gvars[:integer_parameters][:daynri] == gvars[:array_parameters][:DaynrEval][1]
+
+            DaynrEval = gvars[:array_parameters][:DaynrEval] 
+            CCmeanEval = gvars[:array_parameters][:CCmeanEval]
+            CCstdEval = gvars[:array_parameters][:CCstdEval]
+            BmeanEval = gvars[:array_parameters][:BmeanEval]
+            BstdEval = gvars[:array_parameters][:BstdEval]
+            SWCmeanEval = gvars[:array_parameters][:SWCmeanEval]
+            SWCstdEval = gvars[:array_parameters][:SWCstdEval]
+
+            daynri = popfirst!(DaynrEval)
+            ccmean = popfirst!(CCmeanEval)
+            ccstd = popfirst!(CCstdEval)
+            bmean = popfirst!(BmeanEval)
+            bstd = popfirst!(BstdEval)
+            swcmean = popfirst!(SWCmeanEval)
+            swcstd = popfirst!(SWCstdEval)
+
+            di, mi, yi = determine_date(daynri)
+            if gvars[:clim_record].FromY == 1901
+                yi = yi - 1901 + 1
+            end
+            dap_temp = dap
+            if gvars[:integer_parameters][:stagecode] == 0
+                dap_temp = undef_int
+            end
+
+            swci = swcz_soil(gvars)
+
+            arr = Float64[]
+            push!(arr, nrrun) # RunNr
+            push!(arr, yi) # Date year
+            push!(arr, mi) # Date month
+            push!(arr, di) # Date day
+            push!(arr, dap_temp) # DAP
+            push!(arr, gvars[:integer_parameters][:stagecode]) # Stage
+            push!(arr, gvars[:float_parameters][:cciactual]*100) # CCsim
+            push!(arr, ccmean) # CCobs
+            push!(arr, ccstd) # CCstd
+            push!(arr, gvars[:sumwabal].Biomass) # Bsim
+            push!(arr, bmean) # Bobs
+            push!(arr, bstd) # Bstd
+            push!(arr, swci) # SWCsim
+            push!(arr, swcmean) # SWCobs
+            push!(arr, swcstd) # SWCstd
+
+            add_output_in_evaldataout!(outputs, arr)
+
+            setparameter!(gvars[:array_parameters], :DaynrEval, DaynrEval)
+            setparameter!(gvars[:array_parameters], :CCmeanEval, CCmeanEval)
+            setparameter!(gvars[:array_parameters], :CCstdEval, CCstdEval)
+            setparameter!(gvars[:array_parameters], :BmeanEval, BmeanEval)
+            setparameter!(gvars[:array_parameters], :BstdEval, BstdEval)
+            setparameter!(gvars[:array_parameters], :SWCmeanEval, SWCmeanEval)
+            setparameter!(gvars[:array_parameters], :SWCstdEval, SWCstdEval)
+        end
+    end
+    return nothing
+end
+
+
+"""
+    swcact = swcz_soil(gvars)
+
+run.f90:6555
+"""
+function swcz_soil(gvars)
+    zsoil = gvars[:float_parameters][:zeval]
+    compartments = gvars[:compartments]
+
+    cumdepth = 0
+    compi = 0
+    swcact = 0
+    loopi = true
+    while loopi
+        compi = compi + 1
+        cumdepth = cumdepth + compartments[compi].Thickness
+        if cumdepth <= zsoil
+            factor = 1
+        else
+            frac_value = zsoil - (cumdepth - compartments[compi].Thickness)
+            if frac_value > 0
+                factor = frac_value/compartments[compi].Thickness
+            else
+                 factor = 0
+            end 
+        end 
+        swcact = swcact + factor * 10 * compartments[compi].Theta*100 * compartments[compi].Thickness
+        if (round(Int, 100*cumdepth) >= round(Int, 100*zsoil)) | 
+           (compi == length(compartments))
+            loopi = false
+        end
+    end
+    return swcact
+end
