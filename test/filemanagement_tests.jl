@@ -38,7 +38,7 @@ include("checkpoints.jl")
         integer_parameters = integer_parameters
     )
     repeattoday = gvars[:simulation].ToDayNr
-    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i])
+    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i], i)
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
@@ -104,11 +104,11 @@ end
 
     n = 24
     for _ in 1:(n-1)
-        AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i])
+        AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i], i)
         AquaCrop.read_climate_nextday!(outputs, gvars)
         AquaCrop.set_gdd_variables_nextday!(gvars)
     end
-    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i])
+    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i], i)
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
@@ -174,11 +174,11 @@ end
 
     n = 120
     for _ in 1:(n-1)
-        AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i])
+        AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i], i)
         AquaCrop.read_climate_nextday!(outputs, gvars)
         AquaCrop.set_gdd_variables_nextday!(gvars)
     end
-    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i])
+    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i], i)
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
@@ -216,7 +216,7 @@ end
     outputs_0, gvars_0, _ = checkpoint9()
 
     i = 1
-    AquaCrop.file_management!(outputs, gvars, projectinput[i]; kwargs...)
+    AquaCrop.file_management!(outputs, gvars, projectinput[i], i; kwargs...)
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
@@ -242,4 +242,5 @@ end
     @test isapprox(gvars[:root_zone_salt], gvars_0[:root_zone_salt])
     @test isapprox(gvars[:transfer], gvars_0[:transfer])
     @test isapprox(gvars[:plotvarcrop], gvars_0[:plotvarcrop])
+
 end

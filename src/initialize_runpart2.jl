@@ -941,26 +941,14 @@ function initialize_run_part2!(outputs, gvars, projectinput::ProjectInputType, n
 
     initialize_simulation_run_part2!(outputs, gvars, projectinput; kwargs...)
 
-    # OUTPUT
-    # if gvars[:bool_parameters][:outdaily] 
-    #     this writes the lines 2:5 of OUT/OttawaPRMday.OUT
-    #     TODO make a dataframe?
-    #     call WriteTitleDailyResults(TheProjectType, NrRun)
-    # end 
-
-    # OUTPUT
-    # if gvars[:bool_parameters][:part1Mult]
-    #     this writes the lines 3:7 of OUT/OttawaPRMharvest.OUT
-    #     TODO make a dataframe? (we do care about these results in Persefone)
-    #     call WriteTitlePart1MultResults(TheProjectType, NrRun)
-    # end 
+    if gvars[:bool_parameters][:part1Mult]
+        write_title_part1_mult_results!(outputs, gvars, nrun)
+    end 
 
 
-    # OUTPUT
-    # if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
-    #     this file is erased later when we call finalizerun2, is it necessary?
-    #     call CreateEvalData(NrRun)
-    # end 
+    if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
+        create_eval_data!(gvars)
+    end 
 
     return nothing
 end
@@ -2103,3 +2091,68 @@ function determine_growth_stage!(gvars, dayi, cciprev)
     return nothing
 end
 
+"""
+    create_eval_data!(gvars)
+
+run.f90:5451
+"""
+function create_eval_data!(gvars)
+    DaynrEval = Float64[]
+    CCmeanEval = Float64[]
+    CCstdEval = Float64[]
+    BmeanEval = Float64[]
+    BstdEval = Float64[]
+    SWCmeanEval = Float64[]
+    SWCstdEval = Float64[]
+    # open input file with field data
+    open(gvars[:string_parameters][:observations_file], "r") do file
+        readline(file)
+        readline(file)
+        zeval = parse(Float64, strip(readline(file))[1:6])
+        setparameter!(gvars[:float_parameters], :zeval, zeval)
+        dayi = parse(Int, strip(readline(file))[1:6])
+        monthi = parse(Int, strip(readline(file))[1:6])
+        yeari = parse(Int, strip(readline(file))[1:6])
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        daynr1evaleval = determine_day_nr(dayi, monthi, yeari)
+        for line in eachline(file)
+            splitedline = split(line)
+            daynreval = parse(Int, popfirst!(splitedline))
+            daynreval += daynr1evaleval - 1  
+            if daynreval >= gvars[:simulation].FromDayNr
+                push!(DaynrEval, daynreval)
+                push!(CCmeanEval, parse(Float64, popfirst!(splitedline)))
+                push!(CCstdEval, parse(Float64, popfirst!(splitedline)))
+                push!(BmeanEval, parse(Float64, popfirst!(splitedline)))
+                push!(BstdEval, parse(Float64, popfirst!(splitedline)))
+                push!(SWCmeanEval, parse(Float64, popfirst!(splitedline)))
+                push!(SWCstdEval, parse(Float64, popfirst!(splitedline)))
+            end
+        end
+    end
+
+    setparameter!(gvars[:array_parameters], :DaynrEval, DaynrEval)
+    setparameter!(gvars[:array_parameters], :CCmeanEval, CCmeanEval)
+    setparameter!(gvars[:array_parameters], :CCstdEval, CCstdEval)
+    setparameter!(gvars[:array_parameters], :BmeanEval, BmeanEval)
+    setparameter!(gvars[:array_parameters], :BstdEval, BstdEval)
+    setparameter!(gvars[:array_parameters], :SWCmeanEval, SWCmeanEval)
+    setparameter!(gvars[:array_parameters], :SWCstdEval, SWCstdEval)
+    return nothing
+end
+
+"""
+    write_title_part1_mult_results!(outputs, gvars, nrrun)
+
+run.f90:4545
+"""
+function write_title_part1_mult_results!(outputs, gvars, nrrun)
+    daynri = gvars[:integer_parameters][:daynri]
+    setparameter!(gvars[:integer_parameters], :daynri, gvars[:crop].Day1)
+    record_harvest!(outputs, gvars, 0, 0, nrrun)
+    setparameter!(gvars[:integer_parameters], :daynri, daynri)
+    return nothing
+end

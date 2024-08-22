@@ -546,6 +546,7 @@ function checkpoint1()
     AquaCrop.setparameter!(float_parameters, :ccitopearlysen, AquaCrop.undef_double) 
     AquaCrop.setparameter!(float_parameters, :weedrci, AquaCrop.undef_double) 
     AquaCrop.setparameter!(float_parameters, :cciactualweedinfested, AquaCrop.undef_double) 
+    AquaCrop.setparameter!(float_parameters, :zeval, AquaCrop.undef_double) 
 
     symbol_parameters = AquaCrop.ParametersContainer(Symbol)
     AquaCrop.setparameter!(symbol_parameters, :irrimode, :NoIrri) # 0
@@ -606,6 +607,13 @@ function checkpoint1()
     AquaCrop.setparameter!(array_parameters, :Irri_2, Float64[])
     AquaCrop.setparameter!(array_parameters, :Irri_3, Float64[])
     AquaCrop.setparameter!(array_parameters, :Irri_4, Float64[])
+    AquaCrop.setparameter!(array_parameters, :DaynrEval, Float64[])
+    AquaCrop.setparameter!(array_parameters, :CCmeanEval, Float64[])
+    AquaCrop.setparameter!(array_parameters, :CCstdEval, Float64[])
+    AquaCrop.setparameter!(array_parameters, :BmeanEval, Float64[])
+    AquaCrop.setparameter!(array_parameters, :BstdEval, Float64[])
+    AquaCrop.setparameter!(array_parameters, :SWCmeanEval, Float64[])
+    AquaCrop.setparameter!(array_parameters, :SWCstdEval, Float64[])
 
     string_parameters = AquaCrop.ParametersContainer(String)
     AquaCrop.setparameter!(string_parameters, :clim_file, AquaCrop.undef_str)
@@ -1490,6 +1498,7 @@ function checkpoint5()
     AquaCrop.setparameter!(gvars[:float_parameters], :scor_at2, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :stressleaf, AquaCrop.undef_double) 
     AquaCrop.setparameter!(gvars[:float_parameters], :stresssenescence, AquaCrop.undef_double) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :zeval, 1.0) 
 
     AquaCrop.setparameter!(gvars[:integer_parameters], :irri_interval, 1) 
     AquaCrop.setparameter!(gvars[:integer_parameters], :tadj, 0) 
@@ -1543,6 +1552,52 @@ function checkpoint5()
     end
     popfirst!(Man) # done in open_harvest_info -> get_next_harvest 
     AquaCrop.setparameter!(gvars[:array_parameters], :Man, Man)
+
+    #Obs
+    DaynrEval = Float64[]
+    CCmeanEval = Float64[]
+    CCstdEval = Float64[]
+    BmeanEval = Float64[]
+    BstdEval = Float64[]
+    SWCmeanEval = Float64[]
+    SWCstdEval = Float64[]
+    # open input file with field data
+    observations_file = joinpath(pwd(), "testcase/OBS/Ottawa.OBS")
+    open(observations_file, "r") do file
+        readline(file)
+        readline(file)
+        zeval = parse(Float64, strip(readline(file))[1:6])
+        dayi = parse(Int, strip(readline(file))[1:6])
+        monthi = parse(Int, strip(readline(file))[1:6])
+        yeari = parse(Int, strip(readline(file))[1:6])
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        daynr1evaleval = AquaCrop.determine_day_nr(dayi, monthi, yeari)
+        for line in eachline(file)
+            splitedline = split(line)
+            daynreval = parse(Int, popfirst!(splitedline))
+            daynreval += daynr1evaleval - 1  
+            if daynreval >= gvars[:simulation].FromDayNr
+                push!(DaynrEval, daynreval)
+                push!(CCmeanEval, parse(Float64, popfirst!(splitedline)))
+                push!(CCstdEval, parse(Float64, popfirst!(splitedline)))
+                push!(BmeanEval, parse(Float64, popfirst!(splitedline)))
+                push!(BstdEval, parse(Float64, popfirst!(splitedline)))
+                push!(SWCmeanEval, parse(Float64, popfirst!(splitedline)))
+                push!(SWCstdEval, parse(Float64, popfirst!(splitedline)))
+            end
+        end
+    end
+
+    AquaCrop.setparameter!(gvars[:array_parameters], :DaynrEval, DaynrEval)
+    AquaCrop.setparameter!(gvars[:array_parameters], :CCmeanEval, CCmeanEval)
+    AquaCrop.setparameter!(gvars[:array_parameters], :CCstdEval, CCstdEval)
+    AquaCrop.setparameter!(gvars[:array_parameters], :BmeanEval, BmeanEval)
+    AquaCrop.setparameter!(gvars[:array_parameters], :BstdEval, BstdEval)
+    AquaCrop.setparameter!(gvars[:array_parameters], :SWCmeanEval, SWCmeanEval)
+    AquaCrop.setparameter!(gvars[:array_parameters], :SWCstdEval, SWCstdEval)
 
     return outputs, gvars, projectinput
 end
@@ -2576,6 +2631,16 @@ function checkpoint10()
     popfirst!(gvars[:array_parameters][:Man])
     popfirst!(gvars[:array_parameters][:Man])
 
+    for _ in 1:15
+        popfirst!(gvars[:array_parameters][:DaynrEval])
+        popfirst!(gvars[:array_parameters][:CCmeanEval])
+        popfirst!(gvars[:array_parameters][:CCstdEval])
+        popfirst!(gvars[:array_parameters][:BmeanEval])
+        popfirst!(gvars[:array_parameters][:BstdEval])
+        popfirst!(gvars[:array_parameters][:SWCmeanEval])
+        popfirst!(gvars[:array_parameters][:SWCstdEval])
+    end
+
     return outputs, gvars, projectinput
 end
 
@@ -2819,6 +2884,20 @@ function checkpoint11()
 
     gvars[:plotvarcrop].PotVal = 99.998458084931841
     gvars[:plotvarcrop].ActVal = 58.973865865717279 
+
+    popfirst!(gvars[:array_parameters][:Man])
+    popfirst!(gvars[:array_parameters][:Man])
+    popfirst!(gvars[:array_parameters][:Man])
+
+    for _ in 1:15
+        popfirst!(gvars[:array_parameters][:DaynrEval])
+        popfirst!(gvars[:array_parameters][:CCmeanEval])
+        popfirst!(gvars[:array_parameters][:CCstdEval])
+        popfirst!(gvars[:array_parameters][:BmeanEval])
+        popfirst!(gvars[:array_parameters][:BstdEval])
+        popfirst!(gvars[:array_parameters][:SWCmeanEval])
+        popfirst!(gvars[:array_parameters][:SWCstdEval])
+    end
 
     return outputs, gvars, projectinput
 end
@@ -3100,7 +3179,16 @@ function checkpoint12()
 
     popfirst!(gvars[:array_parameters][:Man])
     popfirst!(gvars[:array_parameters][:Man])
-    popfirst!(gvars[:array_parameters][:Man])
+
+    for _ in 1:14
+        popfirst!(gvars[:array_parameters][:DaynrEval])
+        popfirst!(gvars[:array_parameters][:CCmeanEval])
+        popfirst!(gvars[:array_parameters][:CCstdEval])
+        popfirst!(gvars[:array_parameters][:BmeanEval])
+        popfirst!(gvars[:array_parameters][:BstdEval])
+        popfirst!(gvars[:array_parameters][:SWCmeanEval])
+        popfirst!(gvars[:array_parameters][:SWCstdEval])
+    end
 
     return outputs, gvars, projectinput
 end

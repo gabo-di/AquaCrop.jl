@@ -13,7 +13,7 @@ include("checkpoints.jl")
     outputs_0, gvars_0, _ = checkpoint10()
 
     i = 2
-    AquaCrop.finalize_run1!(gvars; kwargs...)
+    AquaCrop.finalize_run1!(outputs, gvars, i; kwargs...)
     AquaCrop.finalize_run2!(outputs, gvars; kwargs...)
     AquaCrop.initialize_run_part1!(outputs, gvars, projectinput[i]; kwargs...) 
     AquaCrop.initialize_climate!(outputs, gvars; kwargs...)
@@ -23,6 +23,8 @@ include("checkpoints.jl")
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
     @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
+    @test isapprox(length(gvars[:array_parameters][:Man]), length(gvars_0[:array_parameters][:Man]))
+    @test isapprox(length(gvars[:array_parameters][:DaynrEval]), length(gvars_0[:array_parameters][:DaynrEval]))
 
     @test isapprox(gvars[:crop], gvars_0[:crop])
     @test isapprox(gvars[:simulation], gvars_0[:simulation])
@@ -64,12 +66,14 @@ end
     outputs_0, gvars_0, _ = checkpoint11()
 
     i = 2
-    AquaCrop.file_management!(outputs, gvars, projectinput[i]; kwargs...)
+    AquaCrop.file_management!(outputs, gvars, projectinput[i], i; kwargs...)
 
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
     @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
+    @test isapprox(length(gvars[:array_parameters][:Man]), length(gvars_0[:array_parameters][:Man]))
+    @test isapprox(length(gvars[:array_parameters][:DaynrEval]), length(gvars_0[:array_parameters][:DaynrEval]))
 
     @test isapprox(gvars[:crop], gvars_0[:crop])
     @test isapprox(gvars[:simulation], gvars_0[:simulation])
@@ -91,6 +95,7 @@ end
     @test isapprox(gvars[:root_zone_salt], gvars_0[:root_zone_salt])
     @test isapprox(gvars[:transfer], gvars_0[:transfer])
     @test isapprox(gvars[:plotvarcrop], gvars_0[:plotvarcrop])
+
 end
 
 @testset "Third run finalize" begin
@@ -103,17 +108,19 @@ end
     outputs_0, gvars_0, _ = checkpoint12()
 
     i = 3
-    AquaCrop.finalize_run1!(gvars; kwargs...)
+    AquaCrop.finalize_run1!(outputs, gvars, i; kwargs...)
     AquaCrop.finalize_run2!(outputs, gvars; kwargs...)
     AquaCrop.initialize_run_part1!(outputs, gvars, projectinput[i]; kwargs...) 
     AquaCrop.initialize_climate!(outputs, gvars; kwargs...)
     AquaCrop.initialize_run_part2!(outputs, gvars, projectinput[i], i; kwargs...)
-    AquaCrop.file_management!(outputs, gvars, projectinput[i]; kwargs...)
+    AquaCrop.file_management!(outputs, gvars, projectinput[i], i; kwargs...)
 
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
     @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
+    @test isapprox(length(gvars[:array_parameters][:Man]), length(gvars_0[:array_parameters][:Man]))
+    @test isapprox(length(gvars[:array_parameters][:DaynrEval]), length(gvars_0[:array_parameters][:DaynrEval]))
 
     @test isapprox(gvars[:crop], gvars_0[:crop])
     @test isapprox(gvars[:simulation], gvars_0[:simulation])
@@ -143,4 +150,5 @@ end
     @test isapprox(gvars[:plotvarcrop], gvars_0[:plotvarcrop])
     @test isapprox(gvars[:perennial_period], gvars_0[:perennial_period])
     @test isapprox(gvars[:crop_file_set], gvars_0[:crop_file_set])
+
 end

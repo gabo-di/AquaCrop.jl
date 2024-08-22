@@ -1,9 +1,9 @@
 """
-    file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+    file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun; kwargs...)
 
 run.f90:7760
 """
-function file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+function file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun; kwargs...)
     # we create these "lvars" because we need functions that 
     # returns nothing or does not change anything
     float_parameters = ParametersContainer(Float64)
@@ -37,7 +37,7 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs
     # MARK
     while loopi
         cont += 1
-        advance_one_time_step!(outputs, gvars, lvars, projectinput)
+        advance_one_time_step!(outputs, gvars, lvars, projectinput, nrrun)
         read_climate_nextday!(outputs, gvars)
         set_gdd_variables_nextday!(gvars)
         if (gvars[:integer_parameters][:daynri] - 1) == repeattoday
@@ -48,11 +48,11 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType; kwargs
 end
 
 """
-    advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType)
+    advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType, nrrun)
 
 run.f90:6747
 """
-function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType)
+function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType, nrrun)
     # reset values since they are local variables
     setparameter!(lvars[:float_parameters], :preirri,  0.0)
     setparameter!(lvars[:float_parameters], :fracassim, 0.0)
@@ -375,11 +375,10 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
                 # for calculation Maximum Biomass unlimited soil fertility
                 gvars[:crop].CCxAdjusted = gvars[:float_parameters][:cciprev] # new
             end 
-            # OUTPUT
             # Record harvest
-            # if gvars[:bool_parameters][:part1Mult]
-            #     RecordHarvest(GetNrCut(), DayInSeason)
-            # end 
+            if gvars[:bool_parameters][:part1Mult]
+                  record_harvest!(outputs, gvars, nrcut + 1, dayinseason, nrrun)
+            end 
             # Reset
             setparameter!(gvars[:integer_parameters], :suminterval, 0)
             setparameter!(gvars[:float_parameters], :sumgddcuts, 0)
@@ -458,16 +457,17 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
 
     # 14.d Print ---------------------------------------
     if gvars[:integer_parameters][:outputaggregate] > 0
-        check_for_print!(gvars)
+        check_for_print!(outputs, gvars)
     end 
-    # OUTPUT
-    # if gvars[:bool_parameters][:outdaily] 
-    #     call WriteDailyResults((gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays() &
-    #                             - gvars[:crop].Day1()+1), WPi)
-    # end
-    # if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
-    #     call WriteEvaluationData((gvars[:integer_parameters][:daynri]-gvars[:simulation].DelayedDays()-gvars[:crop].Day1()+1))
-    # end 
+    if gvars[:bool_parameters][:outdaily] 
+        wpi = lvars[:float_parameters][:wpi]
+        dap = gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays - gvars[:crop].Day1 + 1
+        write_daily_results!(outputs, gvars, dap, wpi, nrrun)
+    end
+    if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
+        dap = gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays - gvars[:crop].Day1 + 1
+        write_evaluation_data!(outputs, gvars, dap, nrrun)
+    end 
 
     # 15. Prepare Next day
     # 15.a Date
@@ -2034,11 +2034,11 @@ function get_potvalsf(dap, sumgddadjcc, gvars)
 end
 
 """
-    check_for_print!(gvars)
+    check_for_print!(outputs, gvars)
 
 run.f90:3476
 """
-function check_for_print!(gvars)
+function check_for_print!(outputs, gvars)
     dayn, monthn, yearn = determine_date(gvars[:integer_parameters][:daynri])
 
     if gvars[:integer_parameters][:outputaggregate] == 1
@@ -2048,14 +2048,24 @@ function check_for_print!(gvars)
         saltin = gvars[:sumwabal].SaltIn - gvars[:previoussum].SaltIn
         saltout = gvars[:sumwabal].SaltOut - gvars[:previoussum].SaltOut
         crsalt = gvars[:sumwabal].CRsalt - gvars[:previoussum].CRsalt
-        # OUTPUT
-        # call WriteTheResults(int(undef_int,kind=int8), DayN, MonthN, YearN, DayN, MonthN, &
-        #                      YearN, GetRain(), GetETo(), GetGDDayi(), GetIrrigation(), &
-        #                      GetInfiltrated(), GetRunoff(), GetDrain(), &
-        #                      GetCRwater(), GetEact(), GetEpot(), GetTact(), &
-        #                      GetTactWeedInfested(), GetTpot(), SaltIn, SaltOut, &
-        #                      CRsalt, BiomassDay, BUnlimDay, GetBin(), GetBout(), &
-        #                      TheProjectFile)
+        write_the_results!(outputs, undef_int, dayn, monthn, yearn, dayn, monthn, 
+                             yearn, gvars[:float_parameters][:rain],
+                             gvars[:float_parameters][:eto],
+                             gvars[:float_parameters][:gddayi],
+                             gvars[:float_parameters][:irrigation], 
+                             gvars[:float_parameters][:infiltrated],
+                             gvars[:float_parameters][:runoff],
+                             gvars[:float_parameters][:drain], 
+                             gvars[:float_parameters][:crwater],
+                             gvars[:float_parameters][:eact], 
+                             gvars[:float_parameters][:epot], 
+                             gvars[:float_parameters][:tact], 
+                             gvars[:float_parameters][:tactweedinfested],
+                             gvars[:float_parameters][:tpot], saltin, saltout, 
+                             crsalt, biomassday, bunlimday,
+                             gvars[:float_parameters][:bin], 
+                             gvars[:float_parameters][:bout], 
+                             gvars)
         gvars[:previoussum].Biomass = gvars[:sumwabal].Biomass
         gvars[:previoussum].BiomassUnlim = gvars[:sumwabal].BiomassUnlim
         gvars[:previoussum].SaltIn = gvars[:sumwabal].SaltIn
@@ -2076,18 +2086,18 @@ function check_for_print!(gvars)
             writenow = true # 10-day
         end
         if writenow
-            write_intermediate_period!(gvars)
+            write_intermediate_period!(outputs, gvars)
         end
     end
     return nothing
 end
 
 """
-    write_intermediate_period!(gvars)
+    write_intermediate_period!(outputs, gvars)
 
 run.f90:6088
 """
-function write_intermediate_period!(gvars)
+function write_intermediate_period!(outputs, gvars)
     # determine intermediate results
     day1, month1, year1 =  determine_date(gvars[:integer_parameters][:previousdaynr]+1)
     dayn, monthn, yearn =  determine_date(gvars[:integer_parameters][:daynri])
@@ -2115,13 +2125,11 @@ function write_intermediate_period!(gvars)
     bmobper = gvars[:transfer].Bmobilized - gvars[:float_parameters][:previousbmob]
     bstoper = gvars[:simulation].Storage.Btotal - gvars[:float_parameters][:previousbsto]
 
-    # OUTPUT
-    # write
-    # call WriteTheResults(int(undef_int, kind=int8), Day1, Month1, Year1, DayN, &
-    #                      MonthN, YearN, RPer, EToPer, GDDPer, IrriPer, InfiltPer, &
-    #                      ROPer, DrainPer, CRwPer, EPer, ExPer, TrPer, TrWPer, &
-    #                      TrxPer, SalInPer, SalOutPer, SalCRPer, BiomassPer, &
-    #                      BUnlimPer, BmobPer, BstoPer, TheProjectFile)
+    write_the_results!(outputs, undef_int, day1, month1, year1, dayn, 
+                         monthn, yearn, rper, etoper, gddper, irriper, infiltper, 
+                         roper, drainper, crwper, eper, exper, trper, trwper, 
+                         trxper, salinper, saloutper, salcrper, biomassper, 
+                         bunlimper, bmobper, bstoper, gvars)
 
     # reset previous sums
     setparameter!(gvars[:integer_parameters], :previousdaynr, gvars[:integer_parameters][:daynri])
@@ -2211,3 +2219,586 @@ function set_gdd_variables_nextday!(gvars)
     return nothing
 end
 
+"""
+    write_the_results!(outputs, anumber, day1, month1, year1, dayn, monthn, 
+                           yearn, rper, etoper, gddper, irriper, infiltper, 
+                           roper, drainper, crwper, eper, exper, trper, trwper, 
+                           trxper, salinper, saloutper, 
+                           salcrper, biomassper, bunlimper, bmobper, bstoper, 
+                           gvars)
+
+run.f90:4582
+"""
+function write_the_results!(outputs, anumber, day1, month1, year1, dayn, monthn, 
+                           yearn, rper, etoper, gddper, irriper, infiltper, 
+                           roper, drainper, crwper, eper, exper, trper, trwper, 
+                           trxper, salinper, saloutper, 
+                           salcrper, biomassper, bunlimper, bmobper, bstoper, 
+                           gvars)
+
+    arr = Float64[]
+
+    # copy intent(in) variables to locals
+    year1_loc = year1
+    yearn_loc = yearn
+
+    # start
+    if gvars[:bool_parameters][:noyear]
+        year1_loc = 9999
+        yearn_loc = 9999
+    end 
+    if anumber == undef_int # intermediate results
+        push!(arr, 0) # RunNr
+    else
+        push!(arr, anumber) # RunNr
+    end
+    push!(arr, year1_loc) # Date1 year
+    push!(arr, month1) # Date1 month
+    push!(arr, day1) # Date1 day
+
+    # Climatic conditions
+    tempreal = round(Int, gddper*10)
+    push!(arr, rper) # Rain
+    push!(arr, etoper) # ETo 
+    push!(arr, tempreal/10) # GD
+    push!(arr, gvars[:float_parameters][:co2i]) # CO2
+
+    # Soil water parameters
+    if exper > 0
+        ratioe = round(Int, 100*eper/exper)
+    else
+        ratioe = undef_int
+    end 
+    if trxper > 0
+        ratiot = round(Int, 100*trper/trxper)
+    else
+        ratiot = undef_int
+    end 
+    push!(arr, irriper) # Irri
+    push!(arr, infiltper) # Infilt
+    push!(arr, roper) # Runoff
+    push!(arr, drainper) # Drain
+    push!(arr, crwper) # Upflow
+    push!(arr, eper) # E
+    push!(arr, ratioe) # E/Ex
+    push!(arr, trper) # Tr
+    push!(arr, trwper) # TrW
+    push!(arr, ratiot) # Tr/Trx
+
+    # Soil Salinity
+    push!(arr, salinper) # SaltIn
+    push!(arr, saloutper) # SaltOut
+    push!(arr, salcrper) # SaltUp
+    push!(arr, gvars[:total_salt_content].EndDay) # SaltProf
+
+    # Seasonal stress
+    push!(arr, gvars[:stresstot].NrD) # Cycle
+    push!(arr, round(Int, gvars[:stresstot].Salt)) # SaltStr
+    push!(arr, gvars[:management].FertilityStress) # FertStr
+    push!(arr, round(Int, gvars[:stresstot].Weed)) # WeedStr
+    push!(arr, round(Int, gvars[:stresstot].Temp)) # TempStr
+    push!(arr, round(Int, gvars[:stresstot].Exp)) # ExpStr
+    push!(arr, round(Int, gvars[:stresstot].Sto)) # StoStr
+
+    # Biomass production
+    if (biomassper > 0) & (bunlimper > 0)
+        brsf = round(Int, 100*biomassper/bunlimper)
+        if brsf > 100
+            brsf = 100
+        end 
+    else
+        brsf = undef_int
+    end 
+    push!(arr, biomassper) # BioMass
+    push!(arr, brsf) # Brelative
+
+    # Crop yield
+    # Harvest Index
+    if (gvars[:sumwabal].Biomass > eps()) &
+       (gvars[:sumwabal].YieldPart > eps())
+        hi = 100*gvars[:sumwabal].YieldPart/gvars[:sumwabal].Biomass
+    else
+        if gvars[:sumwabal].Biomass > eps()
+            hi = 0
+        else
+            hi = undef_double
+        end 
+    end 
+
+    if anumber != undef_int # end of simulation run
+        # Water Use Efficiency yield
+        if ((gvars[:sumwabal].Tact > 0) | (gvars[:sumwabal].ECropCycle > 0)) &
+           (gvars[:sumwabal].YieldPart > 0) 
+            wpy = (gvars[:sumwabal].YieldPart*1000) /
+                  ((gvars[:sumwabal].Tact+gvars[:sumwabal].ECropCycle)*10)
+        else
+            wpy = 0
+        end 
+
+        # Fresh yield
+        if (gvars[:crop].DryMatter ==  undef_int) |
+           (gvars[:crop].DryMatter < eps())
+            push!(arr, hi) # HI
+            push!(arr, gvars[:sumwabal].YieldPart) # Y(dry)
+            push!(arr, undef_double) # Y(fresh)
+            push!(arr, wpy) # WPet
+        else
+            push!(arr, hi) # HI
+            push!(arr, gvars[:sumwabal].YieldPart) # Y(dry)
+            push!(arr, gvars[:sumwabal].YieldPart/(gvars[:crop].DryMatter/100)) # Y(fresh)
+            push!(arr, wpy) # WPet
+        end 
+
+        # Transfer of assimilates
+        push!(arr, gvars[:transfer].Bmobilized) # Bin
+        push!(arr, gvars[:simulation].Storage.Btotal) # Bout
+    else
+        push!(arr, hi) # HI
+        push!(arr, undef_int) # Y(dry)
+        push!(arr, undef_int) # Y(fresh)
+        push!(arr, undef_int) # WPet
+        push!(arr, bmobper) # Bin
+        push!(arr, bstoper) # Bout
+    end 
+
+    # End
+    push!(arr, yearn_loc) # DateN year
+    push!(arr, monthn) # DateN month
+    push!(arr, dayn) # DateN day
+
+    add_output_in_seasonout!(outputs, arr)
+    return nothing
+end
+
+"""
+    write_daily_results!(outputs, gvars, dap, wpi, nrrun)
+
+run.f90:7419
+"""
+function write_daily_results!(outputs, gvars, dap, wpi, nrrun)
+
+    arr = Float64[]
+    push!(arr, nrrun) # RunNr
+
+    dap_loc = dap
+    wpi_loc = wpi
+
+    stagecode = gvars[:integer_parameters][:stagecode]
+    di, mi, yi =  determine_date(gvars[:integer_parameters][:daynri])
+    if gvars[:clim_record].FromY == 1901
+        yi = yi - 1901 + 1
+    end 
+    if stagecode == 0
+        dap_loc = undef_int # before or after cropping
+    end 
+
+    # 0. info day
+    push!(arr, yi) # Date year
+    push!(arr, mi) # Date month 
+    push!(arr, di) # Date day 
+    push!(arr, dap_loc) # DAP
+    push!(arr, stagecode) # Stage
+
+
+    # 1. Water balance
+    ziaqua = gvars[:integer_parameters][:ziaqua]
+    if ziaqua == undef_int
+        zi = undef_double
+    else
+        zi = ziaqua/100
+    end
+    push!(arr, gvars[:total_water_content].EndDay) # WC()
+    push!(arr, gvars[:float_parameters][:rain]) # Rain
+    push!(arr, gvars[:float_parameters][:irrigation]) # Irri 
+    push!(arr, gvars[:float_parameters][:surfacestorage]) # Surf 
+    push!(arr, gvars[:float_parameters][:infiltrated]) # Infilt 
+    push!(arr, gvars[:float_parameters][:runoff]) # RO 
+    push!(arr, gvars[:float_parameters][:drain]) # Drain
+    push!(arr, gvars[:float_parameters][:crwater]) # CR
+    push!(arr, zi) # Zgwt 
+
+    tpot = gvars[:float_parameters][:tpot]
+    epot = gvars[:float_parameters][:epot]
+    tact = gvars[:float_parameters][:tact]
+    eact = gvars[:float_parameters][:eact]
+    if tpot > 0
+        ratio1 = round(Int, 100 * tact/tpot)
+    else
+        ratio1 = 100
+    end 
+
+    if (epot+tpot) > 0
+        ratio2 = round(Int, 100 * (eact+tact)/(epot+tpot))
+    else
+        ratio2 = 100
+    end 
+
+    if epot > 0
+        ratio3 = round(Int, 100 * eact/epot)
+    else
+        ratio3 = 100
+    end 
+
+    push!(arr, epot) # Ex
+    push!(arr, eact) # E
+    push!(arr, ratio3) # E/Ex
+    push!(arr, tpot) # Trx
+    push!(arr, tact) # Tr
+    push!(arr, ratio1) # Tr/Trx
+    push!(arr, epot + tpot) # ETx
+    push!(arr, eact + tact) # ET
+    push!(arr, ratio2) # ET/ETx
+
+    # 2. Crop development and yield
+    # 1. relative transpiration
+    # ratio1
+
+    # 2. Water stresses
+    if gvars[:float_parameters][:stressleaf] < 0
+        strexp = undef_int
+    else
+        strexp = round(Int, gvars[:float_parameters][:stressleaf])
+    end 
+    if tpot < eps()
+        strsto = undef_int
+    else
+        strsto = round(Int, 100 * (1 - tact/tpot))
+    end 
+
+    # 3. Salinity stress
+    kss = gvars[:root_zone_salt].KsSalt
+    if kss < 0
+        strsalt = undef_int
+    else
+        strsalt = round(Int, 100 * (1 - kss ))
+    end 
+
+    # 4. Air temperature stress
+    cciactual = gvars[:float_parameters][:cciactual]
+    if cciactual <= 0.0000001
+        kstr = 1
+    else
+        kstr = ks_temperature(0, gvars[:crop].GDtranspLow, gvars[:float_parameters][:gddayi])
+    end 
+
+    if kstr < 1
+        strtr = round(Int, (1-kstr)*100)
+    else
+        strtr = 0
+    end 
+
+    # 5. Relative cover of weeds
+    if cciactual <= 0.0000001
+        strw = undef_int
+    else
+        strw = round(Int, gvars[:float_parameters][:weedrci])
+    end 
+
+    # 6. WPi adjustemnt
+    if gvars[:sumwabal].Biomass <= 0.000001
+        wpi_loc = 0
+    end 
+
+    # 7. Harvest Index
+    if (gvars[:sumwabal].Biomass > 0) &
+       (gvars[:sumwabal].YieldPart > 0) 
+        hi = 100 * (gvars[:sumwabal].YieldPart)/(gvars[:sumwabal].Biomass)
+    else
+        hi = undef_double
+    end 
+
+    # 8. Relative Biomass
+    if (gvars[:sumwabal].Biomass > 0) &
+       (gvars[:sumwabal].BiomassUnlim > 0)
+        brel = round(Int, 100 * gvars[:sumwabal].Biomass/gvars[:sumwabal].BiomassUnlim)
+        if brel > 100
+            brel = 100
+        end 
+    else
+        brel = undef_int
+    end 
+
+    # 9. Kc coefficient
+    eto = gvars[:float_parameters][:eto]
+    if (eto > 0) & (tpot > 0) & (strtr < 100)
+        kcval = tpot/(eto*kstr)
+    else
+        kcval = undef_int
+    end 
+
+    # 10. Water Use Efficiency yield
+    if ((gvars[:sumwabal].Tact > 0) | (gvars[:sumwabal].ECropCycle > 0)) & (gvars[:sumwabal].YieldPart > 0)
+        wpy = (gvars[:sumwabal].YieldPart*1000)/((gvars[:sumwabal].Tact+gvars[:sumwabal].ECropCycle)*10)
+    else
+        wpy = 0
+    end 
+
+    # Fresh yield
+    if (gvars[:crop].DryMatter == undef_int) |
+       (gvars[:crop].DryMatter < eps())
+        yf = undef_double
+    else
+        yf = gvars[:sumwabal].YieldPart/(gvars[:crop].DryMatter/100)
+    end 
+
+    # write
+    push!(arr, gvars[:float_parameters][:gddayi]) # GD
+    push!(arr, gvars[:float_parameters][:rooting_depth]) # Z
+    push!(arr, strexp) # StExp
+    push!(arr, strsto) # StSto
+    push!(arr, round(Int, gvars[:float_parameters][:stresssenescence])) # StSen
+    push!(arr, strsalt) # StSalt
+    push!(arr, strw) # StWeed
+    push!(arr, cciactual*100) # CC
+    push!(arr, gvars[:float_parameters][:cciactualweedinfested]*100) # CCw
+    push!(arr, strtr) # StTr
+    push!(arr, kcval) # Kc(Tr)
+    push!(arr, gvars[:float_parameters][:tactweedinfested]) # TrW
+    push!(arr, 100*wpi_loc) # WP
+    push!(arr, gvars[:sumwabal].Biomass) #  Biomass
+    push!(arr, hi) # HI
+    push!(arr, gvars[:sumwabal].YieldPart) # Y(dry)
+    push!(arr, yf) # Y(fresh)
+    push!(arr, brel) # Brelative
+    push!(arr, wpy) # WPet
+    push!(arr, gvars[:float_parameters][:bin]) # Bin
+    push!(arr, gvars[:float_parameters][:bout]) # Bout
+
+
+    # 3. Profile/Root zone - Soil water content
+    rooting_depth = gvars[:float_parameters][:rooting_depth]
+    if rooting_depth < eps()
+        gvars[:root_zone_wc].Actual = undef_double
+    else
+        if round(Int, gvars[:soil].RootMax*1000) == round(Int, gvars[:crop].RootMax*1000)
+            determine_root_zone_wc!(gvars, gvars[:crop].RootMax)
+        else
+            determine_root_zone_wc!(gvars, gvars[:soil].RootMax)
+        end 
+    end 
+
+    push!(arr, gvars[:root_zone_wc].Actual) # Wr()
+
+    if rooting_depth < eps() 
+        gvars[:root_zone_wc].Actual = undef_double
+        gvars[:root_zone_wc].FC = undef_double
+        gvars[:root_zone_wc].WP = undef_double
+        gvars[:root_zone_wc].SAT = undef_double
+        gvars[:root_zone_wc].Thresh = undef_double
+        gvars[:root_zone_wc].Leaf = undef_double
+        gvars[:root_zone_wc].Sen = undef_double
+    else
+        determine_root_zone_wc!(gvars, rooting_depth)
+    end 
+
+    push!(arr, gvars[:root_zone_wc].Actual) # Wr
+    push!(arr, gvars[:root_zone_wc].SAT) # Wr(SAT)
+    push!(arr, gvars[:root_zone_wc].FC) # Wr(FC)
+    push!(arr, gvars[:root_zone_wc].Leaf) # Wr(exp)
+    push!(arr, gvars[:root_zone_wc].Thresh) # Wr(sto)
+    push!(arr, gvars[:root_zone_wc].Sen) # Wr(sen)
+    push!(arr, gvars[:root_zone_wc].WP) # Wr(PWP)
+
+    # 4. Profile/Root zone - soil salinity
+    push!(arr, gvars[:float_parameters][:saltinfiltr]) # SaltIn
+    push!(arr, gvars[:float_parameters][:drain]*gvars[:float_parameters][:ecdrain]*equiv/100) # SaltOut
+    push!(arr, gvars[:float_parameters][:crsalt]/100) # SaltUp
+    push!(arr, gvars[:total_salt_content].EndDay) # Salt()
+    if rooting_depth < eps()
+        saltval = undef_int
+        gvars[:root_zone_salt].ECe = undef_int 
+        gvars[:root_zone_salt].ECsw = undef_int 
+        gvars[:root_zone_salt].KsSalt = 1 
+    else
+        saltval = gvars[:root_zone_wc].SAT*gvars[:root_zone_salt].ECe*equiv/100
+    end 
+    push!(arr, saltval) # SaltZ
+    push!(arr, gvars[:root_zone_salt].ECe) # ECe
+    push!(arr, gvars[:root_zone_salt].ECsw) # ECsw
+    push!(arr, round(Int, 100*(1 - gvars[:root_zone_salt].KsSalt))) # StSalt_
+    push!(arr, gvars[:float_parameters][:eciaqua]) # ECgw
+
+    # 5. Compartments - Soil water content
+    for compartment in gvars[:compartments]
+        push!(arr, compartment.Theta*100) # WC_i
+    end
+
+    # 6. Compartmens - Electrical conductivity of the saturated soil-paste extract
+    for compartment in gvars[:compartments]
+        push!(arr, ececomp(compartment, gvars)) # ECe_i
+    end
+
+    # 7. Climate input parameters
+    tempreal = (gvars[:float_parameters][:tmin] + gvars[:float_parameters][:tmax])/2
+    push!(arr, gvars[:float_parameters][:eto]) # ETo
+    push!(arr, gvars[:float_parameters][:tmin]) # Tmin
+    push!(arr, tempreal) # Tavg
+    push!(arr, gvars[:float_parameters][:tmax]) # Tmax
+    push!(arr, gvars[:float_parameters][:co2i]) # CO2i
+
+    add_output_in_dayout!(outputs, arr)
+    return nothing
+end
+
+"""
+    record_harvest!(outputs, gvars, nrcut, dayinseason, nrrun)
+
+run.f90:6697
+"""
+function record_harvest!(outputs, gvars, nrcut, dayinseason, nrrun)
+    arr = Float64[]
+
+    push!(arr, nrrun) # RunNr
+
+    dayi, monthi, yeari_c = determine_date(gvars[:crop].Day1)
+    dayi, monthi, yeari = determine_date(gvars[:integer_parameters][:daynri])
+    if yeari_c == 1901
+        yeari = 9999
+    end
+
+    push!(arr, nrcut) # Nr
+    push!(arr, yeari) # Date year
+    push!(arr, monthi) # Date month
+    push!(arr, dayi) # Date day
+
+    if nrcut == 9999
+        # last line at end of season
+        # maybe use missing
+        dap = 0 
+        interval = 0 
+        biomass = 0 
+        dry_yield = 0 
+        fresh_yield = 0
+    else
+        dap = dayinseason
+        interval = gvars[:integer_parameters][:suminterval]
+        biomass = gvars[:sumwabal].Biomass - gvars[:float_parameters][:bprevsum]
+        dry_yield = gvars[:sumwabal].YieldPart - gvars[:float_parameters][:yprevsum]
+        if gvars[:crop].DryMatter == undef_int
+            fresh_yield = 0
+        else
+            fresh_yield = dry_yield/(gvars[:crop].DryMatter/100)
+        end
+    end
+    if gvars[:crop].DryMatter == undef_int
+        # maybe use missing
+        sumy_ = 0
+    else
+        sumy_ = gvars[:sumwabal].YieldPart/(gvars[:crop].DryMatter/100)
+    end
+
+    push!(arr, dap) # DAP
+    push!(arr, interval) # Interval
+    push!(arr, biomass) # Biomass
+    push!(arr, gvars[:sumwabal].Biomass) # Sum(B)
+    push!(arr, dry_yield) # Dry-Yield
+    push!(arr, gvars[:sumwabal].YieldPart) # Sum(Y)
+    push!(arr, fresh_yield) # Fresh-Yield
+    push!(arr, sumy_) # Sum(Y)_
+
+    add_output_in_harvestsout!(outputs, arr)
+    return nothing
+end
+
+"""
+    write_evaluation_data!(outputs, gvars, dap, nrrun)
+
+run.f90:6498
+"""
+function write_evaluation_data!(outputs, gvars, dap, nrrun)
+    if length(gvars[:array_parameters][:DaynrEval]) > 0
+        if gvars[:integer_parameters][:daynri] == gvars[:array_parameters][:DaynrEval][1]
+
+            DaynrEval = gvars[:array_parameters][:DaynrEval] 
+            CCmeanEval = gvars[:array_parameters][:CCmeanEval]
+            CCstdEval = gvars[:array_parameters][:CCstdEval]
+            BmeanEval = gvars[:array_parameters][:BmeanEval]
+            BstdEval = gvars[:array_parameters][:BstdEval]
+            SWCmeanEval = gvars[:array_parameters][:SWCmeanEval]
+            SWCstdEval = gvars[:array_parameters][:SWCstdEval]
+
+            daynri = popfirst!(DaynrEval)
+            ccmean = popfirst!(CCmeanEval)
+            ccstd = popfirst!(CCstdEval)
+            bmean = popfirst!(BmeanEval)
+            bstd = popfirst!(BstdEval)
+            swcmean = popfirst!(SWCmeanEval)
+            swcstd = popfirst!(SWCstdEval)
+
+            di, mi, yi = determine_date(daynri)
+            if gvars[:clim_record].FromY == 1901
+                yi = yi - 1901 + 1
+            end
+            dap_temp = dap
+            if gvars[:integer_parameters][:stagecode] == 0
+                dap_temp = undef_int
+            end
+
+            swci = swcz_soil(gvars)
+
+            arr = Float64[]
+            push!(arr, nrrun) # RunNr
+            push!(arr, yi) # Date year
+            push!(arr, mi) # Date month
+            push!(arr, di) # Date day
+            push!(arr, dap_temp) # DAP
+            push!(arr, gvars[:integer_parameters][:stagecode]) # Stage
+            push!(arr, gvars[:float_parameters][:cciactual]*100) # CCsim
+            push!(arr, ccmean) # CCobs
+            push!(arr, ccstd) # CCstd
+            push!(arr, gvars[:sumwabal].Biomass) # Bsim
+            push!(arr, bmean) # Bobs
+            push!(arr, bstd) # Bstd
+            push!(arr, swci) # SWCsim
+            push!(arr, swcmean) # SWCobs
+            push!(arr, swcstd) # SWCstd
+
+            add_output_in_evaldataout!(outputs, arr)
+
+            setparameter!(gvars[:array_parameters], :DaynrEval, DaynrEval)
+            setparameter!(gvars[:array_parameters], :CCmeanEval, CCmeanEval)
+            setparameter!(gvars[:array_parameters], :CCstdEval, CCstdEval)
+            setparameter!(gvars[:array_parameters], :BmeanEval, BmeanEval)
+            setparameter!(gvars[:array_parameters], :BstdEval, BstdEval)
+            setparameter!(gvars[:array_parameters], :SWCmeanEval, SWCmeanEval)
+            setparameter!(gvars[:array_parameters], :SWCstdEval, SWCstdEval)
+        end
+    end
+    return nothing
+end
+
+
+"""
+    swcact = swcz_soil(gvars)
+
+run.f90:6555
+"""
+function swcz_soil(gvars)
+    zsoil = gvars[:float_parameters][:zeval]
+    compartments = gvars[:compartments]
+
+    cumdepth = 0
+    compi = 0
+    swcact = 0
+    loopi = true
+    while loopi
+        compi = compi + 1
+        cumdepth = cumdepth + compartments[compi].Thickness
+        if cumdepth <= zsoil
+            factor = 1
+        else
+            frac_value = zsoil - (cumdepth - compartments[compi].Thickness)
+            if frac_value > 0
+                factor = frac_value/compartments[compi].Thickness
+            else
+                 factor = 0
+            end 
+        end 
+        swcact = swcact + factor * 10 * compartments[compi].Theta*100 * compartments[compi].Thickness
+        if (round(Int, 100*cumdepth) >= round(Int, 100*zsoil)) | 
+           (compi == length(compartments))
+            loopi = false
+        end
+    end
+    return swcact
+end

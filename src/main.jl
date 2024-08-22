@@ -37,6 +37,7 @@ function start_the_program(parentdir=nothing, runtype=nothing)
     end
 
     # finalize_the_program()
+    return outputs
 end # notend
 
 
@@ -154,9 +155,8 @@ function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType};
         initialize_run_part1!(outputs, gvars, projectinput[nrrun]; kwargs...)
         initialize_climate!(outputs, gvars; kwargs...)
         initialize_run_part2!(outputs, gvars, projectinput[nrrun], nrrun; kwargs...)
-        # @infiltrate
-        file_management!(outputs, gvars, projectinput[nrrun]; kwargs...)
-        finalize_run1!(gvars; kwargs...)
+        file_management!(outputs, gvars, projectinput[nrrun], nrrun; kwargs...)
+        finalize_run1!(outputs, gvars, nrrun; kwargs...)
         finalize_run2!(outputs, gvars; kwargs...)
     end
     # here we can flush more variables ? 
@@ -191,11 +191,11 @@ function actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
 end
 
 """
-    finalize_run1!(gvars; kwargs...)
+    finalize_run1!(outputs, gvars, nrrun; kwargs...)
     
 run.f90:7390
 """
-function finalize_run1!(gvars; kwargs...)
+function finalize_run1!(outputs, gvars, nrrun; kwargs...)
     daynri = gvars[:integer_parameters][:daynri]
     # 16. Finalise
     if (daynri-1) == gvars[:simulation].ToDayNr
@@ -205,64 +205,59 @@ function finalize_run1!(gvars; kwargs...)
                 # final harvest at crop maturity
                 nrcut = gvars[:integer_parameters][:nrcut]
                 setparameter!(gvars[:integer_parameters], :nrcut, nrcut + 1)
-                # OUTPUT
-                # call RecordHarvest(GetNrCut(), &
-                #                   (GetDayNri() - GetCrop_Day1()+1))
+                dayinseason = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1 + 1
+                record_harvest!(outputs, gvars, nrcut + 1, dayinseason, nrrun)
             end 
-            # OUTPUT
-            # call RecordHarvest((9999), &
-            #      (GetDayNri() - GetCrop_Day1()+1)) # last line at end of season
+            dayinseason = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1 + 1
+            record_harvest!(outputs, gvars, 9999, dayinseason, nrrun) # last line at end of season
         end 
         # intermediate results
         outputaggregate = gvars[:integer_parameters][:outputaggregate]
         if (outputaggregate == 2) | (outputaggregate == 3) & # 10-day and monthly results
-            ((daynri-1) > gvars[:integer_parameters][:previousdaynr]) 
+            ((daynri-1) > gvars[:integer_parameters][:previoussdaynr]) 
             setparameter!(gvars[:integer_parameters], :daynri, daynri - 1)
-            write_intermediate_period!(gvars)
+            write_intermediate_period!(outputs, gvars)
         end 
-        write_sim_period!(gvars)
+        write_sim_period!(outputs, gvars, nrrun)
     end 
 
     return nothing
 end
 
 """
-    write_sim_period!(gvars)
+    write_sim_period!(outputs, gvars, nrrun)
 
 run.f90:6064
 """
-function write_sim_period!(gvars)
+function write_sim_period!(outputs, gvars, nrrun)
     # Start simulation run
     day1, month1, year1 = determine_date(gvars[:simulation].FromDayNr)
     # End simulation run
     dayn, monthn, yearn = determine_date(gvars[:simulation].ToDayNr)
-    # OUTPUT
-    # call WriteTheResults(NrRun, Day1, Month1, Year1, DayN, MonthN, YearN, &
-    #                     GetSumWaBal_Rain(), GetSumETo(), GetSumGDD(), &
-    #                     GetSumWaBal_Irrigation(), GetSumWaBal_Infiltrated(), &
-    #                     GetSumWaBal_Runoff(), GetSumWaBal_Drain(), &
-    #                     GetSumWaBal_CRwater(), GetSumWaBal_Eact(), &
-    #                     GetSumWaBal_Epot(), GetSumWaBal_Tact(), &
-    #                     GetSumWaBal_TrW(), GetSumWaBal_Tpot(), &
-    #                     GetSumWaBal_SaltIn(), GetSumWaBal_SaltOut(), &
-    #                     GetSumWaBal_CRsalt(), GetSumWaBal_Biomass(), &
-    #                     GetSumWaBal_BiomassUnlim(), GetTransfer_Bmobilized(), &
-    #                     GetSimulation_Storage_Btotal(), TheProjectFile)
+    write_the_results!(outputs, nrrun, day1, month1, year1, dayn, monthn, yearn, 
+                        gvars[:sumwabal].Rain, gvars[:float_parameters][:sumeto],
+                        gvars[:float_parameters][:sumgdd], 
+                        gvars[:sumwabal].Irrigation, gvars[:sumwabal].Infiltrated, 
+                        gvars[:sumwabal].Runoff, gvars[:sumwabal].Drain, 
+                        gvars[:sumwabal].CRwater, gvars[:sumwabal].Eact,
+                        gvars[:sumwabal].Epot, gvars[:sumwabal].Tact, 
+                        gvars[:sumwabal].TrW, gvars[:sumwabal].Tpot, 
+                        gvars[:sumwabal].SaltIn, gvars[:sumwabal].SaltOut, 
+                        gvars[:sumwabal].CRsalt, gvars[:sumwabal].Biomass, 
+                        gvars[:sumwabal].BiomassUnlim, gvars[:transfer].Bmobilized, 
+                        gvars[:simulation].Storage.Btotal, gvars)
     return nothing
 end
 
 """
+    finalize_run2!(outputs, gvars; kwargs...)
+
 run.f90:4355
 """
 function finalize_run2!(outputs, gvars; kwargs...)
     close_climate!(outputs, gvars; kwargs...)
     close_irrigation!(gvars; kwargs...)
     close_management!(gvars; kwargs...)
-
-    # OUTPUT 
-    # if (GetPart2Eval() .and. (GetObservationsFile() /= '(None)')) then
-    #     call CloseEvalDataPerformEvaluation(NrRun)
-    # end if
 end
 
 """
