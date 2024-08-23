@@ -1611,8 +1611,6 @@ function initialize_the_program(outputs, parentdir; kwargs...)
     # the part of get_results_parameters is done when we create gvars
     # resultsparameters = get_results_parameters(outputs, filepaths[:simul]; kwargs...)
 
-    # TODO startunit.F90:429  PrepareReport()
-
     return filepaths#, resultsparameters 
 end
 

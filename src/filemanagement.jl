@@ -6,30 +6,8 @@ run.f90:7760
 function file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun; kwargs...)
     # we create these "lvars" because we need functions that 
     # returns nothing or does not change anything
-    float_parameters = ParametersContainer(Float64)
-    setparameter!(float_parameters, :wpi,  0.0) #here
-    setparameter!(float_parameters, :preirri,  0.0) #advance_one_time_step
-    setparameter!(float_parameters, :fracassim, 0.0) #advance_one_time_step
-    setparameter!(float_parameters, :ecinfilt, 0.0) #budget_module
-    setparameter!(float_parameters, :horizontalwaterflow, 0.0) #budget_module
-    setparameter!(float_parameters, :horizontalsaltflow, 0.0) #budget_module
-    setparameter!(float_parameters, :subdrain, 0.0) #budget_module
-    setparameter!(float_parameters, :infiltratedrain, 0.0) #budget_module
-    setparameter!(float_parameters, :infiltratedirrigation, 0.0) #budget_module
-    setparameter!(float_parameters, :infiltratedstorage, 0.0) #budget_module
+    lvars = initialize_lvars()
 
-    integer_parameters = ParametersContainer(Int)
-    setparameter!(integer_parameters, :targettimeval, 0) #advance_one_time_step
-    setparameter!(integer_parameters, :targetdepthval, 0) #advance_one_time_step
-
-    bool_parameters = ParametersContainer(Bool)
-    setparameter!(bool_parameters, :harvestnow, false) #here
-
-    lvars = ComponentArray(
-        float_parameters = float_parameters,
-        bool_parameters = bool_parameters,
-        integer_parameters = integer_parameters
-    )
     repeattoday = gvars[:simulation].ToDayNr
 
     cont = 0
@@ -2801,4 +2779,38 @@ function swcz_soil(gvars)
         end
     end
     return swcact
+end
+
+"""
+    initialize_lvars()
+"""
+function initialize_lvars()
+    # we create these "lvars" because we need functions that 
+    # returns nothing or does not change anything
+    float_parameters = ParametersContainer(Float64)
+    setparameter!(float_parameters, :wpi,  0.0) #here
+    setparameter!(float_parameters, :preirri,  0.0) #advance_one_time_step
+    setparameter!(float_parameters, :fracassim, 0.0) #advance_one_time_step
+    setparameter!(float_parameters, :ecinfilt, 0.0) #budget_module
+    setparameter!(float_parameters, :horizontalwaterflow, 0.0) #budget_module
+    setparameter!(float_parameters, :horizontalsaltflow, 0.0) #budget_module
+    setparameter!(float_parameters, :subdrain, 0.0) #budget_module
+    setparameter!(float_parameters, :infiltratedrain, 0.0) #budget_module
+    setparameter!(float_parameters, :infiltratedirrigation, 0.0) #budget_module
+    setparameter!(float_parameters, :infiltratedstorage, 0.0) #budget_module
+
+    integer_parameters = ParametersContainer(Int)
+    setparameter!(integer_parameters, :targettimeval, 0) #advance_one_time_step
+    setparameter!(integer_parameters, :targetdepthval, 0) #advance_one_time_step
+
+    bool_parameters = ParametersContainer(Bool)
+    setparameter!(bool_parameters, :harvestnow, false) #here
+
+    lvars = ComponentArray(
+        float_parameters = float_parameters,
+        bool_parameters = bool_parameters,
+        integer_parameters = integer_parameters
+    )
+
+    return lvars
 end

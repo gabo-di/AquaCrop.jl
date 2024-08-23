@@ -1,63 +1,62 @@
-# TODO make a call like   result, result_ok = somefunction(); if !result_of then logg and out
-
-# setup
-
 """
-    start_the_program(parentdir::Union{String,Nothing}=nothing, runtype::Union{Symbol,Nothing}=nothing)
+    outputs = start_the_program(parentdir::Union{String,Nothing}=nothing, runtype::Union{Symbol,Nothing}=nothing)
 
 starts the program
 
 startunit.f90:931
 """
-function start_the_program(parentdir=nothing, runtype=nothing)
-    outputs = start_outputs()
-
-    if isnothing(parentdir)
-        parentdir = pwd()
-    end
-    # runtype allowed for now is :Fortran, :Julia or :Persefone 
-    if isnothing(runtype)
-        kwargs = (runtype = FortranRun(),)
-        add_output_in_logger!(outputs, "using default FortranRun")
-    end
-
+function start_the_program!(outputs, parentdir; kwargs...)
     # the part of get_results_parameters is done when we create gvars
     filepaths = initialize_the_program(outputs, parentdir; kwargs...) 
     project_filenames = initialize_project_filename(outputs, filepaths; kwargs...)
 
     nprojects = length(project_filenames)
-    # TODO write some messages if nprojects==0 like in startunit.F90:957
-    # and then early return
+    if nprojects == 0
+        add_output_in_logger!(outputs, "no project loaded")
+    end
 
     for i in eachindex(project_filenames)
         theprojectfile = project_filenames[i]
         theprojecttype = get_project_type(theprojectfile; kwargs...)
-        gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+        if theprojecttype == :typenone 
+            add_output_in_logger!(outputs, "bad projecttype for "*theprojectfile)
+            continue
+        end
+
+        gvars, projectinput, all_ok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+        if !all_ok.logi
+            add_output_in_logger!(outputs, all_ok.msg)
+            continue
+        end
+
         run_simulation!(outputs, gvars, projectinput; kwargs...)
+        add_output_in_logger!(outputs, "run project "*string(i))
     end
 
-    # finalize_the_program()
-    return outputs
-end # notend
+    finalize_the_program!(outputs)
+    return nothing 
+end 
 
 
 """
-    gvars, projectinput, fileok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+    gvars, projectinput, all_ok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
 
 startunit.f90:535
 """
 function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+    all_ok = AllOk(true, "")
     canselect = [true]
+    wrongsimnr = nothing
 
     # check if project file exists
-    if theprojecttype != :typenone 
-        testfile = joinpath(filepaths[:list], theprojectfile)
-        if !isfile(testfile) 
-            canselect[1] = false
-        end 
+    testfile = joinpath(filepaths[:list], theprojectfile)
+    if !isfile(testfile) 
+        all_ok.logi = false
+        all_ok.msg =  "did not find the file "*theprojectfile
+        canselect[1] = false
     end 
 
-    if (theprojecttype != :typenone) & canselect[1]
+    if canselect[1]
         gvars = initialize_settings(outputs, filepaths; kwargs...)
         # this function is to transfer data from resultsparameters to gvars
         actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
@@ -86,6 +85,8 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
                 end
             else
                 wrongsimnr = 1
+                all_ok.logi = false
+                all_ok.msg = "wrong files for project nrrun "*string(wrongsimnr)
             end 
 
         elseif theprojecttype == :typeprm
@@ -125,18 +126,14 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
                 else
                     add_output_in_logger!(outputs, "Project loaded with default parameters")
                 end
+            else
+                all_ok.logi = false
+                all_ok.msg = "wrong files for project nrrun "*string(wrongsimnr)
             end 
         end
-    else
-        if canselect[1]
-            add_output_in_logger!(outputs, "bad projecttype for "*theprojectfile)
-            println("bad projecttype for "*theprojectfile)
-        else
-            add_output_in_logger!(outputs, "did not find the file "*theprojectfile)
-            println("did not find the file "*theprojectfile)
-        end
     end
-    return  gvars, projectinput, fileok
+
+    return  gvars, projectinput, all_ok 
 end
 
 
@@ -146,9 +143,6 @@ end
 run.f90:7779
 """
 function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
-    # this sets outputfiles run.f90:7786 OJO , but maybe we will use dataframes instead
-    # call InitializeSimulation(TheProjectFile_, TheProjectType)
- 
     nrruns = gvars[:simulation].NrRuns 
 
     for nrrun in 1:nrruns
@@ -159,10 +153,8 @@ function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType};
         finalize_run1!(outputs, gvars, nrrun; kwargs...)
         finalize_run2!(outputs, gvars; kwargs...)
     end
-    # here we can flush more variables ? 
-    # call FinalizeSimulation()
     return nothing
-end #notend
+end 
 
 """
     actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
@@ -309,5 +301,27 @@ function close_management!(gvars; kwargs...)
 
     setparameter!(gvars[:integer_parameters], :nrcut, 0)
 
+    return nothing
+end
+
+"""
+    finalize_the_program!(outputs)
+"""
+function finalize_the_program!(outputs)
+    finalize_outputs!(outputs)
+    add_output_in_logger!(outputs, "program run finished")
+    return nothing
+end
+
+
+"""
+    finalize_outputs!(outputs)
+"""
+function finalize_outputs!(outputs)
+    # delete unnecesary outputs
+    delete!(outputs, :tcropsim)
+    delete!(outputs, :etodatasim)
+    delete!(outputs, :raindatasim)
+    delete!(outputs, :tempdatasim)
     return nothing
 end

@@ -37,6 +37,18 @@ struct FortranRun <: AbstractRunType end
 struct JuliaRun <: AbstractRunType end
 struct PersefoneRun <: AbstractRunType end
 
+abstract type AbstractAllOk <: AbstractInfo end
+
+"""
+    all_ok = AllOk(logi::Bool, msg::String)
+
+has information if the simulation is going well
+"""
+struct AllOk <: AbstractAllOk
+    logi::Bool
+    msg::String
+end
+
 """
     AbstractParametersContainer
 """
