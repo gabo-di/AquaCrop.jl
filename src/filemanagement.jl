@@ -15,7 +15,7 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun;
     # MARK
     while loopi
         cont += 1
-        advance_one_time_step!(outputs, gvars, lvars, projectinput, nrrun)
+        advance_one_time_step!(outputs, gvars, lvars, projectinput.ParentDir, nrrun)
         read_climate_nextday!(outputs, gvars)
         set_gdd_variables_nextday!(gvars)
         if (gvars[:integer_parameters][:daynri] - 1) == repeattoday
@@ -26,11 +26,11 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun;
 end
 
 """
-    advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType, nrrun)
+    advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
 
 run.f90:6747
 """
-function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType, nrrun)
+function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
     # reset values since they are local variables
     setparameter!(lvars[:float_parameters], :preirri,  0.0)
     setparameter!(lvars[:float_parameters], :fracassim, 0.0)
@@ -55,7 +55,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
     # 4. Get depth and quality of the groundwater
     if !gvars[:simulparam].ConstGwt
         if gvars[:integer_parameters][:daynri] > gvars[:gwtable].DNr2
-            get_gwt_set!(gvars, projectinput.ParentDir, gvars[:integer_parameters][:daynri])
+            get_gwt_set!(gvars, parentdir, gvars[:integer_parameters][:daynri])
         end 
         get_z_and_ec_gwt!(gvars)
         if check_for_watertable_in_profile(gvars[:compartments], gvars[:integer_parameters][:ziaqua]/100)
@@ -2157,7 +2157,6 @@ function read_climate_nextday!(outputs, gvars)
         end
         if gvars[:bool_parameters][:temperature_file_exists]
             tmin, tmax = read_output_from_tempdatasim(outputs, i)
-            # tmin, tmax = read_output_from_tcropsim(outputs, i)
             setparameter!(gvars[:float_parameters], :tmin, tmin)
             setparameter!(gvars[:float_parameters], :tmax, tmax)
         else

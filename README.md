@@ -27,7 +27,7 @@ using AquaCrop
 
 parentdir = ".../AquaCrop/test/testcase"
 
-outputs, _ = aquacrop_run(parentdir)
+outputs = aquacrop_basic_run(parentdir)
 ```
 
 you can see the daily result in `outputs[:dayout]` 
@@ -36,24 +36,55 @@ the result of the whole season in `outputs[:seasonout]`
 the information for the evaluation in `outputs[:evaldataout]`
 and the logger information in `outputs[:logger]`
 
-If you prefer to use TOML and csv files you can choose to run like
+If you prefer to use TOML and csv files as input, you can choose to run like
 ```julia
 runtype = :Julia
 
 parentdir = ".../AquaCrop/test/testcase/TOML_FILES"
 
-outputs, _ = aquacrop_run(parentdir, runtype)
+outputs = aquacrop_basic_run(parentdir, runtype)
 ```
 
 
 ## Advanced Run
 
-To initialize a crop field you have to provide the  directory data 
+To initialize a crop field you have to provide the directory data 
 
 ```julia
 runtype = :Julia
 
 parentdir = ".../AquaCrop/test/testcase/TOML_FILES"
 
-outputs, _ = aquacrop_initialize_cropfield(parentdir, runtype)
+cropfield, all_ok = aquacrop_initialize_cropfield(parentdir, runtype)
 ```
+where `cropfield` is an struct of type `AquaCropField` with all the information of 
+the crop field, and `all_ok` tell us if the paramers have been loaded correctly 
+`all_ok.logi == true` or not `all_ok.logi == false`, in this case you can see 
+the error kind in `all_ok.msg`. (Note that we do not raise exceptions in case you
+want to inspect the `cropfield` variable, like `cropfield.outputs[:logger]`) 
+
+To make a daily update you can use
+```julia
+aquacrop_dailyupdate!(cropfield)
+```
+
+To harvest you can use
+```julia
+aquacrop_harvest!(cropfield)
+```
+
+To get biomass in `ton/ha` you can use
+```julia
+aquacrop_biomass(cropfield)
+```
+
+To get the amount of dry yield in `ton/ha` you can use
+```julia
+aquacrop_dryyield(cropfield)
+```
+
+To get the amount of fresh yield in `ton/ha` you can use
+```julia
+aquacrop_freshyield(cropfield)
+```
+

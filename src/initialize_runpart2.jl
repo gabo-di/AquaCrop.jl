@@ -912,13 +912,11 @@ function open_climfiles_and_get_data_firstday!(outputs, gvars; kwargs...)
         if firstdaynr == simulation.FromDayNr
             i = 1
             tlow, thigh = read_output_from_tempdatasim(outputs, i) 
-            # tlow, thigh = read_output_from_tcropsim(outputs, i)
             setparameter!(gvars[:float_parameters], :tmin, tlow)
             setparameter!(gvars[:float_parameters], :tmax, thigh)
         else
             i = firstdaynr - simulation.FromDayNr + 1
             tlow, thigh = read_output_from_tempdatasim(outputs, i) 
-            # tlow, thigh = read_output_from_tcropsim(outputs, i)
             setparameter!(gvars[:float_parameters], :tmin, tlow)
             setparameter!(gvars[:float_parameters], :tmax, thigh)
         end

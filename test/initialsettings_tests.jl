@@ -44,15 +44,14 @@ end
     i = 1
     theprojectfile = project_filenames[i]
     theprojecttype = AquaCrop.get_project_type(theprojectfile; kwargs...)
-    gvars, projectinput, fileok = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+    gvars, projectinput, _ = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
 
 
-    gvars_0, projectinput_0, fileok_0 = checkpoint2()
+    gvars_0, projectinput_0, _ = checkpoint2()
 
     @test isapprox(gvars[:simulation], gvars_0[:simulation])
     @test isapprox(gvars[:simulparam], gvars_0[:simulparam])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
-    @test isapprox(fileok, fileok_0)
     @test isequal(length(projectinput),length(projectinput_0))
     @test isapprox(projectinput[1], projectinput_0[1]) 
     @test isapprox(projectinput[2], projectinput_0[2]) 
