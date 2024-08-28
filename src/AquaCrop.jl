@@ -23,11 +23,15 @@ include("startunit.jl")
 include("api.jl")
 
 # ---- exports ----
-export aquacrop_basic_run 
-
-
-
-
-
-
+export AquaCropField,
+       basic_run,
+       initialize_cropfield,
+       canopycover,
+       biomass,
+       dryyield,
+       freshyield,
+       harvest!,
+       dailyupdate!,
+       season_run!
 end
+

@@ -20,12 +20,12 @@ Pkg.add(url="https://github.com/gabo-di/AquaCrop.jl")
 ## Basic Run
 
 For the basic run, first you need to specify the directory where that has all the 
-required input for a common AquaCrop Fortran run and call the `aquacrop_run` function
+required input for a common AquaCrop Fortran run and call the `aquacrop_basic_run` function
 
 ```julia
 using AquaCrop
 
-parentdir = ".../AquaCrop/test/testcase"
+parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
 
 outputs = aquacrop_basic_run(parentdir)
 ```
@@ -40,7 +40,7 @@ If you prefer to use TOML and csv files as input, you can choose to run like
 ```julia
 runtype = :Julia
 
-parentdir = ".../AquaCrop/test/testcase/TOML_FILES"
+parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
 
 outputs = aquacrop_basic_run(parentdir, runtype)
 ```
@@ -53,7 +53,7 @@ To initialize a crop field you have to provide the directory data
 ```julia
 runtype = :Julia
 
-parentdir = ".../AquaCrop/test/testcase/TOML_FILES"
+parentdir = AquaCrop.test_toml_dir #".../AquaCrop/test/testcase/TOML_FILES"
 
 cropfield, all_ok = aquacrop_initialize_cropfield(parentdir, runtype)
 ```
@@ -88,3 +88,8 @@ To get the amount of fresh yield in `ton/ha` you can use
 aquacrop_freshyield(cropfield)
 ```
 
+
+To get the canopy cover in % of terrain you can use
+```julia
+aquacrop_canopycover(cropfield)
+```

@@ -67,3 +67,7 @@ const dS_ = Unit{:Siemens, 𝐈^2*𝐓^3*𝐋^-2*𝐌^-1}(-1, 1//1)
 const kg_ = Unit{:Gram, 𝐌}(3, 1//1)
 const g_ = Unit{:Gram, 𝐌}(0, 1//1)
 const ton_ = Unit{:ton, 𝐌}(0, 1//1)
+
+
+const test_toml_dir = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES"])
+const test_dir = joinpath([dirname(@__DIR__), "test/testcase"])

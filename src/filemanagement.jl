@@ -355,7 +355,7 @@ function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
             end 
             # Record harvest
             if gvars[:bool_parameters][:part1Mult]
-                  record_harvest!(outputs, gvars, nrcut + 1, dayinseason, nrrun)
+                record_harvest!(outputs, gvars, nrcut + 1, dayinseason, nrrun)
             end 
             # Reset
             setparameter!(gvars[:integer_parameters], :suminterval, 0)

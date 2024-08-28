@@ -9,7 +9,7 @@ function checkget_gvar_file(outputs, filename)
         file_ = filename
     else
         add_output_in_logger!(outputs, "using default file for gvars")
-        file_ = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES/gvars.toml"])
+        file_ = joinpath([test_toml_dir, "gvars.toml"])
     end
     return file_
 end
@@ -25,7 +25,7 @@ function checkget_resultsparameters_file(outputs, filename)
         file_ = filename
     else
         add_output_in_logger!(outputs, "using default file for resultsparameters")
-        file_ = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES/resultsparameters.toml"])
+        file_ = joinpath([test_toml_dir, "resultsparameters.toml"])
     end
     return file_
 end
@@ -41,7 +41,7 @@ function checkget_projectfiles_file(outputs, filename)
         file_ = filename
     else
         add_output_in_logger!(outputs, "using default file for project_filenames")
-        file_ = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES/projectfilenames.toml"])
+        file_ = joinpath([test_toml_dir, "projectfilenames.toml"])
     end
     return file_
 end
