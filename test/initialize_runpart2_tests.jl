@@ -5,15 +5,15 @@ include("checkpoints.jl")
 
 @testset "Initialize Run Part 2" begin
 
-    kwargs = (runtype = AquaCrop.FortranRun(), )
+    kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
-    outputs, gvars, projectinput = checkpoint4()
+    outputs, gvars = checkpoint4()
 
-    outputs_0, gvars_0, _ = checkpoint5()
+    outputs_0, gvars_0 = checkpoint5()
 
     i = 1
-    AquaCrop.initialize_climate!(outputs, gvars; kwargs...)
-    AquaCrop.initialize_run_part2!(outputs, gvars, projectinput[i], i; kwargs...)
+    AquaCrop.initialize_climate!(outputs, gvars, i; kwargs...)
+    AquaCrop.initialize_run_part2!(outputs, gvars, i; kwargs...)
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])

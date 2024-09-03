@@ -7,7 +7,7 @@ include("checkpoints.jl")
     parentdir = pwd()*"/testcase"
     outputs = AquaCrop.start_outputs()
 
-    kwargs = (runtype = AquaCrop.FortranRun(),)
+    kwargs = (runtype = AquaCrop.NormalFileRun(),)
 
     filepaths = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...)
     project_filenames = AquaCrop.initialize_project_filename(outputs, filepaths; kwargs...)
@@ -36,7 +36,7 @@ end
     parentdir = pwd()*"/testcase"
     outputs = AquaCrop.start_outputs()
 
-    kwargs = (runtype = AquaCrop.FortranRun(),)
+    kwargs = (runtype = AquaCrop.NormalFileRun(),)
 
 
     filepaths  = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...)
@@ -44,10 +44,13 @@ end
     i = 1
     theprojectfile = project_filenames[i]
     theprojecttype = AquaCrop.get_project_type(theprojectfile; kwargs...)
-    gvars, projectinput, _ = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+    gvars, _ = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
 
 
-    gvars_0, projectinput_0, _ = checkpoint2()
+    gvars_0 = checkpoint2()
+
+    projectinput = gvars[:projectinput]
+    projectinput_0 = gvars_0[:projectinput]
 
     @test isapprox(gvars[:simulation], gvars_0[:simulation])
     @test isapprox(gvars[:simulparam], gvars_0[:simulparam])

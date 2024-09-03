@@ -39,7 +39,7 @@ and the logger information in `outputs[:logger]`
 
 If you prefer to use TOML and csv files as input, you can choose to run like
 ```julia
-runtype = :Julia
+runtype = :Toml
 
 parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
 
@@ -52,7 +52,7 @@ outputs = basic_run(parentdir, runtype)
 To initialize a crop field you have to provide the directory data 
 
 ```julia
-runtype = :Julia
+runtype = :Toml
 
 parentdir = AquaCrop.test_toml_dir #".../AquaCrop/test/testcase/TOML_FILES"
 
@@ -130,7 +130,6 @@ cropfield, all_ok = initialize_cropfield()
 dump(all_ok)
 cropfield.logger
 ```
-we can see that in this case the default runtype is `JuliaRun`. 
 
 We can edit at run time the `cropfield` variable
 We can do set the soil and soil layers to a given known soil type

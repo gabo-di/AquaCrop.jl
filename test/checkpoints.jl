@@ -1,5 +1,4 @@
 using AquaCrop 
-using ComponentArrays
 
 function checkpoint1()
     # Local variables
@@ -470,6 +469,7 @@ function checkpoint1()
     root_zone_wc = AquaCrop.RepRootZoneWC()
     plotvarcrop = AquaCrop.RepPlotPar()
     total_salt_content = AquaCrop.RepContent()
+    projectinput = AquaCrop.ProjectInputType[]
 
     float_parameters = AquaCrop.ParametersContainer(Float64)
     AquaCrop.setparameter!(float_parameters, :eto, 5.0)
@@ -632,44 +632,45 @@ function checkpoint1()
     AquaCrop.setparameter!(string_parameters, :swcini_file, AquaCrop.undef_str)
 
 
-    return ComponentArray(
-        simulparam=simulparam,
-        soil=soil,
-        soil_layers=soil_layers,
-        compartments=compartments,
-        simulation=simulation,
-        total_water_content=total_water_content,
-        crop=crop,
-        management=management,
-        sumwabal=sumwabal,
-        previoussum=previoussum,
-        irri_before_season=irri_before_season,
-        irri_after_season=irri_after_season,
-        irri_ecw=irri_ecw,
-        onset=onset,
-        rain_record=rain_record,
-        eto_record=eto_record,
-        clim_record=clim_record,
-        temperature_record=temperature_record,
-        perennial_period=perennial_period,
-        crop_file_set=crop_file_set, 
-        gwtable = gwtable,
-        stresstot = stresstot,
-        irri_info_record1 = irri_info_record1,
-        irri_info_record2 = irri_info_record2,
-        transfer = transfer,
-        cut_info_record1 = cut_info_record1,
-        cut_info_record2 = cut_info_record2,
-        root_zone_salt = root_zone_salt,
-        root_zone_wc = root_zone_wc,
-        plotvarcrop = plotvarcrop,
-        total_salt_content = total_salt_content,
-        float_parameters = float_parameters,
-        symbol_parameters = symbol_parameters,
-        integer_parameters = integer_parameters,
-        bool_parameters = bool_parameters,
-        array_parameters = array_parameters,
-        string_parameters = string_parameters,
+    return Dict{Symbol, Union{AquaCrop.AbstractParametersContainer,Vector{<:AquaCrop.AbstractParametersContainer}}}(
+         :simulparam => simulparam,
+         :soil => soil,
+         :soil_layers => soil_layers,
+         :compartments => compartments,
+         :simulation => simulation,
+         :total_water_content => total_water_content,
+         :crop => crop,
+         :management => management,
+         :sumwabal => sumwabal,
+         :previoussum => previoussum,
+         :irri_before_season => irri_before_season,
+         :irri_after_season => irri_after_season,
+         :irri_ecw => irri_ecw,
+         :onset => onset,
+         :rain_record => rain_record,
+         :eto_record => eto_record,
+         :clim_record => clim_record,
+         :temperature_record => temperature_record,
+         :perennial_period => perennial_period,
+         :crop_file_set => crop_file_set, 
+         :gwtable => gwtable,
+         :stresstot => stresstot,
+         :irri_info_record1 => irri_info_record1,
+         :irri_info_record2 => irri_info_record2,
+         :transfer => transfer,
+         :cut_info_record1 => cut_info_record1,
+         :cut_info_record2 => cut_info_record2,
+         :root_zone_salt => root_zone_salt,
+         :root_zone_wc => root_zone_wc,
+         :plotvarcrop => plotvarcrop,
+         :total_salt_content => total_salt_content,
+         :float_parameters => float_parameters,
+         :symbol_parameters => symbol_parameters,
+         :integer_parameters => integer_parameters,
+         :bool_parameters => bool_parameters,
+         :array_parameters => array_parameters,
+         :string_parameters => string_parameters,
+         :projectinput => projectinput
     )
 end
 
@@ -717,24 +718,24 @@ function checkpoint2()
     AquaCrop.setparameter!(gvars[:string_parameters], :clim_file,  "EToRainTempFile")
     AquaCrop.setparameter!(gvars[:string_parameters], :swcini_file,  "(None)")
 
-    fileok = AquaCrop.RepFileOK(
-        Climate_Filename=true,
-        Temperature_Filename=true,
-        ETo_Filename=true,
-        Rain_Filename=true,
-        CO2_Filename=true,
-        Calendar_Filename=true,
-        Crop_Filename=true,
-        Irrigation_Filename=true,
-        Management_Filename=true,
-        GroundWater_Filename=true,
-        Soil_Filename=true,
-        SWCIni_Filename=true,
-        OffSeason_Filename=true,
-        Observations_Filename=true
-    )
+    # fileok = AquaCrop.RepFileOK(
+    #     Climate_Filename=true,
+    #     Temperature_Filename=true,
+    #     ETo_Filename=true,
+    #     Rain_Filename=true,
+    #     CO2_Filename=true,
+    #     Calendar_Filename=true,
+    #     Crop_Filename=true,
+    #     Irrigation_Filename=true,
+    #     Management_Filename=true,
+    #     GroundWater_Filename=true,
+    #     Soil_Filename=true,
+    #     SWCIni_Filename=true,
+    #     OffSeason_Filename=true,
+    #     Observations_Filename=true
+    # )
 
-    projectinput = AquaCrop.ProjectInputType[
+    gvars[:projectinput] = AquaCrop.ProjectInputType[
         AquaCrop.ProjectInputType(
             ParentDir=pwd()*"/testcase",
             VersionNr=7.1,
@@ -895,11 +896,11 @@ function checkpoint2()
         )
     ]
 
-    return gvars, projectinput, fileok
+    return gvars 
 end
 
 function checkpoint3()
-    gvars, projectinput, fileok = checkpoint2()
+    gvars = checkpoint2()
 
     gvars[:soil].REW = 7
     gvars[:soil].CNValue = 46
@@ -1365,11 +1366,11 @@ function checkpoint3()
     end
     AquaCrop.setparameter!(gvars[:array_parameters], :Rain, Rain)
     
-    return gvars, projectinput
+    return gvars
 end
 
 function checkpoint4()
-    gvars, projectinput = checkpoint3()
+    gvars = checkpoint3()
     outputs = AquaCrop.start_outputs()
 
     gvars[:simulation].EvapZ = 0.15
@@ -1460,11 +1461,11 @@ function checkpoint4()
         end
     end
 
-    return outputs, gvars, projectinput
+    return outputs, gvars
 end
 
 function checkpoint5()
-    outputs, gvars, projectinput = checkpoint4()
+    outputs, gvars = checkpoint4()
 
     AquaCrop.setparameter!(gvars[:float_parameters], :eto, 3.9)
     AquaCrop.setparameter!(gvars[:float_parameters], :rain, 0.1)
@@ -1599,13 +1600,13 @@ function checkpoint5()
     AquaCrop.setparameter!(gvars[:array_parameters], :SWCmeanEval, SWCmeanEval)
     AquaCrop.setparameter!(gvars[:array_parameters], :SWCstdEval, SWCstdEval)
 
-    return outputs, gvars, projectinput
+    return outputs, gvars
 end
 
 function checkpoint6()
     # break run.f90:7772
 
-    outputs, gvars, projectinput = checkpoint5()
+    outputs, gvars = checkpoint5()
 
     AquaCrop.setparameter!(gvars[:float_parameters], :eto, 3.9)
     AquaCrop.setparameter!(gvars[:float_parameters], :rain, 0.1)
@@ -1760,13 +1761,13 @@ function checkpoint6()
     gvars[:plotvarcrop].PotVal = 5.6798862539621338
     gvars[:plotvarcrop].ActVal = 5.6798862539621346
 
-    return outputs, gvars, projectinput
+    return outputs, gvars
 end
 
 function checkpoint7()
     # break run.f90:7772
 
-    outputs, gvars, projectinput = checkpoint5()
+    outputs, gvars = checkpoint5()
 
     AquaCrop.setparameter!(gvars[:float_parameters], :eto, 1.9)
     AquaCrop.setparameter!(gvars[:float_parameters], :rain, 17.4)
@@ -1972,13 +1973,13 @@ function checkpoint7()
     gvars[:plotvarcrop].PotVal = 80.092136507924835
     gvars[:plotvarcrop].ActVal = 44.647126256430454 
 
-    return outputs, gvars, projectinput
+    return outputs, gvars 
 end
 
 function checkpoint8()
     # break run.f90:7772
 
-    outputs, gvars, projectinput = checkpoint5()
+    outputs, gvars = checkpoint5()
 
     AquaCrop.setparameter!(gvars[:float_parameters], :eto, 1.4)
     AquaCrop.setparameter!(gvars[:float_parameters], :rain, 3.7)
@@ -2198,12 +2199,12 @@ function checkpoint8()
     gvars[:plotvarcrop].PotVal = 99.999994808486036
     gvars[:plotvarcrop].ActVal = 53.207975179846201 
 
-    return outputs, gvars, projectinput
+    return outputs, gvars
 end
 
 function checkpoint9()
     # break run.f90:7800
-    outputs, gvars, projectinput = checkpoint5()
+    outputs, gvars = checkpoint5()
 
     AquaCrop.setparameter!(gvars[:float_parameters], :eto, 0.5)
     AquaCrop.setparameter!(gvars[:float_parameters], :rain, 0.4)
@@ -2438,11 +2439,11 @@ function checkpoint9()
     gvars[:plotvarcrop].PotVal = 99.999999796558043
     gvars[:plotvarcrop].ActVal = 60.639696542081133 
 
-    return outputs, gvars, projectinput
+    return outputs, gvars
 end
 
 function checkpoint10()
-    outputs, gvars, projectinput = checkpoint9()
+    outputs, gvars = checkpoint9()
 
     AquaCrop.setparameter!(gvars[:float_parameters], :eto, 0.5)
     AquaCrop.setparameter!(gvars[:float_parameters], :rain, 0.4)
@@ -2641,12 +2642,12 @@ function checkpoint10()
         popfirst!(gvars[:array_parameters][:SWCstdEval])
     end
 
-    return outputs, gvars, projectinput
+    return outputs, gvars
 end
 
 function checkpoint11()
     # break run.f90:7800
-    outputs, gvars, projectinput = checkpoint10()
+    outputs, gvars = checkpoint10()
 
     AquaCrop.setparameter!(gvars[:float_parameters], :eto, 0.6)
     AquaCrop.setparameter!(gvars[:float_parameters], :rain, 3.6)
@@ -2899,11 +2900,11 @@ function checkpoint11()
         popfirst!(gvars[:array_parameters][:SWCstdEval])
     end
 
-    return outputs, gvars, projectinput
+    return outputs, gvars
 end
 
 function checkpoint12()
-    outputs, gvars, projectinput = checkpoint11()
+    outputs, gvars = checkpoint11()
 
 
     AquaCrop.setparameter!(gvars[:float_parameters], :eto, 0.5)
@@ -3190,5 +3191,5 @@ function checkpoint12()
         popfirst!(gvars[:array_parameters][:SWCstdEval])
     end
 
-    return outputs, gvars, projectinput
+    return outputs, gvars
 end

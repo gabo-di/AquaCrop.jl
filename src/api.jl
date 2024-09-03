@@ -7,9 +7,9 @@ abstract type AbstractCropField end
 Has all the data for the simulation of AquaCrop
 """
 struct AquaCropField <: AbstractCropField
-    gvars::ComponentArray
+    gvars::Dict
     outputs::Dict
-    lvars::ComponentArray
+    lvars::Dict
     parentdir::AbstractString
 end
 
@@ -186,9 +186,9 @@ end
 runs a basic AquaCrop simulation, the outputs variable has the final dataframes
 with the results of the simulation
 
-runtype allowed for now is :Fortran or :Julia  
+runtype allowed for now is :Fortran or :Toml  
 where :Fortran will use the input from a files like in AquaCrop Fortran
-and :Julia will use the input from TOML files (see AquaCrop.jl/test/testcase/TOML_FILES)`
+and :Toml will use the input from TOML files (see AquaCrop.jl/test/testcase/TOML_FILES)`
 """
 
 function basic_run(parentdir::AbstractString, runtype::Union{Symbol,Nothing}=nothing)
@@ -212,16 +212,16 @@ initializes the kwargs with the proper runtype, check if all_ok.logi == true
 function initialize_kwargs(outputs, runtype)
 
     all_ok = AllOk(true, "") 
-    # runtype allowed for now is :Fortran, :Julia or :Persefone 
+    # runtype allowed for now is :Fortran, :Toml or :NoFile 
     if isnothing(runtype)
-        kwargs = (runtype = FortranRun(),)
-        add_output_in_logger!(outputs, "using default FortranRun")
+        kwargs = (runtype = NormalFileRun(),)
+        add_output_in_logger!(outputs, "using default NormalFileRun")
     elseif runtype == :Fortran 
-        kwargs = (runtype = FortranRun(),)
-        add_output_in_logger!(outputs, "using default FortranRun")
-    elseif runtype == :Julia
-        kwargs = (runtype = JuliaRun(),)
-        add_output_in_logger!(outputs, "using default JuliaRun")
+        kwargs = (runtype = NormalFileRun(),)
+        add_output_in_logger!(outputs, "using default NormalFileRun")
+    elseif runtype == :Toml
+        kwargs = (runtype = TomlFileRun(),)
+        add_output_in_logger!(outputs, "using default TomlFileRun")
     else 
         kwargs = (runtype = nothing,)
         all_ok.logi = false
@@ -232,11 +232,12 @@ function initialize_kwargs(outputs, runtype)
 end
 
 """
-    cropfield, all_ok = initialize_cropfield(;runtype=:Julia, parentdir=nothing)
+    cropfield, all_ok = initialize_cropfield(;runtype=:Toml, parentdir=nothing)
 
 initializes the crop with the proper runtype, check if all_ok.logi == true 
+start + setup = initialize
 """
-function initialize_cropfield(;runtype=:Julia, parentdir=nothing)
+function initialize_cropfield(;runtype=:Toml, parentdir=nothing)
     # this variables are here in case later we want to give more control in the season (nrrun)
     # and the project number (nproject)
     nproject = 1
@@ -247,14 +248,10 @@ function initialize_cropfield(;runtype=:Julia, parentdir=nothing)
     if !all_ok.logi
         add_output_in_logger!(outputs, all_ok.msg)
         finalize_outputs!(outputs)
-        gvars = ComponentArray()
-        lvars = ComponentArray()
+        gvars = Dict()
+        lvars = Dict()
         return AquaCropField(gvars, outputs, lvars, parentdir), all_ok
     end
-
-    if !(kwargs[:runtype]==FortranRun) & isnothing(parentdir)
-        parentdir = test_toml_dir
-    end 
 
     all_ok = AllOk(true, "")
 
@@ -265,8 +262,8 @@ function initialize_cropfield(;runtype=:Julia, parentdir=nothing)
         all_ok.msg = "no project loaded"
         add_output_in_logger!(outputs, all_ok.msg)
         finalize_outputs!(outputs)
-        gvars = ComponentArray()
-        lvars = ComponentArray()
+        gvars = Dict()
+        lvars = Dict()
         return AquaCropField(gvars, outputs, lvars, parentdir), all_ok
     end
 
@@ -277,8 +274,8 @@ function initialize_cropfield(;runtype=:Julia, parentdir=nothing)
         all_ok.msg = "bad projecttype for "*theprojectfile
         add_output_in_logger!(outputs, all_ok.msg)
         finalize_outputs!(outputs)
-        gvars = ComponentArray()
-        lvars = ComponentArray()
+        gvars = Dict()
+        lvars = Dict()
         return AquaCropField(gvars, outputs, lvars, parentdir), all_ok
     end
 
@@ -286,8 +283,8 @@ function initialize_cropfield(;runtype=:Julia, parentdir=nothing)
     if !all_ok.logi
         add_output_in_logger!(outputs, all_ok.msg)
         finalize_outputs!(outputs)
-        gvars = ComponentArray()
-        lvars = ComponentArray()
+        gvars = Dict()
+        lvars = Dict()
         return AquaCropField(gvars, outputs, lvars, parentdir), all_ok
     end
 

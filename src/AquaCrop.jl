@@ -1,6 +1,5 @@
 module AquaCrop
 # ---- imports ----
-using ComponentArrays
 using TOML
 using DataFrames
 using Unitful: Quantity, FreeUnits, Unit, 𝐋, 𝚯, 𝐓, 𝐈, 𝐌, NoDims

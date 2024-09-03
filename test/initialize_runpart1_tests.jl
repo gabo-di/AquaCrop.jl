@@ -6,14 +6,14 @@ include("checkpoints.jl")
 @testset "Load Simulation Run Project" begin
     outputs = AquaCrop.start_outputs()
 
-    kwargs = (runtype = AquaCrop.FortranRun(),)
+    kwargs = (runtype = AquaCrop.NormalFileRun(),)
 
-    gvars, projectinput, fileok = checkpoint2()
+    gvars = checkpoint2()
 
-    gvars_0, _ = checkpoint3()
+    gvars_0 = checkpoint3()
 
     i = 1
-    AquaCrop.load_simulation_project!(outputs, gvars, projectinput[i]; kwargs...)
+    AquaCrop.load_simulation_project!(outputs, gvars, gvars[:projectinput][i]; kwargs...)
      
 
     @test isapprox(gvars[:simulparam], gvars_0[:simulparam])
@@ -45,17 +45,17 @@ end
 @testset "Initialize Run Part 1" begin
     outputs = AquaCrop.start_outputs()
 
-    kwargs = (runtype = AquaCrop.FortranRun(),)
+    kwargs = (runtype = AquaCrop.NormalFileRun(),)
 
-    gvars, projectinput = checkpoint3()
+    gvars = checkpoint2()
 
-    outputs_0, gvars_0, _ = checkpoint4()
+    outputs_0, gvars_0 = checkpoint4()
     
     i = 1
-    AquaCrop.adjust_compartments!(gvars)
-    gvars[:sumwabal] = AquaCrop.RepSum()
-    AquaCrop.reset_previous_sum!(gvars)
-    AquaCrop.initialize_run_part1!(outputs, gvars, projectinput[i]; kwargs...)
+    # AquaCrop.adjust_compartments!(gvars)
+    # gvars[:sumwabal] = AquaCrop.RepSum()
+    # AquaCrop.reset_previous_sum!(gvars)
+    AquaCrop.initialize_run_part1!(outputs, gvars, i; kwargs...)
 
 
     @test isapprox(gvars[:simulation], gvars_0[:simulation])

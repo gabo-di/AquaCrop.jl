@@ -1,13 +1,13 @@
 """
-    file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun; kwargs...)
+    file_management!(outputs, gvars, nrrun; kwargs...)
 
 run.f90:7760
 """
-function file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun; kwargs...)
+function file_management!(outputs, gvars, nrrun; kwargs...)
     # we create these "lvars" because we need functions that 
     # returns nothing or does not change anything
     lvars = initialize_lvars()
-
+    projectinput = gvars[:projectinput][nrrun]
     repeattoday = gvars[:simulation].ToDayNr
 
     cont = 0
@@ -2805,11 +2805,11 @@ function initialize_lvars()
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :harvestnow, false) #here
 
-    lvars = ComponentArray(
-        float_parameters = float_parameters,
-        bool_parameters = bool_parameters,
-        integer_parameters = integer_parameters
-    )
 
+    lvars = Dict{Symbol, AbstractParametersContainer}(
+        :float_parameters => float_parameters,
+        :bool_parameters => bool_parameters,
+        :integer_parameters => integer_parameters
+    )
     return lvars
 end

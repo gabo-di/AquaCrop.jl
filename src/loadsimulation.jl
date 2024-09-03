@@ -14,9 +14,9 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         temperature_file = projectinput.Temperature_Filename 
     else
         _temperature_file = joinpath([projectinput.ParentDir, projectinput.Temperature_Directory, projectinput.Temperature_Filename])
-        if typeof(kwargs[:runtype]) == FortranRun
+        if typeof(kwargs[:runtype]) == NormalFileRun
             temperature_file = _temperature_file
-        else
+        elseif typeof(kwargs[:runtype]) == TomlFileRun 
             temperature_file = _temperature_file[1:end-5]*".csv"
         end
         setparameter!(gvars[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
@@ -34,9 +34,9 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         eto_file = projectinput.ETo_Filename 
     else
         _eto_file = joinpath([projectinput.ParentDir, projectinput.ETo_Directory, projectinput.ETo_Filename])
-        if typeof(kwargs[:runtype]) == FortranRun
+        if typeof(kwargs[:runtype]) == NormalFileRun
             eto_file = _eto_file
-        else
+        elseif typeof(kwargs[:runtype]) == TomlFileRun 
             eto_file = _eto_file[1:end-5]*".csv"
         end
         setparameter!(gvars[:bool_parameters], :eto_file_exists, isfile(eto_file))
@@ -54,9 +54,9 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         rain_file = projectinput.Rain_Filename
     else
         _rain_file = joinpath([projectinput.ParentDir, projectinput.Rain_Directory, projectinput.Rain_Filename])
-        if typeof(kwargs[:runtype]) == FortranRun
+        if typeof(kwargs[:runtype]) == NormalFileRun
             rain_file = _rain_file
-        else
+        elseif typeof(kwargs[:runtype]) == TomlFileRun 
             rain_file = _rain_file[1:end-5]*".csv"
         end
         setparameter!(gvars[:bool_parameters], :rain_file_exists, isfile(rain_file))
@@ -166,9 +166,9 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     if projectinput.Soil_Filename=="(External)"
         prof_file = projectinput.Soil_Filename
     elseif projectinput.Soil_Filename=="(None)"
-        if typeof(kwargs[:runtype]) == FortranRun 
+        if typeof(kwargs[:runtype]) == NormalFileRun 
             prof_file = joinpath([projectinput.ParentDir, "SIMUL", "DEFAULT.SOL"])
-        else
+        elseif typeof(kwargs[:runtype]) == TomlFileRun 
             prof_file = joinpath( projectinput.ParentDir, "gvars.toml")
         end
     else
@@ -397,7 +397,7 @@ function load_clim!(record::RepClim, clim_file; kwargs...)
     return nothing
 end
 
-function _load_clim!(runtype::FortranRun, record::RepClim, clim_file; kwargs...)
+function _load_clim!(runtype::NormalFileRun, record::RepClim, clim_file; kwargs...)
     if isfile(clim_file)
         open(clim_file, "r") do file
             readline(file)
@@ -419,7 +419,7 @@ function _load_clim!(runtype::FortranRun, record::RepClim, clim_file; kwargs...)
     return nothing
 end
 
-function _load_clim!(runtype::T, record::RepClim, clim_file; kwargs...) where {T<:Union{JuliaRun, PersefoneRun}}
+function _load_clim!(runtype::T, record::RepClim, clim_file; kwargs...) where T<:TomlFileRun
     if isfile(clim_file)
         load_gvars_from_toml!(record, clim_file; kwargs...) 
         record.NrObs = kwargs[:nrobs]
@@ -700,7 +700,7 @@ function load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_fi
     return nothing
 end
 
-function _load_crop!(runtype::FortranRun, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file)
+function _load_crop!(runtype::NormalFileRun, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file)
     open(crop_file, "r") do file
         readline(file)
         readline(file)
@@ -1044,7 +1044,7 @@ function _load_crop!(runtype::FortranRun, crop::RepCrop, perennial_period::RepPe
     return nothing
 end
 
-function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file) where {T<:Union{JuliaRun, PersefoneRun}}
+function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file) where T<:TomlFileRun
     load_gvars_from_toml!(crop, crop_file)
     load_gvars_from_toml!(perennial_period, crop_file)
     return nothing
@@ -2746,7 +2746,7 @@ function load_management!(gvars, man_file; kwargs...)
     return nothing
 end
 
-function _load_management!(runtype::FortranRun, gvars, man_file)
+function _load_management!(runtype::NormalFileRun, gvars, man_file)
     management = gvars[:management]
     crop = gvars[:crop]
     simulation = gvars[:simulation]
@@ -2837,7 +2837,7 @@ function _load_management!(runtype::FortranRun, gvars, man_file)
     return nothing
 end 
 
-function _load_management!(runtype::T, gvars, man_file) where {T<:Union{JuliaRun, PersefoneRun}}
+function _load_management!(runtype::T, gvars, man_file) where T<:TomlFileRun
     load_gvars_from_toml!(gvars[:management], man_file)
 
     management = gvars[:management]

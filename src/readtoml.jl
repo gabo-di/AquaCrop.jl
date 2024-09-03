@@ -1,52 +1,4 @@
 """
-    checkget_gvar_file(outputs, filename)
-
-we check if the file exists, if not we give the default file path
-"""
-function checkget_gvar_file(outputs, filename)
-    file_ = ""
-    if isfile(filename)
-        file_ = filename
-    else
-        add_output_in_logger!(outputs, "using default file for gvars")
-        file_ = joinpath([test_toml_dir, "gvars.toml"])
-    end
-    return file_
-end
-        
-"""
-    checkget_resultsparameters_file(outputs, filename)
-
-we check if the file exists, if not we give the default file path
-"""
-function checkget_resultsparameters_file(outputs, filename)
-    file_ = ""
-    if isfile(filename)
-        file_ = filename
-    else
-        add_output_in_logger!(outputs, "using default file for resultsparameters")
-        file_ = joinpath([test_toml_dir, "resultsparameters.toml"])
-    end
-    return file_
-end
-
-"""
-    checkget_projectfiles_file(outputs, filename)
-
-we check if the file exists, if not we give the default file path
-"""
-function checkget_projectfiles_file(outputs, filename)
-    file_ = ""
-    if isfile(filename)
-        file_ = filename
-    else
-        add_output_in_logger!(outputs, "using default file for project_filenames")
-        file_ = joinpath([test_toml_dir, "projectfilenames.toml"])
-    end
-    return file_
-end
-
-"""
     actualize_with_dict!(obj::T, aux::AbstractDict) where T<:AbstractParametersContainer
 """
 function actualize_with_dict!(obj::T, aux::AbstractDict) where T<:AbstractParametersContainer
@@ -357,9 +309,10 @@ function load_resultsparameters_from_toml(auxparfile)
     particularresultsparameters = ParametersContainer(Bool)
     actualize_with_dict!(particularresultsparameters, aux["resultsparameters"]["particularresultsparameters"])
 
-    return ComponentArray(aggregationresults=aggregationresultsparameters,
-                dailyresults=dailyresultsparameters,
-                particularresults=particularresultsparameters)
+    return Dict{Symbol, AbstractParametersContainer}(
+                :aggregationresults => aggregationresultsparameters,
+                :dailyresults => dailyresultsparameters,
+                :particularresults => particularresultsparameters)
 end
 
 function load_projectfilenames_from_toml(auxparfile)

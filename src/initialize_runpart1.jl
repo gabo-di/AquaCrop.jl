@@ -1,9 +1,10 @@
 """
-    initialize_run_part1!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+    initialize_run_part1!(outputs, gvars, nrrun; kwargs...)
 
 run.f90:6590
 """
-function initialize_run_part1!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
+function initialize_run_part1!(outputs, gvars, nrrun; kwargs...)
+    projectinput = gvars[:projectinput][nrrun]
     load_simulation_project!(outputs, gvars, projectinput; kwargs...)
     adjust_compartments!(gvars) #TODO check if neccesary
     # reset sumwabal and previoussum

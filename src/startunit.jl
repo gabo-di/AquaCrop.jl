@@ -23,13 +23,13 @@ function start_the_program!(outputs, parentdir; kwargs...)
             continue
         end
 
-        gvars, projectinput, all_ok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+        gvars, all_ok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
         if !all_ok.logi
             add_output_in_logger!(outputs, all_ok.msg)
             continue
         end
 
-        run_simulation!(outputs, gvars, projectinput; kwargs...)
+        run_simulation!(outputs, gvars; kwargs...)
         add_output_in_logger!(outputs, "run project "*string(i))
     end
 
@@ -39,7 +39,7 @@ end
 
 
 """
-    gvars, projectinput, all_ok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+    gvars, all_ok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
 
 startunit.f90:535
 """
@@ -64,17 +64,17 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
 
         if theprojecttype == :typepro
             # 2. Assign single project file and read its contents
-            projectinput = initialize_project_input(testfile, filepaths[:prog]; kwargs...)
+            initialize_project_input!(gvars, testfile, filepaths[:prog]; kwargs...)
 
             # 3. Check if Environment and Simulation Files exist
             fileok = RepFileOK()
-            check_files_in_project!(fileok, canselect, projectinput[1])
+            check_files_in_project!(fileok, canselect, gvars[:projectinput][1])
 
             # 4. load project parameters
             if (canselect[1]) 
-                if typeof(kwargs[:runtype]) == FortranRun
-                    auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PP1"
-                else
+                if typeof(kwargs[:runtype]) == NormalFileRun
+                    auxparfile = joinpath(filepaths[:param], theprojectfile[1:end-3]*"PP1")
+                elseif typeof(kwargs[:runtype]) == TomlFileRun
                     auxparfile = testfile
                 end
                 if isfile(auxparfile) 
@@ -91,10 +91,10 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
 
         elseif theprojecttype == :typeprm
             # 2. Assign multiple project file and read its contents
-            projectinput = initialize_project_input(testfile, filepaths[:prog]; kwargs...)
+            initialize_project_input!(gvars, testfile, filepaths[:prog]; kwargs...)
 
             # 2bis. Get number of Simulation Runs
-            totalsimruns = length(projectinput)
+            totalsimruns = length(gvars[:projectinput])
 
             # 3. Check if Environment and Simulation Files exist for all runs
             canselect[1] = true
@@ -102,7 +102,7 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
             fileok = RepFileOK()
             while (canselect[1] & (simnr < totalsimruns))
                 simnr += simnr + 1
-                check_files_in_project!(fileok, canselect, projectinput[simnr]) 
+                check_files_in_project!(fileok, canselect, gvars[:projectinput][simnr]) 
                 if (! canselect[1]) 
                     wrongsimnr = simnr
                 end
@@ -110,16 +110,16 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
 
             # 4. load project parameters
             if (canselect[1]) 
-                if typeof(kwargs[:runtype]) == FortranRun
-                    auxparfile = filepaths[:param]*theprojectfile[1:end-3]*"PPn"
-                else
+                if typeof(kwargs[:runtype]) == NormalFileRun
+                    auxparfile = joinpath(filepaths[:param], theprojectfile[1:end-3]*"PPn")
+                elseif typeof(kwargs[:runtype]) == TomlFileRun
                     auxparfile = testfile
                 end
                 if isfile(auxparfile)
                     load_program_parameters_project_plugin!(gvars[:simulparam], auxparfile; kwargs...)
                     gvars[:simulation].MultipleRun = true
                     gvars[:simulation].NrRuns = totalsimruns
-                    runwithkeepswc, constzrxforrun = check_for_keep_swc(outputs, projectinput, filepaths, gvars; kwargs...)
+                    runwithkeepswc, constzrxforrun = check_for_keep_swc(outputs, gvars[:projectinput], filepaths, gvars; kwargs...)
                     gvars[:simulation].MultipleRunWithKeepSWC = runwithkeepswc
                     gvars[:simulation].MultipleRunConstZrx = constzrxforrun
                     add_output_in_logger!(outputs, "Project loaded with its program parameters")
@@ -133,25 +133,25 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
         end
     end
 
-    return  gvars, projectinput, all_ok 
+    return  gvars, all_ok 
 end
 
 
 """
-    run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
+    run_simulation!(outputs, gvars; kwargs...)
 
 run.f90:7779
 """
-function run_simulation!(outputs, gvars, projectinput::Vector{ProjectInputType}; kwargs...)
+function run_simulation!(outputs, gvars; kwargs...)
     nrruns = gvars[:simulation].NrRuns 
 
     for nrrun in 1:nrruns
-        initialize_run_part1!(outputs, gvars, projectinput[nrrun]; kwargs...)
-        initialize_climate!(outputs, gvars; kwargs...)
-        initialize_run_part2!(outputs, gvars, projectinput[nrrun], nrrun; kwargs...)
-        file_management!(outputs, gvars, projectinput[nrrun], nrrun; kwargs...)
+        initialize_run_part1!(outputs, gvars, nrrun; kwargs...)
+        initialize_climate!(outputs, gvars, nrrun; kwargs...)
+        initialize_run_part2!(outputs, gvars, nrrun; kwargs...)
+        file_management!(outputs, gvars, nrrun; kwargs...)
         finalize_run1!(outputs, gvars, nrrun; kwargs...)
-        finalize_run2!(outputs, gvars; kwargs...)
+        finalize_run2!(outputs, gvars, nrrun; kwargs...)
     end
     return nothing
 end 
@@ -242,11 +242,11 @@ function write_sim_period!(outputs, gvars, nrrun)
 end
 
 """
-    finalize_run2!(outputs, gvars; kwargs...)
+    finalize_run2!(outputs, gvars, nrrun; kwargs...)
 
 run.f90:4355
 """
-function finalize_run2!(outputs, gvars; kwargs...)
+function finalize_run2!(outputs, gvars, nrrun; kwargs...)
     close_climate!(outputs, gvars; kwargs...)
     close_irrigation!(gvars; kwargs...)
     close_management!(gvars; kwargs...)

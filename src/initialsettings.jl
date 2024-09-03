@@ -1,5 +1,5 @@
 """
-   runwithkeepswc, constzrxforrun = check_for_keep_swc(outputs, projectinput::Vector{ProjectInputType}, filepaths, gvars; kwargs...)
+    runwithkeepswc, constzrxforrun = check_for_keep_swc(outputs, projectinput::Vector{ProjectInputType}, filepaths, gvars; kwargs...)
 
 global.f90:6643
 """
@@ -15,7 +15,7 @@ function check_for_keep_swc(outputs, projectinput::Vector{ProjectInputType}, fil
     # 2. Look for restrictive soil layer
     # restricted to run 1 since with KeepSWC,
     # the soil file has to be common between runs
-    # previousproffilefull = filepaths[:simul]*"DEFAULT.SOL" # keep name soil file (to restore after check)
+    # previousproffilefull = joinpath(filepaths[:simul],"DEFAULT.SOL") # keep name soil file (to restore after check)
 
     filename = projectinput[1].Soil_Filename
     has_external = filename == "(External)"
@@ -67,7 +67,11 @@ function check_for_keep_swc(outputs, projectinput::Vector{ProjectInputType}, fil
     return runwithkeepswc, constzrxforrun
 end 
 
-function _check_for_keep_swc(runtype::FortranRun, fullfilename, soil_layers, constzrxforrun)
+function check_for_keep_swc(outputs, projectinput::Vector{AbstractParametersContainer}, filepaths, gvars; kwargs...)
+    return check_for_keep_swc(outputs, ProjectInputType[p for p in projectinput], filepaths, gvars; kwargs...)
+end
+
+function _check_for_keep_swc(runtype::NormalFileRun, fullfilename, soil_layers, constzrxforrun)
     ret = [constzrxforrun]
     open(fullfilename, "r") do file
         readline(file) # description
@@ -85,7 +89,7 @@ function _check_for_keep_swc(runtype::FortranRun, fullfilename, soil_layers, con
     return ret[1]
 end
 
-function _check_for_keep_swc(runtype::T, fullfilename, soil_layers, constzrxforrun) where {T<:Union{JuliaRun, PersefoneRun}}
+function _check_for_keep_swc(runtype::T, fullfilename, soil_layers, constzrxforrun) where T<:TomlFileRun
     ret = [constzrxforrun]
     aux = TOML.parsefile(fullfilename)
     zrxi = aux["crop"]["RootMax"]
@@ -106,7 +110,7 @@ function load_program_parameters_project_plugin!(simulparam::RepParam, auxparfil
     return nothing
 end
 
-function _load_program_parameters_project_plugin!(runtype::FortranRun, simulparam::RepParam, auxparfile)
+function _load_program_parameters_project_plugin!(runtype::NormalFileRun, simulparam::RepParam, auxparfile)
     open(auxparfile, "r") do file
         # crop
         simulparam.EvapDeclineFactor =  parse(Float64,strip(readline(file))[1:6]) # evaporation decline factor in stage 2
@@ -163,7 +167,7 @@ function _load_program_parameters_project_plugin!(runtype::FortranRun, simulpara
     return nothing
 end
 
-function _load_program_parameters_project_plugin!(runtype::T, simulparam::RepParam, auxparfile) where {T<:Union{JuliaRun, PersefoneRun}}
+function _load_program_parameters_project_plugin!(runtype::T, simulparam::RepParam, auxparfile) where T<:TomlFileRun
     load_gvars_from_toml!(simulparam, auxparfile) 
     return nothing
 end
@@ -230,15 +234,19 @@ end
 
 
 """
-    projectinput = initialize_project_input(filename, parentdir; kwargs...)
+    initialize_project_input!(gvars, filename, parentdir; kwargs...)
 
 project_input.f90:152
 """
-function initialize_project_input(filename, parentdir; kwargs...)
-    return _initialize_project_input(kwargs[:runtype], filename, parentdir)
+function initialize_project_input!(gvars, filename, parentdir; kwargs...)
+    projectinput = _initialize_project_input(kwargs[:runtype], filename, parentdir)
+    for p in projectinput
+        push!(gvars[:projectinput], p)
+    end
+    return nothing
 end
 
-function _initialize_project_input(runtype::FortranRun, filename, parentdir)
+function _initialize_project_input(runtype::NormalFileRun, filename, parentdir)
     projectinput = ProjectInputType[]
 
     # project_input.f90:225
@@ -333,7 +341,7 @@ function _initialize_project_input(runtype::FortranRun, filename, parentdir)
     return projectinput
 end
 
-function _initialize_project_input(runtype::T, filename, parentdir) where {T<:Union{JuliaRun, PersefoneRun}}
+function _initialize_project_input(runtype::T, filename, parentdir) where T<:TomlFileRun
     return load_projectinput_from_toml(filename, parentdir)
 end
 
@@ -357,9 +365,9 @@ function initialize_settings(outputs, filepaths; kwargs...)
     # OJO do not change soil.RootMax like in global.f90:4029 since it will be taken care later
 
     # if usedefaultsoilfile  (this is always true)
-    if typeof(kwargs[:runtype]) == FortranRun 
+    if typeof(kwargs[:runtype]) == NormalFileRun 
         filename = joinpath(filepaths[:simul], "DEFAULT.SOL")
-    else
+    elseif typeof(kwargs[:runtype]) == TomlFileRun 
         filename = joinpath(filepaths[:simul], "gvars.toml")
     end
     soil, soil_layers, compartments = load_profile(outputs, filename, simulparam; kwargs...)
@@ -430,6 +438,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     root_zone_wc = RepRootZoneWC()
     plotvarcrop = RepPlotPar()
     total_salt_content = RepContent()
+    projectinput = ProjectInputType[]
 
     # 12. Simulation run
     float_parameters = ParametersContainer(Float64)
@@ -586,11 +595,11 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(string_parameters, :eto_file,  "(None)")
     setparameter!(string_parameters, :rain_file,  "(None)")
     setparameter!(string_parameters, :groundwater_file, "(None)")
-    if typeof(kwargs[:runtype]) == FortranRun
+    if typeof(kwargs[:runtype]) == NormalFileRun
         setparameter!(string_parameters, :prof_file, "DEFAULT.SOL")
         setparameter!(string_parameters, :crop_file, "DEFAULT.CRO")
         setparameter!(string_parameters, :CO2_file, "MaunaLoa.CO2")
-    else
+    elseif typeof(kwargs[:runtype]) == TomlFileRun 
         setparameter!(string_parameters, :prof_file, "gvars.toml")
         setparameter!(string_parameters, :crop_file, "gvars.toml")
         setparameter!(string_parameters, :CO2_file, "MaunaLoaCO2.csv")
@@ -602,44 +611,45 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(string_parameters, :swcini_file, undef_str)
 
 
-    return ComponentArray(
-        simulparam = simulparam,
-        soil = soil,
-        soil_layers = soil_layers,
-        compartments = compartments,
-        simulation = simulation,
-        total_water_content = total_water_content,
-        crop = crop,
-        management = management,
-        sumwabal = sumwabal,
-        previoussum = previoussum,
-        irri_before_season = irri_before_season,
-        irri_after_season = irri_after_season,
-        irri_ecw = irri_ecw,
-        onset = onset,
-        rain_record = rain_record,
-        eto_record = eto_record,
-        clim_record = clim_record,
-        temperature_record = temperature_record,
-        perennial_period = perennial_period,
-        crop_file_set = crop_file_set,
-        gwtable = gwtable,
-        stresstot = stresstot,
-        irri_info_record1 = irri_info_record1,
-        irri_info_record2 = irri_info_record2,
-        transfer = transfer,
-        cut_info_record1 = cut_info_record1,
-        cut_info_record2 = cut_info_record2,
-        root_zone_salt = root_zone_salt,
-        root_zone_wc = root_zone_wc,
-        plotvarcrop = plotvarcrop,
-        total_salt_content = total_salt_content,
-        float_parameters = float_parameters,
-        symbol_parameters = symbol_parameters,
-        integer_parameters = integer_parameters,
-        bool_parameters = bool_parameters,
-        array_parameters = array_parameters,
-        string_parameters = string_parameters,
+    return Dict{Symbol, Union{AbstractParametersContainer,Vector{<:AbstractParametersContainer}}}(
+         :simulparam => simulparam,
+         :soil => soil,
+         :soil_layers => soil_layers,
+         :compartments => compartments,
+         :simulation => simulation,
+         :total_water_content => total_water_content,
+         :crop => crop,
+         :management => management,
+         :sumwabal => sumwabal,
+         :previoussum => previoussum,
+         :irri_before_season => irri_before_season,
+         :irri_after_season => irri_after_season,
+         :irri_ecw => irri_ecw,
+         :onset => onset,
+         :rain_record => rain_record,
+         :eto_record => eto_record,
+         :clim_record => clim_record,
+         :temperature_record => temperature_record,
+         :perennial_period => perennial_period,
+         :crop_file_set => crop_file_set,
+         :gwtable => gwtable,
+         :stresstot => stresstot,
+         :irri_info_record1 => irri_info_record1,
+         :irri_info_record2 => irri_info_record2,
+         :transfer => transfer,
+         :cut_info_record1 => cut_info_record1,
+         :cut_info_record2 => cut_info_record2,
+         :root_zone_salt => root_zone_salt,
+         :root_zone_wc => root_zone_wc,
+         :plotvarcrop => plotvarcrop,
+         :total_salt_content => total_salt_content,
+         :float_parameters => float_parameters,
+         :symbol_parameters => symbol_parameters,
+         :integer_parameters => integer_parameters,
+         :bool_parameters => bool_parameters,
+         :array_parameters => array_parameters,
+         :string_parameters => string_parameters,
+         :projectinput => projectinput
     )
 end
 
@@ -1194,7 +1204,7 @@ function load_profile(outputs, filepath, simulparam::RepParam; kwargs...)
     return soil, soil_layers, compartments
 end
 
-function _load_profile(runtype::FortranRun, outputs, filepath)
+function _load_profile(runtype::NormalFileRun, outputs, filepath)
     soil = RepSoil()
     soil_layers = SoilLayerIndividual[]
     open(filepath, "r") do file
@@ -1242,14 +1252,12 @@ function _load_profile(runtype::FortranRun, outputs, filepath)
     return soil, soil_layers 
 end
 
-function _load_profile(runtype::T, outputs, filepath) where {T<:Union{JuliaRun, PersefoneRun}}
+function _load_profile(runtype::T, outputs, filepath) where T<:TomlFileRun
     soil = RepSoil()
     soil_layers = SoilLayerIndividual[]
 
-    filename = checkget_gvar_file(outputs, filepath)
-    load_gvars_from_toml!(soil, filename)
-    load_gvars_from_toml!(soil_layers, filename)
-
+    load_gvars_from_toml!(soil, filepath)
+    load_gvars_from_toml!(soil_layers, filepath)
     return soil, soil_layers
 end
 
@@ -1531,7 +1539,7 @@ function get_project_type(theprojectfile; kwargs...)
     return _get_project_type(kwargs[:runtype], theprojectfile)
 end
 
-function _get_project_type(runtype::FortranRun, theprojectfile)
+function _get_project_type(runtype::NormalFileRun, theprojectfile)
     if endswith(theprojectfile, "PRO")
         theprojecttype = :typepro
     elseif endswith(theprojectfile, "PRM")
@@ -1542,7 +1550,7 @@ function _get_project_type(runtype::FortranRun, theprojectfile)
     return theprojecttype
 end
 
-function _get_project_type(runtype::T, theprojectfile) where {T<:Union{JuliaRun, PersefoneRun}}
+function _get_project_type(runtype::T, theprojectfile) where T<:TomlFileRun
     filename = theprojectfile[1:end-5]
     if endswith(filename, "PRO")
         theprojecttype = :typepro
@@ -1565,10 +1573,10 @@ function initialize_project_filename(outputs, filepaths; kwargs...)
     return _initialize_project_filename(kwargs[:runtype], outputs, filepaths)
 end
 
-function _initialize_project_filename(runtype::FortranRun, outputs, filepaths) 
+function _initialize_project_filename(runtype::NormalFileRun, outputs, filepaths) 
     project_filenames = String[]
 
-    listprojectsfile = filepaths[:list]*"ListProjects.txt"
+    listprojectsfile = joinpath(filepaths[:list],"ListProjects.txt")
     listprojectsfileexist = isfile(listprojectsfile)
 
     if isdir(filepaths[:list])
@@ -1602,8 +1610,7 @@ function _initialize_project_filename(runtype::FortranRun, outputs, filepaths)
     return project_filenames
 end
 
-function _initialize_project_filename(runtype::T, outputs, filepaths) where {T<:Union{JuliaRun, PersefoneRun}}
-    # filename = checkget_projectfiles_file(outputs, joinpath(filepaths[:list], "projectfilenames.toml"))
+function _initialize_project_filename(runtype::T, outputs, filepaths) where T<:TomlFileRun
     filename = joinpath(filepaths[:list], "projectfilenames.toml")
     if isfile(filename)
         return load_projectfilenames_from_toml(filename)
@@ -1614,7 +1621,7 @@ function _initialize_project_filename(runtype::T, outputs, filepaths) where {T<:
 end
 
 """
-    filepaths, resultsparameters = initialize_the_program(outputs, parentdir; kwargs...)
+    filepaths = initialize_the_program(outputs, parentdir; kwargs...)
     
 Gets the file paths and the simulation parameters.
 
@@ -1641,22 +1648,22 @@ function default_filepaths(parentdir::AbstractString; kwargs...)
     return _default_filepaths(kwargs[:runtype], parentdir)
 end
 
-function _default_filepaths(runtype::FortranRun, parentdir)
-    return ComponentArray(
-    outp=parentdir*"/OUTP/",
-    simul=parentdir*"/SIMUL/",
-    list=parentdir*"/LIST/",
-    param=parentdir*"/PARAM/",
-    prog=parentdir)
+function _default_filepaths(runtype::NormalFileRun, parentdir)
+    return Dict{Symbol, String}(
+    :outp => joinpath(parentdir,"OUTP"),
+    :simul => joinpath(parentdir,"SIMUL"),
+    :list => joinpath(parentdir,"LIST"),
+    :param => joinpath(parentdir,"PARAM"),
+    :prog => parentdir)
 end
 
-function _default_filepaths(runtype::T, parentdir) where {T<:Union{JuliaRun, PersefoneRun}}
-    return ComponentArray(
-    outp=parentdir,
-    simul=parentdir,
-    list=parentdir,
-    param=parentdir,
-    prog=parentdir)
+function _default_filepaths(runtype::T, parentdir) where T<:TomlFileRun
+    return Dict{Symbol, String}(
+    :outp => parentdir,
+    :simul => parentdir,
+    :list => parentdir,
+    :param => parentdir,
+    :prog => parentdir)
 end
 
 """
@@ -1670,7 +1677,7 @@ function get_results_parameters(outputs, path::String; kwargs...)
     return _get_results_parameters(kwargs[:runtype], outputs, path)
 end
 
-function _get_results_parameters(runtype::FortranRun, outputs, path::String)
+function _get_results_parameters(runtype::NormalFileRun, outputs, path::String)
     #startunit.f90:282
     aggregationresultsparameters = ParametersContainer(Int)
     filename_a = joinpath(path, "AggregationResults.SIM")
@@ -1746,12 +1753,13 @@ function _get_results_parameters(runtype::FortranRun, outputs, path::String)
     end
 
 
-    return ComponentArray(aggregationresults=aggregationresultsparameters,
-                dailyresults=dailyresultsparameters,
-                particularresults=particularresultsparameters)
+    return Dict{Symbol, AbstractParametersContainer}(
+                :aggregationresults => aggregationresultsparameters,
+                :dailyresults => dailyresultsparameters,
+                :particularresults => particularresultsparameters)
 end
 
-function _get_results_parameters(runtype::T, outputs, path::String) where {T<:Union{JuliaRun, PersefoneRun}}
-    filename = checkget_resultsparameters_file(outputs, joinpath(path, "resultsparameters.toml"))
+function _get_results_parameters(runtype::T, outputs, path::String) where T<:TomlFileRun
+    filename = joinpath(path, "resultsparameters.toml")
     return load_resultsparameters_from_toml(filename) 
 end
