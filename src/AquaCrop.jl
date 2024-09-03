@@ -32,6 +32,10 @@ export AquaCropField,
        freshyield,
        harvest!,
        dailyupdate!,
-       season_run!
+       season_run!,
+       get_soil,
+       get_soillayers,
+       get_crop,
+       get_perennial_period
 end
 

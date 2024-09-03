@@ -1232,7 +1232,7 @@ function _load_profile(runtype::FortranRun, outputs, filepath)
             soillayer.CRa = cra_temp
             crb_temp = parse(Float64,popfirst!(splitedline))
             soillayer.CRb = crb_temp
-            description_temp = popfirst!(splitedline)  #join(splitedline," ") 
+            description_temp = join(splitedline, " ") 
             soillayer.Description = description_temp
             gravelv_temp = from_gravelmass_to_gravelvol(SAT_temp, gravelm_temp)
             soillayer.GravelVol = gravelv_temp
@@ -1571,13 +1571,22 @@ function _initialize_project_filename(runtype::FortranRun, outputs, filepaths)
     listprojectsfile = filepaths[:list]*"ListProjects.txt"
     listprojectsfileexist = isfile(listprojectsfile)
 
-    if !listprojectsfileexist
-        cmd_1 = `ls -1 $(filepaths[:list])`
-        cmd_2 = `grep -E ".*.PR[O,M]\$"`
-        rc = run(pipeline( pipeline(cmd_1,cmd_2), stdout = listprojectsfile))
-        if rc.exitcode != 0
-            add_output_in_logger!(outputs, "Failed to create "*listprojectsfile)
+    if isdir(filepaths[:list])
+        if !listprojectsfileexist
+            try
+                cmd_1 = `ls -1 $(filepaths[:list])`
+                cmd_2 = `grep -E ".*.PR[O,M]\$"`
+                rc = run(pipeline( pipeline(cmd_1,cmd_2), stdout = listprojectsfile))
+                if rc.exitcode != 0
+                    add_output_in_logger!(outputs, "Failed to create "*listprojectsfile)
+                end
+            catch e
+                add_output_in_logger!(outputs,
+                            "Something went wrong when trying to find the projects list "*e.msg)
+            end
         end
+    else
+        add_output_in_logger!(outputs, "Not a directory "*filepaths[:list])
     end
 
     if isfile(listprojectsfile)
@@ -1594,8 +1603,14 @@ function _initialize_project_filename(runtype::FortranRun, outputs, filepaths)
 end
 
 function _initialize_project_filename(runtype::T, outputs, filepaths) where {T<:Union{JuliaRun, PersefoneRun}}
-    filename = checkget_projectfiles_file(outputs, joinpath(filepaths[:list], "projectfilenames.toml"))
-    return load_projectfilenames_from_toml(filename)
+    # filename = checkget_projectfiles_file(outputs, joinpath(filepaths[:list], "projectfilenames.toml"))
+    filename = joinpath(filepaths[:list], "projectfilenames.toml")
+    if isfile(filename)
+        return load_projectfilenames_from_toml(filename)
+    else
+        add_output_in_logger!(outputs, "Failed to find projects list "*filename)
+        return String[]
+    end
 end
 
 """

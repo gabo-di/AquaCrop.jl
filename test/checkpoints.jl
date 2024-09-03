@@ -53,7 +53,7 @@ function checkpoint1()
 
     soil_layers = AquaCrop.SoilLayerIndividual[
         AquaCrop.SoilLayerIndividual(
-        Description="Loamy",
+        Description="Loamy soil horizon",
         Thickness=4,
         SAT=50,
         FC=30,
@@ -908,7 +908,7 @@ function checkpoint3()
 
     soil_layers = AquaCrop.SoilLayerIndividual[
         AquaCrop.SoilLayerIndividual(
-            Description="sandy",
+            Description="sandy loam",
             Thickness=3.0000000447034836,
             SAT=46,
             FC=29,

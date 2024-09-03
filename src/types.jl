@@ -44,7 +44,7 @@ abstract type AbstractAllOk <: AbstractInfo end
 
 has information if the simulation is going well
 """
-struct AllOk <: AbstractAllOk
+mutable struct AllOk <: AbstractAllOk
     logi::Bool
     msg::String
 end
