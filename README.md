@@ -137,7 +137,7 @@ We can do set the soil and soil layers to a given known soil type
 ```julia
 soil_type = "clay" # to see other options type in the repl  ?get_soil
 cropfield.gvars[:soil], all_ok = get_soil(soil_type)
-cropfield.gvars[:soil_layers], all_ok = get_soillayers(soil_type, Dict("Thickness" => 5.0)) #Here we manually set a value for the Thickness in the soil layer
+cropfield.gvars[:soil_layers], all_ok = get_soillayers(soil_type; aux=Dict("Thickness" => 5.0)) #Here we manually set a value for the Thickness in the soil layer
 
 dump(all_ok)
 println(cropfield.soil_layers[1].Description)
