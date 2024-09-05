@@ -11,6 +11,7 @@ using Dates
 include("types.jl")
 include("utils.jl")
 include("outputs.jl")
+include("loadvardict.jl")
 include("readtoml.jl")
 include("initialsettings.jl")
 include("loadsimulation.jl")
@@ -23,8 +24,10 @@ include("api.jl")
 
 # ---- exports ----
 export AquaCropField,
+       NormalFileRun,
+       TomlFileRun,
+       NoFileRun,
        basic_run,
-       initialize_cropfield,
        canopycover,
        biomass,
        dryyield,
@@ -32,9 +35,7 @@ export AquaCropField,
        harvest!,
        dailyupdate!,
        season_run!,
-       get_soil,
-       get_soillayers,
-       get_crop,
-       get_perennial_period
+       start_cropfield,
+       setup_cropfield!
 end
 

@@ -16,7 +16,7 @@ end
 
 global.f90:2397
 """
-function determine_date(day_nr)
+function determine_date(day_nr::Int)
     yeari = trunc(Int, (day_nr-0.05)/365.25)
     sum_day_month = (day_nr - yeari*365.25)
     yeari = 1901 + yeari
@@ -30,6 +30,14 @@ function determine_date(day_nr)
     end 
     dayi = round(Int, sum_day_month - ElapsedDays[monthi] + 0.25 + 0.06)
     return dayi, monthi, yeari
+end
+
+function determine_date(dd::Date)
+    return day(dd), month(dd), year(dd)
+end
+
+function determine_date(dd::String)
+    return determine_date(Date(dd))
 end
 
 """

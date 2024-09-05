@@ -7,7 +7,7 @@ startunit.f90:931
 """
 function start_the_program!(outputs, parentdir; kwargs...)
     # the part of get_results_parameters is done when we create gvars
-    filepaths = initialize_the_program(outputs, parentdir; kwargs...) 
+    filepaths = initialize_the_program(outputs, parentdir; kwargs...)
     project_filenames = initialize_project_filename(outputs, filepaths; kwargs...)
 
     nprojects = length(project_filenames)
@@ -18,8 +18,8 @@ function start_the_program!(outputs, parentdir; kwargs...)
     for i in eachindex(project_filenames)
         theprojectfile = project_filenames[i]
         theprojecttype = get_project_type(theprojectfile; kwargs...)
-        if theprojecttype == :typenone 
-            add_output_in_logger!(outputs, "bad projecttype for "*theprojectfile)
+        if theprojecttype == :typenone
+            add_output_in_logger!(outputs, "bad projecttype for " * theprojectfile)
             continue
         end
 
@@ -30,12 +30,12 @@ function start_the_program!(outputs, parentdir; kwargs...)
         end
 
         run_simulation!(outputs, gvars; kwargs...)
-        add_output_in_logger!(outputs, "run project "*string(i))
+        add_output_in_logger!(outputs, "run project " * string(i))
     end
 
     finalize_the_program!(outputs)
-    return nothing 
-end 
+    return nothing
+end
 
 
 """
@@ -47,14 +47,17 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
     all_ok = AllOk(true, "")
     canselect = [true]
     wrongsimnr = nothing
+    gvars = nothing
 
     # check if project file exists
-    testfile = joinpath(filepaths[:list], theprojectfile)
-    if !isfile(testfile) 
-        all_ok.logi = false
-        all_ok.msg =  "did not find the file "*theprojectfile
-        canselect[1] = false
-    end 
+    if typeof(kwargs[:runtype]) != NoFileRun
+        testfile = joinpath(filepaths[:list], theprojectfile)
+        if !isfile(testfile)
+            all_ok.logi = false
+            all_ok.msg = "did not find the file " * theprojectfile
+            canselect[1] = false
+        end
+    end
 
     if canselect[1]
         gvars = initialize_settings(outputs, filepaths; kwargs...)
@@ -68,16 +71,23 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
 
             # 3. Check if Environment and Simulation Files exist
             fileok = RepFileOK()
-            check_files_in_project!(fileok, canselect, gvars[:projectinput][1])
+            if typeof(kwargs[:runtype]) != NoFileRun
+                check_files_in_project!(fileok, canselect, gvars[:projectinput][1])
+            end
 
             # 4. load project parameters
-            if (canselect[1]) 
+            if (canselect[1])
                 if typeof(kwargs[:runtype]) == NormalFileRun
-                    auxparfile = joinpath(filepaths[:param], theprojectfile[1:end-3]*"PP1")
+                    auxparfile = joinpath(filepaths[:param], theprojectfile[1:end-3] * "PP1")
                 elseif typeof(kwargs[:runtype]) == TomlFileRun
                     auxparfile = testfile
+                elseif typeof(kwargs[:runtype]) == NoFileRun 
+                    auxparfile = ""
+                    if haskey(kwargs, :simulparam)
+                        actualize_with_dict!(gvars[:simulparam], kwargs[:simulparam])
+                    end
                 end
-                if isfile(auxparfile) 
+                if isfile(auxparfile)
                     load_program_parameters_project_plugin!(gvars[:simulparam], auxparfile; kwargs...)
                     add_output_in_logger!(outputs, "Project loaded with its program parameters")
                 else
@@ -86,8 +96,8 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
             else
                 wrongsimnr = 1
                 all_ok.logi = false
-                all_ok.msg = "wrong files for project nrrun "*string(wrongsimnr)
-            end 
+                all_ok.msg = "wrong files for project nrrun " * string(wrongsimnr)
+            end
 
         elseif theprojecttype == :typeprm
             # 2. Assign multiple project file and read its contents
@@ -102,16 +112,16 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
             fileok = RepFileOK()
             while (canselect[1] & (simnr < totalsimruns))
                 simnr += simnr + 1
-                check_files_in_project!(fileok, canselect, gvars[:projectinput][simnr]) 
-                if (! canselect[1]) 
+                check_files_in_project!(fileok, canselect, gvars[:projectinput][simnr])
+                if (!canselect[1])
                     wrongsimnr = simnr
                 end
-            end 
+            end
 
             # 4. load project parameters
-            if (canselect[1]) 
+            if (canselect[1])
                 if typeof(kwargs[:runtype]) == NormalFileRun
-                    auxparfile = joinpath(filepaths[:param], theprojectfile[1:end-3]*"PPn")
+                    auxparfile = joinpath(filepaths[:param], theprojectfile[1:end-3] * "PPn")
                 elseif typeof(kwargs[:runtype]) == TomlFileRun
                     auxparfile = testfile
                 end
@@ -128,12 +138,12 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
                 end
             else
                 all_ok.logi = false
-                all_ok.msg = "wrong files for project nrrun "*string(wrongsimnr)
-            end 
+                all_ok.msg = "wrong files for project nrrun " * string(wrongsimnr)
+            end
         end
     end
 
-    return  gvars, all_ok 
+    return gvars, all_ok
 end
 
 
@@ -143,7 +153,7 @@ end
 run.f90:7779
 """
 function run_simulation!(outputs, gvars; kwargs...)
-    nrruns = gvars[:simulation].NrRuns 
+    nrruns = gvars[:simulation].NrRuns
 
     for nrrun in 1:nrruns
         initialize_run_part1!(outputs, gvars, nrrun; kwargs...)
@@ -154,7 +164,7 @@ function run_simulation!(outputs, gvars; kwargs...)
         finalize_run2!(outputs, gvars, nrrun; kwargs...)
     end
     return nothing
-end 
+end
 
 """
     actualize_gvars_resultparameters!(outputs, gvars, filepaths; kwargs...)
@@ -190,7 +200,7 @@ run.f90:7390
 function finalize_run1!(outputs, gvars, nrrun; kwargs...)
     daynri = gvars[:integer_parameters][:daynri]
     # 16. Finalise
-    if (daynri-1) == gvars[:simulation].ToDayNr
+    if (daynri - 1) == gvars[:simulation].ToDayNr
         # multiple cuttings
         if gvars[:bool_parameters][:part1Mult]
             if gvars[:management].Cuttings.HarvestEnd
@@ -199,19 +209,19 @@ function finalize_run1!(outputs, gvars, nrrun; kwargs...)
                 setparameter!(gvars[:integer_parameters], :nrcut, nrcut + 1)
                 dayinseason = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1 + 1
                 record_harvest!(outputs, gvars, nrcut + 1, dayinseason, nrrun)
-            end 
+            end
             dayinseason = gvars[:integer_parameters][:daynri] - gvars[:crop].Day1 + 1
             record_harvest!(outputs, gvars, 9999, dayinseason, nrrun) # last line at end of season
-        end 
+        end
         # intermediate results
         outputaggregate = gvars[:integer_parameters][:outputaggregate]
         if (outputaggregate == 2) | (outputaggregate == 3) & # 10-day and monthly results
-            ((daynri-1) > gvars[:integer_parameters][:previoussdaynr]) 
+                                    ((daynri - 1) > gvars[:integer_parameters][:previoussdaynr])
             setparameter!(gvars[:integer_parameters], :daynri, daynri - 1)
             write_intermediate_period!(outputs, gvars)
-        end 
+        end
         write_sim_period!(outputs, gvars, nrrun)
-    end 
+    end
 
     return nothing
 end
@@ -226,18 +236,18 @@ function write_sim_period!(outputs, gvars, nrrun)
     day1, month1, year1 = determine_date(gvars[:simulation].FromDayNr)
     # End simulation run
     dayn, monthn, yearn = determine_date(gvars[:simulation].ToDayNr)
-    write_the_results!(outputs, nrrun, day1, month1, year1, dayn, monthn, yearn, 
-                        gvars[:sumwabal].Rain, gvars[:float_parameters][:sumeto],
-                        gvars[:float_parameters][:sumgdd], 
-                        gvars[:sumwabal].Irrigation, gvars[:sumwabal].Infiltrated, 
-                        gvars[:sumwabal].Runoff, gvars[:sumwabal].Drain, 
-                        gvars[:sumwabal].CRwater, gvars[:sumwabal].Eact,
-                        gvars[:sumwabal].Epot, gvars[:sumwabal].Tact, 
-                        gvars[:sumwabal].TrW, gvars[:sumwabal].Tpot, 
-                        gvars[:sumwabal].SaltIn, gvars[:sumwabal].SaltOut, 
-                        gvars[:sumwabal].CRsalt, gvars[:sumwabal].Biomass, 
-                        gvars[:sumwabal].BiomassUnlim, gvars[:transfer].Bmobilized, 
-                        gvars[:simulation].Storage.Btotal, gvars)
+    write_the_results!(outputs, nrrun, day1, month1, year1, dayn, monthn, yearn,
+        gvars[:sumwabal].Rain, gvars[:float_parameters][:sumeto],
+        gvars[:float_parameters][:sumgdd],
+        gvars[:sumwabal].Irrigation, gvars[:sumwabal].Infiltrated,
+        gvars[:sumwabal].Runoff, gvars[:sumwabal].Drain,
+        gvars[:sumwabal].CRwater, gvars[:sumwabal].Eact,
+        gvars[:sumwabal].Epot, gvars[:sumwabal].Tact,
+        gvars[:sumwabal].TrW, gvars[:sumwabal].Tpot,
+        gvars[:sumwabal].SaltIn, gvars[:sumwabal].SaltOut,
+        gvars[:sumwabal].CRsalt, gvars[:sumwabal].Biomass,
+        gvars[:sumwabal].BiomassUnlim, gvars[:transfer].Bmobilized,
+        gvars[:simulation].Storage.Btotal, gvars)
     return nothing
 end
 
@@ -286,7 +296,7 @@ function close_irrigation!(gvars; kwargs...)
     setparameter!(gvars[:array_parameters], :Irri_4, Float64[])
 
     setparameter!(gvars[:float_parameters], :irrigation, 0.0)
-    
+
     return nothing
 end
 

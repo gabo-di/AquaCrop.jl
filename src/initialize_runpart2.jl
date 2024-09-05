@@ -1739,6 +1739,9 @@ function open_harvest_info!(gvars, path; kwargs...)
             man_file = gvars[:string_parameters][:man_file]
         elseif typeof(kwargs[:runtype]) == TomlFileRun 
             man_file = gvars[:string_parameters][:man_file][1:end-5] * ".csv"
+        elseif typeof(kwargs[:runtype]) == NoFileRun 
+            # early return for now
+            return nothing
         end
     else
         man_file = joinpath(path, "Cuttings.AqC")

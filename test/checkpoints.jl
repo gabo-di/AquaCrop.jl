@@ -616,7 +616,7 @@ function checkpoint1()
     AquaCrop.setparameter!(array_parameters, :SWCstdEval, Float64[])
 
     string_parameters = AquaCrop.ParametersContainer(String)
-    AquaCrop.setparameter!(string_parameters, :clim_file, AquaCrop.undef_str)
+    AquaCrop.setparameter!(string_parameters, :clim_file, "(None)")
     AquaCrop.setparameter!(string_parameters, :climate_file,   "(None)")
     AquaCrop.setparameter!(string_parameters, :temperature_file,  "(None)")
     AquaCrop.setparameter!(string_parameters, :eto_file,  "(None)")
@@ -629,7 +629,7 @@ function checkpoint1()
     AquaCrop.setparameter!(string_parameters, :irri_file, "(None)")
     AquaCrop.setparameter!(string_parameters, :offseason_file, "(None)")
     AquaCrop.setparameter!(string_parameters, :observations_file, "(None)")
-    AquaCrop.setparameter!(string_parameters, :swcini_file, AquaCrop.undef_str)
+    AquaCrop.setparameter!(string_parameters, :swcini_file,  "(None)")
 
 
     return Dict{Symbol, Union{AquaCrop.AbstractParametersContainer,Vector{<:AquaCrop.AbstractParametersContainer}}}(

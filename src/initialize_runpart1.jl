@@ -11,17 +11,17 @@ function initialize_run_part1!(outputs, gvars, nrrun; kwargs...)
     gvars[:sumwabal] = RepSum() 
     reset_previous_sum!(gvars)
 
-    initialize_simulation_run_part1!(outputs, gvars, projectinput)
+    initialize_simulation_run_part1!(outputs, gvars, projectinput; kwargs...)
 
     return nothing
 end 
 
 """
-    initialize_simulation_run_part1!(outputs, gvars, projectinput)
+    initialize_simulation_run_part1!(outputs, gvars, projectinput; kwargs...)
 
 run.f90:4754
 """
-function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectInputType)
+function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
     # Part1 (before reading the climate) of the initialization of a run
     # Initializes parameters and states
 
@@ -89,9 +89,18 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
     if gvars[:crop].DayN > dnr2
         dnr2 = gvars[:crop].DayN
     end
-    setparameter!(gvars[:float_parameters], :co2i, 
-                  co2_for_simulation_period(gvars[:string_parameters][:CO2_file], dnr1, dnr2)
-                  )
+
+    if typeof(kwargs[:runtype]) != NoFileRun
+        setparameter!(gvars[:float_parameters], :co2i, 
+                      co2_for_simulation_period(gvars[:string_parameters][:CO2_file], dnr1, dnr2)
+                      )
+    else
+        if haskey(kwargs, :co2i)
+            setparameter!(gvars[:float_parameters], :co2i, kwargs[:co2i])
+        else
+            setparameter!(gvars[:float_parameters], :co2i, CO2Ref) 
+        end
+    end
 
     # 5. seasonals stress coefficients
     bool_temp = ((gvars[:crop].ECemin != undef_int) & (gvars[:crop].ECemax != undef_int) & (gvars[:crop].ECemin<gvars[:crop].ECemax))
@@ -633,6 +642,8 @@ function co2_for_simulation_period(co2_file, fromdaynr, todaynr)
             end 
         end
         co2forsimulationperiod = (co2from+co2to)/2
+    else
+        co2forsimulationperiod = CO2Ref 
     end 
 
     return co2forsimulationperiod

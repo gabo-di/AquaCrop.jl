@@ -1,32 +1,4 @@
 """
-    actualize_with_dict!(obj::T, aux::AbstractDict) where T<:AbstractParametersContainer
-"""
-function actualize_with_dict!(obj::T, aux::AbstractDict) where T<:AbstractParametersContainer
-    field_names = String.(fieldnames(T))
-    for key in keys(aux) 
-        if key in field_names
-            if typeof(aux[key]) <: AbstractDict
-                actualize_with_dict!( getfield(obj, Symbol(key)), aux[key])
-            else
-                setfield!(obj, Symbol(key), aux[key]) 
-            end
-        else
-            if !startswith(key, "aux_")
-                println("key "*key*" not found in type ", T)
-            end
-        end
-    end
-    return nothing
-end
-
-function actualize_with_dict!(obj::ParametersContainer{T}, aux::AbstractDict) where T
-    for key in keys(aux)
-        setparameter!(obj, Symbol(key), T(aux[key]))
-    end
-    return nothing
-end
-
-"""
     load_gvars_from_toml!(simulparam::RepParam, auxparfile; kwargs...)
 """
 function load_gvars_from_toml!(simulparam::RepParam, auxparfile; kwargs...)
@@ -229,6 +201,10 @@ end
 
 function load_gvars_from_toml!(perennial_period::RepPerennialPeriod, auxparfile; kwargs...)
     aux = TOML.parsefile(auxparfile)
+
+    if !haskey(aux, "perennial_period")
+        return nothing
+    end
 
     xx = aux["perennial_period"]["aux_GenerateOnset"]
     if xx==0

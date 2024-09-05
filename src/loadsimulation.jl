@@ -16,12 +16,17 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         _temperature_file = joinpath([projectinput.ParentDir, projectinput.Temperature_Directory, projectinput.Temperature_Filename])
         if typeof(kwargs[:runtype]) == NormalFileRun
             temperature_file = _temperature_file
+            setparameter!(gvars[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
         elseif typeof(kwargs[:runtype]) == TomlFileRun 
             temperature_file = _temperature_file[1:end-5]*".csv"
+            setparameter!(gvars[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
+        elseif typeof(kwargs[:runtype]) == NoFileRun
+            if haskey(kwargs, :Tmin) & haskey(kwargs, :Tmax)
+                setparameter!(gvars[:bool_parameters], :temperature_file_exists, true) 
+            end
         end
-        setparameter!(gvars[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
         if gvars[:bool_parameters][:temperature_file_exists]
-            read_temperature_file!(gvars[:array_parameters], temperature_file)
+            read_temperature_file!(gvars[:array_parameters], temperature_file; kwargs...)
         end
         load_clim!(gvars[:temperature_record], _temperature_file;
                    nrobs=length(gvars[:array_parameters][:Tmin]),
@@ -36,12 +41,17 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         _eto_file = joinpath([projectinput.ParentDir, projectinput.ETo_Directory, projectinput.ETo_Filename])
         if typeof(kwargs[:runtype]) == NormalFileRun
             eto_file = _eto_file
+            setparameter!(gvars[:bool_parameters], :eto_file_exists, isfile(eto_file))
         elseif typeof(kwargs[:runtype]) == TomlFileRun 
             eto_file = _eto_file[1:end-5]*".csv"
+            setparameter!(gvars[:bool_parameters], :eto_file_exists, isfile(eto_file))
+        elseif typeof(kwargs[:runtype]) == NoFileRun
+            if haskey(kwargs, :ETo) 
+                setparameter!(gvars[:bool_parameters], :eto_file_exists, true) 
+            end
         end
-        setparameter!(gvars[:bool_parameters], :eto_file_exists, isfile(eto_file))
         if gvars[:bool_parameters][:eto_file_exists]
-            read_eto_file!(gvars[:array_parameters], eto_file)
+            read_eto_file!(gvars[:array_parameters], eto_file; kwargs...)
         end
         load_clim!(gvars[:eto_record], _eto_file;
                    nrobs=length(gvars[:array_parameters][:ETo]),
@@ -56,10 +66,15 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         _rain_file = joinpath([projectinput.ParentDir, projectinput.Rain_Directory, projectinput.Rain_Filename])
         if typeof(kwargs[:runtype]) == NormalFileRun
             rain_file = _rain_file
+            setparameter!(gvars[:bool_parameters], :rain_file_exists, isfile(rain_file))
         elseif typeof(kwargs[:runtype]) == TomlFileRun 
             rain_file = _rain_file[1:end-5]*".csv"
+            setparameter!(gvars[:bool_parameters], :rain_file_exists, isfile(rain_file))
+        elseif typeof(kwargs[:runtype]) == NoFileRun
+            if haskey(kwargs, :Rain) 
+                setparameter!(gvars[:bool_parameters], :rain_file_exists, true) 
+            end
         end
-        setparameter!(gvars[:bool_parameters], :rain_file_exists, isfile(rain_file))
         if gvars[:bool_parameters][:rain_file_exists]
             read_rain_file!(gvars[:array_parameters], rain_file)
         end
@@ -170,6 +185,8 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
             prof_file = joinpath([projectinput.ParentDir, "SIMUL", "DEFAULT.SOL"])
         elseif typeof(kwargs[:runtype]) == TomlFileRun 
             prof_file = joinpath( projectinput.ParentDir, "gvars.toml")
+        elseif typeof(kwargs[:runtype]) == NoFileRun
+            prof_file = joinpath( projectinput.ParentDir, "")
         end
     else
         # The load of profile is delayed to check if soil water profile need to be reset (see 8.)
@@ -305,21 +322,24 @@ end
 
 tempprocessing.f90:307
 """
-function read_temperature_file!(array_parameters::ParametersContainer{T}, temperature_file) where T
+function read_temperature_file!(array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
+    return _read_temperature_file!(kwargs[:runtype], array_parameters, temperature_file; kwargs...) 
+end
+
+
+function _read_temperature_file!(runtype::NormalFileRun, array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
     Tmin = Float64[] 
     Tmax = Float64[]
     
     open(temperature_file, "r") do file
         readline(file)
-        if !endswith(temperature_file, ".csv")
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-        end
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
 
         for line in eachline(file)
             splitedline = split(line)
@@ -337,20 +357,51 @@ function read_temperature_file!(array_parameters::ParametersContainer{T}, temper
     return nothing
 end
 
-function read_eto_file!(array_parameters::ParametersContainer{T}, eto_file) where T
+function _read_temperature_file!(runtype::TomlFileRun, array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
+    Tmin = Float64[] 
+    Tmax = Float64[]
+    
+    open(temperature_file, "r") do file
+        readline(file)
+
+        for line in eachline(file)
+            splitedline = split(line)
+            
+            tmin = parse(Float64,popfirst!(splitedline))
+            tmax = parse(Float64,popfirst!(splitedline))
+            push!(Tmin, tmin)
+            push!(Tmax, tmax)
+        end
+    end
+
+    setparameter!(array_parameters, :Tmin, Tmin)
+    setparameter!(array_parameters, :Tmax, Tmax)
+
+    return nothing
+end
+
+function _read_temperature_file!(runtype::NoFileRun, array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
+    setparameter!(array_parameters, :Tmin, kwargs[:Tmin])
+    setparameter!(array_parameters, :Tmax, kwargs[:Tmax])
+    return nothing
+end
+
+function read_eto_file!(array_parameters::ParametersContainer{T}, eto_file; kwargs...) where T
+    return _read_eto_file!(kwargs[:runtype], array_parameters, eto_file; kwargs...) 
+end
+
+function _read_eto_file!(runtype::NormalFileRun, array_parameters::ParametersContainer{T}, eto_file; kwargs...) where T
     ETo = Float64[] 
     
     open(eto_file, "r") do file
         readline(file)
-        if !endswith(eto_file, ".csv")
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-        end
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
 
         for line in eachline(file)
             eto = parse(Float64, line)
@@ -362,20 +413,43 @@ function read_eto_file!(array_parameters::ParametersContainer{T}, eto_file) wher
     return nothing
 end
 
-function read_rain_file!(array_parameters::ParametersContainer{T}, rain_file) where T
+function _read_eto_file!(runtype::TomlFileRun, array_parameters::ParametersContainer{T}, eto_file; kwargs...) where T
+    ETo = Float64[] 
+    
+    open(eto_file, "r") do file
+        readline(file)
+
+        for line in eachline(file)
+            eto = parse(Float64, line)
+            push!(ETo, eto)
+        end
+    end
+
+    setparameter!(array_parameters, :ETo, ETo)
+    return nothing
+end
+
+function _read_eto_file!(runtype::NoFileRun, array_parameters::ParametersContainer{T}, eto_file; kwargs...) where T
+    setparameter!(array_parameters, :ETo, kwargs[:ETo])
+    return nothing
+end
+
+function read_rain_file!(array_parameters::ParametersContainer{T}, rain_file; kwargs...) where T
+    return _read_rain_file!(kwargs[:runtype], array_parameters, rain_file; kwargs...) 
+end
+
+function _read_rain_file!(runtype::NormalFileRun, array_parameters::ParametersContainer{T}, rain_file; kwargs...) where T
     Rain = Float64[] 
     
     open(rain_file, "r") do file
         readline(file)
-        if !endswith(rain_file, ".csv")
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-            readline(file)
-        end
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
+        readline(file)
 
         for line in eachline(file)
             rain = parse(Float64, line)
@@ -384,6 +458,27 @@ function read_rain_file!(array_parameters::ParametersContainer{T}, rain_file) wh
     end
 
     setparameter!(array_parameters, :Rain, Rain)
+    return nothing
+end
+
+function _read_rain_file!(runtype::TomlFileRun, array_parameters::ParametersContainer{T}, rain_file; kwargs...) where T
+    Rain = Float64[] 
+    
+    open(rain_file, "r") do file
+        readline(file)
+
+        for line in eachline(file)
+            rain = parse(Float64, line)
+            push!(Rain, rain)
+        end
+    end
+
+    setparameter!(array_parameters, :Rain, Rain)
+    return nothing
+end
+
+function _read_rain_file!(runtype::NoFileRun, array_parameters::ParametersContainer{T}, rain_file; kwargs...) where T
+    setparameter!(array_parameters, :Rain, kwargs[:Rain])
     return nothing
 end
 
@@ -425,6 +520,13 @@ function _load_clim!(runtype::T, record::RepClim, clim_file; kwargs...) where T<
         record.NrObs = kwargs[:nrobs]
         complete_climate_description!(record)
     end
+    return nothing
+end
+
+function _load_clim!(runtype::T, record::RepClim, clim_file; kwargs...) where T<:NoFileRun
+    record = load_clim_from_vardict(;kwargs...)
+    record.NrObs = kwargs[:nrobs]
+    complete_climate_description!(record)
     return nothing
 end
 
@@ -696,11 +798,11 @@ end
 global.f90:4799
 """
 function load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...)
-    _load_crop!(kwargs[:runtype], crop, perennial_period, crop_file)
+    _load_crop!(kwargs[:runtype], crop, perennial_period, crop_file; kwargs...)
     return nothing
 end
 
-function _load_crop!(runtype::NormalFileRun, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file)
+function _load_crop!(runtype::NormalFileRun, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...)
     open(crop_file, "r") do file
         readline(file)
         readline(file)
@@ -1044,11 +1146,17 @@ function _load_crop!(runtype::NormalFileRun, crop::RepCrop, perennial_period::Re
     return nothing
 end
 
-function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file) where T<:TomlFileRun
+function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...) where T<:TomlFileRun
     load_gvars_from_toml!(crop, crop_file)
     load_gvars_from_toml!(perennial_period, crop_file)
     return nothing
 end 
+
+function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...) where T<:NoFileRun
+    set_crop!(crop, kwargs[:crop_type]; aux=getkey(kwargs, :crop, nothing))
+    set_perennial_period!(perennial_period, kwargs[:crop_type]; aux=getkey(kwargs, :perennial_period, nothing))
+    return nothing
+end
 
 """
     sxtop, sxbot = derive_smax_top_bottom(crop::RepCrop)
@@ -2839,6 +2947,21 @@ end
 
 function _load_management!(runtype::T, gvars, man_file) where T<:TomlFileRun
     load_gvars_from_toml!(gvars[:management], man_file)
+
+    management = gvars[:management]
+    crop = gvars[:crop]
+    simulation = gvars[:simulation]
+    simulation.EffectStress = crop_stress_parameters_soil_fertility(crop.StressResponse, management.FertilityStress)
+    # soil bunds
+    simulation.SurfaceStorageIni = 0
+    simulation.ECStorageIni = 0
+    return nothing
+end
+
+function _load_management!(runtype::T, gvars, man_file; kwargs...) where T<:NoFileRun
+    if haskey(kwargs, :management)
+        actualize_with_dict!(gvars[:management], kwargs[:management])
+    end
 
     management = gvars[:management]
     crop = gvars[:crop]

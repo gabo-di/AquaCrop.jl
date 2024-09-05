@@ -239,14 +239,14 @@ end
 project_input.f90:152
 """
 function initialize_project_input!(gvars, filename, parentdir; kwargs...)
-    projectinput = _initialize_project_input(kwargs[:runtype], filename, parentdir)
+    projectinput = _initialize_project_input(kwargs[:runtype], filename, parentdir; kwargs...)
     for p in projectinput
         push!(gvars[:projectinput], p)
     end
     return nothing
 end
 
-function _initialize_project_input(runtype::NormalFileRun, filename, parentdir)
+function _initialize_project_input(runtype::NormalFileRun, filename, parentdir; kwargs...)
     projectinput = ProjectInputType[]
 
     # project_input.f90:225
@@ -341,10 +341,13 @@ function _initialize_project_input(runtype::NormalFileRun, filename, parentdir)
     return projectinput
 end
 
-function _initialize_project_input(runtype::T, filename, parentdir) where T<:TomlFileRun
+function _initialize_project_input(runtype::T, filename, parentdir; kwargs...) where T<:TomlFileRun
     return load_projectinput_from_toml(filename, parentdir)
 end
 
+function _initialize_project_input(runtype::T, filename, parentdir; kwargs...) where T<:NoFileRun
+    return load_projectinput_from_vardict(parentdir; kwargs...)
+end
 
 """
     gvars = initialize_settings(outputs, filepaths; kwargs...)
@@ -369,6 +372,8 @@ function initialize_settings(outputs, filepaths; kwargs...)
         filename = joinpath(filepaths[:simul], "DEFAULT.SOL")
     elseif typeof(kwargs[:runtype]) == TomlFileRun 
         filename = joinpath(filepaths[:simul], "gvars.toml")
+    elseif typeof(kwargs[:runtype]) == NoFileRun
+        filename = string(kwargs[:runtype])
     end
     soil, soil_layers, compartments = load_profile(outputs, filename, simulparam; kwargs...)
     # else
@@ -589,7 +594,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(array_parameters, :SWCstdEval, Float64[])
 
     string_parameters = ParametersContainer(String)
-    setparameter!(string_parameters, :clim_file, undef_str)
+    setparameter!(string_parameters, :clim_file, "(None)")
     setparameter!(string_parameters, :climate_file,   "(None)")
     setparameter!(string_parameters, :temperature_file,  "(None)")
     setparameter!(string_parameters, :eto_file,  "(None)")
@@ -603,12 +608,16 @@ function initialize_settings(outputs, filepaths; kwargs...)
         setparameter!(string_parameters, :prof_file, "gvars.toml")
         setparameter!(string_parameters, :crop_file, "gvars.toml")
         setparameter!(string_parameters, :CO2_file, "MaunaLoaCO2.csv")
+    elseif typeof(kwargs[:runtype]) == NoFileRun 
+        setparameter!(string_parameters, :prof_file, "")
+        setparameter!(string_parameters, :crop_file, "")
+        setparameter!(string_parameters, :CO2_file, "")
     end
     setparameter!(string_parameters, :man_file, "(None)")
     setparameter!(string_parameters, :irri_file, "(None)")
     setparameter!(string_parameters, :offseason_file, "(None)")
     setparameter!(string_parameters, :observations_file, "(None)")
-    setparameter!(string_parameters, :swcini_file, undef_str)
+    setparameter!(string_parameters, :swcini_file,  "(None)")
 
 
     return Dict{Symbol, Union{AbstractParametersContainer,Vector{<:AbstractParametersContainer}}}(
@@ -1196,7 +1205,7 @@ global.f90:7590
 """
 function load_profile(outputs, filepath, simulparam::RepParam; kwargs...)
     # note that we only consider version 7.1 parsing style
-    soil, soil_layers = _load_profile(kwargs[:runtype], outputs, filepath)
+    soil, soil_layers = _load_profile(kwargs[:runtype], outputs, filepath; kwargs...)
 
     compartments = CompartmentIndividual[]
     load_profile_processing!(soil, soil_layers, compartments, simulparam)
@@ -1204,7 +1213,7 @@ function load_profile(outputs, filepath, simulparam::RepParam; kwargs...)
     return soil, soil_layers, compartments
 end
 
-function _load_profile(runtype::NormalFileRun, outputs, filepath)
+function _load_profile(runtype::NormalFileRun, outputs, filepath; kwargs...)
     soil = RepSoil()
     soil_layers = SoilLayerIndividual[]
     open(filepath, "r") do file
@@ -1252,12 +1261,21 @@ function _load_profile(runtype::NormalFileRun, outputs, filepath)
     return soil, soil_layers 
 end
 
-function _load_profile(runtype::T, outputs, filepath) where T<:TomlFileRun
+function _load_profile(runtype::T, outputs, filepath; kwargs...) where T<:TomlFileRun
     soil = RepSoil()
     soil_layers = SoilLayerIndividual[]
 
     load_gvars_from_toml!(soil, filepath)
     load_gvars_from_toml!(soil_layers, filepath)
+    return soil, soil_layers
+end
+
+function _load_profile(runtype::T, outputs, filepath; kwargs...) where T<:NoFileRun
+    soil = RepSoil()
+    soil_layers = SoilLayerIndividual[]
+
+    set_soil!(soil, kwargs[:soil_type]; aux=getkey(kwargs, :soil, nothing))
+    set_soillayers!(soil_layers, kwargs[:soil_type]; aux=getkey(kwargs, :soil_layers, nothing))
     return soil, soil_layers
 end
 
@@ -1562,6 +1580,10 @@ function _get_project_type(runtype::T, theprojectfile) where T<:TomlFileRun
     return theprojecttype
 end
 
+function _get_project_type(runtype::T, theprojectfile) where T<:NoFileRun
+    return :typepro
+end
+
 """
     project_filenames = initialize_project_filename(outputs, filepaths; kwargs...)
 
@@ -1620,6 +1642,10 @@ function _initialize_project_filename(runtype::T, outputs, filepaths) where T<:T
     end
 end
 
+function _initialize_project_filename(runtype::T, outputs, filepaths) where T<:NoFileRun
+    return String[string(T)]
+end
+
 """
     filepaths = initialize_the_program(outputs, parentdir; kwargs...)
     
@@ -1666,6 +1692,10 @@ function _default_filepaths(runtype::T, parentdir) where T<:TomlFileRun
     :prog => parentdir)
 end
 
+function _default_filepaths(runtype::T, parentdir) where T<:NoFileRun
+    return Dict{Symbol, String}()
+end
+
 """
     resultsparameters = get_results_parameters(outputs, path::String; kwargs...)
 
@@ -1674,10 +1704,10 @@ gets all the results parameters in filepaths[:simul].
 startunit.f90:426
 """
 function get_results_parameters(outputs, path::String; kwargs...)
-    return _get_results_parameters(kwargs[:runtype], outputs, path)
+    return _get_results_parameters(kwargs[:runtype], outputs, path; kwargs...)
 end
 
-function _get_results_parameters(runtype::NormalFileRun, outputs, path::String)
+function _get_results_parameters(runtype::NormalFileRun, outputs, path::String; kwargs...)
     #startunit.f90:282
     aggregationresultsparameters = ParametersContainer(Int)
     filename_a = joinpath(path, "AggregationResults.SIM")
@@ -1759,7 +1789,11 @@ function _get_results_parameters(runtype::NormalFileRun, outputs, path::String)
                 :particularresults => particularresultsparameters)
 end
 
-function _get_results_parameters(runtype::T, outputs, path::String) where T<:TomlFileRun
+function _get_results_parameters(runtype::T, outputs, path::String; kwargs...) where T<:TomlFileRun
     filename = joinpath(path, "resultsparameters.toml")
     return load_resultsparameters_from_toml(filename) 
+end
+
+function _get_results_parameters(runtype::T, outputs, path::String; kwargs...) where T<:NoFileRun
+    return load_resultsparameters_from_vardict(;kwargs...)
 end
