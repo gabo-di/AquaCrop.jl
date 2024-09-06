@@ -54,7 +54,7 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
         testfile = joinpath(filepaths[:list], theprojectfile)
         if !isfile(testfile)
             all_ok.logi = false
-            all_ok.msg = "did not find the file " * theprojectfile
+            all_ok.msg = "did not find the projectfile " * theprojectfile
             canselect[1] = false
         end
     end

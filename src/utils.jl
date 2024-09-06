@@ -32,6 +32,10 @@ function determine_date(day_nr::Int)
     return dayi, monthi, yeari
 end
 
+function determine_date(day_nr::Float64)
+    return determine_date(Int(day_nr))
+end
+
 function determine_date(dd::Date)
     return day(dd), month(dd), year(dd)
 end

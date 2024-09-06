@@ -172,7 +172,7 @@ end
 runs a basic AquaCrop simulation, the outputs variable has the final dataframes
 with the results of the simulation
 
-runtype allowed for now is :Fortran or :Toml  
+runtype allowed for now is NormalFileRun or TomlFileRun  
 where :Fortran will use the input from a files like in AquaCrop Fortran
 and :Toml will use the input from TOML files (see AquaCrop.jl/test/testcase/TOML_FILES)`
 """
@@ -183,13 +183,13 @@ function basic_run(; kwargs...)
     if !all_ok.logi
         add_output_in_logger!(outputs, all_ok.msg)
         finalize_outputs!(outputs)
-        return outputs
+        return outputs 
     end
 
     parentdir = kwargs[:parentdir]
 
     start_the_program!(outputs, parentdir; kwargs...)
-    return outputs
+    return outputs 
 end
 
 """
@@ -221,8 +221,8 @@ function check_parentdir(outputs; kwargs...)
     all_ok = AllOk(true, "") 
     if !haskey(kwargs, :parentdir) 
         kwargs = merge(kwargs, Dict(:parentdir => pwd()))
-        add_output_in_logger!(outputs, "using default parentdir pwd() ")
-    elseif isdir(kwargs[:runtype]) 
+        add_output_in_logger!(outputs, "using default parentdir pwd()")
+    elseif isdir(kwargs[:parentdir]) 
         add_output_in_logger!(outputs, "using given parentdir")
     else 
         all_ok.logi = false
@@ -232,6 +232,12 @@ function check_parentdir(outputs; kwargs...)
     return kwargs, all_ok 
 end
 
+"""
+    kwargs, all_ok = check_nofilerun(outputs; kwargs...)
+
+checks if we have all the necessary keys for runtype = NoFileRun, 
+check if all_ok.logi == true
+"""
 function check_nofilerun(outputs; kwargs...)
     all_ok = AllOk(true, "") 
 
@@ -327,6 +333,7 @@ function start_cropfield(; kwargs...)
     nrrun = 1
 
     outputs = start_outputs()
+    add_output_in_logger!(outputs, "starting the cropfield")
     kwargs, all_ok = check_kwargs(outputs; kwargs...)
     if !all_ok.logi
         add_output_in_logger!(outputs, all_ok.msg)
@@ -383,6 +390,7 @@ function start_cropfield(; kwargs...)
         finalize_run2!(outputs, gvars, nrrun; kwargs...)
     end
 
+    add_output_in_logger!(outputs, "cropfield started")
     lvars = Dict()
     return AquaCropField(gvars, outputs, lvars), all_ok
 end
@@ -392,8 +400,19 @@ end
 
 setups the cropfield variables, check if all_ok.logi == true
 """
-function setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk=AllOk(true, ""); kwargs...)
+function setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
     nrrun = 1
+
+    add_output_in_logger!(cropfield.outputs, "settingup the cropfield")
+
+    kwargs, _all_ok = check_kwargs(cropfield.outputs; kwargs...)
+    if !_all_ok.logi
+        all_ok.logi = _all_ok.logi
+        all_ok.msg = _all_ok.msg
+        add_output_in_logger!(cropfield.outputs, all_ok.msg)
+        finalize_outputs!(cropfield.outputs)
+        return nothing
+    end
     
     try 
         initialize_run_part1!(cropfield.outputs, cropfield.gvars, nrrun; kwargs...)
@@ -406,7 +425,11 @@ function setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk=AllOk(true, ""
     end
      
     lvars = initialize_lvars()
-    cropfield.lvars = lvars
+    for key in keys(lvars)
+        cropfield.lvars[key] = lvars[key]
+    end
+
+    add_output_in_logger!(cropfield.outputs, "cropfield setted")
     return nothing 
 end
 

@@ -76,7 +76,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
             end
         end
         if gvars[:bool_parameters][:rain_file_exists]
-            read_rain_file!(gvars[:array_parameters], rain_file)
+            read_rain_file!(gvars[:array_parameters], rain_file; kwargs...)
         end
         load_clim!(gvars[:rain_record], _rain_file;
                    nrobs=length(gvars[:array_parameters][:Rain]),

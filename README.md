@@ -26,9 +26,12 @@ required input for a common AquaCrop Fortran run and call the `basic_run` functi
 ```julia
 using AquaCrop
 
+runtype = NormalFileRun()
 parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
 
-outputs = basic_run(parentdir)
+outputs = basic_run(; runtype=runtype, parentdir=parentdir)
+
+isequal(size(outputs[:dayout]), (892, 89)) # true
 ```
 
 you can see the daily result in `outputs[:dayout]` 
@@ -39,38 +42,51 @@ and the logger information in `outputs[:logger]`
 
 If you prefer to use TOML and csv files as input, you can choose to run like
 ```julia
-runtype = :Toml
-
+runtype = TomlFileRun()
 parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
 
-outputs = basic_run(parentdir, runtype)
+outputs = basic_run(; runtype=runtype, parentdir=parentdir)
+
+isequal(size(outputs[:dayout]), (892, 89)) # true
 ```
 
 
-## Advanced Run
+## Intermediate Run
 
-To initialize a crop field you have to provide the directory data 
+To start a crop field you have to provide the runtype and the directory data 
 
 ```julia
-runtype = :Toml
-
+runtype = TomlFileRun()
 parentdir = AquaCrop.test_toml_dir #".../AquaCrop/test/testcase/TOML_FILES"
 
-cropfield, all_ok = initialize_cropfield(;runtype=runtype, parentdir=parentdir)
+cropfield, all_ok = start_cropfield(;runtype=runtype, parentdir=parentdir)
 
 dump(all_ok)
 ```
+
 where `cropfield` is an struct of type `AquaCropField` with all the information of 
 the crop field, and `all_ok` tell us if the paramers have been loaded correctly 
 `all_ok.logi == true` or not `all_ok.logi == false`, in this case you can see 
 the error kind in `all_ok.msg`. (Note that we do not raise exceptions in case you
 want to inspect the `cropfield` variable, like `cropfield.outputs[:logger]`) 
 
+To setup a cropfield you have to provide the runtype 
+```julia
+setup_cropfield!(cropfield, all_ok; runtype=runtype)
+
+dump(all_ok)
+```
+
+
+
 To make a daily update you can use
 ```julia
-for _ in 1:30
+ndays = 30
+for _ in 1:ndays
     dailyupdate!(cropfield)
 end
+
+isequal(size(cropfield.dayout), (ndays, 89))
 cropfield.dayout
 ```
 
@@ -97,8 +113,12 @@ canopycover(cropfield)
 To harvest you can use
 ```julia
 harvest!(cropfield)
+
 cropfield.harvestsout
+
+isequal(size(cropfield.dayout), (ndays+1, 89))
 cropfield.dayout
+
 biomass(cropfield) # biomass is zero after a harvest day
 canopycover(cropfield) # canopy cover just before harvesting
 canopycover(cropfield, actual=false) # canopy cover just after harvesting
@@ -119,9 +139,17 @@ so we do not check for this automatically.
 To run until the end of the season you can use
 ```julia
 season_run!(cropfield)
+
+isequal(size(cropfield.dayout), (164, 89))
 cropfield.seasonout
 ```
 
+## Advanced Run
+
+The advanced run is still experimental, the idea is to:
+1. provide more control of the variables.
+1. not use files for faster upload of values.
+1. be easy to integrate with Persefone.jl or other julia libraries.
 
 We can also upload the default project like this
 ```julia
