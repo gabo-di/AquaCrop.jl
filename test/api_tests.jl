@@ -130,7 +130,3 @@ end
     @test isequal(size(cropfield.dayout), (164, 89))
 end
 
-# @testset "Start cropfield advanced" begin
-#
-#
-# end

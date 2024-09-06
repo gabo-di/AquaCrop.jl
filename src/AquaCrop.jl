@@ -36,6 +36,7 @@ export AquaCropField,
        dailyupdate!,
        season_run!,
        start_cropfield,
-       setup_cropfield!
+       setup_cropfield!,
+       change_climate_data!
 end
 

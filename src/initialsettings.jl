@@ -369,9 +369,11 @@ function initialize_settings(outputs, filepaths; kwargs...)
 
     # if usedefaultsoilfile  (this is always true)
     if typeof(kwargs[:runtype]) == NormalFileRun 
-        filename = joinpath(filepaths[:simul], "DEFAULT.SOL")
+        filename = joinpath([test_dir, "SIMUL", "DEFAULT.SOL"])
+        # filename = joinpath(filepaths[:simul], "DEFAULT.SOL")
     elseif typeof(kwargs[:runtype]) == TomlFileRun 
-        filename = joinpath(filepaths[:simul], "gvars.toml")
+        filename = joinpath( test_toml_dir, "gvars.toml")
+        # filename = joinpath(filepaths[:simul], "gvars.toml")
     elseif typeof(kwargs[:runtype]) == NoFileRun
         filename = string(kwargs[:runtype])
     end
@@ -1274,8 +1276,8 @@ function _load_profile(runtype::T, outputs, filepath; kwargs...) where T<:NoFile
     soil = RepSoil()
     soil_layers = SoilLayerIndividual[]
 
-    set_soil!(soil, kwargs[:soil_type]; aux=getkey(kwargs, :soil, nothing))
-    set_soillayers!(soil_layers, kwargs[:soil_type]; aux=getkey(kwargs, :soil_layers, nothing))
+    set_soil!(soil, kwargs[:soil_type]; aux = haskey(kwargs, :soil) ? kwargs[:soil] : nothing)
+    set_soillayers!(soil_layers, kwargs[:soil_type]; aux = haskey(kwargs, :soil_layers) ? kwargs[:soil_layers] : nothing)
     return soil, soil_layers
 end
 
@@ -1693,7 +1695,12 @@ function _default_filepaths(runtype::T, parentdir) where T<:TomlFileRun
 end
 
 function _default_filepaths(runtype::T, parentdir) where T<:NoFileRun
-    return Dict{Symbol, String}()
+    return Dict{Symbol, String}(
+    :outp => parentdir,
+    :simul => parentdir,
+    :list => parentdir,
+    :param => parentdir,
+    :prog => parentdir)
 end
 
 """

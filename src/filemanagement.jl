@@ -2197,6 +2197,27 @@ function set_gdd_variables_nextday!(gvars)
 end
 
 """
+    reset_gdd_variables!(gvars)
+"""
+function reset_gdd_variables!(gvars)
+    crop = gvars[:crop]
+    simulparam = gvars[:simulparam]
+    simulation = gvars[:simulation]
+    daynri = gvars[:integer_parameters][:daynri]
+    if daynri <= simulation.ToDayNr
+        gddayi = degrees_day(crop.Tbase, crop.Tupper, 
+                                gvars[:float_parameters][:tmin],
+                                gvars[:float_parameters][:tmax],
+                                simulparam.GDDMethod)
+        if daynri >= crop.Day1
+            simulation.SumGDD = simulation.SumGDD - gddayi
+            simulation.SumGDDfromDay1 = simulation.SumGDDfromDay1 - gddayi
+        end 
+    end 
+    return nothing
+end
+
+"""
     write_the_results!(outputs, anumber, day1, month1, year1, dayn, monthn, 
                            yearn, rper, etoper, gddper, irriper, infiltper, 
                            roper, drainper, crwper, eper, exper, trper, trwper, 

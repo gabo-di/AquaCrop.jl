@@ -243,7 +243,7 @@ function check_nofilerun(outputs; kwargs...)
 
     ## These are keys for starting the cropfield
     # project input
-    necessary_keys = [:Simulation_DayNr1, :Simulation_DayNrN, :Crop_Day1, :Crop_DayNrN]
+    necessary_keys = [:Simulation_DayNr1, :Simulation_DayNrN, :Crop_Day1, :Crop_DayN]
     for key in necessary_keys
         if !haskey(kwargs, key)
             all_ok.logi = false
@@ -265,7 +265,7 @@ function check_nofilerun(outputs; kwargs...)
         return kwargs, all_ok
     end
 
-    ## These are keys for making a setup of the cropfield althog soil_type also can be changed here
+    ## These are keys for making a setup of the cropfield althoug soil_type also can be changed here
     # crop
     crop_types = ["maize", "wheat", "cotton", "alfalfaGDD"]
     if !haskey(kwargs, :crop_type) 
@@ -433,4 +433,64 @@ function setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
     return nothing 
 end
 
+"""
+    change_climate_data!(cropfield::AquaCropField, climate_data::DataFrame; kwargs...)
+"""
+function change_climate_data!(cropfield::AquaCropField, climate_data::DataFrame; kwargs...)
+    gvars = cropfield.gvars
+    outputs = cropfield.outputs
 
+    # get current date
+    daynri_now = gvars[:integer_parameters][:daynri]
+    day_now, month_now, year_now = determine_date(daynri_now)
+    date_now = Date(year_now, month_now, day_now)
+
+    l_date = climate_data.Date[1] == date_now
+
+
+    # reset sumgdd if necessary
+    if l_date
+        reset_gdd_variables!(gvars)
+    end
+
+    # change the climate 
+    l_tmin = hasproperty(climate_data, :Tmin)
+    l_tmax = hasproperty(climate_data, :Tmax)
+    l_eto = hasproperty(climate_data, :ETo)
+    l_rain = hasproperty(climate_data, :Rain)
+    for row in eachrow(climate_data)
+        date = row.Date
+        day_i = determine_day_nr(date)
+        i = day_i - gvars[:simulation].FromDayNr + 1
+        
+        # temperature
+        if l_tmin & l_tmax
+            if length(outputs[:tempdatasim][:tlow]) > i 
+                outputs[:tempdatasim][:tlow][i] = row.Tmin
+                outputs[:tempdatasim][:thigh][i] = row.Tmax
+            end
+        end
+
+        # eto
+        if l_eto
+            if length(outputs[:etodatasim]) > i
+                outputs[:etodatasim][i] = row.ETo
+            end
+        end
+
+        # rain
+        if l_rain
+            if length(outputs[:raindatasim]) > i
+                outputs[:raindatasim][i] = row.Rain
+            end
+        end
+    end
+    
+    # set new climate for next day if necessary
+    if l_date
+        read_climate_nextday!(outputs, gvars)
+        set_gdd_variables_nextday!(gvars)
+    end
+
+    return nothing
+end

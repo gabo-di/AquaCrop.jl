@@ -57,6 +57,8 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
             all_ok.msg = "did not find the projectfile " * theprojectfile
             canselect[1] = false
         end
+    else
+        testfile = ""
     end
 
     if canselect[1]

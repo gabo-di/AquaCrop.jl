@@ -2614,7 +2614,7 @@ function determine_cci!(gvars, ccxtotal, ccototal, fracassim,
     stressleaf = gvars[:float_parameters][:stressleaf]
     stresssenescence = gvars[:float_parameters][:stresssenescence]
     timesenescence = gvars[:float_parameters][:timesenescence]
-    nomorecrop = gvars[:float_parameters][:nomorecrop]
+    nomorecrop = gvars[:bool_parameters][:nomorecrop]
     cciactual = gvars[:float_parameters][:cciactual]
     cciprev = gvars[:float_parameters][:cciprev]
     ccitopearlysen = gvars[:float_parameters][:ccitopearlysen]

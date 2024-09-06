@@ -11,6 +11,14 @@ function determine_day_nr(dayi, monthi, yeari)
     return trunc(Int, (yeari - 1901)*365.25 + ElapsedDays[monthi] + dayi + 0.05)
 end
 
+function determine_day_nr(dd::Date)
+    return determine_day_nr(day(dd), month(dd), year(dd))
+end
+
+function determine_day_nr(dd::String)
+    return determine_day_nr(Date(dd))
+end
+
 """
     dayi, monthi, yeari = determine_date(dar_nr)
 

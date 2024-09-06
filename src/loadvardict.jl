@@ -689,10 +689,10 @@ function load_projectinput_from_vardict(parentdir; kwargs...)
     projectinput.ParentDir = parentdir
     # 0. Year of cultivation and Simulation and Cropping period
     projectinput.Simulation_YearSeason = 1
-    projectinput.Simulation_DayNr1 = kwargs[:Simulation_DayNr1]
-    projectinput.Simulation_DayNrN = kwargs[:Simulation_DayNrN]
-    projectinput.Crop_Day1 = kwargs[:Crop_Day1]
-    projectinput.Crop_DayN = kwargs[:Crop_DayN]
+    projectinput.Simulation_DayNr1 = determine_day_nr(kwargs[:Simulation_DayNr1])
+    projectinput.Simulation_DayNrN = determine_day_nr(kwargs[:Simulation_DayNrN])
+    projectinput.Crop_Day1 = determine_day_nr(kwargs[:Crop_Day1])
+    projectinput.Crop_DayN = determine_day_nr(kwargs[:Crop_DayN])
 
     projectinput.Temperature_Filename = ""
     projectinput.ETo_Filename = ""
@@ -747,10 +747,9 @@ function load_resultsparameters_from_vardict(; kwargs...)
 end
 
 """
-    load_clim_from_vardict(;kwargs...)
+    set_clim_record!(record::RepClim; kwargs...)
 """
-function load_clim_from_vardict(; kwargs...)
-    record = RepClim()
+function set_clim_record!(record::RepClim; kwargs...)
 
     clim_symbol = Symbol(kwargs[:str])
     di, mi, yi = determine_date(kwargs[:InitialClimDate])
@@ -763,5 +762,5 @@ function load_clim_from_vardict(; kwargs...)
         actualize_with_dict!(record, kwargs[clim_symbol])
     end
 
-    return record
+    return nothing 
 end

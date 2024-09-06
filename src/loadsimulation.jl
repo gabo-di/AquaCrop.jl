@@ -21,6 +21,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
             temperature_file = _temperature_file[1:end-5]*".csv"
             setparameter!(gvars[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
         elseif typeof(kwargs[:runtype]) == NoFileRun
+            temperature_file = ""
             if haskey(kwargs, :Tmin) & haskey(kwargs, :Tmax)
                 setparameter!(gvars[:bool_parameters], :temperature_file_exists, true) 
             end
@@ -46,6 +47,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
             eto_file = _eto_file[1:end-5]*".csv"
             setparameter!(gvars[:bool_parameters], :eto_file_exists, isfile(eto_file))
         elseif typeof(kwargs[:runtype]) == NoFileRun
+            eto_file = ""
             if haskey(kwargs, :ETo) 
                 setparameter!(gvars[:bool_parameters], :eto_file_exists, true) 
             end
@@ -71,6 +73,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
             rain_file = _rain_file[1:end-5]*".csv"
             setparameter!(gvars[:bool_parameters], :rain_file_exists, isfile(rain_file))
         elseif typeof(kwargs[:runtype]) == NoFileRun
+            rain_file = ""
             if haskey(kwargs, :Rain) 
                 setparameter!(gvars[:bool_parameters], :rain_file_exists, true) 
             end
@@ -182,9 +185,9 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         prof_file = projectinput.Soil_Filename
     elseif projectinput.Soil_Filename=="(None)"
         if typeof(kwargs[:runtype]) == NormalFileRun 
-            prof_file = joinpath([projectinput.ParentDir, "SIMUL", "DEFAULT.SOL"])
+            prof_file = joinpath([test_dir, "SIMUL", "DEFAULT.SOL"])
         elseif typeof(kwargs[:runtype]) == TomlFileRun 
-            prof_file = joinpath( projectinput.ParentDir, "gvars.toml")
+            prof_file = joinpath( test_toml_dir, "gvars.toml")
         elseif typeof(kwargs[:runtype]) == NoFileRun
             prof_file = joinpath( projectinput.ParentDir, "")
         end
@@ -524,7 +527,7 @@ function _load_clim!(runtype::T, record::RepClim, clim_file; kwargs...) where T<
 end
 
 function _load_clim!(runtype::T, record::RepClim, clim_file; kwargs...) where T<:NoFileRun
-    record = load_clim_from_vardict(;kwargs...)
+    set_clim_record!(record; kwargs...)
     record.NrObs = kwargs[:nrobs]
     complete_climate_description!(record)
     return nothing
@@ -1153,8 +1156,8 @@ function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPe
 end 
 
 function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...) where T<:NoFileRun
-    set_crop!(crop, kwargs[:crop_type]; aux=getkey(kwargs, :crop, nothing))
-    set_perennial_period!(perennial_period, kwargs[:crop_type]; aux=getkey(kwargs, :perennial_period, nothing))
+    set_crop!(crop, kwargs[:crop_type]; aux = haskey(kwargs, :crop) ? kwargs[:crop] : nothing)
+    set_perennial_period!(perennial_period, kwargs[:crop_type]; aux = haskey(kwargs, :perennial_period) ? kwargs[:perennial_period] : nothing)
     return nothing
 end
 
