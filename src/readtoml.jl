@@ -1,80 +1,4 @@
 """
-    checkget_gvar_file(outputs, filename)
-
-we check if the file exists, if not we give the default file path
-"""
-function checkget_gvar_file(outputs, filename)
-    file_ = ""
-    if isfile(filename)
-        file_ = filename
-    else
-        add_output_in_logger!(outputs, "using default file for gvars")
-        file_ = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES/gvars.toml"])
-    end
-    return file_
-end
-        
-"""
-    checkget_resultsparameters_file(outputs, filename)
-
-we check if the file exists, if not we give the default file path
-"""
-function checkget_resultsparameters_file(outputs, filename)
-    file_ = ""
-    if isfile(filename)
-        file_ = filename
-    else
-        add_output_in_logger!(outputs, "using default file for resultsparameters")
-        file_ = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES/resultsparameters.toml"])
-    end
-    return file_
-end
-
-"""
-    checkget_projectfiles_file(outputs, filename)
-
-we check if the file exists, if not we give the default file path
-"""
-function checkget_projectfiles_file(outputs, filename)
-    file_ = ""
-    if isfile(filename)
-        file_ = filename
-    else
-        add_output_in_logger!(outputs, "using default file for project_filenames")
-        file_ = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES/projectfilenames.toml"])
-    end
-    return file_
-end
-
-"""
-    actualize_with_dict!(obj::T, aux::AbstractDict) where T<:AbstractParametersContainer
-"""
-function actualize_with_dict!(obj::T, aux::AbstractDict) where T<:AbstractParametersContainer
-    field_names = String.(fieldnames(T))
-    for key in keys(aux) 
-        if key in field_names
-            if typeof(aux[key]) <: AbstractDict
-                actualize_with_dict!( getfield(obj, Symbol(key)), aux[key])
-            else
-                setfield!(obj, Symbol(key), aux[key]) 
-            end
-        else
-            if !startswith(key, "aux_")
-                println("key "*key*" not found in type ", T)
-            end
-        end
-    end
-    return nothing
-end
-
-function actualize_with_dict!(obj::ParametersContainer{T}, aux::AbstractDict) where T
-    for key in keys(aux)
-        setparameter!(obj, Symbol(key), T(aux[key]))
-    end
-    return nothing
-end
-
-"""
     load_gvars_from_toml!(simulparam::RepParam, auxparfile; kwargs...)
 """
 function load_gvars_from_toml!(simulparam::RepParam, auxparfile; kwargs...)
@@ -278,6 +202,10 @@ end
 function load_gvars_from_toml!(perennial_period::RepPerennialPeriod, auxparfile; kwargs...)
     aux = TOML.parsefile(auxparfile)
 
+    if !haskey(aux, "perennial_period")
+        return nothing
+    end
+
     xx = aux["perennial_period"]["aux_GenerateOnset"]
     if xx==0
         aux["perennial_period"]["GenerateOnset"] = false
@@ -357,9 +285,10 @@ function load_resultsparameters_from_toml(auxparfile)
     particularresultsparameters = ParametersContainer(Bool)
     actualize_with_dict!(particularresultsparameters, aux["resultsparameters"]["particularresultsparameters"])
 
-    return ComponentArray(aggregationresults=aggregationresultsparameters,
-                dailyresults=dailyresultsparameters,
-                particularresults=particularresultsparameters)
+    return Dict{Symbol, AbstractParametersContainer}(
+                :aggregationresults => aggregationresultsparameters,
+                :dailyresults => dailyresultsparameters,
+                :particularresults => particularresultsparameters)
 end
 
 function load_projectfilenames_from_toml(auxparfile)

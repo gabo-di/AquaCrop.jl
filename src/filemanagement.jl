@@ -1,35 +1,13 @@
 """
-    file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun; kwargs...)
+    file_management!(outputs, gvars, nrrun; kwargs...)
 
 run.f90:7760
 """
-function file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun; kwargs...)
+function file_management!(outputs, gvars, nrrun; kwargs...)
     # we create these "lvars" because we need functions that 
     # returns nothing or does not change anything
-    float_parameters = ParametersContainer(Float64)
-    setparameter!(float_parameters, :wpi,  0.0) #here
-    setparameter!(float_parameters, :preirri,  0.0) #advance_one_time_step
-    setparameter!(float_parameters, :fracassim, 0.0) #advance_one_time_step
-    setparameter!(float_parameters, :ecinfilt, 0.0) #budget_module
-    setparameter!(float_parameters, :horizontalwaterflow, 0.0) #budget_module
-    setparameter!(float_parameters, :horizontalsaltflow, 0.0) #budget_module
-    setparameter!(float_parameters, :subdrain, 0.0) #budget_module
-    setparameter!(float_parameters, :infiltratedrain, 0.0) #budget_module
-    setparameter!(float_parameters, :infiltratedirrigation, 0.0) #budget_module
-    setparameter!(float_parameters, :infiltratedstorage, 0.0) #budget_module
-
-    integer_parameters = ParametersContainer(Int)
-    setparameter!(integer_parameters, :targettimeval, 0) #advance_one_time_step
-    setparameter!(integer_parameters, :targetdepthval, 0) #advance_one_time_step
-
-    bool_parameters = ParametersContainer(Bool)
-    setparameter!(bool_parameters, :harvestnow, false) #here
-
-    lvars = ComponentArray(
-        float_parameters = float_parameters,
-        bool_parameters = bool_parameters,
-        integer_parameters = integer_parameters
-    )
+    lvars = initialize_lvars()
+    projectinput = gvars[:projectinput][nrrun]
     repeattoday = gvars[:simulation].ToDayNr
 
     cont = 0
@@ -37,7 +15,7 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun;
     # MARK
     while loopi
         cont += 1
-        advance_one_time_step!(outputs, gvars, lvars, projectinput, nrrun)
+        advance_one_time_step!(outputs, gvars, lvars, projectinput.ParentDir, nrrun)
         read_climate_nextday!(outputs, gvars)
         set_gdd_variables_nextday!(gvars)
         if (gvars[:integer_parameters][:daynri] - 1) == repeattoday
@@ -48,11 +26,11 @@ function file_management!(outputs, gvars, projectinput::ProjectInputType, nrrun;
 end
 
 """
-    advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType, nrrun)
+    advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
 
 run.f90:6747
 """
-function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInputType, nrrun)
+function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
     # reset values since they are local variables
     setparameter!(lvars[:float_parameters], :preirri,  0.0)
     setparameter!(lvars[:float_parameters], :fracassim, 0.0)
@@ -77,7 +55,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
     # 4. Get depth and quality of the groundwater
     if !gvars[:simulparam].ConstGwt
         if gvars[:integer_parameters][:daynri] > gvars[:gwtable].DNr2
-            get_gwt_set!(gvars, projectinput.ParentDir, gvars[:integer_parameters][:daynri])
+            get_gwt_set!(gvars, parentdir, gvars[:integer_parameters][:daynri])
         end 
         get_z_and_ec_gwt!(gvars)
         if check_for_watertable_in_profile(gvars[:compartments], gvars[:integer_parameters][:ziaqua]/100)
@@ -377,7 +355,7 @@ function advance_one_time_step!(outputs, gvars, lvars, projectinput::ProjectInpu
             end 
             # Record harvest
             if gvars[:bool_parameters][:part1Mult]
-                  record_harvest!(outputs, gvars, nrcut + 1, dayinseason, nrrun)
+                record_harvest!(outputs, gvars, nrcut + 1, dayinseason, nrrun)
             end 
             # Reset
             setparameter!(gvars[:integer_parameters], :suminterval, 0)
@@ -2179,7 +2157,6 @@ function read_climate_nextday!(outputs, gvars)
         end
         if gvars[:bool_parameters][:temperature_file_exists]
             tmin, tmax = read_output_from_tempdatasim(outputs, i)
-            # tmin, tmax = read_output_from_tcropsim(outputs, i)
             setparameter!(gvars[:float_parameters], :tmin, tmin)
             setparameter!(gvars[:float_parameters], :tmax, tmax)
         else
@@ -2214,6 +2191,27 @@ function set_gdd_variables_nextday!(gvars)
         if daynri >= crop.Day1
             simulation.SumGDD = simulation.SumGDD + gddayi
             simulation.SumGDDfromDay1 = simulation.SumGDDfromDay1 + gddayi
+        end 
+    end 
+    return nothing
+end
+
+"""
+    reset_gdd_variables!(gvars)
+"""
+function reset_gdd_variables!(gvars)
+    crop = gvars[:crop]
+    simulparam = gvars[:simulparam]
+    simulation = gvars[:simulation]
+    daynri = gvars[:integer_parameters][:daynri]
+    if daynri <= simulation.ToDayNr
+        gddayi = degrees_day(crop.Tbase, crop.Tupper, 
+                                gvars[:float_parameters][:tmin],
+                                gvars[:float_parameters][:tmax],
+                                simulparam.GDDMethod)
+        if daynri >= crop.Day1
+            simulation.SumGDD = simulation.SumGDD - gddayi
+            simulation.SumGDDfromDay1 = simulation.SumGDDfromDay1 - gddayi
         end 
     end 
     return nothing
@@ -2801,4 +2799,38 @@ function swcz_soil(gvars)
         end
     end
     return swcact
+end
+
+"""
+    initialize_lvars()
+"""
+function initialize_lvars()
+    # we create these "lvars" because we need functions that 
+    # returns nothing or does not change anything
+    float_parameters = ParametersContainer(Float64)
+    setparameter!(float_parameters, :wpi,  0.0) #here
+    setparameter!(float_parameters, :preirri,  0.0) #advance_one_time_step
+    setparameter!(float_parameters, :fracassim, 0.0) #advance_one_time_step
+    setparameter!(float_parameters, :ecinfilt, 0.0) #budget_module
+    setparameter!(float_parameters, :horizontalwaterflow, 0.0) #budget_module
+    setparameter!(float_parameters, :horizontalsaltflow, 0.0) #budget_module
+    setparameter!(float_parameters, :subdrain, 0.0) #budget_module
+    setparameter!(float_parameters, :infiltratedrain, 0.0) #budget_module
+    setparameter!(float_parameters, :infiltratedirrigation, 0.0) #budget_module
+    setparameter!(float_parameters, :infiltratedstorage, 0.0) #budget_module
+
+    integer_parameters = ParametersContainer(Int)
+    setparameter!(integer_parameters, :targettimeval, 0) #advance_one_time_step
+    setparameter!(integer_parameters, :targetdepthval, 0) #advance_one_time_step
+
+    bool_parameters = ParametersContainer(Bool)
+    setparameter!(bool_parameters, :harvestnow, false) #here
+
+
+    lvars = Dict{Symbol, AbstractParametersContainer}(
+        :float_parameters => float_parameters,
+        :bool_parameters => bool_parameters,
+        :integer_parameters => integer_parameters
+    )
+    return lvars
 end

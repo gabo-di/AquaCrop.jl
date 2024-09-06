@@ -1,9 +1,9 @@
 """
-    initialize_climate!(outputs, gvars; kwargs...)
+    initialize_climate!(outputs, gvars, nrrun; kwargs...)
 
 run.f90:5006
 """
-function initialize_climate!(outputs, gvars; kwargs...)
+function initialize_climate!(outputs, gvars, nrrun; kwargs...)
     # Creates the Climate SIM files and reads climate of first day
     # but in julia we save that things in outputs variable
 
@@ -912,13 +912,11 @@ function open_climfiles_and_get_data_firstday!(outputs, gvars; kwargs...)
         if firstdaynr == simulation.FromDayNr
             i = 1
             tlow, thigh = read_output_from_tempdatasim(outputs, i) 
-            # tlow, thigh = read_output_from_tcropsim(outputs, i)
             setparameter!(gvars[:float_parameters], :tmin, tlow)
             setparameter!(gvars[:float_parameters], :tmax, thigh)
         else
             i = firstdaynr - simulation.FromDayNr + 1
             tlow, thigh = read_output_from_tempdatasim(outputs, i) 
-            # tlow, thigh = read_output_from_tcropsim(outputs, i)
             setparameter!(gvars[:float_parameters], :tmin, tlow)
             setparameter!(gvars[:float_parameters], :tmax, thigh)
         end
@@ -930,19 +928,19 @@ function open_climfiles_and_get_data_firstday!(outputs, gvars; kwargs...)
 end
 
 """
-    initialize_run_part2!(outputs, gvars, projectinput::ProjectInputType, nrun; kwargs...)
+    initialize_run_part2!(outputs, gvars, nrrun; kwargs...)
 
 run.f90:6672
 """
-function initialize_run_part2!(outputs, gvars, projectinput::ProjectInputType, nrun; kwargs...)
+function initialize_run_part2!(outputs, gvars, nrrun; kwargs...)
     # Part2 (after reading the climate) of the run initialization
     # Calls InitializeSimulationRunPart2
     # Initializes write out for the run
-
+    projectinput = gvars[:projectinput][nrrun]
     initialize_simulation_run_part2!(outputs, gvars, projectinput; kwargs...)
 
     if gvars[:bool_parameters][:part1Mult]
-        write_title_part1_mult_results!(outputs, gvars, nrun)
+        write_title_part1_mult_results!(outputs, gvars, nrrun)
     end 
 
 
@@ -1737,10 +1735,13 @@ run.f90:5937
 """
 function open_harvest_info!(gvars, path; kwargs...)
     if gvars[:string_parameters][:man_file] != "(None)"
-        if typeof(kwargs[:runtype]) == FortranRun
+        if typeof(kwargs[:runtype]) == NormalFileRun 
             man_file = gvars[:string_parameters][:man_file]
-        else
+        elseif typeof(kwargs[:runtype]) == TomlFileRun 
             man_file = gvars[:string_parameters][:man_file][1:end-5] * ".csv"
+        elseif typeof(kwargs[:runtype]) == NoFileRun 
+            # early return for now
+            return nothing
         end
     else
         man_file = joinpath(path, "Cuttings.AqC")

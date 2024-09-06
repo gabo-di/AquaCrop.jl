@@ -6,11 +6,11 @@ include("checkpoints.jl")
 @testset "Advance one time step" begin
     # break run.f90:7772
     
-    kwargs = (runtype = AquaCrop.FortranRun(), )
+    kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
-    outputs, gvars, projectinput = checkpoint5()
+    outputs, gvars = checkpoint5()
 
-    outputs_0, gvars_0, _ = checkpoint6()
+    outputs_0, gvars_0 = checkpoint6()
 
     i = 1
     float_parameters = AquaCrop.ParametersContainer(Float64)
@@ -32,13 +32,13 @@ include("checkpoints.jl")
     bool_parameters = AquaCrop.ParametersContainer(Bool)
     AquaCrop.setparameter!(bool_parameters, :harvestnow, false) #here
 
-    lvars = ComponentArray(
-        float_parameters = float_parameters,
-        bool_parameters = bool_parameters,
-        integer_parameters = integer_parameters
+    lvars = Dict{Symbol, AquaCrop.AbstractParametersContainer}(
+        :float_parameters => float_parameters,
+        :bool_parameters => bool_parameters,
+        :integer_parameters => integer_parameters
     )
     repeattoday = gvars[:simulation].ToDayNr
-    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i], i)
+    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, gvars[:projectinput][i].ParentDir, i)
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
@@ -69,11 +69,11 @@ end
 @testset "Advance 24 time steps" begin
     # break run.f90:7772
     
-    kwargs = (runtype = AquaCrop.FortranRun(), )
+    kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
-    outputs, gvars, projectinput = checkpoint5()
+    outputs, gvars = checkpoint5()
 
-    outputs_0, gvars_0, _ = checkpoint7()
+    outputs_0, gvars_0 = checkpoint7()
 
     i = 1
     float_parameters = AquaCrop.ParametersContainer(Float64)
@@ -95,20 +95,20 @@ end
     bool_parameters = AquaCrop.ParametersContainer(Bool)
     AquaCrop.setparameter!(bool_parameters, :harvestnow, false) #here
 
-    lvars = ComponentArray(
-        float_parameters = float_parameters,
-        bool_parameters = bool_parameters,
-        integer_parameters = integer_parameters
+    lvars = Dict{Symbol, AquaCrop.AbstractParametersContainer}(
+        :float_parameters => float_parameters,
+        :bool_parameters => bool_parameters,
+        :integer_parameters => integer_parameters
     )
     repeattoday = gvars[:simulation].ToDayNr
 
     n = 24
     for _ in 1:(n-1)
-        AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i], i)
+        AquaCrop.advance_one_time_step!(outputs, gvars, lvars, gvars[:projectinput][i].ParentDir, i)
         AquaCrop.read_climate_nextday!(outputs, gvars)
         AquaCrop.set_gdd_variables_nextday!(gvars)
     end
-    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i], i)
+    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, gvars[:projectinput][i].ParentDir, i)
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
@@ -139,11 +139,11 @@ end
 @testset "Advance 120 time steps" begin
     # break run.f90:7772
     
-    kwargs = (runtype = AquaCrop.FortranRun(), )
+    kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
-    outputs, gvars, projectinput = checkpoint5()
+    outputs, gvars = checkpoint5()
 
-    outputs_0, gvars_0, _ = checkpoint8()
+    outputs_0, gvars_0 = checkpoint8()
 
     i = 1
     float_parameters = AquaCrop.ParametersContainer(Float64)
@@ -165,20 +165,20 @@ end
     bool_parameters = AquaCrop.ParametersContainer(Bool)
     AquaCrop.setparameter!(bool_parameters, :harvestnow, false) #here
 
-    lvars = ComponentArray(
-        float_parameters = float_parameters,
-        bool_parameters = bool_parameters,
-        integer_parameters = integer_parameters
+    lvars = Dict{Symbol, AquaCrop.AbstractParametersContainer}(
+        :float_parameters => float_parameters,
+        :bool_parameters => bool_parameters,
+        :integer_parameters => integer_parameters
     )
     repeattoday = gvars[:simulation].ToDayNr
 
     n = 120
     for _ in 1:(n-1)
-        AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i], i)
+        AquaCrop.advance_one_time_step!(outputs, gvars, lvars, gvars[:projectinput][i].ParentDir, i)
         AquaCrop.read_climate_nextday!(outputs, gvars)
         AquaCrop.set_gdd_variables_nextday!(gvars)
     end
-    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, projectinput[i], i)
+    AquaCrop.advance_one_time_step!(outputs, gvars, lvars, gvars[:projectinput][i].ParentDir, i)
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
@@ -209,14 +209,14 @@ end
 @testset "Filemanagement Complete" begin
     # break run.f90:7800
 
-    kwargs = (runtype = AquaCrop.FortranRun(), )
+    kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
-    outputs, gvars, projectinput = checkpoint5()
+    outputs, gvars = checkpoint5()
 
-    outputs_0, gvars_0, _ = checkpoint9()
+    outputs_0, gvars_0 = checkpoint9()
 
     i = 1
-    AquaCrop.file_management!(outputs, gvars, projectinput[i], i; kwargs...)
+    AquaCrop.file_management!(outputs, gvars, i; kwargs...)
 
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])

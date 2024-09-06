@@ -33,9 +33,21 @@ const NameMonth = ["January", "February", "March", "April", "May", "June",
 abstract type AbstractInfo end
 abstract type AbstractRunType <: AbstractInfo end
 
-struct FortranRun <: AbstractRunType end
-struct JuliaRun <: AbstractRunType end
-struct PersefoneRun <: AbstractRunType end
+struct NormalFileRun <: AbstractRunType end
+struct TomlFileRun <: AbstractRunType end
+struct NoFileRun <: AbstractRunType end
+
+abstract type AbstractAllOk <: AbstractInfo end
+
+"""
+    all_ok = AllOk(logi::Bool, msg::String)
+
+has information if the simulation is going well
+"""
+mutable struct AllOk <: AbstractAllOk
+    logi::Bool
+    msg::String
+end
 
 """
     AbstractParametersContainer

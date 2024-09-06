@@ -7,9 +7,9 @@ include("checkpoints.jl")
     parentdir = pwd()*"/testcase/TOML_FILES"
     outputs = AquaCrop.start_outputs()
 
-    kwargs = (runtype = AquaCrop.JuliaRun(),)
+    kwargs = (runtype = AquaCrop.TomlFileRun(),)
 
-    outputs_0, gvars_0, _ = checkpoint4()
+    outputs_0, gvars_0 = checkpoint4()
 
 
     filepaths  = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...) 
@@ -18,8 +18,8 @@ include("checkpoints.jl")
     i = 1
     theprojectfile = project_filenames[i]
     theprojecttype = AquaCrop.get_project_type(theprojectfile; kwargs...)
-    gvars, projectinput, fileok = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
-    AquaCrop.initialize_run_part1!(outputs, gvars, projectinput[i]; kwargs...)
+    gvars, allok = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
+    AquaCrop.initialize_run_part1!(outputs, gvars, i; kwargs...)
 
 
     @test isapprox(gvars[:simulparam], gvars_0[:simulparam])

@@ -11,12 +11,20 @@ function determine_day_nr(dayi, monthi, yeari)
     return trunc(Int, (yeari - 1901)*365.25 + ElapsedDays[monthi] + dayi + 0.05)
 end
 
+function determine_day_nr(dd::Date)
+    return determine_day_nr(day(dd), month(dd), year(dd))
+end
+
+function determine_day_nr(dd::String)
+    return determine_day_nr(Date(dd))
+end
+
 """
     dayi, monthi, yeari = determine_date(dar_nr)
 
 global.f90:2397
 """
-function determine_date(day_nr)
+function determine_date(day_nr::Int)
     yeari = trunc(Int, (day_nr-0.05)/365.25)
     sum_day_month = (day_nr - yeari*365.25)
     yeari = 1901 + yeari
@@ -30,6 +38,18 @@ function determine_date(day_nr)
     end 
     dayi = round(Int, sum_day_month - ElapsedDays[monthi] + 0.25 + 0.06)
     return dayi, monthi, yeari
+end
+
+function determine_date(day_nr::Float64)
+    return determine_date(Int(day_nr))
+end
+
+function determine_date(dd::Date)
+    return day(dd), month(dd), year(dd)
+end
+
+function determine_date(dd::String)
+    return determine_date(Date(dd))
 end
 
 """
@@ -67,3 +87,7 @@ const dS_ = Unit{:Siemens, 𝐈^2*𝐓^3*𝐋^-2*𝐌^-1}(-1, 1//1)
 const kg_ = Unit{:Gram, 𝐌}(3, 1//1)
 const g_ = Unit{:Gram, 𝐌}(0, 1//1)
 const ton_ = Unit{:ton, 𝐌}(0, 1//1)
+
+
+const test_toml_dir = joinpath([dirname(@__DIR__), "test/testcase/TOML_FILES"])
+const test_dir = joinpath([dirname(@__DIR__), "test/testcase"])

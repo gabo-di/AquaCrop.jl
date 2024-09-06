@@ -11,3 +11,7 @@ using SafeTestsets
 @safetestset "Filemanagement" begin include("filemanagement_tests.jl") end
 
 @safetestset "Other Runs" begin include("other_runs_tests.jl") end
+
+@safetestset "API" begin include("api_tests.jl") end
+
+@safetestset "API advanced" begin include("api_advanced_tests.jl") end
