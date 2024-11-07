@@ -1,7 +1,7 @@
 name = "AquaCrop"
 uuid = "8f16cebd-c0b4-44a3-857f-c101f083256c"
 authors = ["Gabriel Diaz <gabriel.diaz.iturry@gmail.com>"]
-version = "0.0.1-DEV"
+version = "0.1.0-DEV"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -14,6 +14,8 @@ Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
 Infiltrator = "1"
 TOML = "1"
 julia = "1.9"
+Unitful = "1"
+DataFrames = "1"
 
 [extras]
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"

@@ -11,4 +11,5 @@ Documentation for [AquaCrop](https://github.com/gabo-di/AquaCrop.jl).
 
 ```@autodocs
 Modules = [AquaCrop]
+Files = ["src/api.jl"]
 ```
