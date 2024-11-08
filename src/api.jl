@@ -32,6 +32,14 @@ function Base.getproperty(b::AquaCropField, s::Symbol)
     end
 end
 
+function Base.propertynames(b::AquaCropField, private::Bool=false)
+    # TODO: private is currently ignored
+    return tuple(union(
+        fieldnames(AquaCropField),
+        keys(getfield(b, :outputs)),
+        keys(getfield(b, :gvars))
+    )...)
+end
 
 """
     dailyupdate!(cropfield::AquaCropField)
