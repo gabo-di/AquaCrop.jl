@@ -1,7 +1,7 @@
 # AquaCrop.jl
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gabo-di.github.io/AquaCrop/stable/)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gabo-di.github.io/AquaCrop/dev/)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gabo-di.github.io/AquaCrop.jl/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gabo-di.github.io/AquaCrop.jl/dev/)
 [![Build Status](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
 Welcome to `AquaCrop.jl`! This package is a julia implementation of FAO's [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/), 
@@ -27,7 +27,7 @@ required input for a common AquaCrop Fortran run and call the `basic_run` functi
 using AquaCrop
 
 runtype = NormalFileRun()
-parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
+parentdir = AquaCrop.test_dir  #".../AquaCrop.jl/test/testcase"
 
 outputs = basic_run(; runtype=runtype, parentdir=parentdir)
 
@@ -43,7 +43,7 @@ and the logger information in `outputs[:logger]`
 If you prefer to use TOML and csv files as input, you can choose to run like
 ```julia
 runtype = TomlFileRun()
-parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
+parentdir = AquaCrop.test_toml_dir  #".../AquaCrop.jl/test/testcase/TOML_FILES"
 
 outputs = basic_run(; runtype=runtype, parentdir=parentdir)
 
@@ -107,7 +107,7 @@ To get the amount of fresh yield in `ton/ha` you can use
 freshyield(cropfield)
 ```
 
-To get the canopy cover in % of terrain you can use
+To get the canopy cover in % of terrain covered by the crop you can use
 ```julia
 canopycover(cropfield)
 ```
@@ -125,18 +125,16 @@ biomass(cropfield) # biomass is zero after a harvest day
 canopycover(cropfield) # canopy cover just before harvesting
 canopycover(cropfield, actual=false) # canopy cover just after harvesting
 ```
-note that now we have two days, the function `harvest!` also makes a `dailyupdate!`
+note that now we have two days, the function `harvest!` also makes a `dailyupdate!`, 
+and the harvesting is done at the end of the day, that is why we have two values of 
+canopy cover
 
 If we make another daily update the canopy cover is actualized
 ```julia
 dailyupdate!(cropfield)
 canopycover(cropfield) 
-canopycover(cropfield, actual=false) 
+canopycover(cropfield, actual=false) # since it was not a harvesting day it does not matter if we set `actual=false`
 ```
-to make more physical sense, the function `harvest!`  should work only if 
-`canopycover(cropfield) > cropfield.management.Cuttings.CCcut`,
-note that this behaviour is not considered in the orignal AquaCrop code, 
-so we do not check for this automatically.
 
 To run until the end of the season you can use
 ```julia
@@ -149,9 +147,9 @@ cropfield.seasonout
 ## Advanced Run
 
 The advanced run is still experimental, the idea is to:
-1. provide more control of the variables.
-1. not use files for faster upload of values.
-1. be easy to integrate with Persefone.jl or other julia libraries.
+1. Provide more control of the variables.
+1. Not use files for faster upload of values.
+1. To be easy to integrate with [Persefone.jl](https://persefone-model.eu) and other julia libraries.
 
 We can also upload the default project like this
 ```julia

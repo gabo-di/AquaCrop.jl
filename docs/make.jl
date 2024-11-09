@@ -14,8 +14,15 @@ makedocs(;
         size_threshold = 512_000, #500 KiB in bytes
     ),
     pages=[
-        "Home" => "index.md",
+        "index.md",
+        "Getting Started" => "gettingstarted.md",
+        "User Guide" => "userguide.md",
+        "API" => "api.md",
+        "License" => "license.md"
     ],
+    checkdocs = :export,
+    doctest = true, #note that in the github action workflow we set manual=false
+    warnonly = true
 )
 
 deploydocs(;
