@@ -516,5 +516,3 @@ isequal(size(cropfield.dayout), (total_days, 89))
 # output
 true
 ```
-
-

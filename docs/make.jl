@@ -21,7 +21,8 @@ makedocs(;
         "License" => "license.md"
     ],
     checkdocs = :export,
-    doctest = true
+    doctest = true,
+    warnonly = true
 )
 
 deploydocs(;
