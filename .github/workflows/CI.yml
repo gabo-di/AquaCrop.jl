@@ -68,4 +68,4 @@ jobs:
           using Documenter: DocMeta, doctest
           using AquaCrop
           DocMeta.setdocmeta!(AquaCrop, :DocTestSetup, :(using AquaCrop); recursive=true)
-          doctest(AquaCrop)
+          doctest(AquaCrop; manual=false)

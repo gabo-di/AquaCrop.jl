@@ -21,7 +21,7 @@ makedocs(;
         "License" => "license.md"
     ],
     checkdocs = :export,
-    # doctest = true
+    doctest = true, #note that in the github action workflow we set manual=false
     warnonly = true
 )
 
