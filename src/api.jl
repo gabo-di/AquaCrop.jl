@@ -2,13 +2,23 @@ abstract type AbstractCropField end
 
 
 """
-    FieldAquaCrop
+   AquaCropField 
 
-Has all the data for the simulation of AquaCrop
-"""
+Has all the data for the simulation of a `cropfield::AquaCropField` variable
+stored in dictionaries.
+
+Initialize an object of this type using the function
+[`start_cropfield`](@ref) or making a `deepcopy` of another
+`cropfield`.
+
+See also [`start_cropfield`](@ref)
+""" 
 struct AquaCropField <: AbstractCropField
+    "global variables"
     gvars::Dict
+    "outputs variables"
     outputs::Dict
+    "local variables"
     lvars::Dict
 end
 
@@ -36,11 +46,10 @@ end
 """
     dailyupdate!(cropfield::AquaCropField)
 
-Updates the AquaCropField by one day
+Updates the `cropfield` by one day
 """
 function dailyupdate!(cropfield::AquaCropField)
     nrrun = 1
-
 
     repeattoday = cropfield.gvars[:simulation].ToDayNr
     if (cropfield.gvars[:integer_parameters][:daynri]) <= repeattoday
@@ -55,7 +64,7 @@ end
 """
     season_run!(cropfield::AquaCropField)
 
-Updates the AquaCropField for all days in season 1
+Updates the `cropfield` for all days in the current season
 """
 function season_run!(cropfield::AquaCropField)
     nrrun = 1
@@ -77,7 +86,8 @@ end
 """
     harvest!(cropfield::AquaCropField)
 
-does a daily update with harvest
+Indicates to make a harvest on the `cropfield` 
+it also makes a daily update along with the harvest
 """
 function harvest!(cropfield::AquaCropField)
     gvars = cropfield.gvars
@@ -116,7 +126,7 @@ end
 """
     biomass = biomass(cropfield::AquaCropField)
 
-biomass in ton/ha
+Returns the biomass of the `cropfield` with units `ton/ha`
 """
 function biomass(cropfield::AquaCropField)
     gvars = cropfield.gvars
@@ -127,7 +137,7 @@ end
 """
     dryyield = dryyield(cropfield::AquaCropField)
 
-dryyield in ton/ha
+Returns the dry yield of the `cropfield` with units `ton/ha`
 """
 function dryyield(cropfield::AquaCropField)
     gvars = cropfield.gvars
@@ -138,7 +148,7 @@ end
 """
     freshyield = freshyield(cropfield::AquaCropField)
 
-freshyield in ton/ha
+Returns the fresh yield of the `cropfield` with units `ton/ha`
 """
 function freshyield(cropfield::AquaCropField)
     gvars = cropfield.gvars
@@ -154,7 +164,12 @@ end
 """
     canopycover(cropfield::AquaCropField; actual=true)
 
-canopy cover in % of terrain, 
+Returns the canopy cover of the `cropfield` in percentage of terrain covered.
+
+If `actual=true`, returns the canopy cover just before harvesting
+otherwise returns the canopy cover just after harvesting
+
+The harvesting is done at the end of the day.
 """
 function canopycover(cropfield::AquaCropField; actual=true)
     gvars = cropfield.gvars
@@ -169,14 +184,21 @@ end
 """
     outputs = basic_run(; kwargs...)
 
-runs a basic AquaCrop simulation, the outputs variable has the final dataframes
+Runs a basic AquaCrop simulation, the `outputs` variable has the final dataframes
 with the results of the simulation
 
-runtype allowed for now is NormalFileRun or TomlFileRun  
-where :Fortran will use the input from a files like in AquaCrop Fortran
-and :Toml will use the input from TOML files (see AquaCrop.jl/test/testcase/TOML_FILES)`
-"""
+`runtype` allowed for now is `NormalFileRun` or `TomlFileRun` 
 
+`NormalFileRun` will use the input from a files like in AquaCrop Fortran (see AquaCrop.jl/test/testcase)
+
+`TomlFileRun` will use the input from TOML files (see AquaCrop.jl/test/testcase/TOML_FILES)`
+
+you can see the daily result in `outputs[:dayout]` 
+the result of each harvest in `outputs[:harvestsout]`
+the result of the whole season in `outputs[:seasonout]`
+the information for the evaluation in `outputs[:evaldataout]`
+and the logger information in `outputs[:logger]`
+"""
 function basic_run(; kwargs...) 
     outputs = start_outputs()
     kwargs, all_ok = check_kwargs(outputs; kwargs...)
@@ -195,7 +217,18 @@ end
 """
     kwargs, all_ok = check_runtype(outputs; kwargs...)
 
-initializes the kwargs with the proper runtype, check if all_ok.logi == true 
+If we do not have a `kwarg` for `:runtype` it sets it to `NormalFileRun`
+if we do have that `kwarg`, than checks if it is an `AbstractRunType`.
+
+After calling this function check if `all_ok.logi == true`
+        
+## Examples
+```jldoctest
+julia> kwargs, all_ok = AquaCrop.check_runtype(Dict(:logger => String[]); runtype = TomlFileRun());
+
+julia> all_ok.logi == true
+true
+```
 """
 function check_runtype(outputs; kwargs...)
     all_ok = AllOk(true, "") 
@@ -215,7 +248,18 @@ end
 """
     kwargs, all_ok = check_parentdir(outputs; kwargs...)
 
-initializes the kwargs with the proper parentdir, check if all_ok.logi == true 
+If we do not have a `kwarg` for `parentdir` it sets it to `pwd()`
+if we do have that `kwarg`, than checks if that directory existis. 
+
+After calling this function check if `all_ok.logi == true`
+
+## Examples
+```jldoctest
+julia> kwargs, all_ok = AquaCrop.check_parentdir(Dict(:logger => String[]); parentdir=pwd());
+
+julia> all_ok.logi == true
+true
+```
 """
 function check_parentdir(outputs; kwargs...)
     all_ok = AllOk(true, "") 
@@ -236,7 +280,44 @@ end
     kwargs, all_ok = check_nofilerun(outputs; kwargs...)
 
 checks if we have all the necessary keys for runtype = NoFileRun, 
-check if all_ok.logi == true
+In case we select a `runtype = NoFileRun()` then checks that we have all
+the necessary `kwargs`, these are:
+
+For the project input we have the following
+necessary keys `Simulation_DayNr1`, `Simulation_DayNrN`, `Crop_Day1`, `Crop_DayN`, `InitialClimDate`
+each one of them must be a `Date` type.
+
+
+The `soil_type` must be one of these strings indicating the soil type
+`["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay"]`
+
+The `crop_type` must be one of these  strings indicating the crop type
+`["maize", "wheat", "cotton", "alfalfaGDD"]`
+
+We also have the optional keys
+`[:co2i, :crop, :perennial_period, :soil, :soil_layers, :simulparam,
+:Tmin, :Tmax, :ETo, :Rain, :temperature_record, :eto_record, :rain_record,
+:management (with this we need to change projectinput.Management_Filename too)]`
+which give more control when configurating the `cropfield::AquaCropField`,
+similarly to using `NormalFileRun` or `TomlFileRun`.
+
+After calling this function check if `all_ok.logi == true`
+
+## Examples
+```jldoctest
+julia> using Dates
+
+julia> start_date = Date(2023, 1, 1); # January 1 2023
+
+julia> end_date = Date(2023, 6, 1); # June 1 2023
+
+julia> kwargs = (runtype = NoFileRun(), Simulation_DayNr1 = start_date, Simulation_DayNrN = end_date, Crop_Day1 = start_date, Crop_DayN = end_date, soil_type = "clay", crop_type = "maize", InitialClimDate = start_date);
+
+julia> kwargs, all_ok = AquaCrop.check_nofilerun(Dict(:logger => String[]); kwargs...);
+
+julia> all_ok.logi == true
+true
+```
 """
 function check_nofilerun(outputs; kwargs...)
     all_ok = AllOk(true, "") 
@@ -295,9 +376,21 @@ end
 
 
 """
-    check_kwargs(outputs; kwargs...)    
+    kwargs, all_ok = check_kwargs(outputs; kwargs...)    
 
-chekcs the necessary kwargs, check if all_ok == true
+Runs all the necessary checks on the `kwargs`.
+
+After calling this function check if `all_ok.logi == true`
+
+See also [`check_runtype`](@ref), [`check_parentdir`](@ref), [`check_nofilerun`](@ref)
+
+## Examples
+```jldoctest
+julia> kwargs, all_ok = AquaCrop.check_kwargs(Dict(:logger => String[]); runtype=TomlFileRun(), parentdir=pwd());
+
+julia> all_ok.logi == true
+true
+```
 """
 function check_kwargs(outputs; kwargs...)
     kwargs, all_ok = check_runtype(outputs; kwargs...)
@@ -324,7 +417,17 @@ end
 """
     cropfield, all_ok = start_cropfield(; kwargs...)
 
-starts the crop with the proper runtype, check if all_ok.logi == true 
+Starts the `cropfield::AquaCropField` with the proper runtype. 
+it uses default values for `runtype` and `parentdir` if these
+`kwargs` are missing.
+
+It returns a `cropfield` with default values for crop, soil, etc.
+You need to call the function [`setup_cropfield!`](@ref) to actually
+load the values that you want for these variables.
+
+After calling this function check if `all_ok.logi == true`
+
+See also [`setup_cropfield!`](@ref)
 """
 function start_cropfield(; kwargs...)
     # this variables are here in case later we want to give more control in the season (nrrun)
@@ -398,7 +501,12 @@ end
 """
     setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
 
-setups the cropfield variables, check if all_ok.logi == true
+Setups the `cropfield` variable,  and reads the configuration files 
+with information about the climate.
+
+After calling this function check if `all_ok.logi == true`
+
+See also [`start_cropfield`](@ref)
 """
 function setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
     nrrun = 1
@@ -435,8 +543,25 @@ end
 
 """
     change_climate_data!(cropfield::AquaCropField, climate_data::DataFrame; kwargs...)
+
+Changes the climate data in the `cropfield` using the data in `climate_data`.
+
+Note that `climate_data` must have a column
+with `:Date` property, other wise we do not change anything.
+The function assumes that `:Date` goes day by day.
+
+`climate_data` must also have one of the following climate properties
+`[:Tmin, :Tmax, :ETo, :Rain]`.
 """
 function change_climate_data!(cropfield::AquaCropField, climate_data::DataFrame; kwargs...)
+    # check if have the :Date column in climate_data
+    if !hasproperty(climate_data, :Date)
+        # Silent early return
+        add_output_in_logger!(cropfield.outputs, "Did not find :Date on climate_data")
+        return nothing
+    end
+
+    # Go on
     gvars = cropfield.gvars
     outputs = cropfield.outputs
 
@@ -458,30 +583,33 @@ function change_climate_data!(cropfield::AquaCropField, climate_data::DataFrame;
     l_tmax = hasproperty(climate_data, :Tmax)
     l_eto = hasproperty(climate_data, :ETo)
     l_rain = hasproperty(climate_data, :Rain)
-    for row in eachrow(climate_data)
-        date = row.Date
-        day_i = determine_day_nr(date)
-        i = day_i - gvars[:simulation].FromDayNr + 1
-        
-        # temperature
-        if l_tmin & l_tmax
-            if length(outputs[:tempdatasim][:tlow]) > i 
-                outputs[:tempdatasim][:tlow][i] = row.Tmin
-                outputs[:tempdatasim][:thigh][i] = row.Tmax
+    
+    if |(l_rain, l_eto, l_tmax, l_tmin)
+        for row in eachrow(climate_data)
+            date = row.Date
+            day_i = determine_day_nr(date)
+            i = day_i - gvars[:simulation].FromDayNr + 1
+            
+            # temperature
+            if l_tmin & l_tmax
+                if length(outputs[:tempdatasim][:tlow]) > i 
+                    outputs[:tempdatasim][:tlow][i] = row.Tmin
+                    outputs[:tempdatasim][:thigh][i] = row.Tmax
+                end
             end
-        end
 
-        # eto
-        if l_eto
-            if length(outputs[:etodatasim]) > i
-                outputs[:etodatasim][i] = row.ETo
+            # eto
+            if l_eto
+                if length(outputs[:etodatasim]) > i
+                    outputs[:etodatasim][i] = row.ETo
+                end
             end
-        end
 
-        # rain
-        if l_rain
-            if length(outputs[:raindatasim]) > i
-                outputs[:raindatasim][i] = row.Rain
+            # rain
+            if l_rain
+                if length(outputs[:raindatasim]) > i
+                    outputs[:raindatasim][i] = row.Rain
+                end
             end
         end
     end

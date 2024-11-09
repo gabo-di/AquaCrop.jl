@@ -33,8 +33,25 @@ const NameMonth = ["January", "February", "March", "April", "May", "June",
 abstract type AbstractInfo end
 abstract type AbstractRunType <: AbstractInfo end
 
+"""
+    runtype = NormalFileRun()
+
+Indicates that the configuration will be loading files like in AquaCrop fortran.
+"""
 struct NormalFileRun <: AbstractRunType end
+
+"""
+    runtype = TomlFileRun()
+
+Indicates that the configuration will be loading TOML and csv files.
+"""
 struct TomlFileRun <: AbstractRunType end
+
+"""
+    runtype = NoFileRun()
+
+Indicates that the configuration will be loaded manualy via julia variables
+"""
 struct NoFileRun <: AbstractRunType end
 
 abstract type AbstractAllOk <: AbstractInfo end
@@ -42,7 +59,9 @@ abstract type AbstractAllOk <: AbstractInfo end
 """
     all_ok = AllOk(logi::Bool, msg::String)
 
-has information if the simulation is going well
+If the simulation is going well then `all_ok.logi == true`
+otherwise `all_ok.logi = false` and the error message is 
+stored in `all_ok.msg`
 """
 mutable struct AllOk <: AbstractAllOk
     logi::Bool
