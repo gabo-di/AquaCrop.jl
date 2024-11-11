@@ -36,21 +36,21 @@ abstract type AbstractRunType <: AbstractInfo end
 """
     runtype = NormalFileRun()
 
-Indicates that the configuration will be loading files like in AquaCrop fortran.
+Indicates the configuration will be loading files like in AquaCrop fortran.
 """
 struct NormalFileRun <: AbstractRunType end
 
 """
     runtype = TomlFileRun()
 
-Indicates that the configuration will be loading TOML and csv files.
+Indicates the configuration will be loading TOML and csv files.
 """
 struct TomlFileRun <: AbstractRunType end
 
 """
     runtype = NoFileRun()
 
-Indicates that the configuration will be loaded manualy via julia variables
+Indicates the configuration will be loaded manualy via julia variables
 """
 struct NoFileRun <: AbstractRunType end
 

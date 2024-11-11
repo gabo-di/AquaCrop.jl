@@ -16,7 +16,7 @@ in [Getting Started](@ref Install)
 
 ## Intermediate Run
 
-We will start a crop field, to do this we need to set a runtype and the data directory 
+We start a crop field, to do this we need to set a runtype and the data directory 
 ```jldoctest intermediate_run_example; output = false
 using AquaCrop
 
@@ -40,12 +40,12 @@ AquaCrop.AllOk
 
 where `cropfield` is an struct of type `AquaCropField` with all the information of 
 the crop field, and `all_ok` tell us if the paramers have been loaded correctly 
-`all_ok.logi == true` or not `all_ok.logi == false`, when this happens, you can see 
+`all_ok.logi == true`, or not `all_ok.logi == false`. When this happens, you can see 
 the error kind in `all_ok.msg`. (Note that we do not raise exceptions in case you
 want to inspect the `cropfield` variable, like `cropfield.outputs[:logger]`). 
 In out example we see that `all_ok.logi == true`, so all went well up to now. 
 
-We have a `cropfield::AquaCropField` variable with some generic soil and crop data, 
+We have a `cropfield::AquaCropField` variable with the soil and crop data, 
 and we have checked that the config files exist. Now we have to setup the `cropfield` 
 using the function [`setup_cropfield!`](@ref),
 this will read the climate data, setup the cropfield, among other things.
