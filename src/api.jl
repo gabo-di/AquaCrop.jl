@@ -20,6 +20,8 @@ struct AquaCropField <: AbstractCropField
     outputs::Dict
     "local variables"
     lvars::Dict
+    "cropfield status"
+    status::Vector{AbstractCropFieldStatus}
 end
 
 function Base.getindex(b::AquaCropField, s::Symbol)
@@ -42,6 +44,34 @@ function Base.getproperty(b::AquaCropField, s::Symbol)
     end
 end
 
+"""
+    status = BadCropField()
+
+Indicates the cropfield can not be run
+"""
+struct BadCropField <: AbstractCropFieldStatus end
+
+"""
+    status = StartCropField()
+
+Indicates the cropfield has been started
+"""
+struct StartCropField <: AbstractCropFieldStatus end
+
+"""
+    status = SetupCropField()
+
+Indicates the cropfield has been seted up
+"""
+struct SetupCropField <: AbstractCropFieldStatus end
+
+
+"""
+    status = SetupCropField()
+
+Indicates the cropfield has finished running
+"""
+struct FinishCropField <: AbstractCropFieldStatus end
 
 """
     dailyupdate!(cropfield::AquaCropField)
@@ -49,6 +79,16 @@ end
 Updates the `cropfield` by one day
 """
 function dailyupdate!(cropfield::AquaCropField)
+    _dailyupdate!(cropfield.status[1], cropfield)
+end
+
+function _dailyupdate!(status::T, cropfield::AquaCropField) where T<:AbstractCropFieldStatus
+    # by default do nothing
+    return nothing
+end
+
+function _dailyupdate!(status::SetupCropField, cropfield::AquaCropField)
+    # the status is correct then do something
     nrrun = 1
 
     repeattoday = cropfield.gvars[:simulation].ToDayNr
@@ -57,6 +97,11 @@ function dailyupdate!(cropfield::AquaCropField)
                               cropfield.lvars, cropfield.projectinput[nrrun].ParentDir, nrrun)
         read_climate_nextday!(cropfield.outputs, cropfield.gvars)
         set_gdd_variables_nextday!(cropfield.gvars)
+    end
+    if (cropfield.gvars[:integer_parameters][:daynri] - 1) == repeattoday
+        finalize_run1!(cropfield.outputs, cropfield.gvars, nrrun)
+        finalize_run2!(cropfield.outputs, cropfield.gvars, nrrun)
+        cropfield.status[1] = FinishCropField()
     end
     return nothing
 end
@@ -67,19 +112,26 @@ end
 Updates the `cropfield` for all days in the current season
 """
 function season_run!(cropfield::AquaCropField)
+    _season_run!(cropfield.status[1], cropfield)
+end
+
+function _season_run!(status::T, cropfield::AquaCropField) where T<:AbstractCropFieldStatus
+    # by default do nothing
+    return nothing
+end
+
+function _season_run!(status::SetupCropField, cropfield::AquaCropField)
+    # the status is correct then do something
     nrrun = 1
 
     repeattoday = cropfield.gvars[:simulation].ToDayNr
     loopi = true
     while loopi
-        dailyupdate!(cropfield)
+        _dailyupdate!(status, cropfield)
         if (cropfield.gvars[:integer_parameters][:daynri] - 1) == repeattoday
             loopi = false
         end
     end
-    finalize_run1!(cropfield.outputs, cropfield.gvars, nrrun)
-    finalize_run2!(cropfield.outputs, cropfield.gvars, nrrun)
-    
     return nothing
 end
 
@@ -90,6 +142,16 @@ Indicates to make a harvest on the `cropfield`
 it also makes a daily update along with the harvest
 """
 function harvest!(cropfield::AquaCropField)
+    _harvest!(cropfield.status[1], cropfield)
+end
+
+function _harvest!(status::T, cropfield::AquaCropField) where T<:AbstractCropFieldStatus
+    # by default do nothing
+    return nothing
+end
+
+function _harvest!(status::SetupCropField, cropfield::AquaCropField)
+    # the status is correct then do something
     gvars = cropfield.gvars
 
     cutlog = gvars[:management].Cuttings.Considered 
@@ -112,7 +174,7 @@ function harvest!(cropfield::AquaCropField)
     Man = deepcopy(gvars[:array_parameters][:Man])
     Man_info = deepcopy(gvars[:array_parameters][:Man_info])
 
-    dailyupdate!(cropfield) 
+    _dailyupdate!(status, cropfield) 
 
     cropfield.gvars[:cut_info_record1] = cut_info_record1
     cropfield.gvars[:management].Cuttings.Considered = cutlog 
@@ -129,6 +191,16 @@ end
 Returns the biomass of the `cropfield` with units `ton/ha`
 """
 function biomass(cropfield::AquaCropField)
+    _biomass(cropfield.status[1], cropfield)
+end
+
+function _biomass(status::T, cropfield::AquaCropField) where T<:AbstractCropFieldStatus
+    # by default return missing 
+    missing
+end
+
+function _biomass(status::T, cropfield::AquaCropField) where {T<:Union{SetupCropField, FinishCropField}}
+    # the status is correct then return something
     gvars = cropfield.gvars
     biomass = gvars[:sumwabal].Biomass - gvars[:float_parameters][:bprevsum]
     return  biomass*ton*u"ha^-1"
@@ -140,6 +212,16 @@ end
 Returns the dry yield of the `cropfield` with units `ton/ha`
 """
 function dryyield(cropfield::AquaCropField)
+    _dryyield(cropfield.status[1], cropfield)
+end
+
+function _dryyield(status::T, cropfield::AquaCropField) where T<:AbstractCropFieldStatus
+    # by default return missing 
+    missing
+end
+
+function _dryyield(status::T, cropfield::AquaCropField) where {T<:Union{SetupCropField, FinishCropField}}
+    # the status is correct then return something
     gvars = cropfield.gvars
     dry_yield = gvars[:sumwabal].YieldPart - gvars[:float_parameters][:yprevsum]
     return dry_yield*ton*u"ha^-1"
@@ -151,6 +233,16 @@ end
 Returns the fresh yield of the `cropfield` with units `ton/ha`
 """
 function freshyield(cropfield::AquaCropField)
+    _freshyield(cropfield.status[1], cropfield)
+end
+
+function _freshyield(status::T, cropfield::AquaCropField) where T<:AbstractCropFieldStatus
+    # by default return missing 
+    missing
+end
+
+function _freshyield(status::T, cropfield::AquaCropField) where {T<:Union{SetupCropField, FinishCropField}}
+    # the status is correct then return something
     gvars = cropfield.gvars
     if gvars[:crop].DryMatter == undef_int
         fresh_yield = 0
@@ -166,12 +258,22 @@ end
 
 Returns the canopy cover of the `cropfield` in percentage of terrain covered.
 
-If `actual=true`, returns the canopy cover just before harvesting
+If `actual=true`, returns the canopy cover just before harvesting,
 otherwise returns the canopy cover just after harvesting
 
 The harvesting is done at the end of the day.
 """
 function canopycover(cropfield::AquaCropField; actual=true)
+    _canopycover(cropfield.status[1], cropfield, actual)
+end
+
+function _canopycover(status::T, cropfield::AquaCropField, actual) where T<:AbstractCropFieldStatus
+    # by default return missing 
+    missing
+end
+
+function _canopycover(status::T, cropfield::AquaCropField, actual) where {T<:Union{SetupCropField, FinishCropField}}
+    # the status is correct then return something
     gvars = cropfield.gvars
     if actual 
         return gvars[:float_parameters][:cciactual] * 100
@@ -191,9 +293,9 @@ with the results of the simulation
 
 `NormalFileRun` will use the input from a files like in AquaCrop Fortran (see AquaCrop.jl/test/testcase)
 
-`TomlFileRun` will use the input from TOML files (see AquaCrop.jl/test/testcase/TOML_FILES)`
+`TomlFileRun` will use the input from TOML files (see AquaCrop.jl/test/testcase/TOML_FILES)
 
-you can see the daily result in `outputs[:dayout]` 
+You can see the daily result in `outputs[:dayout]` 
 the result of each harvest in `outputs[:harvestsout]`
 the result of the whole season in `outputs[:seasonout]`
 the information for the evaluation in `outputs[:evaldataout]`
@@ -217,8 +319,8 @@ end
 """
     kwargs, all_ok = check_runtype(outputs; kwargs...)
 
-If we do not have a `kwarg` for `:runtype` it sets it to `NormalFileRun`
-if we do have that `kwarg`, than checks if it is an `AbstractRunType`.
+If we do not have a `kwarg` for `:runtype` it sets it to `NormalFileRun`.
+If we do have that `kwarg`, then checks if it is an `AbstractRunType`.
 
 After calling this function check if `all_ok.logi == true`
         
@@ -248,8 +350,8 @@ end
 """
     kwargs, all_ok = check_parentdir(outputs; kwargs...)
 
-If we do not have a `kwarg` for `parentdir` it sets it to `pwd()`
-if we do have that `kwarg`, than checks if that directory existis. 
+If we do not have a `kwarg` for `parentdir` it sets it to `pwd()`.
+If we do have that `kwarg`, then checks if that directory exists. 
 
 After calling this function check if `all_ok.logi == true`
 
@@ -279,22 +381,21 @@ end
 """
     kwargs, all_ok = check_nofilerun(outputs; kwargs...)
 
-checks if we have all the necessary keys for runtype = NoFileRun, 
-In case we select a `runtype = NoFileRun()` then checks that we have all
+In case we select a `runtype = NoFileRun()` checks that we have all
 the necessary `kwargs`, these are:
 
 For the project input we have the following
-necessary keys `Simulation_DayNr1`, `Simulation_DayNrN`, `Crop_Day1`, `Crop_DayN`, `InitialClimDate`
+necessary keywords: `Simulation_DayNr1`, `Simulation_DayNrN`, `Crop_Day1`, `Crop_DayN`, `InitialClimDate`
 each one of them must be a `Date` type.
 
 
-The `soil_type` must be one of these strings indicating the soil type
+The `soil_type` must be one of these strings indicating the soil type:
 `["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay"]`
 
-The `crop_type` must be one of these  strings indicating the crop type
+The `crop_type` must be one of these  strings indicating the crop type:
 `["maize", "wheat", "cotton", "alfalfaGDD"]`
 
-We also have the optional keys
+We also have the optional keys:
 `[:co2i, :crop, :perennial_period, :soil, :soil_layers, :simulparam,
 :Tmin, :Tmax, :ETo, :Rain, :temperature_record, :eto_record, :rain_record,
 :management (with this we need to change projectinput.Management_Filename too)]`
@@ -443,7 +544,7 @@ function start_cropfield(; kwargs...)
         finalize_outputs!(outputs)
         gvars = Dict()
         lvars = Dict()
-        return AquaCropField(gvars, outputs, lvars), all_ok
+        return AquaCropField(gvars, outputs, lvars, [BadCropField()]), all_ok
     end
 
     parentdir = kwargs[:parentdir]
@@ -459,7 +560,7 @@ function start_cropfield(; kwargs...)
         finalize_outputs!(outputs)
         gvars = Dict()
         lvars = Dict()
-        return AquaCropField(gvars, outputs, lvars), all_ok
+        return AquaCropField(gvars, outputs, lvars, [BadCropField()]), all_ok
     end
 
     theprojectfile = project_filenames[nproject]
@@ -471,7 +572,7 @@ function start_cropfield(; kwargs...)
         finalize_outputs!(outputs)
         gvars = Dict()
         lvars = Dict()
-        return AquaCropField(gvars, outputs, lvars), all_ok
+        return AquaCropField(gvars, outputs, lvars, [BadCropField()]), all_ok
     end
 
     gvars, all_ok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
@@ -480,7 +581,7 @@ function start_cropfield(; kwargs...)
         finalize_outputs!(outputs)
         gvars = Dict()
         lvars = Dict()
-        return AquaCropField(gvars, outputs, lvars) , all_ok
+        return AquaCropField(gvars, outputs, lvars, [BadCropField()]) , all_ok
     end
 
     # run all previouss simulations
@@ -495,7 +596,7 @@ function start_cropfield(; kwargs...)
 
     add_output_in_logger!(outputs, "cropfield started")
     lvars = Dict()
-    return AquaCropField(gvars, outputs, lvars), all_ok
+    return AquaCropField(gvars, outputs, lvars, [StartCropField()]), all_ok
 end
 
 """
@@ -509,6 +610,16 @@ After calling this function check if `all_ok.logi == true`
 See also [`start_cropfield`](@ref)
 """
 function setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
+    _setup_cropfield!(cropfield.status[1], cropfield, all_ok; kwargs...)
+end
+
+function _setup_cropfield!(status::T, cropfield::AquaCropField, all_ok::AllOk; kwargs...) where T<:AbstractCropFieldStatus
+    # by default do nothing
+    return nothing
+end
+
+function _setup_cropfield!(status::StartCropField, cropfield::AquaCropField, all_ok::AllOk; kwargs...)
+    # the status is correct then do something
     nrrun = 1
 
     add_output_in_logger!(cropfield.outputs, "settingup the cropfield")
@@ -519,6 +630,7 @@ function setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
         all_ok.msg = _all_ok.msg
         add_output_in_logger!(cropfield.outputs, all_ok.msg)
         finalize_outputs!(cropfield.outputs)
+        cropfield.status[1] = BadCropField()
         return nothing
     end
     
@@ -530,6 +642,9 @@ function setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
         all_ok.logi = false
         all_ok.msg = "error when settingup the cropfield "*e.msg
         add_output_in_logger!(cropfield.outputs, all_ok.msg)
+        finalize_outputs!(cropfield.outputs)
+        cropfield.status[1] = BadCropField()
+        return nothing
     end
      
     lvars = initialize_lvars()
@@ -538,6 +653,7 @@ function setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
     end
 
     add_output_in_logger!(cropfield.outputs, "cropfield setted")
+    cropfield.status[1] = SetupCropField()
     return nothing 
 end
 
@@ -554,6 +670,17 @@ The function assumes that `:Date` goes day by day.
 `[:Tmin, :Tmax, :ETo, :Rain]`.
 """
 function change_climate_data!(cropfield::AquaCropField, climate_data::DataFrame; kwargs...)
+    _change_climate_data!(cropfield.status[1], cropfield, climate_data; kwargs...)
+end
+
+function _change_climate_data!(status::T, cropfield::AquaCropField, climate_data::DataFrame; kwargs...) where T<:AbstractCropFieldStatus
+    # by default do nothing
+    return nothing
+end
+
+function _change_climate_data!(status::SetupCropField, cropfield::AquaCropField, climate_data::DataFrame; kwargs...)
+    # the status is correct then do something
+
     # check if have the :Date column in climate_data
     if !hasproperty(climate_data, :Date)
         # Silent early return

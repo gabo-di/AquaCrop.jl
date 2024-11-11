@@ -45,6 +45,12 @@ end
     cropfield, all_ok = start_cropfield(; parentdir=parentdir)
     @test isequal(all_ok.logi, true)
 
+    # missing observables
+    @test ismissing(biomass(cropfield))
+    @test ismissing(canopycover(cropfield))
+    @test ismissing(freshyield(cropfield))
+    @test ismissing(dryyield(cropfield))
+
 
     # bad start giving wrong runtype 
     runtype = :TomlFileRun  # or other thing
@@ -90,6 +96,12 @@ end
     cropfield, all_ok = start_cropfield(; parentdir=parentdir)
     setup_cropfield!(cropfield, all_ok) 
     @test isequal(all_ok.logi, true)
+
+    # observables start with 0 value
+    @test isapprox( biomass(cropfield).val, 0.0 )
+    @test isapprox( canopycover(cropfield), 0.0 )
+    @test isapprox( freshyield(cropfield).val, 0.0 )
+    @test isapprox( dryyield(cropfield).val, 0.0 )
 
     # we can have "error when settingup the cropfield"
 end

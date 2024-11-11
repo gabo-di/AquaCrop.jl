@@ -14,7 +14,7 @@ with precision and robustness.
 
 The original FAO's code is written in Fortran
 and available on github [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/). AquaCrop.jl is a julia implementation that corresponds 
-to AquaCrop version 7.2, older or newer versions can have compatibility issues. 
+to AquaCrop version 7.1, older or newer versions can have compatibility issues. 
 This repository is written with the idea to be possible to interact with other libraries from the julia
 ecosystem, like DatarFrames.jl, Makie.jl, StatsModels.jl, etc.
 But also to complement the models in [Persefone.jl](https://persefone-model.eu)
