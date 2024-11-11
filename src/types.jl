@@ -68,6 +68,8 @@ mutable struct AllOk <: AbstractAllOk
     msg::String
 end
 
+abstract type AbstractCropFieldStatus <: AbstractInfo end
+
 """
     AbstractParametersContainer
 """
