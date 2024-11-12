@@ -18,6 +18,7 @@ out4Salt = true               # Soil salinity in the soil profile and root zone
 out5CompWC = true             # Soil water content at various depths of the soil profile
 out6CompEC = true             # Soil salinity at various depths of the soil profile
 out7Clim = true               # Climate input parameters
+out8Irri = true               # Irrigation events and intervals
 
 
 

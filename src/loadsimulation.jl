@@ -488,7 +488,7 @@ end
 """
     load_clim!(record::RepClim, clim_file; kwargs...)
 
-global.f90:5936
+global.f90:LoadClim:5973
 """
 function load_clim!(record::RepClim, clim_file; kwargs...)
     _load_clim!(kwargs[:runtype], record, clim_file; kwargs...)
@@ -536,7 +536,7 @@ end
 """
     complete_climate_description!(record::RepClim)
 
-global.f90:8223
+global.f90:CompleteClimateDescription:8260
 """
 function complete_climate_description!(record::RepClim)
     record.FromDayNr = determine_day_nr(record.FromD, record.FromM, record.FromY)
@@ -585,7 +585,7 @@ end
 """
     set_clim_data!(gvars, projectinput::ProjectInputType)
 
-global.f90:4295
+global.f90:SetClimData:4311
 """
 function set_clim_data!(gvars, projectinput::ProjectInputType)
     clim_record = gvars[:clim_record]
@@ -680,7 +680,7 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
     end 
 
     # Part B - ClimFile and Temperature files --> ClimFile
-    if (temperature_file != "(None)") 
+    if (temperature_file != "(None)") & (temperature_file != "(External)")
         if clim_file == "(None)"
             clim_file = "EToRainTempFile"
             clim_record.FromY = temperature_record.FromY
@@ -754,7 +754,7 @@ end
 """
     logi = full_undefined_record(record::RepClim)
 
-global.f90:2826
+global.f90:FullUndefinedRecord:2843
 """
 function full_undefined_record(record::RepClim)
     fromy = record.FromY
@@ -769,7 +769,7 @@ end
 """
     adjust_onset_search_period!(gvars)
 
-global.f90:4214
+global.f90:AdjustOnsetSearchPeriod:4230
 """
 function adjust_onset_search_period!(gvars)
     onset = gvars[:onset]
@@ -798,7 +798,7 @@ end
 """
     load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...)
 
-global.f90:4799
+global.f90:LoadCrop:4876
 """
 function load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...)
     _load_crop!(kwargs[:runtype], crop, perennial_period, crop_file; kwargs...)
@@ -1164,7 +1164,7 @@ end
 """
     sxtop, sxbot = derive_smax_top_bottom(crop::RepCrop)
 
-global.f90:1944
+global.f90:DeriveSmaxTopBottom:1961
 """
 function derive_smax_top_bottom(crop::RepCrop)
     sxtopq = crop.SmaxTopQuarter
@@ -1203,7 +1203,7 @@ end
 """
     adjust_year_perennials!(crop::RepCrop, theyearseason)
 
-global.f90:4690
+global.f90:AdjustYearPerennials:4626
 """
 function adjust_year_perennials!(crop::RepCrop, theyearseason)
     sownyear1  = crop.SownYear1
@@ -1453,7 +1453,7 @@ end
 """
     dgrd = degrees_day(tbase, tupper, tdaymin, tdaymax, gddselectedmethod)
 
-global.f90:2419
+global.f90:DegreesDay:2436
 """
 function degrees_day(tbase, tupper, tdaymin, tdaymax, gddselectedmethod)
     if gddselectedmethod==1
@@ -2316,7 +2316,7 @@ end
 """
     adjust_crop_year_to_climfile!(crop::RepCrop, clim_file, clim_record)
 
-global.f90:6447
+global.f90:AdjustCropYearToClimFile:6484
 """
 function adjust_crop_year_to_climfile!(crop::RepCrop, clim_file, clim_record)
     cday1 = crop.Day1
@@ -2343,7 +2343,7 @@ end
 """
     adjust_climrecord_to!(clim_record::RepClim, cdayn)
 
-global.f90:6163
+global.f90:AdjustClimRecordTo:6200
 """
 function adjust_climrecord_to!(clim_record::RepClim, cdayn)
     dayi, monthi, yeari = determine_date(cdayn)
@@ -2357,7 +2357,7 @@ end
 """
     adjust_simperiod!(gvars, projectinput::ProjectInputType)
 
-global.f90:4692
+global.f90:AdjustSimPeriod:4709
 """
 function adjust_simperiod!(gvars, projectinput::ProjectInputType)
     simulation = gvars[:simulation]
@@ -2416,7 +2416,7 @@ end
 """
     determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_record::RepClim, clim_file)
 
-global.f90:4677
+global.f90:DetermineLinkedSimDay1:4694
 """
 function determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_record::RepClim, clim_file)
     simday1 = crop.Day1
@@ -2433,7 +2433,7 @@ end
 """
     load_groundwater!(gvars, groundwater_file)
 
-global.f90:5981
+global.f90:LoadGroundWater:6018
 """
 function load_groundwater!(gvars, groundwater_file)
     simulparam = gvars[:simulparam]
@@ -2585,7 +2585,7 @@ end
 """
     zcn, ecdsm = find_values(atdaynr, daynr1, daynr2, z1, ec1, z2, ec2)
 
-global.f90:6140
+global.f90:FindValues:6177
 """
 function find_values(atdaynr, daynr1, daynr2, z1, ec1, z2, ec2)
         zcm = round(Int, 100 * (z1 + (z2-z1) * (atdaynr-daynr1)/(daynr2-daynr1)))
@@ -2597,7 +2597,7 @@ end
 """
     calculate_adjusted_fc!(compartadj::Vector{CompartmentIndividual}, soil_layers::Vector{SoilLayerIndividual}, depthaquifer)
 
-global.f90:4141
+global.f90:CalculateAdjustedFC:4157
 """
 function calculate_adjusted_fc!(compartadj::Vector{CompartmentIndividual}, soil_layers::Vector{SoilLayerIndividual}, depthaquifer)
     depth = 0
@@ -2643,7 +2643,7 @@ end
 """
     nadj = no_adjustment(fcvolpr)
 
-global.f90:4195
+global.f90:NoAdjustment:4211
 """
 function no_adjustment(fcvolpr)
     if fcvolpr<=10
@@ -2664,7 +2664,7 @@ end
     reset_swc_to_fc!(simulation::RepSim, compartments::Vector{CompartmentIndividual},
                      soil_layers::Vector{SoilLayerIndividual}, ziaqua)
 
-global.f90:4758
+global.f90:ResetSWCToFC:4775
 """
 function reset_swc_to_fc!(simulation::RepSim, compartments::Vector{CompartmentIndividual},
                            soil_layers::Vector{SoilLayerIndividual}, ziaqua)
@@ -2705,7 +2705,7 @@ end
 """
     no_irrigation!(gvars)
 
-global.f90:2838
+global.f90:NoIrrigation:2855
 """
 function no_irrigation!(gvars)
     setparameter!(gvars[:symbol_parameters], :irrimode, :NoIrri)
@@ -2729,7 +2729,7 @@ end
 """
     load_irri_schedule_info!(gvars, irri_file)
 
-global.f90:2860
+global.f90:LoadIrriScheduleInfo:2877
 """
 function load_irri_schedule_info!(gvars, irri_file)
     open(irri_file, "r") do file
@@ -2850,7 +2850,7 @@ end
 """
     load_management!(gvars, man_file; kwargs...)
 
-global.f90:3350
+global.f90:LoadManagement:3366
 """
 function load_management!(gvars, man_file; kwargs...)
     _load_management!(kwargs[:runtype], gvars, man_file) 
@@ -2979,7 +2979,7 @@ end
 """
     adjust_size_compartments!(gvars, cropzx)
 
-global.f90:6563
+global.f90:AdjustSizeCompartments:6600
 """
 function adjust_size_compartments!(gvars, cropzx)
     compartments = gvars[:compartments]
@@ -3047,7 +3047,7 @@ end
 """
     adjust_theta_initial!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
 
-global.f90:5852
+global.f90:AdjustThetaInitial:5889
 """
 function adjust_theta_initial!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
     compartments = gvars[:compartments]
@@ -3103,7 +3103,7 @@ end
 """
     translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, locecds)
 
-global.f90:6258
+global.f90:TranslateIniPointsToSWProfile:6295
 """
 function translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, locecds)
     soil_layers = gvars[:soil_layers]
@@ -3195,7 +3195,7 @@ end
 """
     determine_salt_content!(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
 
-global.f90:4258
+global.f90:DetermineSaltContent:4274
 """
 function determine_salt_content!(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
     ece = compartment.WFactor
@@ -3234,7 +3234,7 @@ end
 """
     celi = active_cells(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual})
 
-globa.f90:4241
+global.f90:ActiveCells:4257
 """
 function active_cells(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual})
     if compartment.Theta<=soil_layers[compartment.Layer].UL 
@@ -3255,7 +3255,7 @@ end
 """
     salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepParam, i, mm)
 
-global.f90:2572
+global.f90:SaltSolutionDeposit:2589
 """
 function salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepParam, i, mm) # mm = l/m2, SaltSol/Saltdepo = g/m2
     saltsolution = compartment.Salt[i]
@@ -3278,7 +3278,7 @@ end
 """
     translate_inilayers_to_swprofile!(gvars, nrlay, laythickness, layvolpr, layecds)
 
-global.f90:6179
+global.f90:TranslateIniLayersToSWProfile:6216
 """
 function translate_inilayers_to_swprofile!(gvars, nrlay, laythickness, layvolpr, layecds)
     compartments = gvars[:compartments]
@@ -3346,7 +3346,7 @@ end
 """
      load_initial_conditions!(gvars, swcinifilefull)
 
-global.f90:6486
+global.f90:LoadInitialConditions:6523
 """
 function load_initial_conditions!(gvars, swcinifilefull)
     simulation = gvars[:simulation]
@@ -3385,7 +3385,7 @@ end
 """
     ece = ececomp(compartment::CompartmentIndividual, gvars)
 
-global.f90:2523
+global.f90:ECeComp:2540
 """
 function ececomp(compartment::CompartmentIndividual, gvars)
     soil_layers = gvars[:soil_layers]
@@ -3409,7 +3409,7 @@ end
 """
     load_offseason!(gvars, offseason_file)
 
-global.f90:5769
+global.f90:LoadOffSeason:5806
 """
 function load_offseason!(gvars, offseason_file)
     management = gvars[:management]

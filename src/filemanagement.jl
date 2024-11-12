@@ -12,7 +12,6 @@ function file_management!(outputs, gvars, nrrun; kwargs...)
 
     cont = 0
     loopi = true
-    # MARK
     while loopi
         cont += 1
         advance_one_time_step!(outputs, gvars, lvars, projectinput.ParentDir, nrrun)
@@ -686,7 +685,7 @@ end
                                             themodecycle, simulation)
 
 
-global.f90:6371
+global.f90:CCiniTotalFromTimeToCCini:6408
 """
 function ccini_total_from_time_to_ccini(tempdaystoccini, tempgddaystoccini, 
                                             l0, l12, l12sf, l123, l1234, gddl0, 
@@ -737,7 +736,7 @@ end
 """
     adjusted_rooting_depth!(gvars)
 
-rootunit.f90:37
+rootunit.f90:AdjustedRootingDepth:37
 """
 function adjusted_rooting_depth!(gvars)
     ccact = gvars[:plotvarcrop].ActVal 
@@ -874,7 +873,7 @@ end
 """
     determine_root_zone_wc!(gvars, rootingdepth)
 
-global.f90:7750
+global.f90:DetermineRootZoneWC:7787
 """
 function determine_root_zone_wc!(gvars, rootingdepth)
     root_zone_wc = gvars[:root_zone_wc]  
@@ -1160,7 +1159,7 @@ end
 """
     determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
 
-simul.f90:453
+simul.f90:DeterminePotentialBiomass:454
 """
 function determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
 
@@ -1238,7 +1237,7 @@ end
 """
     fadjustedforco2 = fadjusted_for_co2(co21, wpi, percenta)
 
-global.f90:2749
+global.f90:fAdjustedForCO2:2766
 """
 function fadjusted_for_co2(co2i, wpi, percenta)
     # 1. Correction for crop type: fType
@@ -1313,7 +1312,7 @@ end
 """
     determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc) 
 
-simul.f90:528
+simul.f90:DetermineBiomassAndYield:529
 """
 function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc) 
 
@@ -1808,7 +1807,7 @@ end
 """
     yeari = year_weighing_factor(cropfirstdaynr)
     
-simul.f90:1073
+simul.f90:YearWeighingFactor:1074
 """
 function year_weighing_factor(cropfirstdaynr)
     dayi, monthi, yeari = determine_date(cropfirstdaynr)
@@ -1818,7 +1817,7 @@ end
 """
     fi = fraction_period(diflor, crop)
 
-simul.f90:1050
+simul.f90:FractionPeriod:1051
 """
 function fraction_period(diflor, crop)
     if diflor <= eps() 
@@ -1840,7 +1839,7 @@ end
 """
     f = fraction_flowering(dayi, crop, simulation)
 
-simul.f90:1025
+simul.f90:FractionFlowering:1026
 """
 function fraction_flowering(dayi, crop, simulation)
   if crop.LengthFlowering <= 1
@@ -1850,7 +1849,7 @@ function fraction_flowering(dayi, crop, simulation)
       f2 = fraction_period(diflor, crop)
       diflor = (dayi-1) - (simulation.DelayedDays + crop.Day1 + crop.DaysToFlowering)
       f1 = fraction_period(diflor, crop)
-      if abs(f1-f2) < 0.0000001
+      if abs(f1-f2) < ac_zero_threshold 
           f = 0
       else
           f = (100 * ((f1+f2)/2)/crop.LengthFlowering)
@@ -1866,7 +1865,7 @@ end
                                   hifinal,
                                   crop, simulation)
 
-global.f90:5530
+global.f90:HarvestIndexDay:5567
 """
 function harvest_index_day(dap, daystoflower, himax, dhidt, cci, 
                                   ccxadjusted, theccxwithered, 
@@ -1940,7 +1939,7 @@ end
 """
     bmr = bm_range(hiadj)
 
-global.f90:2278
+global.f90:BMRange:2295
 """
 function bm_range(hiadj)
     if hiadj <= 0
@@ -1957,7 +1956,7 @@ end
 """
     himultiplier = hi_multiplier(ratiobm, rangebm, hiadj)
 
-global.f90:2295
+global.f90:HImultiplier:2312
 """
 function hi_multiplier(ratiobm, rangebm, hiadj)
     rini = 1 - rangebm

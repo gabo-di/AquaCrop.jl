@@ -1608,7 +1608,7 @@ end
     zr = actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax, 
                               sumgdd, zmin, zmax, shapefactor, typedays, gvars)
 
-global.f90:7262
+global.f90:ActualRootingDepth:7299
 must set simulation.SCor = 1  before calling this function 
 """
 function actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax,
@@ -1638,7 +1638,7 @@ end
 """
     ardd = actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, shapefactor, gvars)
 
-global.f90:7306
+global.f90:ActualRootingDepthDays:7343
 """
 function actual_rooting_depth_days(dap, l0, lzmax, l1234, zmin, zmax, shapefactor, gvars)
     simulation = gvars[:simulation]
@@ -1678,7 +1678,7 @@ end
 """
     ardg = actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, shapefactor, gvars)
 
-global.f90:7346
+global.f90:ActualRootingDepthGDDays:7383
 """
 function actual_rooting_depth_gddays(dap, l1234, gddl0, gddlzmax, sumgdd, zmin, zmax, shapefactor, gvars)
     simulation = gvars[:simulation]
@@ -1721,7 +1721,7 @@ end
 """
     trf = time_root_function(t, shapefactor, tmax, t0)
 
-global.f90:1263
+global.f90:TimeRootFunction:1281
 """
 function time_root_function(t, shapefactor, tmax, t0)
     trf = exp((10 / shapefactor) * log((t - t0) / (tmax - t0)))
@@ -1919,7 +1919,7 @@ end
 """
     determine_root_zone_salt_content!(gvars, rootingdepth)
 
-global.f90:4089
+global.f90:DetermineRootZoneSaltContent:4105
 """
 function determine_root_zone_salt_content!(gvars, rootingdepth)
     compartments = gvars[:compartments]
@@ -1978,7 +1978,7 @@ end
 """
     ecs = ecswcomp(compartment::CompartmentIndividual, atfc, gvars)
 
-global.f90:2547
+global.f90:ECswComp:2564
 """
 function ecswcomp(compartment::CompartmentIndividual, atfc, gvars)
     soil_layers = gvars[:soil_layers]
@@ -2005,7 +2005,7 @@ end
 """
     m = ks_salinity(salinityresponsconsidered, ecen, ecex, ecevar, ksshapesalinity)
 
-global.f90:2043
+global.f90:KsSalinity:2060
 """
 function ks_salinity(salinityresponsconsidered, ecen, ecex, ecevar, ksshapesalinity)
     m = 1 # no correction applied

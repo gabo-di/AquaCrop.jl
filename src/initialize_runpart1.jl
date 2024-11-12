@@ -6,7 +6,7 @@ run.f90:6590
 function initialize_run_part1!(outputs, gvars, nrrun; kwargs...)
     projectinput = gvars[:projectinput][nrrun]
     load_simulation_project!(outputs, gvars, projectinput; kwargs...)
-    adjust_compartments!(gvars) #TODO check if neccesary
+    adjust_compartments!(gvars) 
     # reset sumwabal and previoussum
     gvars[:sumwabal] = RepSum() 
     reset_previous_sum!(gvars)
@@ -265,7 +265,7 @@ end
 """
     logi = check_for_watertable_in_profile(profilecomp::Vector{CompartmentIndividual}, depthgwtmeter)
 
-global.f90:1540
+global.f90:CheckForWaterTableInProfile:1557
 """
 function check_for_watertable_in_profile(profilecomp::Vector{CompartmentIndividual}, depthgwtmeter)
     watertableinprofile = false
@@ -573,7 +573,7 @@ end
 """
     co2forsimulationperiod = co2_for_simulation_period(co2_file, fromdaynr, todaynr)
 
-global.f90:3114
+global.f90:CO2ForSimulationPeriod:3130
 """
 function co2_for_simulation_period(co2_file, fromdaynr, todaynr)
     dayi, monthi, fromyi = determine_date(fromdaynr)
@@ -905,10 +905,12 @@ end
                                      gddcdc, kctop, kcdeclageing, 
                                      cceffectprocent, tbase, tupper, tdaymin, 
                                      tdaymax, gdtransplow, co2i, themodecycle,
-                                     simulation, simulparam)
+                                     simulation, simulparam, referenceclimate)
 
-global.f90:5315
+global.f90:SeasonalSumOfKcPot:5332
 note that we must do simulation.DelayedDays = 0 before calling this function
+# CHECK LATER
+# all the function related to temperaturefile external, tcropsim, tcropreferencesim
 """
 function seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l12, 
                                      l123, l1234, gddl0, gddl12, gddl123, 
@@ -916,7 +918,7 @@ function seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l1
                                      gddcdc, kctop, kcdeclageing, 
                                      cceffectprocent, tbase, tupper, tdaymin, 
                                      tdaymax, gdtransplow, co2i, themodecycle,
-                                     simulation, simulparam)
+                                     simulation, simulparam, referenceclimate)
     etostandard = 5
 
     # 1. Open Temperature file
@@ -975,7 +977,6 @@ function seasonal_sum_of_kcpot(outputs, thedaystoccini, thegddaystoccini, l0, l1
     end 
 
     # 3. Calculate Sum
-    # MARK
     for dayi in 1:l1234
         # 3.1 calculate growing degrees for the day
         if loggi 
@@ -1084,7 +1085,7 @@ end
        lmaturity, gddl0, gddl123, gddlmaturity, cco, ccx,
        cgc, cdc, gddcgc, gddcdc, sumgdd, typedays, sfredcgc, sfredccx, simulation)
 
-global.f90:1299
+global.f90:CanopyCoverNoStressSF:1317
 """
 function canopy_cover_no_stress_sf(dap, l0, l123, 
        lmaturity, gddl0, gddl123, gddlmaturity, cco, ccx,
@@ -1104,7 +1105,7 @@ end
     cc = canopy_cover_no_stress_days_sf(dap, l0, l123,
        lmaturity, cco, ccx, cgc, cdc, sfredcgc, sfredccx, simulation)
 
-global.f90:1333
+global.f90:CanopyCoverNoStressDaysSF:1351
 """
 function canopy_cover_no_stress_days_sf(dap, l0, l123,
        lmaturity, cco, ccx, cgc, cdc, sfredcgc, sfredccx, simulation)
@@ -1152,7 +1153,7 @@ end
     cc = canopy_cover_no_stress_gddays_sf(gddl0, gddl123, gddlmaturity, sumgdd, 
         cco, ccx, gddcgc, gddcdc, sfredcgc, sfredccx)
 
-global.f90:2670
+global.f90:CanopyCoverNoStressGDDaysSF2687
 """
 function canopy_cover_no_stress_gddays_sf(gddl0, gddl123, gddlmaturity, sumgdd, 
         cco, ccx, gddcgc, gddcdc, sfredcgc, sfredccx)
@@ -1195,7 +1196,7 @@ end
 """
     cci = cc_at_gdd(gddi, ccoin, gddcgcin, ccxin)
 
-global.f90:2654
+global.f90:CCatGDD:2671
 """
 function cc_at_gdd(gddi, ccoin, gddcgcin, ccxin)
     cci = ccoin * exp(gddcgcin * gddi)
@@ -1211,7 +1212,7 @@ end
                           cceffectprocent, co2i, gddayi, tempgdtransplow, 
                           simulation, simulparam)
 
-global.f90:7888
+global.f90:CalculateETpot:7925
 """
 function calculate_etpot(dap, l0, l12, l123, lharvest, daylastcut, cci, 
                           etoval, kcval, kcdeclineval, ccx, ccxwithered, 
@@ -1245,7 +1246,7 @@ function calculate_etpot(dap, l0, l12, l123, lharvest, daylastcut, cci,
         end 
 
         # Correction for Air temperature stress
-        if (cciadjusted <= 0.0000001) | (round(Int, gddayi) < 0) 
+        if (cciadjusted <= ac_zero_threshold) | (round(Int, gddayi) < 0) 
             kstrcold = 1
         else
             kstrcold = ks_temperature(0, tempgdtransplow, gddayi)
@@ -1304,7 +1305,7 @@ end
 """
     m = ks_temperature(t0, t1, tin)
 
-global.f90:1981
+global.f90:KsTemperature:1998
 """
 function ks_temperature(t0, t1, tin)
     m = 1 # no correction applied (to and/or t1 is undefined, or t0=t1)
@@ -1339,7 +1340,7 @@ end
 """
     ksi = getks(t0, t1, tin)
 
-global.f90:2021
+global.f90:GetKs:2038
 """
 function getks(t0, t1, tin)
     mo = 0.02
@@ -1358,7 +1359,7 @@ end
 """
     higc = harvest_index_growth_coefficient(himax, dhidt)
 
-global.f90:1860
+global.f90:HarvestIndexGrowthCoefficient:1877
 """
 function harvest_index_growth_coefficient(himax, dhidt)
     hio = 1
@@ -1385,7 +1386,7 @@ end
 """
     tswitch, higclinear = get_day_switch_to_linear(himax, dhidt, higc)
 
-global.f90:2988
+global.f90:GetDaySwitchToLinear:3004
 """
 function get_day_switch_to_linear(himax, dhidt, higc)
     hio = 1
@@ -1526,7 +1527,6 @@ function bnormalized(outputs, thedaystoccini, thegddaystoccini,
     end 
 
     # 5. Calculate Bnormalized
-    # MARK
     for dayi in 1:l1234
         # 5.1 growing degrees for dayi
         if loggi 
@@ -1705,7 +1705,7 @@ end
 """
     fweed = cc_multiplier_weed(procentweedcover, ccxcrop, fshapeweed)
 
-global.f90:2180
+global.f90:CCmultiplierWeed:2197
 """
 function cc_multiplier_weed(procentweedcover, ccxcrop, fshapeweed)
     if (procentweedcover > 0) & (ccxcrop < 0.9999) & (ccxcrop > 0.001) 
@@ -1729,7 +1729,7 @@ end
                     gddl12sf, gddl123, gddl1234, cco, ccx, cgc, gddcgc, cdc, gddcdc, sumgdd,
                     ratdgdd, sfredcgc, sfredccx, sfcdecline, themodecycle, simulation)
 
-global.f90:1391
+global.f90:CCiNoWaterStressSF:1409
 """
 function cci_no_water_stress_sf(dayi, l0, l12sf, l123, l1234, gddl0,
     gddl12sf, gddl123, gddl1234, cco, ccx, cgc, gddcgc, cdc, gddcdc, sumgdd,
@@ -1742,8 +1742,7 @@ function cci_no_water_stress_sf(dayi, l0, l12sf, l123, l1234, gddl0,
                                 sfredccx, simulation)
 
     # Consider CDecline for limited soil fertiltiy
-    # IF ((Dayi > L12SF) AND (SFCDecline > 0.000001))
-    if (dayi > l12sf) & (sfcdecline > 0.000001) & (l12sf < l123) 
+    if (dayi > l12sf) & (sfcdecline > ac_zero_threshold) & (l12sf < l123) 
         if dayi < l123
             if themodecycle == :CalendarDays 
                 cci = cci - (sfcdecline/100) * exp(2*log(dayi-l12sf))/(l123-l12sf)
@@ -1823,7 +1822,7 @@ end
 """
     cci = cc_at_time(dayi, ccoin, cgcin, ccxin)
 
-global.f90:2371
+global.f90:CCatTime:2388
 """
 function cc_at_time(dayi, ccoin, cgcin, ccxin)
     cci = ccoin * exp(cgcin * dayi)
@@ -1838,7 +1837,7 @@ end
                             tempweeddeltarc, l12sf, templ123, gddl12sf, 
                             tempgddl123, themodecycle)
 
-global.f90:1567
+global.f90:GetWeedRC:1584
 """
 function get_weed_rc(theday, gddayi, fccx, tempweedrcinput, tempweedadj,
                             tempweeddeltarc, l12sf, templ123, gddl12sf, 
@@ -2214,7 +2213,7 @@ end
 """
     fccx = multiplier_ccx_self_thinning(yeari, yearx, shapefactor)
 
-global.f90:1784
+global.f90:MultiplierCCxSelfThinning:1801
 """
 function multiplier_ccx_self_thinning(yeari, yearx, shapefactor)
     fccx = 1
@@ -2235,7 +2234,7 @@ end
 """
     fweedi, rcadj = cc_multiplier_weed_adjusted(procentweedcover, ccxcrop, fshapeweed, fccx, yeari, mweedadj, cropsubkind)
 
-global.f90:2204
+global.f90:CCmultiplierWeedAdjusted:2221
 """
 function cc_multiplier_weed_adjusted(procentweedcover, ccxcrop, fshapeweed, fccx, yeari, mweedadj, cropsubkind)
     fweedi = 1
@@ -2302,7 +2301,7 @@ end
 """
     fcco = multiplier_cco_self_thinning(yeari, yearx, shapefactor)
 
-global.f90:2588
+global.f90:MultiplierCCoSelfThinning:2605
 """
 function multiplier_cco_self_thinning(yeari, yearx, shapefactor)
     fcco = 1

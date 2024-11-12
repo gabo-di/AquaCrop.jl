@@ -727,6 +727,7 @@ function load_resultsparameters_from_vardict(; kwargs...)
     setparameter!(dailyresultsparameters, :out5CompWC, true)
     setparameter!(dailyresultsparameters, :out6CompEC, true)
     setparameter!(dailyresultsparameters, :out7Clim, true)
+    setparameter!(dailyresultsparameters, :out8Irri, true)
     if (dailyresultsparameters[:out1Wabal] | dailyresultsparameters[:out2Crop]
         | dailyresultsparameters[:out3Prof] | dailyresultsparameters[:out4Salt]
         | dailyresultsparameters[:out5CompWC] | dailyresultsparameters[:out6CompEC]

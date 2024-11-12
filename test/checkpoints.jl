@@ -575,6 +575,7 @@ function checkpoint1()
     AquaCrop.setparameter!(integer_parameters, :stagecode, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :previoussdaynr, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :outputaggregate, AquaCrop.undef_int) 
+    AquaCrop.setparameter!(integer_parameters, :tnxreferenceyear, 2000)
 
     bool_parameters = AquaCrop.ParametersContainer(Bool)
     AquaCrop.setparameter!(bool_parameters, :preday, false)
@@ -595,6 +596,7 @@ function checkpoint1()
     AquaCrop.setparameter!(bool_parameters, :outdaily, false)
     AquaCrop.setparameter!(bool_parameters, :part1Mult, false)
     AquaCrop.setparameter!(bool_parameters, :part2Eval, false)
+    AquaCrop.setparameter!(bool_parameters, :out8Irri, false)
 
     array_parameters = AquaCrop.ParametersContainer(Vector{Float64})
     AquaCrop.setparameter!(array_parameters, :Tmin, Float64[])
@@ -619,6 +621,7 @@ function checkpoint1()
     AquaCrop.setparameter!(string_parameters, :clim_file, "(None)")
     AquaCrop.setparameter!(string_parameters, :climate_file,   "(None)")
     AquaCrop.setparameter!(string_parameters, :temperature_file,  "(None)")
+    AquaCrop.setparameter!(string_parameters, :tnxreference_file,  "(None)")
     AquaCrop.setparameter!(string_parameters, :eto_file,  "(None)")
     AquaCrop.setparameter!(string_parameters, :rain_file,  "(None)")
     AquaCrop.setparameter!(string_parameters, :groundwater_file, "(None)")
@@ -682,7 +685,7 @@ function checkpoint2()
     gvars[:simulation].MultipleRunWithKeepSWC = true
     gvars[:simulation].MultipleRunConstZrx = 3
     # OJO this is incorrect in fortran code, they forget to set the temperature in line startuni.f90:864
-    # it should be: call SetSimulParam_Tmin(Tmin_temp)
+    # it should be: call SetSimulParam_Tmin(Tmin_temp)  corrected in v7.2
     # gvars[:simulparam].Tmin = 0 
     
     AquaCrop.setparameter!(gvars[:integer_parameters], :outputaggregate, 0)
