@@ -44,6 +44,16 @@ function Base.getproperty(b::AquaCropField, s::Symbol)
     end
 end
 
+
+function Base.propertynames(b::AquaCropField, private::Bool=false)
+    # TODO: private is currently ignored
+    return tuple(union(
+        fieldnames(AquaCropField),
+        keys(getfield(b, :outputs)),
+        keys(getfield(b, :gvars))
+    )...)
+end
+
 """
     status = BadCropField()
 
@@ -72,6 +82,7 @@ struct SetupCropField <: AbstractCropFieldStatus end
 Indicates the cropfield has finished running
 """
 struct FinishCropField <: AbstractCropFieldStatus end
+
 
 """
     dailyupdate!(cropfield::AquaCropField)
