@@ -143,7 +143,7 @@ end
 end
 
 @testset "AquaCropField utility functions" begin
-    cropfield = AquaCropField(Dict(:foo => "bar"), Dict(), Dict())
+    cropfield = AquaCropField(Dict(:foo => "bar"), Dict(), Dict(), [AquaCrop.StartCropField()])
     @test propertynames(cropfield) isa Tuple
     @test all(x -> x isa Symbol, propertynames(cropfield))
 end
