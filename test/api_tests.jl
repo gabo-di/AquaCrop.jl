@@ -130,3 +130,8 @@ end
     @test isequal(size(cropfield.dayout), (164, 89))
 end
 
+@testset "AquaCropField utility functions" begin
+    cropfield = AquaCropField(Dict(:foo => "bar"), Dict(), Dict())
+    @test propertynames(cropfield) isa Tuple
+    @test all(x -> x isa Symbol, propertynames(cropfield))
+end
