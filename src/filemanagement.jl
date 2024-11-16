@@ -1,7 +1,7 @@
 """
     file_management!(outputs, gvars, nrrun; kwargs...)
 
-run.f90:7760
+run.f90:FileManagement:7807
 """
 function file_management!(outputs, gvars, nrrun; kwargs...)
     # we create these "lvars" because we need functions that 
@@ -27,7 +27,7 @@ end
 """
     advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
 
-run.f90:6747
+run.f90:AdvanceOneTimeStep:6729
 """
 function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
     # reset values since they are local variables
@@ -470,7 +470,7 @@ end
 """
     get_z_and_ec_gwt!(gvars)
 
-run.f90:6159
+run.f90:GetZandECgwt:6137
 """
 function get_z_and_ec_gwt!(gvars)
     ziaqua = gvars[:integer_parameters][:ziaqua]
@@ -500,7 +500,7 @@ end
 """
     get_irri_param!(gvars, lvars)
 
-run.f90:6262
+run.f90:GetIrriParam:6240
 """
 function get_irri_param!(gvars, lvars)
     irri_info_record1 = gvars[:irri_info_record1]
@@ -592,7 +592,7 @@ end
 """
     irri = irri_out_season(gvars)
 
-run.f90:6188
+run.f90:IrriOutSeason:6166
 """
 function irri_out_season(gvars)
     irrievents = RepDayEventInt[RepDayEventInt() for _ in 1:5]
@@ -634,7 +634,7 @@ end
 """
     irri_manual!(gvars)
 
-run.f90:6224
+run.f90:IrriManual:6202
 """
 function irri_manual!(gvars)
     irri_info_record1 = gvars[:irri_info_record1]
@@ -1020,7 +1020,7 @@ end
 """
     adjust_swc_rootzone!(gvars, lvars)
 
-run.f90:6348
+run.f90:AdjustSWCRootZone:6326
 """
 function adjust_swc_rootzone!(gvars, lvars)
     compartments = gvars[:compartments]
@@ -1056,7 +1056,7 @@ end
 """
     initialize_transfer_assimilates!(gvars, lvars)
 
-run.f90:6378
+run.f90:InitializeTransferAssimilates:6356
 """
 function initialize_transfer_assimilates!(gvars, lvars)
     crop = gvars[:crop]
@@ -1978,7 +1978,7 @@ end
 """
     potvalsf = get_potvalsf(dap, sumgddadjcc, gvars)
 
-run.f90:6468
+run.f90:GetPotValSF:6446
 """
 function get_potvalsf(dap, sumgddadjcc, gvars)
     crop = gvars[:crop]
@@ -2013,7 +2013,7 @@ end
 """
     check_for_print!(outputs, gvars)
 
-run.f90:3476
+run.f90:CheckForPrint:3391
 """
 function check_for_print!(outputs, gvars)
     dayn, monthn, yearn = determine_date(gvars[:integer_parameters][:daynri])
@@ -2072,7 +2072,7 @@ end
 """
     write_intermediate_period!(outputs, gvars)
 
-run.f90:6088
+run.f90:WriteIntermediatePeriod:6066
 """
 function write_intermediate_period!(outputs, gvars)
     # determine intermediate results
@@ -2140,7 +2140,7 @@ end
 """
     read_climate_nextday!(outputs, gvars)
 
-run.f90:7345
+run.f90:ReadClimateNextDay:7330
 """
 function read_climate_nextday!(outputs, gvars)
     # Read Climate next day, Get GDDays and update SumGDDays
@@ -2172,7 +2172,7 @@ end
 """
     set_gdd_variables_nextday!(gvars)
 
-run.f90:7376
+run.f90:SetGDDVariablesNextDay:7362
 """
 function set_gdd_variables_nextday!(gvars)
     crop = gvars[:crop]
@@ -2224,7 +2224,7 @@ end
                            salcrper, biomassper, bunlimper, bmobper, bstoper, 
                            gvars)
 
-run.f90:4582
+run.f90:WriteTheResults:4531
 """
 function write_the_results!(outputs, anumber, day1, month1, year1, dayn, monthn, 
                            yearn, rper, etoper, gddper, irriper, infiltper, 
@@ -2370,7 +2370,7 @@ end
 """
     write_daily_results!(outputs, gvars, dap, wpi, nrrun)
 
-run.f90:7419
+run.f90:WriteDailyResults:7405
 """
 function write_daily_results!(outputs, gvars, dap, wpi, nrrun)
 
@@ -2640,7 +2640,7 @@ end
 """
     record_harvest!(outputs, gvars, nrcut, dayinseason, nrrun)
 
-run.f90:6697
+run.f90:RecordHarvest:6679
 """
 function record_harvest!(outputs, gvars, nrcut, dayinseason, nrrun)
     arr = Float64[]
@@ -2700,7 +2700,7 @@ end
 """
     write_evaluation_data!(outputs, gvars, dap, nrrun)
 
-run.f90:6498
+run.f90:WriteEvaluationData:6476
 """
 function write_evaluation_data!(outputs, gvars, dap, nrrun)
     if length(gvars[:array_parameters][:DaynrEval]) > 0
@@ -2768,7 +2768,7 @@ end
 """
     swcact = swcz_soil(gvars)
 
-run.f90:6555
+run.f90:SWCZsoil:6533
 """
 function swcz_soil(gvars)
     zsoil = gvars[:float_parameters][:zeval]

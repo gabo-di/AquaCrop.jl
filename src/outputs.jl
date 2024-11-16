@@ -14,6 +14,16 @@ function start_outputs()
                     :tlow => Float64[],
                     :thigh => Float64[])
 
+    tcropreferencesim = Dict(
+                    :tlow => Float64[],
+                    :thigh => Float64[])
+    tnxreference12months = Dict(
+                    :tlow => Float64[],
+                    :thigh => Float64[])
+    tnxreference365days = Dict(
+                    :tlow => Float64[],
+                    :thigh => Float64[])
+
     seasonout = DataFrame(
         "RunNr" => Int[],
         "Date1" => Date[],
@@ -181,6 +191,9 @@ function start_outputs()
         :etodatasim => etodatasim,
         :raindatasim => raindatasim,
         :tempdatasim => tempdatasim,
+        :tnxreference12months => tnxreference12months,
+        :tnxreference365days => tnxreference365days,
+        :tcropreferencesim => tcropreferencesim,
         :seasonout => seasonout,
         :harvestsout => harvestsout,
         :dayout => dayout,
@@ -569,5 +582,83 @@ end
 """
 function flush_output_evaldataout!(outputs)
     empty!(outputs[:evaldataout])
+    return nothing
+end
+
+"""
+    add_output_in_tnxreference12months!(outputs, tlow::T, thigh::T) where T<:Number
+"""
+function add_output_in_tnxreference12months!(outputs, tlow::T, thigh::T) where T<:Number
+    push!(outputs[:tnxreference12months][:tlow], tlow)
+    push!(outputs[:tnxreference12months][:thigh], thigh) 
+    return nothing
+end
+
+"""
+    tlow, thigh = read_output_from_tnxreference12months(outputs, i::Int)
+"""
+function read_output_from_tnxreference12months(outputs, i::Int)
+    return outputs[:tnxreference12months][:tlow][i], outputs[:tnxreference12months][:thigh][i]
+end
+
+"""
+    flush_output_tnxreference12months!(outputs)
+"""
+function flush_output_tnxreference12months!(outputs)
+    outputs[:tnxreference12months] = Dict(
+                            :tlow => Float64[],
+                            :thigh => Float64[])
+    return nothing
+end
+
+"""
+    add_output_in_tnxreference365days!(outputs, tlow::T, thigh::T) where T<:Number
+"""
+function add_output_in_tnxreference365days!(outputs, tlow::T, thigh::T) where T<:Number
+    push!(outputs[:tnxreference365days][:tlow], tlow)
+    push!(outputs[:tnxreference365days][:thigh], thigh) 
+    return nothing
+end
+
+"""
+    tlow, thigh = read_output_from_tnxreference365days(outputs, i::Int)
+"""
+function read_output_from_tnxreference365days(outputs, i::Int)
+    return outputs[:tnxreference365days][:tlow][i], outputs[:tnxreference365days][:thigh][i]
+end
+
+"""
+    flush_output_tnxreference365days!(outputs)
+"""
+function flush_output_tnxreference365days!(outputs)
+    outputs[:tnxreference365days] = Dict(
+                            :tlow => Float64[],
+                            :thigh => Float64[])
+    return nothing
+end
+
+"""
+    add_output_in_tcropreferencesim!(outputs, tlow::T, thigh::T) where T<:Number
+"""
+function add_output_in_tcropreferencesim!(outputs, tlow::T, thigh::T) where T<:Number
+    push!(outputs[:tcropreferencesim][:tlow], tlow)
+    push!(outputs[:tcropreferencesim][:thigh], thigh) 
+    return nothing
+end
+
+"""
+    tlow, thigh = read_output_from_tcropreferencesim(outputs, i::Int)
+"""
+function read_output_from_tcropreferencesim(outputs, i::Int)
+    return outputs[:tcropreferencesim][:tlow][i], outputs[:tcropreferencesim][:thigh][i]
+end
+
+"""
+    flush_output_tcropreferencesim!(outputs)
+"""
+function flush_output_tcropreferencesim!(outputs)
+    outputs[:tcropreferencesim] = Dict(
+                            :tlow => Float64[],
+                            :thigh => Float64[])
     return nothing
 end

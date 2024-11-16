@@ -354,6 +354,9 @@ end
 gets the initial settings.
 
 initialsettings.f90:InitializeSettings:204
+# CHECK LATER
+# might need more parameters
+# this will also change checkpoint1
 """
 function initialize_settings(outputs, filepaths; kwargs...)
     # 1. Program settings
@@ -598,7 +601,6 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(string_parameters, :clim_file, "(None)")
     setparameter!(string_parameters, :climate_file,   "(None)")
     setparameter!(string_parameters, :temperature_file,  "(None)")
-    setparameter!(string_parameters, :tnxreference_file,  "(None)")
     setparameter!(string_parameters, :eto_file,  "(None)")
     setparameter!(string_parameters, :rain_file,  "(None)")
     setparameter!(string_parameters, :groundwater_file, "(None)")

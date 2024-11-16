@@ -115,6 +115,15 @@ function ParametersContainer(::Type{T}) where {T}
 end
 
 Base.isapprox(a::Dict{Symbol, T}, b::Dict{Symbol, T}; kwargs...) where {T} = begin 
+    if length(a) != length(b)
+        ans = false
+        println("\n\n\n")
+        println("wrong length")
+        println(length(a), "   ", length(b))
+        println("\n\n\n")
+        return ans
+    end
+
     ans = true
     for key in keys(a)
         if isapprox(a[key], b[key]; kwargs...)

@@ -1,7 +1,7 @@
 """
     initialize_run_part1!(outputs, gvars, nrrun; kwargs...)
 
-run.f90:6590
+run.f90:InitializeRunPart1:6568
 """
 function initialize_run_part1!(outputs, gvars, nrrun; kwargs...)
     projectinput = gvars[:projectinput][nrrun]
@@ -19,7 +19,7 @@ end
 """
     initialize_simulation_run_part1!(outputs, gvars, projectinput; kwargs...)
 
-run.f90:4754
+run.f90:InitializeSimulationRunPart1:4703
 """
 function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
     # Part1 (before reading the climate) of the initialization of a run
@@ -72,7 +72,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
     gvars[:simulation].DelayedDays = 0
 
     # 3. create temperature file covering crop cycle
-    if gvars[:string_parameters][:temperature_file] != "(None)"
+    if (gvars[:string_parameters][:temperature_file] != "(None)") & (gvars[:string_parameters][:temperature_file] != "(External)")
         if gvars[:simulation].ToDayNr < gvars[:crop].DayN
             temperature_file_covering_crop_period!(outputs, gvars, gvars[:crop].Day1, gvars[:simulation].ToDayNr)
         else
@@ -170,7 +170,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
             gvars[:crop].KcTop, gvars[:crop].KcDecline, gvars[:crop].CCEffectEvapLate, 
             gvars[:crop].Tbase, gvars[:crop].Tupper, gvars[:simulparam].Tmin,
             gvars[:simulparam].Tmax, gvars[:crop].GDtranspLow, gvars[:float_parameters][:co2i],
-            gvars[:crop].ModeCycle, gvars[:simulation], gvars[:simulparam])
+            gvars[:crop].ModeCycle, gvars[:simulation], gvars[:simulparam], true)
     setparameter!(gvars[:float_parameters], :sumkctop, sumkctop)
     setparameter!(gvars[:float_parameters], :sumkctop_stress, sumkctop*gvars[:float_parameters][:fracbiomasspotsf])
     setparameter!(gvars[:float_parameters], :sumkci, 0.0)
@@ -295,7 +295,7 @@ end
 """
     adjust_for_watertable!(gvars)
 
-run.f90:3423
+run.f90:AdjustForWatertable:3338
 """
 function adjust_for_watertable!(gvars)
     compartments = gvars[:compartments]
@@ -320,7 +320,7 @@ end
 """
     get_gwt_set!(gvars, parentdir, daynrin)
 
-run.f90:3526
+run.f90:GetGwtSet:3441
 """
 function get_gwt_set!(gvars, parentdir, daynrin)
     gwt = gvars[:gwtable]
@@ -559,12 +559,6 @@ function temperature_file_covering_crop_period!(outputs, gvars, crop_firstday, c
 
             add_output_in_tcropsim!(outputs, tlow, thigh)
         end 
-
-    # we do not write anything yet, OJO
-    # else
-    #     write(*,*) 'ERROR: no valid air temperature file'
-    #     return
-        # fatal error if no air temperature file
     end
 
     return nothing
@@ -652,7 +646,7 @@ end
 """
     relationships_for_fertility_and_salt_stress!(outputs, gvars)
 
-run.f90:3954
+run.f90:RelationshipsForFertilityAndSaltStress:3876
 """
 function relationships_for_fertility_and_salt_stress!(outputs, gvars)
     # 1. Soil fertility
@@ -660,7 +654,8 @@ function relationships_for_fertility_and_salt_stress!(outputs, gvars)
 
     # 1.a Soil fertility (Coeffb0,Coeffb1,Coeffb2 : Biomass-Soil Fertility stress)
     if gvars[:crop].StressResponse.Calibrated
-        stress_biomass_relationship!(outputs, gvars)
+        # stress_biomass_relationship!(outputs, gvars)
+        ReferenceStressBiomassRelationship!(outputs, gvars)
     else
         setparameter!(gvars[:float_parameters], :coeffb0, undef_double)
         setparameter!(gvars[:float_parameters], :coeffb1, undef_double)
@@ -1433,6 +1428,8 @@ end
 
 tempprocessing.f90:2586
 note that we must do simulation.DelayedDays = 0 before calling this function
+# CHECK LATER
+# uses tcropsim and treferencesim
 """
 function bnormalized(outputs, thedaystoccini, thegddaystoccini,
             l0, l12, l12sf, l123, l1234, lflor, 
@@ -2318,3 +2315,252 @@ function multiplier_cco_self_thinning(yeari, yearx, shapefactor)
     end 
     return fcco
 end
+
+"""
+    reference_stress_biomass_relationship!(outputs, gvars)
+
+preparefertilitysalinity.f90:ReferenceStressBiomassRelationship:788
+"""
+function reference_stress_biomass_relationship!(outputs, gvars)
+    cropdnr1 = gvars[:crop].Day1
+
+    L0_loc = L0
+    L12_loc = L12
+    LFlor_loc = LFlor
+    LengthFlor_loc = LengthFlor
+    L123_loc = L123
+    L1234_loc = L1234
+    LHImax_loc = LHImax
+    CGC_loc = CGC
+    CDC_loc =  CDC 
+    RatedHIdt_loc = RatedHIdt
+
+    # 1. Day 1 of the GrowingCycle
+    dayi, monthi, yeari = determine_date(cropdnr1)
+    refcropday1 = determine_day_nr(dayi, monthi, 1901)  # not linked to a specific year
+
+    # 2. Create TCropReference.SIM (i.e. daily mean Tnx for 365 days from Onset onwards)
+    if length(outputs[:tnxreference365days][:tlow]) > 0 
+        daily_tnxreferencefile_covering_cropperiod!(outputs, refcropday1)
+    end 
+
+    # 3. Determine coresponding calendar days if crop cycle is defined in GDDays
+    if gvars[:crop].ModeCycle == :GDDays
+        l0, l12, lflor, lengthflor, l123, l1234, lhimax, cgc, cdc, ratedhidt = adjust_calendardays_referencetnx(refcropday1, gvars)
+    end 
+
+    # 4. CO2 concentration for TnxReferenceYear
+    if gvars[:integer_parameters][:tnxreferenceyear] == 2000
+        co2tnxreferenceyear = CO2Ref
+    else
+        co2tnxreferenceyear = CO2ForTnxReferenceYear(GetTnxReferenceYear())
+    end 
+
+    # 5. Stress Biomass relationship
+    call StressBiomassRelationshipForTnxReference(TheDaysToCCini, TheGDDaysToCCini,&
+    L0_loc, L12_loc, L123_loc, L1234_loc,&
+    LFlor_loc, LengthFlor_loc,&
+    GDDL0, GDDL12, GDDL123, GDDL1234, WPyield, RefHI,&
+    CCo, CCx, CGC_loc, GDDCGC, CDC_loc, GDDCDC,&
+    KcTop, KcDeclAgeing, CCeffectProcent,&
+    Tbase, Tupper, TDayMin, TDayMax, GDtranspLow,&
+    WPveg, RatedHIdt_loc, CO2TnxReferenceYear,&
+    RefCropDay1,&
+    CropDeterm,&
+    CropSResp,&
+    TheCropType,&
+    TheModeCycle,&
+    b0, b1, b2,&
+    BM10, BM20, BM30, BM40, BM50, BM60, BM70)
+end #notend
+
+"""
+    daily_tnxreferencefile_covering_cropperiod!(outputs, cropfirstday)
+
+preparefertilitysalinity.f90:DailyTnxReferenceFileCoveringCropPeriod:262
+"""
+function daily_tnxreferencefile_covering_cropperiod!(outputs, cropfirstday)
+    # CropFirstDay = DayNr1 in undefined year
+    dayi, monthi, yeari = determine_date(cropfirstday)
+    daynr = determine_day_nr(dayi, monthi, 1901)
+    
+    for dayi in daynr1:365
+        tlow, thigh = read_output_from_tnxreference365days(outputs, dayi)
+        add_output_in_tcropreferencesim!(outputs, tlow, thigh)
+    end 
+    for dayi in 1:(daynr1-1)
+        tlow, thigh = read_output_from_tnxreference365days(outputs, dayi)
+        add_output_in_tcropreferencesim!(outputs, tlow, thigh)
+    end 
+     
+    # after this we do not use tnxreference365months so we flush it
+    flush_output_tnxreference365days!(outputs)
+    return nothing
+end 
+
+"""
+preparefertilitysalinity.f90:AdjustCalendarDaysReferenceTnx:156
+"""
+function adjust_calendardays_referencetnx(plantdaynr, gvars)
+    thecroptype = crop.subkind
+    tbase = crop.Tbase
+    tupper = crop.Tupper
+    tdaymin = simulparam.Tmin
+    tdaymax = simulparam.Tmax
+    gddl0 = crop.GDDaysToGermination
+    gddl12 = crop.GDDaysToFullCanopy
+    gddflor = crop.GDDaysToFlowering
+    gddlengthflor = crop.GDDLengthFlowering
+    gddl123 = crop.GDDaysToSenescence
+    gddl1234 = crop.GDDaysToHarvest
+    gddhimax = crop.GDDaysToHIo
+    gddcgc = crop.GDDCGC
+    gddcdc = crop.GDDCDC
+    cco = crop.CCo
+    ccx = crop.CCx
+    refhi = crop.HI
+    thedaystoccini = crop.DaysToCCini
+    thegddaystoccini = crop.GDDaysToCCini
+    theplanting = crop.Planting
+    l0 = crop.DaysToGermination
+    l12 = crop.DaysToFullCanopy
+    lflor = crop.DaysToFlowering
+    lengthflor = crop.LengthFlowering
+    l123 = crop.DaysToSenescence
+    l1234 = crop.DaysToHarvest
+    lhimax = crop.DaysToHIo
+    cgc = crop.CGC
+    cdc = crop.CDC
+    ratedhidt = crop.dHIdt
+
+    if thedaystoccini==0 
+        # planting/sowing
+        l0 = sum_calendar_days_referencetnx(gddl0, plantdaynr, plantdaynr, tbase, tupper, 
+                                            tdaymin, tdaymax, gvars)
+        l12 = sum_calendar_days_referencetnx(gddl12, plantdaynr, tbase, tupper, 
+                                            tdaymin, tdaymax, gvars)
+    else
+        # regrowth
+        if thedaystoccini>0 
+           # ccini < ccx
+           extragddays = gddl12 - gddl0 - thegddaystoccini
+           extradays = sum_calendar_days_referencetnx(extragddays, plantdaynr, plantdaynr,
+                                                      tbase, tupper, tdaymin, tdaymax, gvars)
+           l12 = l0 + thedaystoccini + extradays
+        end 
+    end 
+    if thecroptype != :Forage 
+        l123 = sum_calendar_days_referencetnx(gddl123, plantdaynr, plantdaynr, tbase, tupper,
+                                                tdaymin, tdaymax, gvars)
+        l1234 = sum_calendar_days_referencetnx(gddl1234, plantdaynr, plantdaynr, tbase, tupper,
+                                                tdaymin, tdaymax, gvars)
+    end 
+
+    if (thecroptype==:Grain) | (thecroptype==:Tuber)
+        lflor = sum_calendar_days_referencetnx(gddflor, plantdaynr, plantdaynr, tbase, tupper, 
+                                                tdaymin, tdaymax, gvars)
+        if thecroptype==:Grain 
+            lengthflor = sum_calendar_days_referencetnx(gddlengthflor, plantdaynr, 
+                            (plantdaynr+dflor), tbase, tupper, tdaymin, tdaymax, gvars)
+        else
+            lengthflor = 0
+        end 
+        lhimax = sum_calendar_days_referencetnx(gddhimax, plantdaynr, (plantdaynr+dflor),
+                                                tbase, tupper, tdaymin, tdaymax, gvars)
+    elseif (thecroptype==:Vegetative) | (thecroptype==:Forage)
+        lhimax = sum_calendar_days_referencetnx(gddhimax, plantdaynr, plantdaynr, tbase, tupper,
+                                                tdaymin, tdaymax, gvars)
+    end 
+
+    cgc = gddl12/l12 * gddcgc
+    cdc = gddcdc_to_cdc(plantdaynr, l123, gddl123, gddl1234, ccx, gddcdc, tbase, tupper, tdaymin, tdaymax, gvars)
+    if (thecroptype==:Grain) | (thecroptype==:Tuber) 
+        ratedhidt = refhi/lhimax
+    end 
+    if (thecroptype==:Vegetative) | (thecroptype==:Forage) 
+        if lhimax > 0 
+            if lhimax > l1234 
+                ratedhidt = refhi/l1234
+            else
+                ratedhidt = refhi/lhimax
+            end 
+            if ratedhidt > 100
+                ratedhidt = 100 # 100 is maximum tempdhidt (see setdhidt)
+                lhimax = 0
+            end 
+        else
+            ratedhidt = 100 # 100 is maximum tempdhidt (see setdhidt)
+            lhimax = 0
+        end 
+    end 
+
+    return l0, l12, lflor, lengthflor, l123, l1234, lhimax, cgc, cdc, ratedhidt
+end #notend
+
+"""
+preparefertilitysalinity.f90::92
+"""
+
+integer(int32) function SumCalendarDaysReferenceTnx(ValGDDays, RefCropDay1,&
+                                        StartDayNr, Tbase, Tupper,&
+                                        TDayMin, TDayMax)
+    integer(int32), intent(in) :: ValGDDays
+    integer(int32), intent(in) :: RefCropDay1
+    integer(int32), intent(in) :: StartDayNr
+    real(dp), intent(in) :: Tbase
+    real(dp), intent(in) :: Tupper
+    real(dp), intent(in) :: TDayMin
+    real(dp), intent(in) :: TDayMax
+
+    integer(int32) :: i
+    integer(int32) :: NrCDays
+    real(dp) :: RemainingGDDays, DayGDD
+    real(dp) :: TDayMin_loc, TDayMax_loc
+    
+    TDayMin_loc = TDayMin
+    TDayMax_loc = TDayMax
+
+    NrCdays = 0
+    if (ValGDDays > 0) then
+        if (GetTnxReferenceFile() == '(None)') then
+            ! given average Tmin and Tmax
+            DayGDD = DegreesDay(Tbase, Tupper, &
+                       TDayMin_loc, TDayMax_loc, GetSimulParam_GDDMethod())
+            if (abs(DayGDD) < epsilon(1._dp)) then
+                NrCDays = 0
+            else
+                NrCDays = roundc(ValGDDays/DayGDD, mold=1_int32)
+            end if
+        else
+            ! Get TCropReference: mean daily Tnx (365 days) from RefCropDay1 onwards
+            ! determine corresponding calendar days
+            RemainingGDDays = ValGDDays
+
+            ! TminCropReference and TmaxCropReference arrays contain the TemperatureFilefull data
+            i = StartDayNr - RefCropDay1
+
+            do while (RemainingGDDays > 0.1_dp)
+                i = i + 1
+                if (i == size(GetTminCropReferenceRun())) then
+                    i = 1
+                end if
+                TDayMin_loc = GetTminCropReferenceRun_i(i)
+                TDayMax_loc = GetTmaxCropReferenceRun_i(i)
+
+                DayGDD = DegreesDay(Tbase, Tupper, TDayMin_loc, &
+                                    TDayMax_loc, &
+                                    GetSimulParam_GDDMethod())
+                if (DayGDD > RemainingGDDays) then
+                    if (roundc((DayGDD-RemainingGDDays)/RemainingGDDays,mold=1) >= 1) then
+                        NrCDays = NrCDays + 1
+                    end if
+                else
+                    NrCDays = NrCDays + 1
+                end if
+                RemainingGDDays = RemainingGDDays - DayGDD
+            end do
+        end if
+    end if
+    SumCalendarDaysReferenceTnx = NrCDays
+end function SumCalendarDaysReferenceTnx
+

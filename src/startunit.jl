@@ -152,7 +152,7 @@ end
 """
     run_simulation!(outputs, gvars; kwargs...)
 
-run.f90:7779
+run.f90:RunSimulation:7826
 """
 function run_simulation!(outputs, gvars; kwargs...)
     nrruns = gvars[:simulation].NrRuns
@@ -197,7 +197,7 @@ end
 """
     finalize_run1!(outputs, gvars, nrrun; kwargs...)
     
-run.f90:7390
+run.f90:FinalizeRun1:7376
 """
 function finalize_run1!(outputs, gvars, nrrun; kwargs...)
     daynri = gvars[:integer_parameters][:daynri]
@@ -231,7 +231,7 @@ end
 """
     write_sim_period!(outputs, gvars, nrrun)
 
-run.f90:6064
+run.f90:WriteSimPeriod:6042
 """
 function write_sim_period!(outputs, gvars, nrrun)
     # Start simulation run
@@ -256,7 +256,7 @@ end
 """
     finalize_run2!(outputs, gvars, nrrun; kwargs...)
 
-run.f90:4355
+run.f90:FinalizeRun2:4286
 """
 function finalize_run2!(outputs, gvars, nrrun; kwargs...)
     close_climate!(outputs, gvars; kwargs...)
