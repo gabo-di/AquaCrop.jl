@@ -284,6 +284,7 @@ function close_climate!(outputs, gvars; kwargs...)
     flush_output_etodatasim!(outputs)
     flush_output_raindatasim!(outputs)
     flush_output_tempdatasim!(outputs)
+    flush_output_tcropreferencesim!(outputs)
 end
 
 """
@@ -334,5 +335,8 @@ function finalize_outputs!(outputs)
     delete!(outputs, :etodatasim)
     delete!(outputs, :raindatasim)
     delete!(outputs, :tempdatasim)
+    delete!(outputs, :tcropreferencesim)
+    delete!(outputs, :tnxreference12months)
+    delete!(outputs, :tnxreference365days)
     return nothing
 end

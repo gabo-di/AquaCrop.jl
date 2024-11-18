@@ -1344,7 +1344,8 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
     gddays = 0
 
     if (valperiod > 0) 
-        if (temperature_file=="(None)") 
+        if (temperature_file=="(None)") | (temperature_file=="(External)")
+            # OJO this includes temperature_file = "None" and "External" because we never set TminRun
             # given average Tmin and Tmax
             daygdd = degrees_day(tbase, tupper, tdaymin_local, tdaymax_local, simulparam.GDDMethod)
             gddays = round(Int, valperiod * daygdd)
@@ -2020,7 +2021,8 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
 
     nrcdays = 0
     if valgddays>0 
-        if temperature_file=="(None)"
+        if (temperature_file=="(None)") | (temperature_file=="(External)")
+            # OJO this includes temperature_file = "None" and "External" because we never set TminRun
             # given average Tmin and Tmax
             daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
             if abs(daygdd) < eps()

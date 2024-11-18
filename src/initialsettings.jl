@@ -554,6 +554,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(integer_parameters, :previoussdaynr, undef_int)
     setparameter!(integer_parameters, :outputaggregate, undef_int)
     setparameter!(integer_parameters, :tnxreferenceyear, 2000)
+    setparameter!(integer_parameters, :last_irri_dap, undef_int)
 
     bool_parameters = ParametersContainer(Bool)
     setparameter!(bool_parameters, :preday, false)

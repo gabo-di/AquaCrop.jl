@@ -576,6 +576,7 @@ function checkpoint1()
     AquaCrop.setparameter!(integer_parameters, :previoussdaynr, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :outputaggregate, AquaCrop.undef_int) 
     AquaCrop.setparameter!(integer_parameters, :tnxreferenceyear, 2000)
+    AquaCrop.setparameter!(integer_parameters, :last_irri_dap, AquaCrop.undef_int)
 
     bool_parameters = AquaCrop.ParametersContainer(Bool)
     AquaCrop.setparameter!(bool_parameters, :preday, false)

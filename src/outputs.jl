@@ -662,3 +662,7 @@ function flush_output_tcropreferencesim!(outputs)
                             :thigh => Float64[])
     return nothing
 end
+
+"""
+        add_output_in_irriinfoout!(outputs, arr)
+"""

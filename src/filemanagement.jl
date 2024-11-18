@@ -239,7 +239,7 @@ function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
     if (gvars[:float_parameters][:rooting_depth] > 0) & (gvars[:bool_parameters][:nomorecrop] == false)
         determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth])
         # temperature stress affecting crop transpiration
-        if gvars[:float_parameters][:cciactual] <= 0.0000001
+        if gvars[:float_parameters][:cciactual] <= ac_zero_threshold
             kstr = 1
         else
             kstr = ks_temperature(0, gvars[:crop].GDtranspLow, gvars[:float_parameters][:gddayi])
@@ -376,21 +376,21 @@ function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
     # 14.b Stress totals
     if gvars[:float_parameters][:cciactual] > 0
         # leaf expansion growth
-        if gvars[:float_parameters][:stressleaf] > - 0.000001
+        if gvars[:float_parameters][:stressleaf] > - ac_zero_threshold
             gvars[:stresstot].Exp = ((gvars[:stresstot].NrD - 1)*gvars[:stresstot].Exp +
                                      gvars[:float_parameters][:stressleaf])/(gvars[:stresstot].NrD)
         end 
         # stomatal closure
         if gvars[:float_parameters][:tpot] > 0
             stressstomata = 100 *(1 - gvars[:float_parameters][:tact]/gvars[:float_parameters][:tpot])
-            if stressstomata > - 0.000001
+            if stressstomata > - ac_zero_threshold
                 gvars[:stresstot].Sto = ((gvars[:stresstot].NrD - 1) *
                                          gvars[:stresstot].Sto + stressstomata) / (gvars[:stresstot].NrD)
             end 
         end 
     end 
     # weed stress
-    if gvars[:float_parameters][:weedrci] > - 0.000001
+    if gvars[:float_parameters][:weedrci] > - ac_zero_threshold
         gvars[:stresstot].Weed =  ((gvars[:stresstot].NrD - 1)*gvars[:stresstot].Weed +
                                      gvars[:float_parameters][:weedrci])/(gvars[:stresstot].NrD)
     end 
@@ -440,6 +440,9 @@ function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
         wpi = lvars[:float_parameters][:wpi]
         dap = gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays - gvars[:crop].Day1 + 1
         write_daily_results!(outputs, gvars, dap, wpi, nrrun)
+    end
+    if gvars[:bool_parameters][:out8Irri]
+        write_irr_info!(outputs, gvars)
     end
     if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
         dap = gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays - gvars[:crop].Day1 + 1
@@ -2472,7 +2475,7 @@ function write_daily_results!(outputs, gvars, dap, wpi, nrrun)
 
     # 4. Air temperature stress
     cciactual = gvars[:float_parameters][:cciactual]
-    if cciactual <= 0.0000001
+    if cciactual <= ac_zero_threshold
         kstr = 1
     else
         kstr = ks_temperature(0, gvars[:crop].GDtranspLow, gvars[:float_parameters][:gddayi])
@@ -2485,14 +2488,14 @@ function write_daily_results!(outputs, gvars, dap, wpi, nrrun)
     end 
 
     # 5. Relative cover of weeds
-    if cciactual <= 0.0000001
+    if cciactual <= ac_zero_threshold
         strw = undef_int
     else
         strw = round(Int, gvars[:float_parameters][:weedrci])
     end 
 
     # 6. WPi adjustemnt
-    if gvars[:sumwabal].Biomass <= 0.000001
+    if gvars[:sumwabal].Biomass <= ac_zero_threshold
         wpi_loc = 0
     end 
 
@@ -2764,7 +2767,6 @@ function write_evaluation_data!(outputs, gvars, dap, nrrun)
     return nothing
 end
 
-
 """
     swcact = swcz_soil(gvars)
 
@@ -2832,4 +2834,86 @@ function initialize_lvars()
         :integer_parameters => integer_parameters
     )
     return lvars
+end
+
+"""
+    write_irr_info!(outputs, gvars)
+
+run.f90:WriteIrrInfo:7746
+"""
+function write_irr_info!(outputs, gvars)
+    daynri = gvars[:integer_parameters][:daynri]
+    cropday1 = gvars[:crop].Day1
+    cropdayn = gvars[:crop].DayN
+    irrigation = gvars[:float_parameters][:irrigation]
+    irrimode = gvars[:symbol_parameters][:irrimode]
+    lastirridap = gvars[:integer_parameters][:last_irri_dap]
+
+    di, mi, yi = determine_date(daynri)
+
+    if gvars[:clim_record].FromY == 1901
+        yi = yi -1901 + 1
+    end
+    if (daynri < cropday1) | (daynri > cropdayn) # before and after growing period
+        arr = Float64[]
+        push!(arr, yi) # Date year
+        push!(arr, mi) # Date month
+        push!(arr, di) # Date day
+        push!(arr, undef_int) # DAP
+        push!(arr, undef_int) # Stage 
+        push!(arr, irrigation) # Irri (mm) 
+        push!(arr, undef_int) # IrriInt (days)
+
+        add_output_in_irriinfoout!(outputs, arr)
+    else # during growing period AND irrigation event or last day
+        if (daynri == cropdayn) | ((irrigation > 0) & (irrimode == :Inet)) # last day  
+            if (irrigation < 0.0001) & (daynri == cropdayn)
+                irrion = false
+            else
+                irrion = true
+            end
+            dapi = daynri - cropday1 + 1
+            for i in (lastirridap+1):dapi
+                di, mi, yi = determine_date(daynri - (dapi-lastirridap) + (i-lastirridap))
+                if gvars[:clim_record].FromY == 1901
+                    yi = yi -1901 + 1
+                end
+                if i == dapi 
+                    irrmm = irrigation
+                else
+                    irrmm = 0
+                end 
+                if irrimode == :Inet # for last day of growing period
+                    irrmm = undef_int
+                    irrion = false
+                end 
+                if irrion 
+                    arr = Float64[]
+                    push!(arr, yi) # Date year
+                    push!(arr, mi) # Date month
+                    push!(arr, di) # Date day
+                    push!(arr, i) # DAP
+                    push!(arr, undef_int) # Stage 
+                    push!(arr, irrmm) # Irri (mm) 
+                    push!(arr, dapi - lastirridap) # IrriInt (days)
+
+                    add_output_in_irriinfoout!(outputs, arr)
+                else
+                    arr = Float64[]
+                    push!(arr, yi) # Date year
+                    push!(arr, mi) # Date month
+                    push!(arr, di) # Date day
+                    push!(arr, i) # DAP
+                    push!(arr, undef_int) # Stage 
+                    push!(arr, irrmm) # Irri (mm) 
+                    push!(arr, undef_int) # IrriInt (days)
+
+                    add_output_in_irriinfoout!(outputs, arr)
+                end 
+            end 
+            if irrion
+                setparameter!(gvars[:integer_parameters][:last_irri_dap], dapi)
+            end 
+        end 
+    end 
 end

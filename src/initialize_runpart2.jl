@@ -990,6 +990,7 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
     # In Versions < 3.2 - Irrigation water
     # quality is not yet recorded on file
     open_irrigation_file!(gvars, projectinput.ParentDir)
+    setparameter!(gvars[:integer_parameters], :last_irri_dap, 0)
 
     # 12. Adjusted time when starting as regrowth
     if gvars[:crop].DaysToCCini != 0
@@ -1398,8 +1399,6 @@ end
     get_sumgdd_before_simulation!(gvars)
 
 run.f90:GetSumGDDBeforeSimulation:3713
-# CHECK LATER
-# temperature_file = External, temperature_file_exists ?
 """
 function get_sumgdd_before_simulation!(gvars)
     daynri = gvars[:integer_parameters][:daynri]
@@ -1514,17 +1513,17 @@ function get_sumgdd_before_simulation!(gvars)
 
         sumgddfromday1 = (daynri - gvars[:crop].Day1) * dgrd
         if sumgddfromday1 < 0
-            gvars[:simulation].SumGDD = 0
+            gvars[:simulation].SumGDDfromDay1 = 0
         else
             gvars[:simulation].SumGDDfromDay1 = sumgddfromday1
         end
 
-    else
+    else #this includes temperature_file = "(External)"
         sumgdd = gvars[:simulation].SumGDD
         dgrd = degrees_day(gvars[:crop].Tbase, gvars[:crop].Tupper,
             tmin, tmax,
             gvars[:simulparam].GDDMethod)
-        sumgddfromday1 = sumgdd - degrees_day
+        sumgddfromday1 = sumgdd - dgrd 
         gvars[:simulation].SumGDDfromDay1 = sumgddfromday1
         setparameter!(gvars[:float_parameters], :tmin, tmin)
         setparameter!(gvars[:float_parameters], :tmax, tmax)

@@ -2990,10 +2990,10 @@ function determine_cci!(gvars, ccxtotal, ccototal, fracassim,
                     else
                         # CDC is adjusted to degree of stress
                         # time required to reach CCiprev with CDCadjusted
-                        if ccitopearlysen < eps()
+                        if abs(ccitopearlysen) < eps()
                             ccitopearlysen = eps()
                         end 
-                        if cdcadjusted < eps()
+                        if abs(cdcadjusted) < eps()
                             cdcadjusted = eps()
                         end 
                         ttemp = (log(1 + (1 - cciprev/ccitopearlysen)/0.05)) /
