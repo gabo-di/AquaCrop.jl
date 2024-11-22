@@ -689,7 +689,7 @@ function relationships_for_fertility_and_salt_stress!(outputs, gvars)
 
     # 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
     if gvars[:simulation].SalinityConsidered == true
-        ccx_salt_stress_relationship!(outputs, gvars)
+        reference_ccx_salt_stress_relationship!(outputs, gvars)
     else
         setparameter!(gvars[:float_parameters], :coeffb0salt, undef_double)
         setparameter!(gvars[:float_parameters], :coeffb1salt, undef_double)
@@ -697,7 +697,7 @@ function relationships_for_fertility_and_salt_stress!(outputs, gvars)
     end
 
     return nothing
-end #notend
+end 
 
 """
     stress_biomass_relationship!(outputs, gvars)
@@ -2410,7 +2410,7 @@ function daily_tnxreferencefile_covering_cropperiod!(outputs, cropfirstday)
         tlow, thigh = read_output_from_tnxreference365days(outputs, dayi)
         add_output_in_tcropreferencesim!(outputs, tlow, thigh)
     end 
-    for dayi in 1:(daynr1-1)
+    for dayi in 1:(daynr-1)
         tlow, thigh = read_output_from_tnxreference365days(outputs, dayi)
         add_output_in_tcropreferencesim!(outputs, tlow, thigh)
     end 
@@ -2546,7 +2546,7 @@ function sum_calendar_days_referencetnx(valgddays, refcropday1, startdaynr, tbas
 
     nrcdays = 0
     if valgddays > 0
-        if length(outputs[:tcropreferencesim][:tlow]) > 0 
+        if length(outputs[:tcropreferencesim][:tlow]) == 0 
             # given average Tmin and Tmax
             daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
             if abs(daygdd) < eps()
@@ -2704,6 +2704,10 @@ function stress_biomass_relationship_for_tnxreference!(co2tnxreferenceyear, refc
         else
             tswitch = round(Int, daysyieldformation/3)
         end 
+    else
+        # assign default values 
+        daysyieldformation = undef_int
+        tswitch = undef_int
     end 
 
     # 2. Biomass production for various stress levels
@@ -2951,6 +2955,10 @@ function ccx_salt_stress_relationship_for_tnxreference!(co2tnxreferenceyear, ref
         else
             tswitch = round(Int, daysyieldformation/3)
         end 
+    else
+        # assign default values 
+        daysyieldformation = undef_int
+        tswitch = undef_int
     end 
 
     # 2. Biomass production (or Salt stress) for various CCx reductions

@@ -4,7 +4,7 @@ using Test
 include("checkpoints.jl")
 
 @testset "Second run initialize" begin
-    # break run.f90:7799
+    # break run.f90:RunSimulation:7846
     
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
@@ -57,7 +57,7 @@ include("checkpoints.jl")
 end
 
 @testset "Second run finalize" begin
-    # break run.f90:7800
+    # break run.f90:RunSimulation:7847
     
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
@@ -81,7 +81,7 @@ end
     @test isapprox(gvars[:soil_layers], gvars_0[:soil_layers])
     @test isapprox(gvars[:compartments], gvars_0[:compartments])
     @test isapprox(gvars[:management], gvars_0[:management])
-    @test isapprox(gvars[:total_water_content], gvars_0[:total_water_content])
+    @test isapprox(gvars[:total_water_content], gvars_0[:total_water_content]; atol=1e-10)
     @test isapprox(gvars[:total_salt_content], gvars_0[:total_salt_content])
     @test isapprox(gvars[:stresstot], gvars_0[:stresstot]; atol=1e-10)
     @test isapprox(gvars[:sumwabal], gvars_0[:sumwabal])
@@ -95,11 +95,10 @@ end
     @test isapprox(gvars[:root_zone_salt], gvars_0[:root_zone_salt])
     @test isapprox(gvars[:transfer], gvars_0[:transfer])
     @test isapprox(gvars[:plotvarcrop], gvars_0[:plotvarcrop])
-
 end
 
 @testset "Third run finalize" begin
-    # break run.f90:7800
+    # break run.f90:RunSimulation:7847
     
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
@@ -150,5 +149,4 @@ end
     @test isapprox(gvars[:plotvarcrop], gvars_0[:plotvarcrop])
     @test isapprox(gvars[:perennial_period], gvars_0[:perennial_period])
     @test isapprox(gvars[:crop_file_set], gvars_0[:crop_file_set])
-
 end

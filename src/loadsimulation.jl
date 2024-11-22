@@ -3608,7 +3608,7 @@ function create_tnxreferencefile!(outputs, gvars; kwargs...)
             if isleapyear(yeari) & (monthi==2)
                 dayi = dayi + 1
             end 
-            endyearnr = determine_day_nr(dayi, monthi, yeari)
+            enddaynr = determine_day_nr(dayi, monthi, yeari)
         end 
             
         # open temperature file
@@ -3669,7 +3669,7 @@ function create_tnxreferencefile!(outputs, gvars; kwargs...)
                     if isleapyear(yeari) & (monthi==2)
                         dayi = dayi + 1
                     end 
-                    endyearnr = determine_day_nr(dayi, monthi, yeari)
+                    enddaynr = determine_day_nr(dayi, monthi, yeari)
                 elseif temperature_record.Datatype == :Decadely
                     monthdecs = 0
                     deci = 0
@@ -3681,7 +3681,6 @@ function create_tnxreferencefile!(outputs, gvars; kwargs...)
             end 
         end 
     end 
-
     
     # 3. Create and Save TnxReference File
     if gvars[:bool_parameters][:temperature_file_exists]
@@ -3779,7 +3778,7 @@ function get_monthly_temperature_dataset_from_tnxreferencefile(outputs, monthi)
     end 
     for dayi in (dayn+1):31 # give to remaining days (day 29,30 or 31) the daynr of the last day of the month
         tmin_dataset[dayi].DayNr = dnr+dayn-1
-        tmax_dataset[dayi].daynr = dnr+dayn-1
+        tmax_dataset[dayi].DayNr = dnr+dayn-1
         tmin_dataset[dayi].Param = 0
         tmax_dataset[dayi].Param = 0
     end 

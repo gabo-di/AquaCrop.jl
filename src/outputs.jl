@@ -185,6 +185,14 @@ function start_outputs()
         "SWCstd" => Quantity{Float64, 𝐋, FreeUnits{(mm_,), 𝐋, nothing}}[],
     )
 
+    irriinfoout = DataFrame(
+        "Date" => Date[],
+        "DAP" => Int[],
+        "Stage" => Int[],
+        "Irri" => Quantity{Float64, 𝐋, FreeUnits{(mm_,), 𝐋, nothing}}[],
+        "IrriInt" => Quantity{Float64, 𝐓, FreeUnits{(d_,), 𝐓, nothing}}[],
+    )
+
     return Dict( 
         :logger => logger,
         :tcropsim => tcropsim,
@@ -197,7 +205,8 @@ function start_outputs()
         :seasonout => seasonout,
         :harvestsout => harvestsout,
         :dayout => dayout,
-        :evaldataout => evaldataout
+        :evaldataout => evaldataout,
+        :irriinfoout => irriinfoout
     )
 end
 
@@ -664,5 +673,33 @@ function flush_output_tcropreferencesim!(outputs)
 end
 
 """
-        add_output_in_irriinfoout!(outputs, arr)
+    add_output_in_irriinfoout!(outputs, arr)
 """
+function add_output_in_irriinfoout!(outputs, arr)
+    if length(arr) == 13
+        new_row = Dict(
+            "Date" => Date(arr[1], arr[2], arr[3]),
+            "DAP" => arr[4],
+            "Stage" => arr[5],
+            "Irri" => arr[6]*u"mm",
+            "IrriInt" => arr[7]*u"d",
+        )
+        push!(outputs[:irriinfoout], new_row)
+    end
+    return nothing
+end
+
+"""
+    read_output_from_irriinfoout(outputs, i::Int)
+"""
+function read_output_from_irriinfoout(outputs, i::Int)
+    return outputs[:irriinfoout, i]
+end
+
+"""
+    flush_output_irriinfoout!(outputs)
+"""
+function flush_output_irriinfoout!(outputs)
+    empty!(outputs[:irriinfoout])
+    return nothing
+end

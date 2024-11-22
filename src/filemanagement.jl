@@ -2912,7 +2912,7 @@ function write_irr_info!(outputs, gvars)
                 end 
             end 
             if irrion
-                setparameter!(gvars[:integer_parameters][:last_irri_dap], dapi)
+                setparameter!(gvars[:integer_parameters], :last_irri_dap, dapi)
             end 
         end 
     end 
