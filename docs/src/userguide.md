@@ -107,7 +107,7 @@ if we want to know the biomass of the current day we use [`biomass`](@ref) funct
 biomass(cropfield)
 
 # output
-1.9209359227956477 ton ha⁻¹
+1.9197377309729786 ton ha⁻¹
 ```
 note that the result is in `ton/ha`, metric tonelades per hectare. The amount of dry yield
 of the current day is given by the [`dryyield`](@ref) function
@@ -115,14 +115,14 @@ of the current day is given by the [`dryyield`](@ref) function
 dryyield(cropfield)
 
 # output
-1.762886258750845 ton ha⁻¹
+1.7616862576301124 ton ha⁻¹
 ```
 and the fresh yield by the [`freshyield`](@ref) function
 ```jldoctest intermediate_run_example
 freshyield(cropfield)
 
 # output
-8.814431293754224 ton ha⁻¹
+8.808431288150562 ton ha⁻¹
 ```
 
 The canopy cover is given by the percentage of terrain covered by the crop, 
@@ -131,7 +131,7 @@ for this use the function [`canopycover`](@ref)
 canopycover(cropfield)
 
 # output
-49.26884612609828
+49.26884621144958
 ```
 
 If we want to make a harvest in the current day use [`harvest!`](@ref) function 
@@ -147,7 +147,7 @@ cropfield.harvestsout
      │ Int64  Int64  Date        Int64  Quantity…  Quantity…         Quantity… ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │     1      0  2014-05-21      0      0.0 d      0.0 ton ha⁻¹      0.0 t ⋯
-   2 │     1      1  2014-06-20     31     31.0 d  2.03767 ton ha⁻¹  2.03767 t
+   2 │     1      1  2014-06-20     31     31.0 d  2.03624 ton ha⁻¹  2.03624 t
                                                                5 columns omitted
 ```
 
@@ -176,7 +176,7 @@ before harvesting
 canopycover(cropfield) # canopy cover just before harvesting
 
 # output
-49.904006947723616
+49.9040070260628
 ```
 
 and just after harvesting
@@ -228,7 +228,7 @@ cropfield.seasonout
  Row │ RunNr  Date1       Rain       ETo        GD       CO2         Irri      ⋯
      │ Int64  Date        Quantity…  Quantity…  Float64  Quantity…   Quantity… ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │     1  2014-05-21   487.5 mm   431.0 mm   1802.6  398.81 ppm     0.0 mm ⋯
+   1 │     1  2014-05-21   487.5 mm   431.0 mm   1802.6  398.82 ppm     0.0 mm ⋯
                                                               29 columns omitted
 ```
 
