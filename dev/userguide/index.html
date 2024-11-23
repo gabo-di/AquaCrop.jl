@@ -48,16 +48,16 @@ true</code></pre><p>we can see the daily output DataFrame in the field</p><pre><
                                                   82 columns and 15 rows omitted</code></pre><p>if we want to know the biomass of the current day we use <a href="../api/#AquaCrop.biomass-Tuple{AquaCropField}"><code>biomass</code></a> function</p><pre><code class="language-julia hljs">biomass(cropfield)
 
 # output
-1.9209359227956477 ton ha⁻¹</code></pre><p>note that the result is in <code>ton/ha</code>, metric tonelades per hectare. The amount of dry yield of the current day is given by the <a href="../api/#AquaCrop.dryyield-Tuple{AquaCropField}"><code>dryyield</code></a> function</p><pre><code class="language-julia hljs">dryyield(cropfield)
+1.9197377309729786 ton ha⁻¹</code></pre><p>note that the result is in <code>ton/ha</code>, metric tonelades per hectare. The amount of dry yield of the current day is given by the <a href="../api/#AquaCrop.dryyield-Tuple{AquaCropField}"><code>dryyield</code></a> function</p><pre><code class="language-julia hljs">dryyield(cropfield)
 
 # output
-1.762886258750845 ton ha⁻¹</code></pre><p>and the fresh yield by the <a href="../api/#AquaCrop.freshyield-Tuple{AquaCropField}"><code>freshyield</code></a> function</p><pre><code class="language-julia hljs">freshyield(cropfield)
+1.7616862576301124 ton ha⁻¹</code></pre><p>and the fresh yield by the <a href="../api/#AquaCrop.freshyield-Tuple{AquaCropField}"><code>freshyield</code></a> function</p><pre><code class="language-julia hljs">freshyield(cropfield)
 
 # output
-8.814431293754224 ton ha⁻¹</code></pre><p>The canopy cover is given by the percentage of terrain covered by the crop,  for this use the function <a href="../api/#AquaCrop.canopycover-Tuple{AquaCropField}"><code>canopycover</code></a></p><pre><code class="language-julia hljs">canopycover(cropfield)
+8.808431288150562 ton ha⁻¹</code></pre><p>The canopy cover is given by the percentage of terrain covered by the crop,  for this use the function <a href="../api/#AquaCrop.canopycover-Tuple{AquaCropField}"><code>canopycover</code></a></p><pre><code class="language-julia hljs">canopycover(cropfield)
 
 # output
-49.26884612609828</code></pre><p>If we want to make a harvest in the current day use <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a> function </p><pre><code class="language-julia hljs">harvest!(cropfield)
+49.26884621144958</code></pre><p>If we want to make a harvest in the current day use <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a> function </p><pre><code class="language-julia hljs">harvest!(cropfield)
 
 cropfield.harvestsout
 
@@ -67,7 +67,7 @@ cropfield.harvestsout
      │ Int64  Int64  Date        Int64  Quantity…  Quantity…         Quantity… ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │     1      0  2014-05-21      0      0.0 d      0.0 ton ha⁻¹      0.0 t ⋯
-   2 │     1      1  2014-06-20     31     31.0 d  2.03767 ton ha⁻¹  2.03767 t
+   2 │     1      1  2014-06-20     31     31.0 d  2.03624 ton ha⁻¹  2.03624 t
                                                                5 columns omitted</code></pre><p>note that <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a> also makes a daily update, now we have <code>ndays+1</code> days</p><pre><code class="language-julia hljs">isequal(size(cropfield.dayout), (ndays+1, 89))
 
 # output
@@ -77,7 +77,7 @@ true</code></pre><p>another effect of the <a href="../api/#AquaCrop.harvest!-Tup
 0.0 ton ha⁻¹</code></pre><p>it also changes the canopy cover, we can see the value of it just before harvesting</p><pre><code class="language-julia hljs">canopycover(cropfield) # canopy cover just before harvesting
 
 # output
-49.904006947723616</code></pre><p>and just after harvesting</p><pre><code class="language-julia hljs">canopycover(cropfield, actual=false) # canopy cover just after harvesting
+49.9040070260628</code></pre><p>and just after harvesting</p><pre><code class="language-julia hljs">canopycover(cropfield, actual=false) # canopy cover just after harvesting
 
 # output
 25.0</code></pre><p>the harvesting is done at the end of the day, that is why we have two values of canopy cover.</p><p>If we make another daily update the canopy cover is actualized</p><pre><code class="language-julia hljs">dailyupdate!(cropfield)
@@ -99,7 +99,7 @@ true</code></pre><p>and check the output dataframe of the season using</p><pre><
  Row │ RunNr  Date1       Rain       ETo        GD       CO2         Irri      ⋯
      │ Int64  Date        Quantity…  Quantity…  Float64  Quantity…   Quantity… ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │     1  2014-05-21   487.5 mm   431.0 mm   1802.6  398.81 ppm     0.0 mm ⋯
+   1 │     1  2014-05-21   487.5 mm   431.0 mm   1802.6  398.82 ppm     0.0 mm ⋯
                                                               29 columns omitted</code></pre><h2 id="Advanced-Run"><a class="docs-heading-anchor" href="#Advanced-Run">Advanced Run</a><a id="Advanced-Run-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Run" title="Permalink"></a></h2><p>The advanced run is still experimental, the idea is to:</p><ol><li>Provide more control of the variables.</li><li>Not use files for faster upload of values.</li><li>To be easy to integrate with <a href="https://persefone-model.eu">Persefone.jl</a> and other julia libraries.</li></ol><p>Let&#39;s start calling some libraries and creating some variables</p><pre><code class="language-julia hljs">using AquaCrop
 using DataFrames
 using Dates
@@ -292,4 +292,4 @@ total_days = length(collect(start_date:end_date))
 isequal(size(cropfield.dayout), (total_days, 89))
 
 # output
-true</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gettingstarted/">« Getting Started</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Thursday 14 November 2024 12:33">Thursday 14 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+true</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gettingstarted/">« Getting Started</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Saturday 23 November 2024 13:23">Saturday 23 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

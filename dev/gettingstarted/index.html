@@ -16,19 +16,19 @@ true</code></pre><p>we can see the harvest dataframe via</p><pre><code class="la
      │ Int64  Int64  Date        Int64  Quantity…  Quantity…         Quantity… ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │     1      0  2014-05-21      0      0.0 d      0.0 ton ha⁻¹      0.0 t ⋯
-   2 │     1      1  2014-07-13     54     54.0 d  4.80683 ton ha⁻¹  4.80683 t
-   3 │     1      2  2014-08-31    103     49.0 d  3.19971 ton ha⁻¹  8.00655 t
-   4 │     1   9999  2014-11-01      0      0.0 d      0.0 ton ha⁻¹  9.31949 t
+   2 │     1      1  2014-07-13     54     54.0 d  4.78668 ton ha⁻¹  4.78668 t
+   3 │     1      2  2014-08-31    103     49.0 d  3.08189 ton ha⁻¹  7.86857 t
+   4 │     1   9999  2014-11-01      0      0.0 d      0.0 ton ha⁻¹  9.17245 t
    5 │     2      0  2015-05-01      0      0.0 d      0.0 ton ha⁻¹      0.0 t ⋯
-   6 │     2      1  2015-06-20     51    232.0 d  5.68897 ton ha⁻¹  5.68897 t
-   7 │     2      2  2015-07-26     87     36.0 d  3.39526 ton ha⁻¹  9.08422 t
-   8 │     2      3  2015-08-30    122     35.0 d  1.55885 ton ha⁻¹  10.6431 t
-   9 │     2   9999  2015-10-25      0      0.0 d      0.0 ton ha⁻¹  11.8413 t ⋯
+   6 │     2      1  2015-06-20     51    232.0 d  5.69329 ton ha⁻¹  5.69329 t
+   7 │     2      2  2015-07-26     87     36.0 d  3.44309 ton ha⁻¹  9.13638 t
+   8 │     2      3  2015-08-30    122     35.0 d  1.62555 ton ha⁻¹  10.7619 t
+   9 │     2   9999  2015-10-25      0      0.0 d      0.0 ton ha⁻¹  11.9474 t ⋯
   10 │     3      0  2016-05-07      0      0.0 d      0.0 ton ha⁻¹      0.0 t
-  11 │     3      1  2016-06-15     40    235.0 d  5.04462 ton ha⁻¹  5.04462 t
-  12 │     3      2  2016-07-20     75     35.0 d  3.78779 ton ha⁻¹  8.83241 t
-  13 │     3      3  2016-08-29    115     40.0 d  2.22597 ton ha⁻¹  11.0584 t ⋯
-  14 │     3   9999  2016-10-29      0      0.0 d      0.0 ton ha⁻¹  12.4664 t
+  11 │     3      1  2016-06-15     40    235.0 d  5.05947 ton ha⁻¹  5.05947 t
+  12 │     3      2  2016-07-20     75     35.0 d  3.81457 ton ha⁻¹  8.87405 t
+  13 │     3      3  2016-08-29    115     40.0 d  2.28277 ton ha⁻¹  11.1568 t ⋯
+  14 │     3   9999  2016-10-29      0      0.0 d      0.0 ton ha⁻¹  12.5786 t
                                                                5 columns omitted</code></pre><p>similarly with the daily output dataframe <code>outputs[:dayout]</code>, the result of the whole season dataframe <code>outputs[:seasonout]</code>, the information for the evaluation dataframe <code>outputs[:evaldataout]</code>, and the logger information in <code>outputs[:logger]</code>. Note the output&#39;s dataframes correspond to output files in a run of AquaCrop Fortran.</p><h3 id="Using-TOML-files"><a class="docs-heading-anchor" href="#Using-TOML-files">Using TOML files</a><a id="Using-TOML-files-1"></a><a class="docs-heading-anchor-permalink" href="#Using-TOML-files" title="Permalink"></a></h3><p>If you prefer to use TOML and csv files for configuring the input, then  use the function <a href="../api/#AquaCrop.TomlFileRun"><code>TomlFileRun</code></a> like in the following example</p><pre><code class="language-julia hljs">runtype = TomlFileRun();
 parentdir = AquaCrop.test_toml_dir  #&quot;.../AquaCrop.jl/test/testcase/TOML_FILES&quot;
 
@@ -38,4 +38,4 @@ isequal(size(outputs[:dayout]), (892, 89))
 
 # output
 
-true</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../userguide/">User Guide »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Thursday 14 November 2024 12:33">Thursday 14 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+true</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Introduction</a><a class="docs-footer-nextpage" href="../userguide/">User Guide »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Saturday 23 November 2024 13:23">Saturday 23 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
