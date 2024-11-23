@@ -3,12 +3,12 @@
 
 starts the program
 
-startunit.f90:931
+startunit.f90:StartTheProgram:943
 """
 function start_the_program!(outputs, parentdir; kwargs...)
     # the part of get_results_parameters is done when we create gvars
     filepaths = initialize_the_program(outputs, parentdir; kwargs...)
-    project_filenames = initialize_project_filename(outputs, filepaths; kwargs...)
+    project_filenames = initialize_project_filenames(outputs, filepaths; kwargs...)
 
     nprojects = length(project_filenames)
     if nprojects == 0
@@ -41,7 +41,7 @@ end
 """
     gvars, all_ok = initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
 
-startunit.f90:535
+startunit.f90:InitializeProject:547
 """
 function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
     all_ok = AllOk(true, "")
@@ -152,7 +152,7 @@ end
 """
     run_simulation!(outputs, gvars; kwargs...)
 
-run.f90:7779
+run.f90:RunSimulation:7826
 """
 function run_simulation!(outputs, gvars; kwargs...)
     nrruns = gvars[:simulation].NrRuns
@@ -197,7 +197,7 @@ end
 """
     finalize_run1!(outputs, gvars, nrrun; kwargs...)
     
-run.f90:7390
+run.f90:FinalizeRun1:7376
 """
 function finalize_run1!(outputs, gvars, nrrun; kwargs...)
     daynri = gvars[:integer_parameters][:daynri]
@@ -231,7 +231,7 @@ end
 """
     write_sim_period!(outputs, gvars, nrrun)
 
-run.f90:6064
+run.f90:WriteSimPeriod:6042
 """
 function write_sim_period!(outputs, gvars, nrrun)
     # Start simulation run
@@ -256,7 +256,7 @@ end
 """
     finalize_run2!(outputs, gvars, nrrun; kwargs...)
 
-run.f90:4355
+run.f90:FinalizeRun2:4286
 """
 function finalize_run2!(outputs, gvars, nrrun; kwargs...)
     close_climate!(outputs, gvars; kwargs...)
@@ -284,6 +284,7 @@ function close_climate!(outputs, gvars; kwargs...)
     flush_output_etodatasim!(outputs)
     flush_output_raindatasim!(outputs)
     flush_output_tempdatasim!(outputs)
+    flush_output_tcropreferencesim!(outputs)
 end
 
 """
@@ -325,7 +326,6 @@ function finalize_the_program!(outputs)
     return nothing
 end
 
-
 """
     finalize_outputs!(outputs)
 """
@@ -335,5 +335,8 @@ function finalize_outputs!(outputs)
     delete!(outputs, :etodatasim)
     delete!(outputs, :raindatasim)
     delete!(outputs, :tempdatasim)
+    delete!(outputs, :tcropreferencesim)
+    delete!(outputs, :tnxreference12months)
+    delete!(outputs, :tnxreference365days)
     return nothing
 end

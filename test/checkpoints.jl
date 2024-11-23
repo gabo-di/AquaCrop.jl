@@ -575,6 +575,8 @@ function checkpoint1()
     AquaCrop.setparameter!(integer_parameters, :stagecode, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :previoussdaynr, AquaCrop.undef_int)
     AquaCrop.setparameter!(integer_parameters, :outputaggregate, AquaCrop.undef_int) 
+    AquaCrop.setparameter!(integer_parameters, :tnxreferenceyear, 2000)
+    AquaCrop.setparameter!(integer_parameters, :last_irri_dap, AquaCrop.undef_int)
 
     bool_parameters = AquaCrop.ParametersContainer(Bool)
     AquaCrop.setparameter!(bool_parameters, :preday, false)
@@ -595,6 +597,7 @@ function checkpoint1()
     AquaCrop.setparameter!(bool_parameters, :outdaily, false)
     AquaCrop.setparameter!(bool_parameters, :part1Mult, false)
     AquaCrop.setparameter!(bool_parameters, :part2Eval, false)
+    AquaCrop.setparameter!(bool_parameters, :out8Irri, false)
 
     array_parameters = AquaCrop.ParametersContainer(Vector{Float64})
     AquaCrop.setparameter!(array_parameters, :Tmin, Float64[])
@@ -682,7 +685,7 @@ function checkpoint2()
     gvars[:simulation].MultipleRunWithKeepSWC = true
     gvars[:simulation].MultipleRunConstZrx = 3
     # OJO this is incorrect in fortran code, they forget to set the temperature in line startuni.f90:864
-    # it should be: call SetSimulParam_Tmin(Tmin_temp)
+    # it should be: call SetSimulParam_Tmin(Tmin_temp)  corrected in v7.2
     # gvars[:simulparam].Tmin = 0 
     
     AquaCrop.setparameter!(gvars[:integer_parameters], :outputaggregate, 0)
@@ -1365,6 +1368,8 @@ function checkpoint3()
         end
     end
     AquaCrop.setparameter!(gvars[:array_parameters], :Rain, Rain)
+
+    AquaCrop.setparameter!(gvars[:integer_parameters], :tnxreferenceyear, 2015)
     
     return gvars
 end
@@ -1411,16 +1416,16 @@ function checkpoint4()
     AquaCrop.setparameter!(gvars[:float_parameters], :previousbmob, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :previousbsto, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :co2i, 398.81)
-    AquaCrop.setparameter!(gvars[:float_parameters], :fracbiomasspotsf, 0.50819993030339949)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0, 86.318499948012658)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1, -0.56684310202237487)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2, -0.0029082706116472321)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0salt, 0.70209879230240801)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1salt, 0.33362709367525073)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2salt, 0.0054910290873667863)
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop, 144.33651012061804)
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 73.351804383534002)
+    AquaCrop.setparameter!(gvars[:float_parameters], :co2i, 398.82)
+    AquaCrop.setparameter!(gvars[:float_parameters], :fracbiomasspotsf, 0.50300951009185912)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0, 85.035549263170651)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1, -0.5464029338149593)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2, -0.0029841028452112285)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0salt, 0.68675667252681905)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1salt, 0.3311841084739463)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2salt, 0.0055193594580992345)
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop, 136.1658588988922)
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 68.492721975968976)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :fweednos, 1.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxcrop_weednosf_stress, 0.95)
@@ -1508,8 +1513,8 @@ function checkpoint5()
     AquaCrop.setparameter!(gvars[:integer_parameters], :suminterval, 0) 
     AquaCrop.setparameter!(gvars[:integer_parameters], :daylastcut, 0) 
     AquaCrop.setparameter!(gvars[:integer_parameters], :stagecode, 1) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :last_irri_dap, 0) 
 
-    AquaCrop.setparameter!(gvars[:bool_parameters], :global_irri_ecw, true) 
     AquaCrop.setparameter!(gvars[:bool_parameters], :nomorecrop, false) 
 
     gvars[:simulation].SumGDD = 11.35
@@ -1604,7 +1609,7 @@ function checkpoint5()
 end
 
 function checkpoint6()
-    # break run.f90:7772
+    # break run.f90:FileManagement:7819
 
     outputs, gvars = checkpoint5()
 
@@ -1622,7 +1627,7 @@ function checkpoint6()
     AquaCrop.setparameter!(gvars[:float_parameters], :ecdrain, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :drain, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :runoff, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :tact, 0.40011921792801869)
+    AquaCrop.setparameter!(gvars[:float_parameters], :tact, 0.40011810102533346)
     AquaCrop.setparameter!(gvars[:float_parameters], :infiltrated, 0.1)
     AquaCrop.setparameter!(gvars[:float_parameters], :crwater, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :crsalt, 0.0)
@@ -1630,7 +1635,7 @@ function checkpoint6()
     AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.053958919412640277)
     AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.053958919412640277)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccitopearlysen, AquaCrop.undef_double)
-    AquaCrop.setparameter!(gvars[:float_parameters], :tpot, 0.40011921792801869)
+    AquaCrop.setparameter!(gvars[:float_parameters], :tpot, 0.40011810102533346)
     AquaCrop.setparameter!(gvars[:float_parameters], :epot, 3.9041363452133968)
     AquaCrop.setparameter!(gvars[:float_parameters], :eact, 3.2087533516688618) 
     AquaCrop.setparameter!(gvars[:float_parameters], :surfacestorage, 0.0)
@@ -1638,14 +1643,14 @@ function checkpoint6()
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, 0.053958919412640277) 
     AquaCrop.setparameter!(gvars[:float_parameters], :weedrci, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.053958919412640277) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :tactweedinfested, 0.40011921792801869) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :tactweedinfested, 0.40011810102533346) 
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgdd, 11.35)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumeto, 3.9)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddcuts, 11.35)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddprev, 11.35)
     AquaCrop.setparameter!(gvars[:float_parameters], :alfa_hi, 0.0) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 0.10259467126359453) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 72.168255060309022)
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 0.10259438487829063) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 68.082929449446098)
     AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :tmin, 10.0) 
@@ -1703,7 +1708,7 @@ function checkpoint6()
     gvars[:soil_layers][1].WaterContent = 990.07975803387228
 
 
-    gvars[:compartments][1].Theta = 0.25491127482689369
+    gvars[:compartments][1].Theta = 0.25491128599592039
     gvars[:compartments][1].Fluxout = 0 
     gvars[:compartments][1].Smax = 0.019444444411330752
     gvars[:compartments][1].WFactor = 1 
@@ -1733,16 +1738,16 @@ function checkpoint6()
 
 
     gvars[:sumwabal].Epot = 3.9041363452133968
-    gvars[:sumwabal].Tpot = 0.40011921792801869
+    gvars[:sumwabal].Tpot = 0.40011810102533346
     gvars[:sumwabal].Rain = 0.10000000000000001 
     gvars[:sumwabal].Infiltrated = 0.10000000000000001
     gvars[:sumwabal].Eact = 3.2087533516688618
-    gvars[:sumwabal].Tact = 0.40011921792801869
+    gvars[:sumwabal].Tact = 0.40011810102533346
     gvars[:sumwabal].ECropCycle = 3.2087533516688618
-    gvars[:sumwabal].Biomass = 0.016506432342811034
-    gvars[:sumwabal].BiomassPot = 0.0083885677661743475
-    gvars[:sumwabal].BiomassUnlim = 0.016506432342811034
-    gvars[:sumwabal].BiomassTot = 0.016506432342811034
+    gvars[:sumwabal].Biomass = 0.01650675010092589
+    gvars[:sumwabal].BiomassPot = 0.0083030522814754783
+    gvars[:sumwabal].BiomassUnlim = 0.01650675010092589
+    gvars[:sumwabal].BiomassTot = 0.01650675010092589
 
     
     gvars[:root_zone_wc].Actual = 83.491127430403097
@@ -1752,7 +1757,7 @@ function checkpoint6()
     gvars[:root_zone_wc].Leaf = 77.821021981034306
     gvars[:root_zone_wc].Thresh = 56.800255459488511
     gvars[:root_zone_wc].Sen = 52.199957958770504
-    gvars[:root_zone_wc].ZtopAct = 25.491127482689368
+    gvars[:root_zone_wc].ZtopAct = 25.491128599592042
     gvars[:root_zone_wc].ZtopFC = 29
     gvars[:root_zone_wc].ZtopWP = 13
     gvars[:root_zone_wc].ZtopThresh = 18.933418486496173 
@@ -1765,7 +1770,7 @@ function checkpoint6()
 end
 
 function checkpoint7()
-    # break run.f90:7772
+    # break run.f90:FileManagement:7819
 
     outputs, gvars = checkpoint5()
 
@@ -1781,9 +1786,9 @@ function checkpoint7()
     AquaCrop.setparameter!(gvars[:float_parameters], :timesenescence, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :surf0, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ecdrain, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :drain, 1.4608760574252797)
+    AquaCrop.setparameter!(gvars[:float_parameters], :drain, 1.4609149173767255)
     AquaCrop.setparameter!(gvars[:float_parameters], :runoff, 1.1834135711751885)
-    AquaCrop.setparameter!(gvars[:float_parameters], :tact, 1.2407825046611656) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :tact, 1.2407790447171203) 
     AquaCrop.setparameter!(gvars[:float_parameters], :infiltrated, 16.216586428824812) 
     AquaCrop.setparameter!(gvars[:float_parameters], :crwater, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :crsalt, 0.0)
@@ -1791,7 +1796,7 @@ function checkpoint7()
     AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.42414769943608926) 
     AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.42414769943608926) 
     AquaCrop.setparameter!(gvars[:float_parameters], :ccitopearlysen, AquaCrop.undef_double) #0
-    AquaCrop.setparameter!(gvars[:float_parameters], :tpot, 1.2407825046611656)
+    AquaCrop.setparameter!(gvars[:float_parameters], :tpot, 1.2407790447171203)
     AquaCrop.setparameter!(gvars[:float_parameters], :epot, 0.8934244530339831) 
     AquaCrop.setparameter!(gvars[:float_parameters], :eact, 0.8934244530339831) 
     AquaCrop.setparameter!(gvars[:float_parameters], :surfacestorage, 0.0)
@@ -1799,14 +1804,14 @@ function checkpoint7()
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, 0.76087529682528598) 
     AquaCrop.setparameter!(gvars[:float_parameters], :weedrci, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.42414769943608926) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :tactweedinfested, 1.2407825046611656) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :tactweedinfested, 1.2407790447171203) 
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgdd, 269.35000000000002) 
     AquaCrop.setparameter!(gvars[:float_parameters], :sumeto, 77.199999999999989)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddcuts, 269.35000000000002)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddprev, 269.35000000000002)
     AquaCrop.setparameter!(gvars[:float_parameters], :alfa_hi, 100.0) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 7.7977256854929413) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 72.168255060309022)
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 7.7977039579173981) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 68.082929449446098)
     AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :tmin, 15.1) 
@@ -1863,69 +1868,69 @@ function checkpoint7()
 
     
     
-    gvars[:soil_layers][1].WaterContent = 1113.4967169948866
+    gvars[:soil_layers][1].WaterContent = 1113.496785944229
 
 
 
-    gvars[:compartments][1].Theta = 0.4314274334597068
-    gvars[:compartments][1].Fluxout = 13.522758635680136 
+    gvars[:compartments][1].Theta = 0.43142746809393107
+    gvars[:compartments][1].Fluxout = 13.522763328844601 
     gvars[:compartments][1].Smax = 0.020971677596376796
     gvars[:compartments][1].WFactor = 1 
     gvars[:compartments][1].DayAnaero = 1 
 
     gvars[:compartments][2].Theta = 0.29127477265228668
-    gvars[:compartments][2].Fluxout = 2.0080792364923021
+    gvars[:compartments][2].Fluxout = 2.008132421942721
     gvars[:compartments][2].Smax =  0.019234204920652122 
     gvars[:compartments][2].WFactor = 1 
 
-    gvars[:compartments][3].Theta = 0.29100875508231477
-    gvars[:compartments][3].Fluxout = 1.8567659718903404
+    gvars[:compartments][3].Theta = 0.29100878230301236
+    gvars[:compartments][3].Fluxout = 1.8568150742360574
     gvars[:compartments][3].Smax =  0.017149237709782515 
     gvars[:compartments][3].WFactor = 1 
     
-    gvars[:compartments][4].Theta = 0.29045545425305946
-    gvars[:compartments][4].Fluxout = 1.7656751199210874
+    gvars[:compartments][4].Theta = 0.29045546555995505
+    gvars[:compartments][4].Fluxout = 1.76572196088764490
     gvars[:compartments][4].Smax = 0.014716775963767973
     gvars[:compartments][4].WFactor = 1 
 
-    gvars[:compartments][5].Theta = 0.29038136419496297
-    gvars[:compartments][5].Fluxout = 1.6894022797919317
+    gvars[:compartments][5].Theta = 0.29038137404394987
+    gvars[:compartments][5].Fluxout = 1.6894471509610822
     gvars[:compartments][5].Smax = 0.011936819682608495
     gvars[:compartments][5].WFactor = 1 
 
-    gvars[:compartments][6].Theta = 0.29019031607230478
-    gvars[:compartments][6].Fluxout = 1.6418232610067482
+    gvars[:compartments][6].Theta = 0.29019032103826997
+    gvars[:compartments][6].Fluxout = 1.6418668906845735
     gvars[:compartments][6].Smax = 0.0094400874376810457
     gvars[:compartments][6].WFactor = 0.63699079692640459
 
-    gvars[:compartments][7].Theta = 0.29018201047081305
-    gvars[:compartments][7].Fluxout = 1.5963206426254355
+    gvars[:compartments][7].Theta = 0.290182015242967
+    gvars[:compartments][7].Fluxout = 1.5963630792647554
     gvars[:compartments][7].Smax = 0
 
     gvars[:compartments][8].Theta = 0.29010972093491499
-    gvars[:compartments][8].Fluxout = 1.5634043616604452
+    gvars[:compartments][8].Fluxout = 1.563445931703453
     gvars[:compartments][8].Smax = 0
 
     gvars[:compartments][9].Theta = 0.2901074057246778
-    gvars[:compartments][9].Fluxout = 1.5311826437769547
+    gvars[:compartments][9].Fluxout = 1.5312233637847052
     gvars[:compartments][9].Smax = 0
     
     gvars[:compartments][10].Theta = 0.29007184096573579
-    gvars[:compartments][10].Fluxout = 1.5060383053947386
+    gvars[:compartments][10].Fluxout = 1.5060783608312696
     gvars[:compartments][10].Smax = 0
     
     gvars[:compartments][11].Theta = 0.29007101761758292
-    gvars[:compartments][11].Fluxout = 1.4811821388703306
+    gvars[:compartments][11].Fluxout = 1.4812215366415957
     gvars[:compartments][11].Smax = 0
     
     gvars[:compartments][12].Theta = 0.29005076520285616
-    gvars[:compartments][12].Fluxout = 1.4608760574252797
+    gvars[:compartments][12].Fluxout = 1.4609149173767255
     gvars[:compartments][12].Smax = 0
 
 
 
-    gvars[:total_water_content].BeginDay = 872.2596721867792
-    gvars[:total_water_content].EndDay = 884.8811756004834
+    gvars[:total_water_content].BeginDay = 872.25972511227815
+    gvars[:total_water_content].EndDay = 884.88119312945332
     gvars[:total_water_content].ErrorDay = 2.2737367544323206e-13 
 
 
@@ -1935,36 +1940,36 @@ function checkpoint7()
 
 
     gvars[:stresstot].Temp = 0.24549857357286284
-    gvars[:stresstot].Exp = 0.018299915008233861
+    gvars[:stresstot].Exp = 0.018299504815995814
     gvars[:stresstot].Sto = -9.2518585385429718e-16 
     gvars[:stresstot].NrD = 24
 
 
     gvars[:sumwabal].Epot = 61.289869880798179
-    gvars[:sumwabal].Tpot = 24.480837501472465
+    gvars[:sumwabal].Tpot = 24.480769292924823
     gvars[:sumwabal].Rain =  79.900000000000006
     gvars[:sumwabal].Infiltrated = 78.310283994799335
     gvars[:sumwabal].Runoff = 1.5897160052006705
-    gvars[:sumwabal].Drain = 1.4608760574252797
-    gvars[:sumwabal].Eact = 37.487407799428176
-    gvars[:sumwabal].Tact = 24.480837501472465
-    gvars[:sumwabal].TrW = 23.240054996811299
-    gvars[:sumwabal].ECropCycle = 37.487407799428176
-    gvars[:sumwabal].Biomass = 1.2517750517515114
-    gvars[:sumwabal].YieldPart = 1.0937253877066988
-    gvars[:sumwabal].BiomassPot = 0.91195326864060511
-    gvars[:sumwabal].BiomassUnlim = 1.7944773587358849
-    gvars[:sumwabal].BiomassTot = 1.2517750517515114
+    gvars[:sumwabal].Drain = 1.4609149173767255
+    gvars[:sumwabal].Eact = 37.48741961905445
+    gvars[:sumwabal].Tact = 24.480769292924823
+    gvars[:sumwabal].TrW = 23.239990248207704
+    gvars[:sumwabal].ECropCycle = 37.48741961905445
+    gvars[:sumwabal].Biomass = 1.2514531564505482
+    gvars[:sumwabal].YieldPart = 1.0934016831076727
+    gvars[:sumwabal].BiomassPot = 0.90265655340096829
+    gvars[:sumwabal].BiomassUnlim = 1.7945119034352373
+    gvars[:sumwabal].BiomassTot = 1.2514531564505482
 
     
-    gvars[:root_zone_wc].Actual = 292.86478073359626 
+    gvars[:root_zone_wc].Actual = 292.86479304216704 
     gvars[:root_zone_wc].FC = 278.18183692239666 
     gvars[:root_zone_wc].WP = 124.70220275831575
     gvars[:root_zone_wc].SAT = 441.25394822173263
     gvars[:root_zone_wc].Leaf = 237.32709351472025
     gvars[:root_zone_wc].Thresh = 173.48079756026053
     gvars[:root_zone_wc].Sen = 159.9323763076309
-    gvars[:root_zone_wc].ZtopAct = 43.142743345970679
+    gvars[:root_zone_wc].ZtopAct = 43.14274680939311
     gvars[:root_zone_wc].ZtopFC = 29
     gvars[:root_zone_wc].ZtopWP = 13
     gvars[:root_zone_wc].ZtopThresh = 18.085088461943755
@@ -1977,7 +1982,7 @@ function checkpoint7()
 end
 
 function checkpoint8()
-    # break run.f90:7772
+    # break run.f90:FileManagement:7819
 
     outputs, gvars = checkpoint5()
 
@@ -1987,7 +1992,7 @@ function checkpoint8()
     AquaCrop.setparameter!(gvars[:float_parameters], :irrigation, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :rooting_depth, 2.6103245071754047)
     AquaCrop.setparameter!(gvars[:float_parameters], :bin, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :bout, 0.023251265912542812)
+    AquaCrop.setparameter!(gvars[:float_parameters], :bout, 0.022404426367023146)
     AquaCrop.setparameter!(gvars[:float_parameters], :stressleaf, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :stresssenescence, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :timesenescence, 0.0)
@@ -1995,32 +2000,32 @@ function checkpoint8()
     AquaCrop.setparameter!(gvars[:float_parameters], :ecdrain, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :drain, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :runoff, 0.0) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :tact,  0.83919632073143413)
+    AquaCrop.setparameter!(gvars[:float_parameters], :tact,  0.84110157853297807)
     AquaCrop.setparameter!(gvars[:float_parameters], :infiltrated, 3.7) 
     AquaCrop.setparameter!(gvars[:float_parameters], :crwater, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :crsalt, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :saltinfiltr, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.5054757642085389) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.5054757642085389) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.50705716529127109) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.50705716529127109) 
     AquaCrop.setparameter!(gvars[:float_parameters], :ccitopearlysen, AquaCrop.undef_double) #0
-    AquaCrop.setparameter!(gvars[:float_parameters], :tpot, 0.83919632073143413) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :epot, 0.53490644093635065) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :eact, 0.53490644093635065) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :tpot, 0.84110157853297807) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :epot, 0.53262172860540868) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :eact, 0.53262172860540868) 
     AquaCrop.setparameter!(gvars[:float_parameters], :surfacestorage, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ecstorage, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos,  0.94999995068061738)
     AquaCrop.setparameter!(gvars[:float_parameters], :weedrci, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.5054757642085389) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :tactweedinfested, 0.83919632073143413) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.50705716529127109) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :tactweedinfested, 0.84110157853297807) 
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgdd,  1532.6499999999992)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumeto, 380.5)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddcuts, 183.74999999999997)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddprev, 1532.6499999999992) 
     AquaCrop.setparameter!(gvars[:float_parameters], :alfa_hi, 100.0) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 73.013989759755475) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 73.611620161515205)
-    AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 8.0065472916213789) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum,  7.8484976275765659)
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 69.800542947909491) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 69.444588038435015)
+    AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 7.8685716221193092) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum,  7.7105201487764337)
     AquaCrop.setparameter!(gvars[:float_parameters], :tmin, 5.1) 
     AquaCrop.setparameter!(gvars[:float_parameters], :tmax, 15.9) 
     AquaCrop.setparameter!(gvars[:float_parameters], :gddayi, 5.5) 
@@ -2046,9 +2051,9 @@ function checkpoint8()
     gvars[:crop].GDDaysToFullCanopySF = 590 
     gvars[:crop].pLeafAct = 0.28493031947493325 
     gvars[:crop].pSenAct = 0.78182104826564724 
-    gvars[:crop].CCxAdjusted = 0.5054757642085389 
+    gvars[:crop].CCxAdjusted = 0.50705716529127109 
     gvars[:crop].CCoAdjusted = 0.05
-    gvars[:crop].CCxWithered = 0.5054757642085389 
+    gvars[:crop].CCxWithered = 0.50705716529127109 
     gvars[:crop].pActStom = 0.69543712776214661 
     
     gvars[:simulation].IrriECw = 0
@@ -2070,30 +2075,30 @@ function checkpoint8()
     gvars[:simulation].EvapStartStg2 = AquaCrop.undef_int
     gvars[:simulation].DayAnaero = 0
     gvars[:simulation].HIfinal = 100
-    gvars[:simulation].Storage.Btotal = 1.4615342303009733 
-    gvars[:simulation].EvapWCsurf = 3.1650935590636493
+    gvars[:simulation].Storage.Btotal = 1.3884550744095494 
+    gvars[:simulation].EvapWCsurf = 3.1673782713945915
 
  
     
-    gvars[:soil_layers][1].WaterContent = 948.9898051364604
+    gvars[:soil_layers][1].WaterContent = 948.99281044484053
 
 
-    gvars[:compartments][1].Theta = 0.28863748253843891
+    gvars[:compartments][1].Theta = 0.28864042029259473
     gvars[:compartments][1].Fluxout = 0 
     gvars[:compartments][1].Smax = 0.021411270575196734
     gvars[:compartments][1].WFactor = 1 
 
-    gvars[:compartments][2].Theta = 0.28976912694991402
+    gvars[:compartments][2].Theta = 0.28976976167910812
     gvars[:compartments][2].Fluxout = 0 
     gvars[:compartments][2].Smax =  0.020772780346521906 
     gvars[:compartments][2].WFactor = 1 
 
-    gvars[:compartments][3].Theta = 0.16871683095235379
+    gvars[:compartments][3].Theta = 0.16871872321973436
     gvars[:compartments][3].Fluxout = 0 
     gvars[:compartments][3].Smax =  0.020006592072112112 
     gvars[:compartments][3].WFactor = 1 
     
-    gvars[:compartments][4].Theta = 0.28363126208232431
+    gvars[:compartments][4].Theta = 0.28363179629528518
     gvars[:compartments][4].Fluxout = 0
     gvars[:compartments][4].Smax = 0.01911270575196735
     gvars[:compartments][4].WFactor = 1 
@@ -2139,8 +2144,8 @@ function checkpoint8()
     gvars[:compartments][12].WFactor = 0.025811170696347453
 
 
-    gvars[:total_water_content].BeginDay = 848.03700978871132 
-    gvars[:total_water_content].EndDay = 850.36290702704355
+    gvars[:total_water_content].BeginDay = 848.03741000168748 
+    gvars[:total_water_content].EndDay = 850.36368669454907
     gvars[:total_water_content].ErrorDay = 1.1368683772161603e-13 
 
 
@@ -2160,50 +2165,50 @@ function checkpoint8()
 
 
     gvars[:stresstot].Temp = 1.0034186854568179 
-    gvars[:stresstot].Exp = 0.0057831890497611789
+    gvars[:stresstot].Exp = 0.0057830594196914059
     gvars[:stresstot].Sto = -9.2518585385429718e-16 
     gvars[:stresstot].NrD = 120
 
 
     
-    gvars[:sumwabal].Epot = 176.94324453714765
-    gvars[:sumwabal].Tpot = 248.9634314075472
+    gvars[:sumwabal].Epot = 176.93494744033052
+    gvars[:sumwabal].Tpot = 248.97054516688019
     gvars[:sumwabal].Rain = 382.40000000000003
     gvars[:sumwabal].Infiltrated = 380.13978969442394
     gvars[:sumwabal].Runoff = 2.2602103055761256
-    gvars[:sumwabal].Drain = 24.668076636773641
-    gvars[:sumwabal].Eact = 126.14538758706982
-    gvars[:sumwabal].Tact = 248.9634314075472
-    gvars[:sumwabal].TrW = 248.12423508681576
-    gvars[:sumwabal].ECropCycle = 126.14538758706982
-    gvars[:sumwabal].Biomass = 8.5657622187306668
-    gvars[:sumwabal].YieldPart = 8.4077125546858529
-    gvars[:sumwabal].BiomassPot = 8.7335440554033514
-    gvars[:sumwabal].BiomassUnlim = 17.185252367487248
-    gvars[:sumwabal].BiomassTot = 8.5657622187306668
+    gvars[:sumwabal].Drain = 24.668212730431289
+    gvars[:sumwabal].Eact = 126.13735806657324
+    gvars[:sumwabal].Tact = 248.97054516688019
+    gvars[:sumwabal].TrW = 248.12944358834721
+    gvars[:sumwabal].ECropCycle = 126.13735806657324
+    gvars[:sumwabal].Biomass = 8.4126510919056781
+    gvars[:sumwabal].YieldPart = 8.2545996185628017
+    gvars[:sumwabal].BiomassPot = 8.6812854454443489
+    gvars[:sumwabal].BiomassUnlim = 17.258690484517839
+    gvars[:sumwabal].BiomassTot = 8.4126510919056781
 
     
-    gvars[:root_zone_wc].Actual = 737.35700114390067
+    gvars[:root_zone_wc].Actual = 737.3577808114062
     gvars[:root_zone_wc].FC = 756.99410708086737
     gvars[:root_zone_wc].WP = 339.34218593280258
     gvars[:root_zone_wc].SAT = 1200.7492733006861
     gvars[:root_zone_wc].Leaf = 637.99241175882958
     gvars[:root_zone_wc].Thresh = 466.54345463331464
     gvars[:root_zone_wc].Sen = 430.46504427872588
-    gvars[:root_zone_wc].ZtopAct = 28.863748253843891
+    gvars[:root_zone_wc].ZtopAct = 28.864042029259476
     gvars[:root_zone_wc].ZtopFC = 29
     gvars[:root_zone_wc].ZtopWP = 13
     gvars[:root_zone_wc].ZtopThresh = 17.873005955805652 
 
 
     gvars[:plotvarcrop].PotVal = 99.999994808486036
-    gvars[:plotvarcrop].ActVal = 53.207975179846201 
+    gvars[:plotvarcrop].ActVal = 53.374438451712749 
 
     return outputs, gvars
 end
 
 function checkpoint9()
-    # break run.f90:7800
+    # break run.f90:RunSimulation:7847
     outputs, gvars = checkpoint5()
 
     AquaCrop.setparameter!(gvars[:float_parameters], :eto, 0.5)
@@ -2218,15 +2223,15 @@ function checkpoint9()
     AquaCrop.setparameter!(gvars[:float_parameters], :timesenescence, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :surf0, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ecdrain, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :drain, 0.730842826877532330)
+    AquaCrop.setparameter!(gvars[:float_parameters], :drain, 0.73087658631881447)
     AquaCrop.setparameter!(gvars[:float_parameters], :runoff, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :tact, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :infiltrated, 0.4)
     AquaCrop.setparameter!(gvars[:float_parameters], :crwater, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :crsalt, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :saltinfiltr, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.576077117149770720)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.576077117149770720)
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.58155317481723878)
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.58155317481723878)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccitopearlysen, AquaCrop.undef_double)
     AquaCrop.setparameter!(gvars[:float_parameters], :tpot, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :epot, 0.55)
@@ -2235,17 +2240,17 @@ function checkpoint9()
     AquaCrop.setparameter!(gvars[:float_parameters], :ecstorage, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, 0.95)
     AquaCrop.setparameter!(gvars[:float_parameters], :weedrci, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.576077117149770720)
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.58155317481723878)
     AquaCrop.setparameter!(gvars[:float_parameters], :tactweedinfested, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgdd, 1802.6) 
     AquaCrop.setparameter!(gvars[:float_parameters], :sumeto, 431.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddcuts, 453.7)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddprev, 1802.6)
     AquaCrop.setparameter!(gvars[:float_parameters], :alfa_hi, 100.0) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 79.490730680188847) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 79.385080566339937)
-    AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 8.0065472916213789) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum, 7.8484976275765659) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 75.700525474588275) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 74.891222394390709)
+    AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 7.8685716221193092) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum, 7.7105201487764337) 
     AquaCrop.setparameter!(gvars[:float_parameters], :tmin, -0.5) 
     AquaCrop.setparameter!(gvars[:float_parameters], :tmax, 7.3) 
     AquaCrop.setparameter!(gvars[:float_parameters], :gddayi, 0.0) 
@@ -2272,9 +2277,9 @@ function checkpoint9()
     gvars[:crop].GDDaysToFullCanopySF = 562
     gvars[:crop].pLeafAct = 0.31866289934366654
     gvars[:crop].pSenAct = 0.80227631033205904
-    gvars[:crop].CCxAdjusted = 0.57607711714977072
+    gvars[:crop].CCxAdjusted = 0.58155317481723878
     gvars[:crop].CCoAdjusted = 0.05
-    gvars[:crop].CCxWithered = 0.57607711714977072
+    gvars[:crop].CCxWithered = 0.58155317481723878
     gvars[:crop].pActStom = 0.71929640970268327
     
     gvars[:simulation].IrriECw = 0
@@ -2296,7 +2301,7 @@ function checkpoint9()
     gvars[:simulation].EvapStartStg2 = 22
     gvars[:simulation].DayAnaero = 0
     gvars[:simulation].HIfinal = 100
-    gvars[:simulation].Storage.Btotal = 2.3975455313466778
+    gvars[:simulation].Storage.Btotal = 2.3364179434905172
 
 
     gvars[:soil_layers][1].WaterContent = 1009.1557018884808
@@ -2315,70 +2320,70 @@ function checkpoint9()
 
     
     gvars[:compartments][3].Theta = 0.29019870962556377
-    gvars[:compartments][3].Fluxout = 0.58388092523273205
+    gvars[:compartments][3].Fluxout = 0.58388349617452984
     gvars[:compartments][3].Smax = 0.020162435651772861
     gvars[:compartments][3].WFactor = 0.015863181510512692
 
 
     gvars[:compartments][4].Theta = 0.29012744148121866
-    gvars[:compartments][4].Fluxout = 0.6020824854801996
+    gvars[:compartments][4].Fluxout = 0.60208805957891653
     gvars[:compartments][4].Smax = 0.01935246510529158
     gvars[:compartments][4].WFactor = 0
 
     
     gvars[:compartments][5].Theta = 0.29008792636992675
-    gvars[:compartments][5].Fluxout = 0.6194312387260279
+    gvars[:compartments][5].Fluxout = 0.61943981207670773
     gvars[:compartments][5].Smax = 0.018426784480741545
     gvars[:compartments][5].WFactor = 0
 
 
     gvars[:compartments][6].Theta = 0.29006798537616635
-    gvars[:compartments][6].Fluxout = 0.63978833219415554
+    gvars[:compartments][6].Fluxout = 0.63980069760115554
     gvars[:compartments][6].Smax = 0.017385393778122753
     gvars[:compartments][6].WFactor = 0
 
     
     gvars[:compartments][7].Theta = 0.29005359230987582
-    gvars[:compartments][7].Fluxout = 0.65682781341949981
+    gvars[:compartments][7].Fluxout = 0.65684356925080101
     gvars[:compartments][7].Smax = 0.016228292997435209
     gvars[:compartments][7].WFactor = 0
 
     
     gvars[:compartments][8].Theta = 0.29004457836760383
-    gvars[:compartments][8].Fluxout = 0.67491128201553541
+    gvars[:compartments][8].Fluxout = 0.67493117727808816
     gvars[:compartments][8].Smax = 0.014955482138678911
     gvars[:compartments][8].WFactor = 0
 
     
     gvars[:compartments][9].Theta = 0.29004448362231922
-    gvars[:compartments][9].Fluxout = 0.68814487336478536
+    gvars[:compartments][9].Fluxout = 0.68816814440753449
     gvars[:compartments][9].Smax = 0.013566961201853855
     gvars[:compartments][9].WFactor = 0
 
     
     gvars[:compartments][10].Theta = 0.2900320546496038
-    gvars[:compartments][10].Fluxout = 0.70409087594683706
+    gvars[:compartments][10].Fluxout = 0.70411781302047172
     gvars[:compartments][10].Smax = 0.012062730186960049
     gvars[:compartments][10].WFactor = 0
 
     
     gvars[:compartments][11].Theta = 0.29003131002431454
-    gvars[:compartments][11].Fluxout = 0.71668686262650461
+    gvars[:compartments][11].Fluxout = 0.71671714275098364
     gvars[:compartments][11].Smax = 0.010442789093997488
     gvars[:compartments][11].WFactor = 0
 
     
     gvars[:compartments][12].Theta = 0.29002446769251361
-    gvars[:compartments][12].Fluxout = 0.73084282687753233
+    gvars[:compartments][12].Fluxout = 0.73087658631881447
     gvars[:compartments][12].Smax = 0.0089830759404247694
     gvars[:compartments][12].WFactor = 0
 
 
 
 
-    gvars[:total_water_content].BeginDay = 870.977059813610710
+    gvars[:total_water_content].BeginDay = 870.977095826452
     gvars[:total_water_content].EndDay = 870.09922446179735
-    gvars[:total_water_content].ErrorDay = 1.1368683772161603e-13
+    gvars[:total_water_content].ErrorDay = -1.1368683772161603e-13
     
 
     gvars[:total_salt_content].BeginDay = 0
@@ -2388,29 +2393,29 @@ function checkpoint9()
     
     gvars[:stresstot].Salt = 0
     gvars[:stresstot].Temp = 11.497152813109741
-    gvars[:stresstot].Exp = 0.0043185524644892221
+    gvars[:stresstot].Exp = 0.0043805036140225186
     gvars[:stresstot].Sto = -6.9414627017820649e-17
     gvars[:stresstot].Weed = 0
     gvars[:stresstot].NrD = 164 
 
     
-    gvars[:sumwabal].Epot = 195.09540663475843
-    gvars[:sumwabal].Tpot = 276.24802977578918
+    gvars[:sumwabal].Epot = 194.93774816572909
+    gvars[:sumwabal].Tpot = 276.36090846630663
     gvars[:sumwabal].Rain = 487.50000000000011
     gvars[:sumwabal].Irrigation = 0
     gvars[:sumwabal].Infiltrated = 484.09143552451582
     gvars[:sumwabal].Runoff = 3.4085644754843547
-    gvars[:sumwabal].Drain = 65.023086034139581
-    gvars[:sumwabal].Eact = 142.72110821679951
-    gvars[:sumwabal].Tact = 276.24802977578918
-    gvars[:sumwabal].TrW = 276.24802977578918 
-    gvars[:sumwabal].ECropCycle = 142.72110821679951
+    gvars[:sumwabal].Drain = 65.04942280327873
+    gvars[:sumwabal].Eact = 142.5818905037425
+    gvars[:sumwabal].Tact = 276.36090846630663
+    gvars[:sumwabal].TrW = 276.36090846630663 
+    gvars[:sumwabal].ECropCycle = 142.5818905037425
     gvars[:sumwabal].CRwater = 0
-    gvars[:sumwabal].Biomass = 9.3194942852625839
-    gvars[:sumwabal].YieldPart = 9.1614446212177718
-    gvars[:sumwabal].BiomassPot = 10.544812389509518
-    gvars[:sumwabal].BiomassUnlim = 20.749338519614081
-    gvars[:sumwabal].BiomassTot = 9.3194942852625839
+    gvars[:sumwabal].Biomass = 9.1724462468553778
+    gvars[:sumwabal].YieldPart = 9.0143947735124978
+    gvars[:sumwabal].BiomassPot = 10.468086497785333
+    gvars[:sumwabal].BiomassUnlim = 20.810911698018714
+    gvars[:sumwabal].BiomassTot = 9.1724462468553778
     gvars[:sumwabal].SaltIn = 0
     gvars[:sumwabal].SaltOut = 0
     gvars[:sumwabal].CRsalt = 0 
@@ -2437,7 +2442,7 @@ function checkpoint9()
     gvars[:transfer].Mobilize = false 
 
     gvars[:plotvarcrop].PotVal = 99.999999796558043
-    gvars[:plotvarcrop].ActVal = 60.639696542081133 
+    gvars[:plotvarcrop].ActVal = 61.216123664972514 
 
     return outputs, gvars
 end
@@ -2452,7 +2457,7 @@ function checkpoint10()
     AquaCrop.setparameter!(gvars[:float_parameters], :irrigation, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :surfacestorage, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ecstorage, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :drain, 0.73084282687753233)
+    AquaCrop.setparameter!(gvars[:float_parameters], :drain, 0.73087658631881447)
     AquaCrop.setparameter!(gvars[:float_parameters], :runoff, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :infiltrated, 0.4)
     AquaCrop.setparameter!(gvars[:float_parameters], :crwater, 0.0)
@@ -2465,16 +2470,16 @@ function checkpoint10()
     AquaCrop.setparameter!(gvars[:float_parameters], :previousbmob, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :previousbsto, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, 0.0) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :co2i, 401.01) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :fracbiomasspotsf, 0.50779690544596179) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0, 86.084090961833354)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1, -0.56134037826198147) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2, -0.0029391774899306783)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0salt, 0.79636344922211677)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1salt, 0.33631348098536523)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2salt, 0.0054243004180416082)
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop, 170.65447289377104)
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 86.657813235968703) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :co2i, 401.02) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :fracbiomasspotsf, 0.50413160021816306) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0, 85.378783945055247)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1, -0.55286978274556109) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2, -0.002953450441497352)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0salt, 0.78360738811204911)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1salt, 0.33693757850594308)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2salt, 0.0054227015016671491)
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop, 177.07980969376374)
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 89.271527827244896) 
     AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :fweednos, 1.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxcrop_weednosf_stress, 0.95) 
@@ -2518,7 +2523,7 @@ function checkpoint10()
     AquaCrop.setparameter!(gvars[:float_parameters], :saltinfiltr, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :ccitopearlysen, AquaCrop.undef_double)
     AquaCrop.setparameter!(gvars[:float_parameters], :weedrci, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.57607711714977072) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.58155317481723878) 
 
 
     AquaCrop.setparameter!(gvars[:integer_parameters], :daylastcut, 0)
@@ -2582,7 +2587,7 @@ function checkpoint10()
 
     gvars[:transfer].Store = false
     gvars[:transfer].Mobilize = true 
-    gvars[:transfer].ToMobilize = 0.2877054680487468
+    gvars[:transfer].ToMobilize = 0.2803701573967029
     gvars[:transfer].Bmobilized = 0
 
     gvars[:cut_info_record1].NoMoreInfo = false
@@ -2646,7 +2651,7 @@ function checkpoint10()
 end
 
 function checkpoint11()
-    # break run.f90:7800
+    # break run.f90:RunSimulation:7847
     outputs, gvars = checkpoint10()
 
     AquaCrop.setparameter!(gvars[:float_parameters], :eto, 0.6)
@@ -2668,27 +2673,27 @@ function checkpoint11()
     AquaCrop.setparameter!(gvars[:float_parameters], :crwater, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :crsalt, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :saltinfiltr, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.56025172572431414)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.56025172572431414)
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.55094167146255202)
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.55094167146255202)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccitopearlysen, AquaCrop.undef_double) 
     AquaCrop.setparameter!(gvars[:float_parameters], :tpot, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :epot, 0.19634547828829069)
-    AquaCrop.setparameter!(gvars[:float_parameters], :eact, 0.19634547828829069)
+    AquaCrop.setparameter!(gvars[:float_parameters], :epot, 0.20179350918759695)
+    AquaCrop.setparameter!(gvars[:float_parameters], :eact, 0.20179350918759695)
     AquaCrop.setparameter!(gvars[:float_parameters], :surfacestorage, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ecstorage, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, 0.95)
     AquaCrop.setparameter!(gvars[:float_parameters], :weedrci, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.56025172572431414)
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.55094167146255202)
     AquaCrop.setparameter!(gvars[:float_parameters], :tactweedinfested, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgdd, 2118.5999999999999) 
     AquaCrop.setparameter!(gvars[:float_parameters], :sumeto, 617.60000000000002) 
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddcuts, 495.19999999999987)
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddprev, 2048.0500000000002)
     AquaCrop.setparameter!(gvars[:float_parameters], :alfa_hi, 100.0) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 92.172746116416576) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 92.153415362636366)
-    AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 10.643070189506627) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum, 10.643070189506631) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 94.536484974292236) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 93.852299137694786)
+    AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 10.761924694614526) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum, 10.761924694614528) 
     AquaCrop.setparameter!(gvars[:float_parameters], :tmin, 0.5) 
     AquaCrop.setparameter!(gvars[:float_parameters], :tmax, 8.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :gddayi, 0.0) 
@@ -2703,28 +2708,28 @@ function checkpoint11()
     AquaCrop.setparameter!(gvars[:integer_parameters], :daylastcut, 122) 
     AquaCrop.setparameter!(gvars[:integer_parameters], :stagecode, 0) 
     AquaCrop.setparameter!(gvars[:integer_parameters], :daynri, 41936)
-    AquaCrop.setparameter!(gvars[:integer_parameters], :stress_sf_adj_new, 46) 
-    AquaCrop.setparameter!(gvars[:integer_parameters], :previous_stress_level, 46) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :stress_sf_adj_new, 47) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :previous_stress_level, 47) 
 
     AquaCrop.setparameter!(gvars[:bool_parameters], :startmode, false) 
     AquaCrop.setparameter!(gvars[:bool_parameters], :evapo_entire_soil_surface, true) 
     AquaCrop.setparameter!(gvars[:bool_parameters], :preday, true) 
 
-    gvars[:crop].DaysToFullCanopySF = 53
-    gvars[:crop].GDDaysToFullCanopySF = 538
+    gvars[:crop].DaysToFullCanopySF = 52
+    gvars[:crop].GDDaysToFullCanopySF = 524
     gvars[:crop].pLeafAct = 0.31491483491380734
     gvars[:crop].pSenAct = 0.80000350343579107
-    gvars[:crop].CCxAdjusted = 0.56026036836354065
+    gvars[:crop].CCxAdjusted = 0.55095017048162265 
     gvars[:crop].CCoAdjusted = 0.048023576462394767
-    gvars[:crop].CCxWithered = 0.56026036836354065
+    gvars[:crop].CCxWithered = 0.55095017048162265 
     gvars[:crop].pActStom = 0.71664537837595699
 
 
     gvars[:simulation].IrriECw = 0
     gvars[:simulation].EffectStress.RedCGC = 21
-    gvars[:simulation].EffectStress.RedCCX = 36
-    gvars[:simulation].EffectStress.RedWP = 48
-    gvars[:simulation].EffectStress.CDecline = 0.032184104413785386
+    gvars[:simulation].EffectStress.RedCCX = 37
+    gvars[:simulation].EffectStress.RedWP = 49
+    gvars[:simulation].EffectStress.CDecline = 0.034386931619837524
     gvars[:simulation].EffectStress.RedKsSto = 0
     gvars[:simulation].SCor = 1
     gvars[:simulation].SWCtopSoilConsidered = true 
@@ -2739,34 +2744,34 @@ function checkpoint11()
     gvars[:simulation].EvapStartStg2 = AquaCrop.undef_int
     gvars[:simulation].DayAnaero = 0
     gvars[:simulation].HIfinal = 100
-    gvars[:simulation].Storage.Btotal = 2.2868156335990366
-    gvars[:simulation].EvapWCsurf = 3.4036545217117093
+    gvars[:simulation].Storage.Btotal = 2.306473214669658
+    gvars[:simulation].EvapWCsurf = 3.3982064908124032
 
 
 
-    gvars[:soil_layers][1].WaterContent = 976.5956104446841
+    gvars[:soil_layers][1].WaterContent = 976.85628275963325
 
 
 
-    gvars[:compartments][1].Theta = 0.32405069474860621
-    gvars[:compartments][1].Fluxout = 0.015733615056915326
+    gvars[:compartments][1].Theta = 0.32399041464321687
+    gvars[:compartments][1].Fluxout = 0.0092807886333606954
     gvars[:compartments][1].Smax = 0.021444444441133075
     gvars[:compartments][1].WFactor = 0.76209455325384923
 
 
-    gvars[:compartments][2].Theta = 0.29029171471901183
-    gvars[:compartments][2].Fluxout = 0.51260546661508022
+    gvars[:compartments][2].Theta = 0.29029170204843008
+    gvars[:compartments][2].Fluxout = 0.50613056780705079
     gvars[:compartments][2].Smax = 0.020888888877299096
     gvars[:compartments][2].WFactor = 0.22218498638893547
 
     
-    gvars[:compartments][3].Theta = 0.23875482657223857
+    gvars[:compartments][3].Theta = 0.23937934823334678
     gvars[:compartments][3].Fluxout = 0
     gvars[:compartments][3].Smax = 0.020222222200698324
     gvars[:compartments][3].WFactor = 0.015863181510512692
 
 
-    gvars[:compartments][4].Theta = 0.23981995503207343
+    gvars[:compartments][4].Theta = 0.23982232869387513
     gvars[:compartments][4].Fluxout = 0 
     gvars[:compartments][4].Smax = 0.019444444411330752
     gvars[:compartments][4].WFactor = 0
@@ -2820,9 +2825,9 @@ function checkpoint11()
     gvars[:compartments][12].WFactor = 0
 
 
-    gvars[:total_water_content].BeginDay = 852.32239990456287
-    gvars[:total_water_content].EndDay = 855.72605442627457
-    gvars[:total_water_content].ErrorDay = 0 
+    gvars[:total_water_content].BeginDay = 852.41597100717559
+    gvars[:total_water_content].EndDay = 855.81417749798811
+    gvars[:total_water_content].ErrorDay = -1.1368683772161603e-13 
     
 
     gvars[:total_salt_content].BeginDay = 0
@@ -2838,23 +2843,23 @@ function checkpoint11()
     gvars[:stresstot].NrD = 177 
 
 
-    gvars[:sumwabal].Epot = 323.47992499293639
-    gvars[:sumwabal].Tpot = 348.81350702612167
+    gvars[:sumwabal].Epot = 324.01814856315099
+    gvars[:sumwabal].Tpot = 348.39171466464859
     gvars[:sumwabal].Rain = 782.10000000000048
     gvars[:sumwabal].Irrigation = 0
     gvars[:sumwabal].Infiltrated = 777.75806042423528
     gvars[:sumwabal].Runoff = 4.3419395757654566
     gvars[:sumwabal].Drain = 194.45159905397986
-    gvars[:sumwabal].Eact = 248.8661243796555
-    gvars[:sumwabal].Tact = 348.81350702612167
-    gvars[:sumwabal].TrW = 348.81350702612167
-    gvars[:sumwabal].ECropCycle = 135.90818125717061
+    gvars[:sumwabal].Eact = 249.19979366941507
+    gvars[:sumwabal].Tact = 348.39171466464859
+    gvars[:sumwabal].TrW = 348.39171466464859
+    gvars[:sumwabal].ECropCycle = 136.24185054693018
     gvars[:sumwabal].CRwater = 0
-    gvars[:sumwabal].Biomass = 11.841291271983982
-    gvars[:sumwabal].YieldPart = 11.841291271983993
-    gvars[:sumwabal].BiomassPot = 13.013656919065257
-    gvars[:sumwabal].BiomassUnlim = 25.627680632744877
-    gvars[:sumwabal].BiomassTot = 11.841291271983982
+    gvars[:sumwabal].Biomass = 11.947435887342117
+    gvars[:sumwabal].YieldPart = 11.947435887342113
+    gvars[:sumwabal].BiomassPot = 12.906380149384177
+    gvars[:sumwabal].BiomassUnlim = 25.601212349709755
+    gvars[:sumwabal].BiomassTot = 11.947435887342117
     gvars[:sumwabal].SaltIn = 0
     gvars[:sumwabal].SaltOut = 0
     gvars[:sumwabal].CRsalt = 0 
@@ -2864,14 +2869,14 @@ function checkpoint11()
     gvars[:cut_info_record1].FromDay = 897
 
 
-    gvars[:root_zone_wc].Actual = 855.72604146226433
+    gvars[:root_zone_wc].Actual = 855.81416453397787
     gvars[:root_zone_wc].FC = 870 
     gvars[:root_zone_wc].WP = 390
     gvars[:root_zone_wc].SAT = 1380 
     gvars[:root_zone_wc].Leaf = 718.84087924137236
     gvars[:root_zone_wc].Thresh = 526.01021837954056
     gvars[:root_zone_wc].Sen = 485.99831835082034
-    gvars[:root_zone_wc].ZtopAct = 32.405069474860618
+    gvars[:root_zone_wc].ZtopAct = 32.399041464321684
     gvars[:root_zone_wc].ZtopFC = 29
     gvars[:root_zone_wc].ZtopWP = 13
     gvars[:root_zone_wc].ZtopThresh = 17.533673945984688 
@@ -2879,12 +2884,12 @@ function checkpoint11()
 
     gvars[:transfer].Store = true
     gvars[:transfer].Mobilize = false 
-    gvars[:transfer].ToMobilize = 0.2877054680487468
-    gvars[:transfer].Bmobilized = 0.2877054680487468
+    gvars[:transfer].ToMobilize = 0.2803701573967029
+    gvars[:transfer].Bmobilized = 0.2803701573967029
 
 
     gvars[:plotvarcrop].PotVal = 99.998458084931841
-    gvars[:plotvarcrop].ActVal = 58.973865865717279 
+    gvars[:plotvarcrop].ActVal = 57.993860153952845 
 
     popfirst!(gvars[:array_parameters][:Man])
     popfirst!(gvars[:array_parameters][:Man])
@@ -2928,16 +2933,16 @@ function checkpoint12()
     AquaCrop.setparameter!(gvars[:float_parameters], :previousbsto, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, 0.94999999994807116) 
     AquaCrop.setparameter!(gvars[:float_parameters], :co2i, 404.41000000000003) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :fracbiomasspotsf, 0.50752025859269856) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0, 86.072397622864784)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1, -0.5620753844179871) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2, -0.0029293735004094052)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0salt, 0.76992028518908029)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1salt, 0.33196286966676114)
-    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2salt, 0.005472515397255304)
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop, 167.09517835752234)
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 88.560444529486844) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 88.370484933315353)
+    AquaCrop.setparameter!(gvars[:float_parameters], :fracbiomasspotsf, 0.50504894020083835) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0, 85.519426917960672)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1, -0.55385375548550353) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2, -0.0029584941472780416)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0salt, 0.84309868976428959)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1salt, 0.34567807492239472)
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2salt, 0.0053253789821134838)
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop, 172.5262808649729)
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 89.713666049785914) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 90.331044809451299)
     AquaCrop.setparameter!(gvars[:float_parameters], :fweednos, 1.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxcrop_weednosf_stress, 0.95) 
     AquaCrop.setparameter!(gvars[:float_parameters], :ccxtotal, 0.94406250000000003)
@@ -2948,14 +2953,14 @@ function checkpoint12()
     AquaCrop.setparameter!(gvars[:float_parameters], :gddayi, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :dayfraction, 0.87248322147651003)
     AquaCrop.setparameter!(gvars[:float_parameters], :gddayfraction, 0.90324354040681698) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.54216324731593235)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.54216324731593235)
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0.53428733476014956)
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0.53428733476014956)
     AquaCrop.setparameter!(gvars[:float_parameters], :timesenescence, 0.0)
     AquaCrop.setparameter!(gvars[:float_parameters], :ziprev, 3.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :rooting_depth, 3.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :sumgddcuts, 540.5500000000003)
-    AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 11.058376807968642) 
-    AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum, 11.05837680796866)
+    AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 11.156816074561055) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum, 11.156816074561059)
     AquaCrop.setparameter!(gvars[:float_parameters], :cgcref, 0.12293333333333333)
     AquaCrop.setparameter!(gvars[:float_parameters], :gddcgcref, 0.012) 
     AquaCrop.setparameter!(gvars[:float_parameters], :hi_times_bef, AquaCrop.undef_double)
@@ -2980,13 +2985,13 @@ function checkpoint12()
     AquaCrop.setparameter!(gvars[:float_parameters], :saltinfiltr, 0.0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :ccitopearlysen, AquaCrop.undef_double)
     AquaCrop.setparameter!(gvars[:float_parameters], :weedrci, 0.0)
-    AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.54216324731593235) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactualweedinfested, 0.53428733476014956) 
 
 
     AquaCrop.setparameter!(gvars[:integer_parameters], :daylastcut, 115)
     AquaCrop.setparameter!(gvars[:integer_parameters], :suminterval, 60)
-    AquaCrop.setparameter!(gvars[:integer_parameters], :stress_sf_adj_new, 47)
-    AquaCrop.setparameter!(gvars[:integer_parameters], :previous_stress_level, 47)
+    AquaCrop.setparameter!(gvars[:integer_parameters], :stress_sf_adj_new, 48)
+    AquaCrop.setparameter!(gvars[:integer_parameters], :previous_stress_level, 48)
     AquaCrop.setparameter!(gvars[:integer_parameters], :tadj, 17)
     AquaCrop.setparameter!(gvars[:integer_parameters], :nrcut, 3)
     AquaCrop.setparameter!(gvars[:integer_parameters], :gddtadj, 171)
@@ -3010,8 +3015,8 @@ function checkpoint12()
     gvars[:crop].DaysToGermination = 2 
     gvars[:crop].DaysToCCini = 17 
     gvars[:crop].DaysToHIo = 19 
-    gvars[:crop].CCxAdjusted = 0.54216324731593235
-    gvars[:crop].CCxWithered = 0.54216324731593235
+    gvars[:crop].CCxAdjusted = 0.53428733476014956
+    gvars[:crop].CCxWithered = 0.53428733476014956
     gvars[:crop].CCoAdjusted = 0.046047152924789531
     gvars[:crop].CDC = 0.005 
     gvars[:crop].CGC = 0.12293333333333333 
@@ -3026,13 +3031,13 @@ function checkpoint12()
     gvars[:crop].Planting = :Regrowth
 
 
-    gvars[:simulation].Storage.Btotal = 2.4425391569245685
+    gvars[:simulation].Storage.Btotal = 2.4671938440891439
     gvars[:simulation].Storage.Season = 3
     gvars[:simulation].YearSeason = 3
-    gvars[:simulation].EffectStress.RedCGC = 21
-    gvars[:simulation].EffectStress.RedCCX = 37
-    gvars[:simulation].EffectStress.RedWP = 49
-    gvars[:simulation].EffectStress.CDecline = 0.034386931619837524
+    gvars[:simulation].EffectStress.RedCGC = 22
+    gvars[:simulation].EffectStress.RedCCX = 38
+    gvars[:simulation].EffectStress.RedWP = 50
+    gvars[:simulation].EffectStress.CDecline = 0.036732063476094035
     gvars[:simulation].SumGDD = 2103.7
     gvars[:simulation].SumGDDfromDay1 = 2103.7
     gvars[:simulation].ToDayNr = 42305
@@ -3063,7 +3068,7 @@ function checkpoint12()
     gvars[:compartments][3].WFactor = 0.015863181510512692
 
 
-    gvars[:compartments][4].Theta = 0.26747583255660218
+    gvars[:compartments][4].Theta = 0.26807589605683513
 
     
     gvars[:compartments][5].Theta = 0.13000000000000014
@@ -3072,39 +3077,39 @@ function checkpoint12()
     gvars[:compartments][6].Theta = 0.17083185432599887
 
 
-    gvars[:total_water_content].BeginDay = 804.46948367501909
-    gvars[:total_water_content].EndDay = 806.61948367501907
-    gvars[:total_water_content].ErrorDay = 1.1368683772161603e-13 
+    gvars[:total_water_content].BeginDay = 804.58949638303898
+    gvars[:total_water_content].EndDay = 806.73949638303907
+    gvars[:total_water_content].ErrorDay = 0.0 
 
 
-    gvars[:soil_layers][1].WaterContent = 890.90779837500918
+    gvars[:soil_layers][1].WaterContent = 891.22916344391228
 
 
     gvars[:stresstot].Salt = 0 
     gvars[:stresstot].Temp = 11.554330894561998
-    gvars[:stresstot].Exp =  0.99256568949777868
+    gvars[:stresstot].Exp =  1.0549629815117196
     gvars[:stresstot].Sto =  -6.608470384673552e-17
     gvars[:stresstot].Weed = 0 
     gvars[:stresstot].NrD = 175 
 
 
-    gvars[:sumwabal].Epot = 364.98711714861338
-    gvars[:sumwabal].Tpot = 352.10439980283957
+    gvars[:sumwabal].Epot = 365.15002123473676
+    gvars[:sumwabal].Tpot = 351.89647766034238
     gvars[:sumwabal].Rain = 926.1999999999997
     gvars[:sumwabal].Irrigation = 0
     gvars[:sumwabal].Infiltrated = 906.18883216180711
     gvars[:sumwabal].Runoff = 20.01116783819274
-    gvars[:sumwabal].Drain = 359.94335589735635
-    gvars[:sumwabal].Eact = 243.24764721286687
-    gvars[:sumwabal].Tact = 352.10439980283957
-    gvars[:sumwabal].TrW = 352.10439980283957
-    gvars[:sumwabal].ECropCycle = 118.45293585040912
+    gvars[:sumwabal].Drain = 360.03147896899134
+    gvars[:sumwabal].Eact = 243.33555664742232
+    gvars[:sumwabal].Tact = 351.89647766034238
+    gvars[:sumwabal].TrW = 351.89647766034238
+    gvars[:sumwabal].ECropCycle = 118.54084528488605
     gvars[:sumwabal].CRwater = 0
-    gvars[:sumwabal].Biomass = 12.466405794835991
-    gvars[:sumwabal].YieldPart = 12.466405794836
-    gvars[:sumwabal].BiomassPot = 13.291211566470444
-    gvars[:sumwabal].BiomassUnlim = 26.188534036701522
-    gvars[:sumwabal].BiomassTot = 12.466405794835991
+    gvars[:sumwabal].Biomass = 12.57859510962437
+    gvars[:sumwabal].YieldPart = 12.578595109624374
+    gvars[:sumwabal].BiomassPot = 13.220052191775176
+    gvars[:sumwabal].BiomassUnlim = 26.175784442826618
+    gvars[:sumwabal].BiomassTot = 12.57859510962437
     gvars[:sumwabal].SaltIn = 0
     gvars[:sumwabal].SaltOut = 0
     gvars[:sumwabal].CRsalt = 0 
@@ -3114,7 +3119,7 @@ function checkpoint12()
     gvars[:cut_info_record1].FromDay = 972 
 
 
-    gvars[:root_zone_wc].Actual = 806.61947071100883
+    gvars[:root_zone_wc].Actual = 806.73948341902883
     gvars[:root_zone_wc].FC = 870 
     gvars[:root_zone_wc].WP = 390
     gvars[:root_zone_wc].SAT = 1380 
@@ -3129,12 +3134,12 @@ function checkpoint12()
 
     gvars[:transfer].Store = true
     gvars[:transfer].Mobilize = false 
-    gvars[:transfer].ToMobilize = 1.3720893801594221
-    gvars[:transfer].Bmobilized = 1.3716249335738133
+    gvars[:transfer].ToMobilize = 1.3838839288017948
+    gvars[:transfer].Bmobilized = 1.3835300268634934
 
 
     gvars[:plotvarcrop].PotVal = 99.999999994533795
-    gvars[:plotvarcrop].ActVal = 57.069815506940245 
+    gvars[:plotvarcrop].ActVal = 56.240772080015745 
 
 
     outputs[:tcropsim] = Dict(

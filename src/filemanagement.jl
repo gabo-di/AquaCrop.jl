@@ -1,7 +1,7 @@
 """
     file_management!(outputs, gvars, nrrun; kwargs...)
 
-run.f90:7760
+run.f90:FileManagement:7807
 """
 function file_management!(outputs, gvars, nrrun; kwargs...)
     # we create these "lvars" because we need functions that 
@@ -12,7 +12,6 @@ function file_management!(outputs, gvars, nrrun; kwargs...)
 
     cont = 0
     loopi = true
-    # MARK
     while loopi
         cont += 1
         advance_one_time_step!(outputs, gvars, lvars, projectinput.ParentDir, nrrun)
@@ -28,7 +27,7 @@ end
 """
     advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
 
-run.f90:6747
+run.f90:AdvanceOneTimeStep:6729
 """
 function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
     # reset values since they are local variables
@@ -240,7 +239,7 @@ function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
     if (gvars[:float_parameters][:rooting_depth] > 0) & (gvars[:bool_parameters][:nomorecrop] == false)
         determine_root_zone_wc!(gvars, gvars[:float_parameters][:rooting_depth])
         # temperature stress affecting crop transpiration
-        if gvars[:float_parameters][:cciactual] <= 0.0000001
+        if gvars[:float_parameters][:cciactual] <= ac_zero_threshold
             kstr = 1
         else
             kstr = ks_temperature(0, gvars[:crop].GDtranspLow, gvars[:float_parameters][:gddayi])
@@ -377,21 +376,21 @@ function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
     # 14.b Stress totals
     if gvars[:float_parameters][:cciactual] > 0
         # leaf expansion growth
-        if gvars[:float_parameters][:stressleaf] > - 0.000001
+        if gvars[:float_parameters][:stressleaf] > - ac_zero_threshold
             gvars[:stresstot].Exp = ((gvars[:stresstot].NrD - 1)*gvars[:stresstot].Exp +
                                      gvars[:float_parameters][:stressleaf])/(gvars[:stresstot].NrD)
         end 
         # stomatal closure
         if gvars[:float_parameters][:tpot] > 0
             stressstomata = 100 *(1 - gvars[:float_parameters][:tact]/gvars[:float_parameters][:tpot])
-            if stressstomata > - 0.000001
+            if stressstomata > - ac_zero_threshold
                 gvars[:stresstot].Sto = ((gvars[:stresstot].NrD - 1) *
                                          gvars[:stresstot].Sto + stressstomata) / (gvars[:stresstot].NrD)
             end 
         end 
     end 
     # weed stress
-    if gvars[:float_parameters][:weedrci] > - 0.000001
+    if gvars[:float_parameters][:weedrci] > - ac_zero_threshold
         gvars[:stresstot].Weed =  ((gvars[:stresstot].NrD - 1)*gvars[:stresstot].Weed +
                                      gvars[:float_parameters][:weedrci])/(gvars[:stresstot].NrD)
     end 
@@ -442,6 +441,9 @@ function advance_one_time_step!(outputs, gvars, lvars, parentdir, nrrun)
         dap = gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays - gvars[:crop].Day1 + 1
         write_daily_results!(outputs, gvars, dap, wpi, nrrun)
     end
+    if gvars[:bool_parameters][:out8Irri]
+        write_irr_info!(outputs, gvars)
+    end
     if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
         dap = gvars[:integer_parameters][:daynri] - gvars[:simulation].DelayedDays - gvars[:crop].Day1 + 1
         write_evaluation_data!(outputs, gvars, dap, nrrun)
@@ -471,7 +473,7 @@ end
 """
     get_z_and_ec_gwt!(gvars)
 
-run.f90:6159
+run.f90:GetZandECgwt:6137
 """
 function get_z_and_ec_gwt!(gvars)
     ziaqua = gvars[:integer_parameters][:ziaqua]
@@ -501,7 +503,7 @@ end
 """
     get_irri_param!(gvars, lvars)
 
-run.f90:6262
+run.f90:GetIrriParam:6240
 """
 function get_irri_param!(gvars, lvars)
     irri_info_record1 = gvars[:irri_info_record1]
@@ -593,7 +595,7 @@ end
 """
     irri = irri_out_season(gvars)
 
-run.f90:6188
+run.f90:IrriOutSeason:6166
 """
 function irri_out_season(gvars)
     irrievents = RepDayEventInt[RepDayEventInt() for _ in 1:5]
@@ -635,7 +637,7 @@ end
 """
     irri_manual!(gvars)
 
-run.f90:6224
+run.f90:IrriManual:6202
 """
 function irri_manual!(gvars)
     irri_info_record1 = gvars[:irri_info_record1]
@@ -686,7 +688,7 @@ end
                                             themodecycle, simulation)
 
 
-global.f90:6371
+global.f90:CCiniTotalFromTimeToCCini:6408
 """
 function ccini_total_from_time_to_ccini(tempdaystoccini, tempgddaystoccini, 
                                             l0, l12, l12sf, l123, l1234, gddl0, 
@@ -737,7 +739,7 @@ end
 """
     adjusted_rooting_depth!(gvars)
 
-rootunit.f90:37
+rootunit.f90:AdjustedRootingDepth:37
 """
 function adjusted_rooting_depth!(gvars)
     ccact = gvars[:plotvarcrop].ActVal 
@@ -874,7 +876,7 @@ end
 """
     determine_root_zone_wc!(gvars, rootingdepth)
 
-global.f90:7750
+global.f90:DetermineRootZoneWC:7787
 """
 function determine_root_zone_wc!(gvars, rootingdepth)
     root_zone_wc = gvars[:root_zone_wc]  
@@ -1021,7 +1023,7 @@ end
 """
     adjust_swc_rootzone!(gvars, lvars)
 
-run.f90:6348
+run.f90:AdjustSWCRootZone:6326
 """
 function adjust_swc_rootzone!(gvars, lvars)
     compartments = gvars[:compartments]
@@ -1057,7 +1059,7 @@ end
 """
     initialize_transfer_assimilates!(gvars, lvars)
 
-run.f90:6378
+run.f90:InitializeTransferAssimilates:6356
 """
 function initialize_transfer_assimilates!(gvars, lvars)
     crop = gvars[:crop]
@@ -1160,7 +1162,7 @@ end
 """
     determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
 
-simul.f90:453
+simul.f90:DeterminePotentialBiomass:454
 """
 function determine_potential_biomass!(gvars, virtualtimecc, sumgddadjcc)
 
@@ -1238,7 +1240,7 @@ end
 """
     fadjustedforco2 = fadjusted_for_co2(co21, wpi, percenta)
 
-global.f90:2749
+global.f90:fAdjustedForCO2:2766
 """
 function fadjusted_for_co2(co2i, wpi, percenta)
     # 1. Correction for crop type: fType
@@ -1313,7 +1315,7 @@ end
 """
     determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc) 
 
-simul.f90:528
+simul.f90:DetermineBiomassAndYield:529
 """
 function determine_biomass_and_yield!(gvars, lvars, sumgddadjcc, virtualtimecc) 
 
@@ -1808,7 +1810,7 @@ end
 """
     yeari = year_weighing_factor(cropfirstdaynr)
     
-simul.f90:1073
+simul.f90:YearWeighingFactor:1074
 """
 function year_weighing_factor(cropfirstdaynr)
     dayi, monthi, yeari = determine_date(cropfirstdaynr)
@@ -1818,7 +1820,7 @@ end
 """
     fi = fraction_period(diflor, crop)
 
-simul.f90:1050
+simul.f90:FractionPeriod:1051
 """
 function fraction_period(diflor, crop)
     if diflor <= eps() 
@@ -1840,7 +1842,7 @@ end
 """
     f = fraction_flowering(dayi, crop, simulation)
 
-simul.f90:1025
+simul.f90:FractionFlowering:1026
 """
 function fraction_flowering(dayi, crop, simulation)
   if crop.LengthFlowering <= 1
@@ -1850,7 +1852,7 @@ function fraction_flowering(dayi, crop, simulation)
       f2 = fraction_period(diflor, crop)
       diflor = (dayi-1) - (simulation.DelayedDays + crop.Day1 + crop.DaysToFlowering)
       f1 = fraction_period(diflor, crop)
-      if abs(f1-f2) < 0.0000001
+      if abs(f1-f2) < ac_zero_threshold 
           f = 0
       else
           f = (100 * ((f1+f2)/2)/crop.LengthFlowering)
@@ -1866,7 +1868,7 @@ end
                                   hifinal,
                                   crop, simulation)
 
-global.f90:5530
+global.f90:HarvestIndexDay:5567
 """
 function harvest_index_day(dap, daystoflower, himax, dhidt, cci, 
                                   ccxadjusted, theccxwithered, 
@@ -1940,7 +1942,7 @@ end
 """
     bmr = bm_range(hiadj)
 
-global.f90:2278
+global.f90:BMRange:2295
 """
 function bm_range(hiadj)
     if hiadj <= 0
@@ -1957,7 +1959,7 @@ end
 """
     himultiplier = hi_multiplier(ratiobm, rangebm, hiadj)
 
-global.f90:2295
+global.f90:HImultiplier:2312
 """
 function hi_multiplier(ratiobm, rangebm, hiadj)
     rini = 1 - rangebm
@@ -1979,7 +1981,7 @@ end
 """
     potvalsf = get_potvalsf(dap, sumgddadjcc, gvars)
 
-run.f90:6468
+run.f90:GetPotValSF:6446
 """
 function get_potvalsf(dap, sumgddadjcc, gvars)
     crop = gvars[:crop]
@@ -2014,7 +2016,7 @@ end
 """
     check_for_print!(outputs, gvars)
 
-run.f90:3476
+run.f90:CheckForPrint:3391
 """
 function check_for_print!(outputs, gvars)
     dayn, monthn, yearn = determine_date(gvars[:integer_parameters][:daynri])
@@ -2073,7 +2075,7 @@ end
 """
     write_intermediate_period!(outputs, gvars)
 
-run.f90:6088
+run.f90:WriteIntermediatePeriod:6066
 """
 function write_intermediate_period!(outputs, gvars)
     # determine intermediate results
@@ -2141,7 +2143,7 @@ end
 """
     read_climate_nextday!(outputs, gvars)
 
-run.f90:7345
+run.f90:ReadClimateNextDay:7330
 """
 function read_climate_nextday!(outputs, gvars)
     # Read Climate next day, Get GDDays and update SumGDDays
@@ -2173,7 +2175,7 @@ end
 """
     set_gdd_variables_nextday!(gvars)
 
-run.f90:7376
+run.f90:SetGDDVariablesNextDay:7362
 """
 function set_gdd_variables_nextday!(gvars)
     crop = gvars[:crop]
@@ -2225,7 +2227,7 @@ end
                            salcrper, biomassper, bunlimper, bmobper, bstoper, 
                            gvars)
 
-run.f90:4582
+run.f90:WriteTheResults:4531
 """
 function write_the_results!(outputs, anumber, day1, month1, year1, dayn, monthn, 
                            yearn, rper, etoper, gddper, irriper, infiltper, 
@@ -2371,7 +2373,7 @@ end
 """
     write_daily_results!(outputs, gvars, dap, wpi, nrrun)
 
-run.f90:7419
+run.f90:WriteDailyResults:7405
 """
 function write_daily_results!(outputs, gvars, dap, wpi, nrrun)
 
@@ -2473,7 +2475,7 @@ function write_daily_results!(outputs, gvars, dap, wpi, nrrun)
 
     # 4. Air temperature stress
     cciactual = gvars[:float_parameters][:cciactual]
-    if cciactual <= 0.0000001
+    if cciactual <= ac_zero_threshold
         kstr = 1
     else
         kstr = ks_temperature(0, gvars[:crop].GDtranspLow, gvars[:float_parameters][:gddayi])
@@ -2486,14 +2488,14 @@ function write_daily_results!(outputs, gvars, dap, wpi, nrrun)
     end 
 
     # 5. Relative cover of weeds
-    if cciactual <= 0.0000001
+    if cciactual <= ac_zero_threshold
         strw = undef_int
     else
         strw = round(Int, gvars[:float_parameters][:weedrci])
     end 
 
     # 6. WPi adjustemnt
-    if gvars[:sumwabal].Biomass <= 0.000001
+    if gvars[:sumwabal].Biomass <= ac_zero_threshold
         wpi_loc = 0
     end 
 
@@ -2641,7 +2643,7 @@ end
 """
     record_harvest!(outputs, gvars, nrcut, dayinseason, nrrun)
 
-run.f90:6697
+run.f90:RecordHarvest:6679
 """
 function record_harvest!(outputs, gvars, nrcut, dayinseason, nrrun)
     arr = Float64[]
@@ -2701,7 +2703,7 @@ end
 """
     write_evaluation_data!(outputs, gvars, dap, nrrun)
 
-run.f90:6498
+run.f90:WriteEvaluationData:6476
 """
 function write_evaluation_data!(outputs, gvars, dap, nrrun)
     if length(gvars[:array_parameters][:DaynrEval]) > 0
@@ -2765,11 +2767,10 @@ function write_evaluation_data!(outputs, gvars, dap, nrrun)
     return nothing
 end
 
-
 """
     swcact = swcz_soil(gvars)
 
-run.f90:6555
+run.f90:SWCZsoil:6533
 """
 function swcz_soil(gvars)
     zsoil = gvars[:float_parameters][:zeval]
@@ -2833,4 +2834,86 @@ function initialize_lvars()
         :integer_parameters => integer_parameters
     )
     return lvars
+end
+
+"""
+    write_irr_info!(outputs, gvars)
+
+run.f90:WriteIrrInfo:7746
+"""
+function write_irr_info!(outputs, gvars)
+    daynri = gvars[:integer_parameters][:daynri]
+    cropday1 = gvars[:crop].Day1
+    cropdayn = gvars[:crop].DayN
+    irrigation = gvars[:float_parameters][:irrigation]
+    irrimode = gvars[:symbol_parameters][:irrimode]
+    lastirridap = gvars[:integer_parameters][:last_irri_dap]
+
+    di, mi, yi = determine_date(daynri)
+
+    if gvars[:clim_record].FromY == 1901
+        yi = yi -1901 + 1
+    end
+    if (daynri < cropday1) | (daynri > cropdayn) # before and after growing period
+        arr = Float64[]
+        push!(arr, yi) # Date year
+        push!(arr, mi) # Date month
+        push!(arr, di) # Date day
+        push!(arr, undef_int) # DAP
+        push!(arr, undef_int) # Stage 
+        push!(arr, irrigation) # Irri (mm) 
+        push!(arr, undef_int) # IrriInt (days)
+
+        add_output_in_irriinfoout!(outputs, arr)
+    else # during growing period AND irrigation event or last day
+        if (daynri == cropdayn) | ((irrigation > 0) & (irrimode == :Inet)) # last day  
+            if (irrigation < 0.0001) & (daynri == cropdayn)
+                irrion = false
+            else
+                irrion = true
+            end
+            dapi = daynri - cropday1 + 1
+            for i in (lastirridap+1):dapi
+                di, mi, yi = determine_date(daynri - (dapi-lastirridap) + (i-lastirridap))
+                if gvars[:clim_record].FromY == 1901
+                    yi = yi -1901 + 1
+                end
+                if i == dapi 
+                    irrmm = irrigation
+                else
+                    irrmm = 0
+                end 
+                if irrimode == :Inet # for last day of growing period
+                    irrmm = undef_int
+                    irrion = false
+                end 
+                if irrion 
+                    arr = Float64[]
+                    push!(arr, yi) # Date year
+                    push!(arr, mi) # Date month
+                    push!(arr, di) # Date day
+                    push!(arr, i) # DAP
+                    push!(arr, undef_int) # Stage 
+                    push!(arr, irrmm) # Irri (mm) 
+                    push!(arr, dapi - lastirridap) # IrriInt (days)
+
+                    add_output_in_irriinfoout!(outputs, arr)
+                else
+                    arr = Float64[]
+                    push!(arr, yi) # Date year
+                    push!(arr, mi) # Date month
+                    push!(arr, di) # Date day
+                    push!(arr, i) # DAP
+                    push!(arr, undef_int) # Stage 
+                    push!(arr, irrmm) # Irri (mm) 
+                    push!(arr, undef_int) # IrriInt (days)
+
+                    add_output_in_irriinfoout!(outputs, arr)
+                end 
+            end 
+            if irrion
+                setparameter!(gvars[:integer_parameters], :last_irri_dap, dapi)
+            end 
+        end 
+    end 
 end

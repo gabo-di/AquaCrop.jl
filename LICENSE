@@ -3,7 +3,7 @@ COPYRIGHT
 Based on AquaCrop, Copyright © 2024 KU Leuven for Fortran Version v7.2.
 Originally licensed under BSD-3.
 
-Translated and adapted to Julia by CAP4GI.
+Translated and adapted to Julia by Gabriel Díaz for the CAP4GI project.
 
 All rights reserved.
 

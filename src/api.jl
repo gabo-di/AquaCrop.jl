@@ -563,7 +563,7 @@ function start_cropfield(; kwargs...)
     all_ok = AllOk(true, "")
 
     filepaths = initialize_the_program(outputs, parentdir; kwargs...) 
-    project_filenames = initialize_project_filename(outputs, filepaths; kwargs...)
+    project_filenames = initialize_project_filenames(outputs, filepaths; kwargs...)
     if length(project_filenames) < nproject
         all_ok.logi = false
         all_ok.msg = "no project loaded"

@@ -37,6 +37,7 @@ include("checkpoints.jl")
     @test isapprox(gvars[:perennial_period], gvars_0[:perennial_period])
     @test isapprox(gvars[:crop_file_set], gvars_0[:crop_file_set])
     @test isapprox(gvars[:string_parameters], gvars_0[:string_parameters])
+    @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
 
     # @test isapprox(gvars[:array_parameters][:Tmax], gvars_0[:array_parameters][:Tmax])
     # @test isapprox(gvars[:array_parameters][:Tmin], gvars_0[:array_parameters][:Tmin])

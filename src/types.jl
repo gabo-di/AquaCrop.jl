@@ -11,6 +11,8 @@ const undef_symbol = :undef_symbol # value for 'undefined' symbol variables
 const CO2Ref = 369.41 # reference CO2 in ppm by volume for year 2000 for Mauna Loa (Hawaii,USA)
 const EvapZmin = 15.0 # cm  minimum soil depth for water extraction by evaporation
 const epsilon = 10E-08
+const ac_zero_threshold = 0.000001
+
 const ElapsedDays = [0.0, 31.0, 59.25,
     90.25, 120.25, 151.25,
     181.25, 212.25, 243.25,
@@ -113,6 +115,15 @@ function ParametersContainer(::Type{T}) where {T}
 end
 
 Base.isapprox(a::Dict{Symbol, T}, b::Dict{Symbol, T}; kwargs...) where {T} = begin 
+    if length(a) != length(b)
+        ans = false
+        println("\n\n\n")
+        println("wrong length")
+        println(length(a), "   ", length(b))
+        println("\n\n\n")
+        return ans
+    end
+
     ans = true
     for key in keys(a)
         if isapprox(a[key], b[key]; kwargs...)
@@ -157,7 +168,7 @@ Base.getindex(parameterscontainer::ParametersContainer, parameterkey::Symbol) = 
     effectiverain = RepEffectiveRain()
 
 set from
-initialsettings.f90:244
+initialsettings.f90:InitializeSettings:247
 """
 @kwdef mutable struct RepEffectiveRain <: AbstractParametersContainer
     "Undocumented"
@@ -177,7 +188,7 @@ end
 contains the simulation parameters.
 
 set from
-initialsettings.f90:216
+initialsettings.f90:InitializeSettings:219
 """
 @kwdef mutable struct RepParam <: AbstractParametersContainer
     #  DEFAULT.PAR
@@ -271,7 +282,7 @@ end
     soil = RepSoil()
 
 set from
-defaultcropsoil.f90:289
+defaultcropsoil.f90:ResetDefaultSoil:289
 """
 @kwdef mutable struct RepSoil <: AbstractParametersContainer
     "(* Readily evaporable water mm *)"
@@ -289,7 +300,7 @@ end
 creates a soil layer with a given soil class.
 
 set from
-defaultcropsoil.f90:289
+defaultcropsoil.f90:ResetDefaultSoil:289
 """
 @kwdef mutable struct SoilLayerIndividual <: AbstractParametersContainer
     "Undocumented"
@@ -343,7 +354,7 @@ end
     shape = RepShapes()
 
 set from
-defaultcropsoil.f90:175
+defaultcropsoil.f90:ResetDefaultCrop:175
 """
 @kwdef mutable struct RepShapes <: AbstractParametersContainer
     "Percentage soil fertility stress for calibration"
@@ -365,7 +376,7 @@ end
     assimilates = RepAssimilates()
 
 set from
-defaultcropsoil.f90:274
+defaultcropsoil.f90:ResetDefaultCrop:274
 """
 @kwdef mutable struct RepAssimilates <: AbstractParametersContainer
     "Undocumented"
@@ -383,7 +394,7 @@ end
     crop = RepCrop()
 
 set from 
-defaultcropsoil.f90:140
+defaultcropsoil.f90:ResetDefaultCrop:140
 """
 @kwdef mutable struct RepCrop <: AbstractParametersContainer
     "Undocumented"
@@ -658,7 +669,7 @@ end
     simulation = RepSim()
 
 set from
-global.f90:7694
+global.f90:LoadProfileProcessing:7731
 """
 @kwdef mutable struct RepSim <: AbstractParametersContainer
     "daynumber"
@@ -743,9 +754,6 @@ global.f90:7694
     CropDay1Previous::Int = undef_int
 end
 
-
-
-
 """
     endseason = RepEndSeason()
 """
@@ -782,7 +790,7 @@ end
     cuttings = RepCuttings()
 
 set from
-global.f90:3338
+global.f90:NoManagement:3354
 """
 @kwdef mutable struct RepCuttings <: AbstractParametersContainer
     "Undocumented"
@@ -808,7 +816,7 @@ end
     management = RepManag()
 
 set from
-global.f90:3311
+global.f90:NoManagement:3327
 """
 @kwdef mutable struct RepManag <: AbstractParametersContainer
     "percent soil cover by mulch in growing period"
@@ -845,7 +853,7 @@ end
     summ = RepSum()
 
 set from
-global.f90:7153
+global.f90:GlobalZero:7191
 """
 @kwdef mutable struct RepSum <: AbstractParametersContainer
     # Undocumented
@@ -878,7 +886,7 @@ end
     a = RepDayEventInt()
 
 set from
-global.f90:2838
+global.f90:NoIrrigation:2855
 """
 @kwdef mutable struct RepDayEventInt <: AbstractParametersContainer
     "Undocumented"
@@ -902,7 +910,7 @@ end
     irriecw = RepIrriECw()
 
 set from
-global.f90:2838
+global.f90:NoIrrigation:2855
 """
 @kwdef mutable struct RepIrriECw <: AbstractParametersContainer
     "Undocumented"
@@ -915,7 +923,7 @@ end
     onset = RepOnset()
 
 set from
-initialsettings.f90:464
+initialsettings.f90:InitializeSettings:469
 """
 @kwdef mutable struct RepOnset <: AbstractParametersContainer
     "by rainfall or temperature criterion"

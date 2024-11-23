@@ -1,17 +1,20 @@
 """
     load_simulation_project!(outputs, gvars, projectinput::ProjectInputType; kwargs...) 
 
-tempprocessing.f90:1932
+tempprocessing.f90:LoadSimulationRunProject:2057
 """
 function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType; kwargs...) 
     # 0. Year of cultivation and Simulation and Cropping period
     gvars[:simulation].YearSeason = projectinput.Simulation_YearSeason
     gvars[:crop].Day1 = projectinput.Crop_Day1
     gvars[:crop].DayN = projectinput.Crop_DayN
+    gvars[:simulation].FromDayNr = projectinput.Simulation_DayNr1
+    gvars[:simulation].ToDayNr = projectinput.Simulation_DayNrN
 
     # 1.1 Temperature
     if (projectinput.Temperature_Filename=="(None)") | (projectinput.Temperature_Filename=="(External)")
         temperature_file = projectinput.Temperature_Filename 
+        setparameter!(gvars[:bool_parameters], :temperature_file_exists, false)
     else
         _temperature_file = joinpath([projectinput.ParentDir, projectinput.Temperature_Directory, projectinput.Temperature_Filename])
         if typeof(kwargs[:runtype]) == NormalFileRun
@@ -35,9 +38,17 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     end 
     setparameter!(gvars[:string_parameters], :temperature_file, temperature_file)
 
+    # Create Temperature Reference file 
+    if temperature_file != "(External)"
+        create_tnxreferencefile!(outputs, gvars; kwargs...) 
+    end 
+    create_tnxreference365days!(outputs, gvars; kwargs...)
+
+
     # 1.2 ETo
     if (projectinput.ETo_Filename=="(None)") | (projectinput.ETo_Filename=="(External)")
         eto_file = projectinput.ETo_Filename 
+        setparameter!(gvars[:bool_parameters], :eto_file_exists, false)
     else
         _eto_file = joinpath([projectinput.ParentDir, projectinput.ETo_Directory, projectinput.ETo_Filename])
         if typeof(kwargs[:runtype]) == NormalFileRun
@@ -64,6 +75,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     # 1.3 Rain
     if (projectinput.Rain_Filename=="(None)") | (projectinput.Rain_Filename=="(External)")
         rain_file = projectinput.Rain_Filename
+        setparameter!(gvars[:bool_parameters], :rain_file_exists, false)
     else
         _rain_file = joinpath([projectinput.ParentDir, projectinput.Rain_Directory, projectinput.Rain_Filename])
         if typeof(kwargs[:runtype]) == NormalFileRun
@@ -321,14 +333,13 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
 end 
 
 """
-    read_temperature_file!(array_parameters::ParametersContainer{T}, temperature_file) where T
+    read_temperature_file!(array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
 
-tempprocessing.f90:307
+tempprocessing.f90:ReadTemperatureFilefull:358
 """
 function read_temperature_file!(array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
     return _read_temperature_file!(kwargs[:runtype], array_parameters, temperature_file; kwargs...) 
 end
-
 
 function _read_temperature_file!(runtype::NormalFileRun, array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
     Tmin = Float64[] 
@@ -488,7 +499,7 @@ end
 """
     load_clim!(record::RepClim, clim_file; kwargs...)
 
-global.f90:5936
+global.f90:LoadClim:5973
 """
 function load_clim!(record::RepClim, clim_file; kwargs...)
     _load_clim!(kwargs[:runtype], record, clim_file; kwargs...)
@@ -536,7 +547,7 @@ end
 """
     complete_climate_description!(record::RepClim)
 
-global.f90:8223
+global.f90:CompleteClimateDescription:8260
 """
 function complete_climate_description!(record::RepClim)
     record.FromDayNr = determine_day_nr(record.FromD, record.FromM, record.FromY)
@@ -585,7 +596,7 @@ end
 """
     set_clim_data!(gvars, projectinput::ProjectInputType)
 
-global.f90:4295
+global.f90:SetClimData:4311
 """
 function set_clim_data!(gvars, projectinput::ProjectInputType)
     clim_record = gvars[:clim_record]
@@ -680,7 +691,7 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
     end 
 
     # Part B - ClimFile and Temperature files --> ClimFile
-    if (temperature_file != "(None)") 
+    if (temperature_file != "(None)") & (temperature_file != "(External)")
         if clim_file == "(None)"
             clim_file = "EToRainTempFile"
             clim_record.FromY = temperature_record.FromY
@@ -754,7 +765,7 @@ end
 """
     logi = full_undefined_record(record::RepClim)
 
-global.f90:2826
+global.f90:FullUndefinedRecord:2843
 """
 function full_undefined_record(record::RepClim)
     fromy = record.FromY
@@ -769,7 +780,7 @@ end
 """
     adjust_onset_search_period!(gvars)
 
-global.f90:4214
+global.f90:AdjustOnsetSearchPeriod:4230
 """
 function adjust_onset_search_period!(gvars)
     onset = gvars[:onset]
@@ -798,7 +809,7 @@ end
 """
     load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...)
 
-global.f90:4799
+global.f90:LoadCrop:4876
 """
 function load_crop!(crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...)
     _load_crop!(kwargs[:runtype], crop, perennial_period, crop_file; kwargs...)
@@ -1164,7 +1175,7 @@ end
 """
     sxtop, sxbot = derive_smax_top_bottom(crop::RepCrop)
 
-global.f90:1944
+global.f90:DeriveSmaxTopBottom:1961
 """
 function derive_smax_top_bottom(crop::RepCrop)
     sxtopq = crop.SmaxTopQuarter
@@ -1203,7 +1214,7 @@ end
 """
     adjust_year_perennials!(crop::RepCrop, theyearseason)
 
-global.f90:4690
+global.f90:AdjustYearPerennials:4626
 """
 function adjust_year_perennials!(crop::RepCrop, theyearseason)
     sownyear1  = crop.SownYear1
@@ -1261,7 +1272,7 @@ end
 """
     adjust_crop_file_parameters!(gvars)
 
-tempprocessing.f90:1882
+tempprocessing.f90:AdjustCropFileParameters:2007
 """
 function adjust_crop_file_parameters!(gvars)
     crop = gvars[:crop]
@@ -1315,7 +1326,7 @@ end
 """
     gdd1234 = growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, tdaymin, tdaymax)
 
-tempprocessing.f90:871
+tempprocessing.f90:GrowingDegreeDays:922
 """
 function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, tdaymin, tdaymax)
     temperature_file = gvars[:string_parameters][:temperature_file]
@@ -1333,7 +1344,8 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
     gddays = 0
 
     if (valperiod > 0) 
-        if (temperature_file=="(None)") 
+        if (temperature_file=="(None)") | (temperature_file=="(External)")
+            # OJO this includes temperature_file = "None" and "External" because we never set TminRun
             # given average Tmin and Tmax
             daygdd = degrees_day(tbase, tupper, tdaymin_local, tdaymax_local, simulparam.GDDMethod)
             gddays = round(Int, valperiod * daygdd)
@@ -1453,7 +1465,7 @@ end
 """
     dgrd = degrees_day(tbase, tupper, tdaymin, tdaymax, gddselectedmethod)
 
-global.f90:2419
+global.f90:DegreesDay:2436
 """
 function degrees_day(tbase, tupper, tdaymin, tdaymax, gddselectedmethod)
     if gddselectedmethod==1
@@ -1507,7 +1519,7 @@ end
 """
     daynri = set_daynr_to_yundef(daynri)
 
-tempprocessing.f90:351
+tempprocessing.f90:SetDayNrToYundef:402
 """
 function set_daynr_to_yundef(daynri)
     dayi, monthi, yeari = determine_date(daynri)
@@ -1519,7 +1531,7 @@ end
 """
     get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_array, temperature_record::RepClim)
 
-tempprocessing.f90:362
+tempprocessing.f90:GetDecadeTemperatureDataSet:413
 """
 function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_array, temperature_record::RepClim)
     dayi, monthi, yeari = determine_date(daynri)
@@ -1586,7 +1598,7 @@ end
 """
     ul, ll, mid = get_parameters(c1, c2, c3)
 
-tempprocessing.f90:580
+tempprocessing.f90:GetParameters:631
 """
 function get_parameters(c1, c2, c3)
     ul = (c1+c2)/2
@@ -1599,7 +1611,7 @@ end
 """
     c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_array, temperature_record::RepClim)
 
-tempprocessing.f90:439
+tempprocessing.f90:GetSetofThree:490
 """
 function get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_array, temperature_record::RepClim)
     # 1 = previous decade, 2 = Actual decade, 3 = Next decade;
@@ -1722,7 +1734,7 @@ end
 """ 
     decfile, mfile, yfile = adjust_decade_month_and_year(decfile, mfile, yfile)
 
-tempprocessing.f90:293
+tempprocessing.f90:AdjustDecadeMONTHandYEAR:344
 """
 function adjust_decade_month_and_year(decfile, mfile, yfile)
     decfile = 1
@@ -1738,7 +1750,7 @@ end
 """
     mfile, yfile = adjust_month_and_year(mfile, yfile)
 
-tempprocessing.f90:284
+tempprocessing.f90:AdjustMONTHandYEAR:335
 """
 function adjust_month_and_year(mfile, yfile)
     mfile = mfile - 12
@@ -1749,7 +1761,7 @@ end
 """
     get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_array, temperature_record::RepClim)
 
-tempprocessing.f90:596
+tempprocessing.f90:GetMonthlyTemperatureDataSet:647
 """
 function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_array, temperature_record::RepClim)
     dayi, monthi, yeari = determine_date(daynri)
@@ -1784,7 +1796,7 @@ end
 """
     c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months_temperature(monthi, yeari, temperature_array, temperature_record::RepClim)
 
-tempprocessing.f90:645
+tempprocessing.f90:GetSetofThreeMonths:696
 """
 function get_set_of_three_months_temperature(monthi, yeari, temperature_array, temperature_record::RepClim)
     n1 = 30
@@ -1964,7 +1976,7 @@ end
 """
     cimin, cimax = adjust_month(tlow, thigh)
 
-this comes from read_month tempprocessing.f90:837
+this comes from read_month tempprocessing.f90:ReadMonth:888
 """
 function adjust_month(tlow, thigh)
     ni = 30
@@ -1977,7 +1989,7 @@ end
 """
      aover3, bover2, c = get_interpolation_parameters(c1, c2, c3)
 
-tempprocessing.f90:854
+tempprocessing.f90:GetInterpolationParameters:905
 """
 function get_interpolation_parameters(c1, c2, c3)
     # n1=n2=n3=30 --> better parabola
@@ -1991,7 +2003,7 @@ end
 """
     nrcdays = sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tdaymax, gvars)
 
-tempprocessing.f90:1035
+tempprocessing.f90:SumCalendarDays:1113
 """
 function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tdaymax, gvars)
     temperature_file = gvars[:string_parameters][:temperature_file]
@@ -2009,7 +2021,8 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
 
     nrcdays = 0
     if valgddays>0 
-        if temperature_file=="(None)"
+        if (temperature_file=="(None)") | (temperature_file=="(External)")
+            # OJO this includes temperature_file = "None" and "External" because we never set TminRun
             # given average Tmin and Tmax
             daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
             if abs(daygdd) < eps()
@@ -2128,7 +2141,7 @@ end
 """
     adjust_calendar_crop!(gvars)
 
-tempprocessing.f90:1467
+tempprocessing.f90:AdjustCalendarCrop:1590
 """
 function adjust_calendar_crop!(gvars)
     crop = gvars[:crop]
@@ -2149,7 +2162,7 @@ end
 """
     adjust_calendar_days!(gvars, iscgcgiven)
 
-tempprocessing.f90:1327
+tempprocessing.f90:AdjustCalendarDays:1450
 """
 function adjust_calendar_days!(gvars, iscgcgiven)
     crop = gvars[:crop]
@@ -2209,7 +2222,7 @@ function adjust_calendar_days!(gvars, iscgcgiven)
         end 
     end 
 
-    if infocroptype!=:Forage 
+    if infocroptype != :Forage 
         d123 = sum_calendar_days(gddl123, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
         dharvest = sum_calendar_days(gddharvest, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
     end 
@@ -2286,7 +2299,7 @@ end
 """
     cdc = gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
 
-tempprocessing.f90:1545
+tempprocessing.f90:GDDCDCToCDC:1668
 """
 function gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
     gddi = length_canopy_decline(ccx, gddcdc)
@@ -2316,7 +2329,7 @@ end
 """
     adjust_crop_year_to_climfile!(crop::RepCrop, clim_file, clim_record)
 
-global.f90:6447
+global.f90:AdjustCropYearToClimFile:6484
 """
 function adjust_crop_year_to_climfile!(crop::RepCrop, clim_file, clim_record)
     cday1 = crop.Day1
@@ -2343,7 +2356,7 @@ end
 """
     adjust_climrecord_to!(clim_record::RepClim, cdayn)
 
-global.f90:6163
+global.f90:AdjustClimRecordTo:6200
 """
 function adjust_climrecord_to!(clim_record::RepClim, cdayn)
     dayi, monthi, yeari = determine_date(cdayn)
@@ -2357,7 +2370,7 @@ end
 """
     adjust_simperiod!(gvars, projectinput::ProjectInputType)
 
-global.f90:4692
+global.f90:AdjustSimPeriod:4709
 """
 function adjust_simperiod!(gvars, projectinput::ProjectInputType)
     simulation = gvars[:simulation]
@@ -2416,7 +2429,7 @@ end
 """
     determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_record::RepClim, clim_file)
 
-global.f90:4677
+global.f90:DetermineLinkedSimDay1:4694
 """
 function determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_record::RepClim, clim_file)
     simday1 = crop.Day1
@@ -2433,7 +2446,7 @@ end
 """
     load_groundwater!(gvars, groundwater_file)
 
-global.f90:5981
+global.f90:LoadGroundWater:6018
 """
 function load_groundwater!(gvars, groundwater_file)
     simulparam = gvars[:simulparam]
@@ -2585,7 +2598,7 @@ end
 """
     zcn, ecdsm = find_values(atdaynr, daynr1, daynr2, z1, ec1, z2, ec2)
 
-global.f90:6140
+global.f90:FindValues:6177
 """
 function find_values(atdaynr, daynr1, daynr2, z1, ec1, z2, ec2)
         zcm = round(Int, 100 * (z1 + (z2-z1) * (atdaynr-daynr1)/(daynr2-daynr1)))
@@ -2597,7 +2610,7 @@ end
 """
     calculate_adjusted_fc!(compartadj::Vector{CompartmentIndividual}, soil_layers::Vector{SoilLayerIndividual}, depthaquifer)
 
-global.f90:4141
+global.f90:CalculateAdjustedFC:4157
 """
 function calculate_adjusted_fc!(compartadj::Vector{CompartmentIndividual}, soil_layers::Vector{SoilLayerIndividual}, depthaquifer)
     depth = 0
@@ -2640,10 +2653,11 @@ function calculate_adjusted_fc!(compartadj::Vector{AbstractParametersContainer},
     calculate_adjusted_fc!(CompartmentIndividual[c for c in compartadj], SoilLayerIndividual[s for s in soil_layers], depthaquifer)
     return nothing
 end
+
 """
     nadj = no_adjustment(fcvolpr)
 
-global.f90:4195
+global.f90:NoAdjustment:4211
 """
 function no_adjustment(fcvolpr)
     if fcvolpr<=10
@@ -2659,12 +2673,11 @@ function no_adjustment(fcvolpr)
     return nadj
 end 
 
-
 """
     reset_swc_to_fc!(simulation::RepSim, compartments::Vector{CompartmentIndividual},
                      soil_layers::Vector{SoilLayerIndividual}, ziaqua)
 
-global.f90:4758
+global.f90:ResetSWCToFC:4775
 """
 function reset_swc_to_fc!(simulation::RepSim, compartments::Vector{CompartmentIndividual},
                            soil_layers::Vector{SoilLayerIndividual}, ziaqua)
@@ -2702,10 +2715,11 @@ function reset_swc_to_fc!(simulation::RepSim, compartments::Vector{AbstractParam
     reset_swc_to_fc!(simulation, CompartmentIndividual[c for c in compartments], SoilLayerIndividual[s for s in soil_layers], ziaqua)
     return nothing
 end
+
 """
     no_irrigation!(gvars)
 
-global.f90:2838
+global.f90:NoIrrigation:2855
 """
 function no_irrigation!(gvars)
     setparameter!(gvars[:symbol_parameters], :irrimode, :NoIrri)
@@ -2729,7 +2743,7 @@ end
 """
     load_irri_schedule_info!(gvars, irri_file)
 
-global.f90:2860
+global.f90:LoadIrriScheduleInfo:2877
 """
 function load_irri_schedule_info!(gvars, irri_file)
     open(irri_file, "r") do file
@@ -2850,7 +2864,7 @@ end
 """
     load_management!(gvars, man_file; kwargs...)
 
-global.f90:3350
+global.f90:LoadManagement:3366
 """
 function load_management!(gvars, man_file; kwargs...)
     _load_management!(kwargs[:runtype], gvars, man_file) 
@@ -2979,7 +2993,7 @@ end
 """
     adjust_size_compartments!(gvars, cropzx)
 
-global.f90:6563
+global.f90:AdjustSizeCompartments:6600
 """
 function adjust_size_compartments!(gvars, cropzx)
     compartments = gvars[:compartments]
@@ -3047,7 +3061,7 @@ end
 """
     adjust_theta_initial!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
 
-global.f90:5852
+global.f90:AdjustThetaInitial:5889
 """
 function adjust_theta_initial!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
     compartments = gvars[:compartments]
@@ -3103,7 +3117,7 @@ end
 """
     translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, locecds)
 
-global.f90:6258
+global.f90:TranslateIniPointsToSWProfile:6295
 """
 function translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, locecds)
     soil_layers = gvars[:soil_layers]
@@ -3195,7 +3209,7 @@ end
 """
     determine_salt_content!(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
 
-global.f90:4258
+global.f90:DetermineSaltContent:4274
 """
 function determine_salt_content!(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
     ece = compartment.WFactor
@@ -3234,7 +3248,7 @@ end
 """
     celi = active_cells(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual})
 
-globa.f90:4241
+global.f90:ActiveCells:4257
 """
 function active_cells(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual})
     if compartment.Theta<=soil_layers[compartment.Layer].UL 
@@ -3255,7 +3269,7 @@ end
 """
     salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepParam, i, mm)
 
-global.f90:2572
+global.f90:SaltSolutionDeposit:2589
 """
 function salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::RepParam, i, mm) # mm = l/m2, SaltSol/Saltdepo = g/m2
     saltsolution = compartment.Salt[i]
@@ -3278,7 +3292,7 @@ end
 """
     translate_inilayers_to_swprofile!(gvars, nrlay, laythickness, layvolpr, layecds)
 
-global.f90:6179
+global.f90:TranslateIniLayersToSWProfile:6216
 """
 function translate_inilayers_to_swprofile!(gvars, nrlay, laythickness, layvolpr, layecds)
     compartments = gvars[:compartments]
@@ -3346,7 +3360,7 @@ end
 """
      load_initial_conditions!(gvars, swcinifilefull)
 
-global.f90:6486
+global.f90:LoadInitialConditions:6523
 """
 function load_initial_conditions!(gvars, swcinifilefull)
     simulation = gvars[:simulation]
@@ -3385,7 +3399,7 @@ end
 """
     ece = ececomp(compartment::CompartmentIndividual, gvars)
 
-global.f90:2523
+global.f90:ECeComp:2540
 """
 function ececomp(compartment::CompartmentIndividual, gvars)
     soil_layers = gvars[:soil_layers]
@@ -3409,7 +3423,7 @@ end
 """
     load_offseason!(gvars, offseason_file)
 
-global.f90:5769
+global.f90:LoadOffSeason:5806
 """
 function load_offseason!(gvars, offseason_file)
     management = gvars[:management]
@@ -3475,7 +3489,7 @@ end
 """
     adjust_compartments!(gvars)
 
-run.f90:6619
+run.f90:AdjustCompartments:6597
 """
 function adjust_compartments!(gvars)
     simulation = gvars[:simulation]
@@ -3523,7 +3537,7 @@ end
 """
     reset_previous_sum!(gvars)
 
-run.f90:3445
+run.f90:ResetPreviousSum:3360
 """
 function reset_previous_sum!(gvars)
     gvars[:previoussum] = RepSum()
@@ -3537,3 +3551,237 @@ function reset_previous_sum!(gvars)
     return nothing
 end 
 
+"""
+    create_tnxreferencefile!(outputs, gvars; kwargs...)
+
+tempprocessing.f90:CreateTnxReferenceFile:3137
+"""
+function create_tnxreferencefile!(outputs, gvars; kwargs...)
+    monthval1 = zeros(12)
+    monthval2 = zeros(12)
+    monthnryears = zeros(Int, 12)
+
+    # Do not need to delete previous data files since we save in memory
+
+    temperature_record = gvars[:temperature_record]
+    # 2. Get Mean monthly data
+    if gvars[:bool_parameters][:temperature_file_exists]
+        # 2.a Preparation
+        # Get Number of Years
+        nryears = temperature_record.ToY - temperature_record.FromY + 1
+        # Get TnxReferenceYear
+        tnxreferenceyear = round(Int, (temperature_record.FromY+temperature_record.ToY)/2)
+        if tnxreferenceyear == 1901
+            tnxreferenceyear = 2000
+        end 
+        # check number of years for each month
+        for monthi in 1:12
+            monthnryears[monthi] = nryears
+        end 
+        if nryears > 1
+            if temperature_record.FromM > 1
+                for monthi in 1:(temperature_record.FromM-1)
+                    monthnryears[monthi] = monthnryears[monthi] - 1
+                end 
+            end
+            if temperature_record.ToM < 12
+                for monthi in 12:-1:(temperature_record.ToM+1)
+                    monthnryears[monthi] = monthnryears[monthi] - 1
+                end 
+            end 
+        end 
+                
+        # initialize
+        yeari = temperature_record.FromY
+        monthi = temperature_record.FromM
+        daynri = temperature_record.FromDayNr
+        endmonth = false
+        enddaynr = undef_int
+        deci = undef_int
+        sum1 = 0
+        sum2 = 0
+        monthdays = 0
+        monthdecs = 0
+        if temperature_record.Datatype == :Daily
+            # EndDayNr = DayNr of last day in month
+            dayi = DaysInMonth[monthi]
+            if isleapyear(yeari) & (monthi==2)
+                dayi = dayi + 1
+            end 
+            enddaynr = determine_day_nr(dayi, monthi, yeari)
+        end 
+            
+        # open temperature file
+        Tmin = gvars[:array_parameters][:Tmin]
+        Tmax = gvars[:array_parameters][:Tmax]
+
+        # 2.b Determine mean monthly data
+        for i in eachindex(Tmin)
+            # read data
+            val1 = Tmin[i]
+            val2 = Tmax[i]
+            # OJO maybe this ends in length-1   if (rc == iostat_end) exit
+            sum1 = sum1 + val1 # minimum temperature
+            sum2 = sum2 + val2 # maximum temperature
+            # check end of month
+            if temperature_record.Datatype == :Daily
+                monthdays = monthdays + 1
+                if daynri == enddaynr
+                    endmonth = true
+                end 
+            elseif temperature_record.Datatype == :Decadely
+                monthdecs = monthdecs + 1
+                if deci == 3 # OJO deci is 0 or undef_int, so this is nonsense
+                    endmonth = true
+                end 
+            elseif temperature_record.Datatype == :Monthly
+                endmonth = true
+            end 
+            if i==length(Tmin)
+                endmonth = true
+            end 
+            # End of Month
+            if endmonth
+                # mean monthly values Tmin and Tmax
+                if temperature_record.Datatype == :Daily
+                    sum1 = sum1/monthdays 
+                    sum2 = sum2/monthdays 
+                elseif temperature_record.Datatype == :Decadely
+                    sum1 = sum1/monthdecs 
+                    sum2 = sum2/monthdecs 
+                end 
+                monthval1[monthi] = monthval1[monthi] + sum1/monthnryears[monthi] # Tmin
+                monthval2[monthi] = monthval2[monthi] + sum2/monthnryears[monthi] # Tmax
+                # Next month
+                sum1 = 0
+                sum2 = 0
+                if monthi == 12
+                    monthi = 1
+                    yeari = yeari + 1
+                else
+                    monthi = monthi + 1
+                end 
+                endmonth = false
+                if temperature_record.Datatype == :Daily
+                    # EndDayNr = DayNr of last day in month
+                    monthdays = 0
+                    dayi = DaysInMonth[monthi]
+                    if isleapyear(yeari) & (monthi==2)
+                        dayi = dayi + 1
+                    end 
+                    enddaynr = determine_day_nr(dayi, monthi, yeari)
+                elseif temperature_record.Datatype == :Decadely
+                    monthdecs = 0
+                    deci = 0
+                end 
+            end 
+            # Next day, decade, month
+            if temperature_record.Datatype == :Daily
+                daynri = daynri + 1
+            end 
+        end 
+    end 
+    
+    # 3. Create and Save TnxReference File
+    if gvars[:bool_parameters][:temperature_file_exists]
+        # Determine Name of TnxReference File
+        # note that TnxReferenceFileFull exists only if TminTnxReference12MonthsRun lenght > 0
+        # Save mean monhtly data data
+        for monthi in 1:12
+            tlow = round(Int, 100*monthval1[monthi])/100
+            thigh = round(Int, 100*monthval2[monthi])/100
+            add_output_in_tnxreference12months!(outputs, tlow, thigh) 
+        end 
+    end 
+
+    setparameter!(gvars[:integer_parameters], :tnxreferenceyear, tnxreferenceyear)
+    return nothing
+end 
+
+"""
+    create_tnxreference365days!(outputs, gvars; kwargs...)
+
+tempprocessing.f90:CreateTnxReference365Days:3089
+"""
+function create_tnxreference365days!(outputs, gvars; kwargs...)
+    if length(outputs[:tnxreference12months][:tlow]) > 0 
+        # get data set for 1st month
+        monthi = 1
+        tmin_dataset, tmax_dataset = get_monthly_temperature_dataset_from_tnxreferencefile(outputs, monthi)
+        
+        # Tnx for Day 1 to 365
+        for daynri in 1:365
+            if daynri > tmin_dataset[31].DayNr
+                # next month
+                monthi = monthi + 1
+                tmin_dataset, tmax_dataset = get_monthly_temperature_dataset_from_tnxreferencefile(outputs, monthi)
+            end 
+            i = 1
+            while tmin_dataset[i].DayNr != daynri
+                i = i+1
+            end 
+            tlow = round(Int, 100*tmin_dataset[i].Param)/100
+            thigh = round(Int, 100*tmax_dataset[i].Param)/100
+            add_output_in_tnxreference365days!(outputs, tlow, thigh)
+        end 
+    end 
+
+    # after this we do not use tnxreference12months so we flush it
+    flush_output_tnxreference12months!(outputs)
+    return nothing
+end 
+
+"""
+    tmin_dataset, tmax_dataset = get_monthly_temperature_dataset_from_tnxreferencefile(monthi)
+
+tempprocessing.f90:GetMonthlyTemperatureDataSetFromTnxReferenceFile:3549
+"""
+function get_monthly_temperature_dataset_from_tnxreferencefile(outputs, monthi)
+    tmin_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
+    tmax_dataset = RepDayEventDbl[RepDayEventDbl() for _ in 1:31]
+
+    ni=30
+
+    if monthi == 1
+        c1min, c1max = read_output_from_tnxreference12months(outputs, 12)
+    else
+        c1min, c1max = read_output_from_tnxreference12months(outputs, monthi - 1)
+    end 
+    c2min, c2max = read_output_from_tnxreference12months(outputs, monthi)
+    if monthi == 12
+        c3min, c3max = read_output_from_tnxreference12months(outputs, 1)
+    else
+        c3min, c3max = read_output_from_tnxreference12months(outputs, monthi + 1)
+    end 
+
+    c1min = c1min*ni
+    c1max = c1max*ni
+    c2min = c2min*ni
+    c2max = c2max*ni
+    c3min = c3min*ni
+    c3max = c3max*ni
+
+    dnr = determine_day_nr(1, monthi, 1901)
+    dayn = DaysInMonth[monthi]
+
+    aover3min, bover2min, cmin = get_interpolation_parameters(c1min, c2min, c3min)
+    aover3max, bover2max, cmax = get_interpolation_parameters(c1max, c2max, c3max)
+
+    t1 = 30
+    for dayi in 1:dayn
+        t2 = t1 + 1
+        tmin_dataset[dayi].DayNr = dnr+dayi-1
+        tmax_dataset[dayi].DayNr = dnr+dayi-1
+        tmin_dataset[dayi].Param = aover3min*(t2*t2*t2-t1*t1*t1) + bover2min*(t2*t2-t1*t1) + cmin*(t2-t1)
+        tmax_dataset[dayi].Param = aover3max*(t2*t2*t2-t1*t1*t1) + bover2max*(t2*t2-t1*t1) + cmax*(t2-t1)
+        t1 = t2
+    end 
+    for dayi in (dayn+1):31 # give to remaining days (day 29,30 or 31) the daynr of the last day of the month
+        tmin_dataset[dayi].DayNr = dnr+dayn-1
+        tmax_dataset[dayi].DayNr = dnr+dayn-1
+        tmin_dataset[dayi].Param = 0
+        tmax_dataset[dayi].Param = 0
+    end 
+
+    return tmin_dataset, tmax_dataset
+end  
