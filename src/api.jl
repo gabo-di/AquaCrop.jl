@@ -405,7 +405,8 @@ The `soil_type` must be one of these strings indicating the soil type:
 "sandy clay loam", "sandy loam", "silty clay loam", "paddy"]`
 
 The `crop_type` must be one of these  strings indicating the crop type:
-`["maize", "wheat", "cotton", "alfalfaGDD"]`
+`["maize", "wheat", "cotton", "alfalfaGDD", "barley", "barleyGDD", "cottonGDD", "drybean", "drybeanGDD",
+"maizeGDD", "wheatGDD", "sugarbeet", "sugarbeetGDD", "sunflower", "sunflowerGDD", "sugarcane"]`
 
 We also have the optional keys:
 `[:co2i, :crop, :perennial_period, :soil, :soil_layers, :simulparam,
@@ -462,7 +463,8 @@ function check_nofilerun(outputs; kwargs...)
 
     ## These are keys for making a setup of the cropfield althoug soil_type also can be changed here
     # crop
-    crop_types = ["maize", "wheat", "cotton", "alfalfaGDD"]
+    crop_types = ["maize", "wheat", "cotton", "alfalfaGDD", "barley", "barleyGDD", "cottonGDD", "drybean", "drybeanGDD",
+                  "maizeGDD", "wheatGDD", "sugarbeet", "sugarbeetGDD", "sunflower", "sunflowerGDD", "sugarcane"]
     if !haskey(kwargs, :crop_type) 
         all_ok.logi = false
         all_ok.msg = "missing  necessary keyword :crop_type"
