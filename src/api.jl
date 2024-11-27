@@ -401,7 +401,8 @@ each one of them must be a `Date` type.
 
 
 The `soil_type` must be one of these strings indicating the soil type:
-`["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay"]`
+`["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay",
+"sandy clay loam", "sandy loam", "silty clay loam", "paddy"]`
 
 The `crop_type` must be one of these  strings indicating the crop type:
 `["maize", "wheat", "cotton", "alfalfaGDD"]`
@@ -446,7 +447,8 @@ function check_nofilerun(outputs; kwargs...)
     end
 
     # soil
-    soil_types = ["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay"]
+    soil_types = ["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay",
+                  "sandy clay loam", "sandy loam", "silty clay loam", "paddy"]
     if !haskey(kwargs, :soil_type) 
         all_ok.logi = false
         all_ok.msg = "missing  necessary keyword :soil_type"

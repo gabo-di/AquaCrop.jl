@@ -31,7 +31,8 @@ end
 
 sets soil for a given soil_type
 possible soil_type are 
-["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay"]
+["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay",
+"sandy clay loam", "sandy loam", "silty clay loam", "paddy"]
 """
 function set_soil!(soil::RepSoil, soil_type::AbstractString; aux::Union{AbstractDict,Nothing}=nothing)
     if soil_type == "sandy clay"
@@ -79,6 +80,26 @@ function set_soil!(soil::RepSoil, soil_type::AbstractString; aux::Union{Abstract
         soil.CNValue = 72
         soil.REW = 14
         soil.NrSoilLayers = 1
+    elseif soil_type == "sandy clay loam"
+        # aquacrop version 6.0
+        soil.CNValue = 72
+        soil.REW = 9
+        soil.NrSoilLayers = 1
+    elseif soil_type == "sandy loam"
+        # aquacrop version 6.0
+        soil.CNValue = 46
+        soil.REW = 7
+        soil.NrSoilLayers = 1
+    elseif soil_type == "silty clay loam"
+        # aquacrop version 6.0
+        soil.CNValue = 72  
+        soil.REW = 13
+        soil.NrSoilLayers = 1
+    elseif soil_type == "paddy"
+        # aquacrop version 6.0
+        soil.CNValue = 77
+        soil.REW = 10     
+        soil.NrSoilLayers = 2
     end
 
     if !isnothing(aux)
@@ -95,7 +116,8 @@ end
 
 sets soil_layers for a given soil_type
 possible soil_type are 
-["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay"]
+["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay",
+"sandy clay loam", "sandy loam", "silty clay loam", "paddy"]
 """
 function set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::AbstractString; aux::Union{AbstractDict,Nothing}=nothing)
     push!(soil_layers, SoilLayerIndividual())
@@ -207,6 +229,65 @@ function set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::Ab
         soil_layers[1].CRa = -0.556600
         soil_layers[1].CRb = 1.336132
         soil_layers[1].Description = "silty clay"
+    elseif soil_type == "sandy clay loam"
+        # aquacrop version 6.0
+        soil_layers[1].Thickness = 4
+        soil_layers[1].SAT = 47
+        soil_layers[1].FC = 32
+        soil_layers[1].WP = 20
+        soil_layers[1].InfRate = 225
+        soil_layers[1].Penetrability = 100
+        soil_layers[1].GravelMass = 0
+        soil_layers[1].CRa = -0.576700
+        soil_layers[1].CRb = -0.511485
+        soil_layers[1].Description = "sandy clay loam"
+    elseif soil_type == "sandy loam"
+        # aquacrop version 6.0
+        soil_layers[1].Thickness = 4
+        soil_layers[1].SAT = 41
+        soil_layers[1].FC = 22
+        soil_layers[1].WP = 10
+        soil_layers[1].InfRate = 1200 
+        soil_layers[1].Penetrability = 100
+        soil_layers[1].GravelMass = 0
+        soil_layers[1].CRa = -0.323200
+        soil_layers[1].CRb = 0.219363
+        soil_layers[1].Description = "sandy loam"
+    elseif soil_type == "silty clay loam"
+        # aquacrop version 6.0
+        soil_layers[1].Thickness = 4
+        soil_layers[1].SAT = 52
+        soil_layers[1].FC = 44
+        soil_layers[1].WP = 23
+        soil_layers[1].InfRate = 150 
+        soil_layers[1].Penetrability = 100
+        soil_layers[1].GravelMass = 0
+        soil_layers[1].CRa = -0.516600
+        soil_layers[1].CRb = 1.622512
+        soil_layers[1].Description = "silty clay loam"
+    elseif soil_type == "paddy"
+        # aquacrop version 6.0
+        soil_layers[1].Thickness = 0.5
+        soil_layers[1].SAT = 54
+        soil_layers[1].FC = 50
+        soil_layers[1].WP = 32
+        soil_layers[1].InfRate = 15 
+        soil_layers[1].Penetrability = 100
+        soil_layers[1].GravelMass = 0
+        soil_layers[1].CRa = -0.624600
+        soil_layers[1].CRb = -0.003804
+        soil_layers[1].Description = "silty clay"
+
+        soil_layers[2].Thickness = 1.5
+        soil_layers[2].SAT = 55
+        soil_layers[2].FC = 54
+        soil_layers[2].WP = 39
+        soil_layers[2].InfRate = 2 
+        soil_layers[2].Penetrability = 100
+        soil_layers[2].GravelMass = 0
+        soil_layers[2].CRa = -0.635000
+        soil_layers[2].CRb = -1.426930
+        soil_layers[2].Description = "clay"
     end
 
     if !isnothing(aux)
