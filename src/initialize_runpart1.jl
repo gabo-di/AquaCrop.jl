@@ -2090,11 +2090,11 @@ function adjust_calendardays_referencetnx!(plantdaynr, outputs, gvars)
                                                 tdaymin, tdaymax, outputs, gvars)
         if thecroptype==:Grain 
             lengthflor = sum_calendar_days_referencetnx(gddlengthflor, plantdaynr, 
-                            (plantdaynr+dflor), tbase, tupper, tdaymin, tdaymax, outputs, gvars)
+                            (plantdaynr+lflor), tbase, tupper, tdaymin, tdaymax, outputs, gvars)
         else
             lengthflor = 0
         end 
-        lhimax = sum_calendar_days_referencetnx(gddhimax, plantdaynr, (plantdaynr+dflor),
+        lhimax = sum_calendar_days_referencetnx(gddhimax, plantdaynr, (plantdaynr+lflor),
                                                 tbase, tupper, tdaymin, tdaymax, outputs, gvars)
     elseif (thecroptype==:Vegetative) | (thecroptype==:Forage)
         lhimax = sum_calendar_days_referencetnx(gddhimax, plantdaynr, plantdaynr, tbase, tupper,
