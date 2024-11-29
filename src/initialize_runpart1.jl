@@ -118,7 +118,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
     # 6. Soil fertility stress
     # Coefficients for soil fertility - biomass relationship
     # AND for Soil salinity - CCx/KsSto relationship
-    relationships_for_fertility_and_salt_stress!(outputs, gvars)
+    relationships_for_fertility_and_salt_stress!(outputs, gvars; kwargs...)
 
     # No soil fertility stress
     if gvars[:management].FertilityStress <= 0 
@@ -644,17 +644,17 @@ function co2_for_simulation_period(co2_file, fromdaynr, todaynr)
 end 
 
 """
-    relationships_for_fertility_and_salt_stress!(outputs, gvars)
+    relationships_for_fertility_and_salt_stress!(outputs, gvars; kwargs...)
 
 run.f90:RelationshipsForFertilityAndSaltStress:3876
 """
-function relationships_for_fertility_and_salt_stress!(outputs, gvars)
+function relationships_for_fertility_and_salt_stress!(outputs, gvars; kwargs...)
     # 1. Soil fertility
     setparameter!(gvars[:float_parameters], :fracbiomasspotsf, 1.0)
 
     # 1.a Soil fertility (Coeffb0,Coeffb1,Coeffb2 : Biomass-Soil Fertility stress)
     if gvars[:crop].StressResponse.Calibrated
-        reference_stress_biomass_relationship!(outputs, gvars)
+        reference_stress_biomass_relationship!(outputs, gvars; kwargs...)
     else
         setparameter!(gvars[:float_parameters], :coeffb0, undef_double)
         setparameter!(gvars[:float_parameters], :coeffb1, undef_double)
@@ -689,7 +689,7 @@ function relationships_for_fertility_and_salt_stress!(outputs, gvars)
 
     # 2. soil salinity (Coeffb0Salt,Coeffb1Salt,Coeffb2Salt : CCx/KsSto - Salt stress)
     if gvars[:simulation].SalinityConsidered == true
-        reference_ccx_salt_stress_relationship!(outputs, gvars)
+        reference_ccx_salt_stress_relationship!(outputs, gvars; kwargs...)
     else
         setparameter!(gvars[:float_parameters], :coeffb0salt, undef_double)
         setparameter!(gvars[:float_parameters], :coeffb1salt, undef_double)
@@ -1940,11 +1940,11 @@ function multiplier_cco_self_thinning(yeari, yearx, shapefactor)
 end
 
 """
-    reference_stress_biomass_relationship!(outputs, gvars)
+    reference_stress_biomass_relationship!(outputs, gvars; kwargs...)
 
 preparefertilitysalinity.f90:ReferenceStressBiomassRelationship:788
 """
-function reference_stress_biomass_relationship!(outputs, gvars)
+function reference_stress_biomass_relationship!(outputs, gvars; kwargs...)
     cropdnr1 = gvars[:crop].Day1
 
     # save values
@@ -1979,7 +1979,7 @@ function reference_stress_biomass_relationship!(outputs, gvars)
     else
         tnxreferenceyear = gvars[:integer_parameters][:tnxreferenceyear]
         co2_file = gvars[:string_parameters][:CO2_file]
-        co2tnxreferenceyear = co2_for_tnxreferenceyear(tnxreferenceyear, co2_file)
+        co2tnxreferenceyear = co2_for_tnxreferenceyear(tnxreferenceyear, co2_file; kwargs...)
     end 
 
     # 5. Stress Biomass relationship
@@ -2188,11 +2188,11 @@ function sum_calendar_days_referencetnx(valgddays, refcropday1, startdaynr, tbas
 end
 
 """
-    theco2 = co2_for_tnxreferenceyear(tnxreferenceyear, co2_file)
+    theco2 = co2_for_tnxreferenceyear(tnxreferenceyear, co2_file; kwargs...)
 
 preparefertilitysalinity.f90:CO2ForTnxReferenceYear:312
 """
-function co2_for_tnxreferenceyear(tnxreferenceyear, co2_file)
+function co2_for_tnxreferenceyear(tnxreferenceyear, co2_file; kwargs...)
     if tnxreferenceyear == 2000
         theco2 = CO2Ref
     elseif isfile(co2_file)
@@ -2231,7 +2231,11 @@ function co2_for_tnxreferenceyear(tnxreferenceyear, co2_file)
         end 
     else
         # OJO we need a method when  NoFileRun
-        theco2 = CO2Ref
+        if haskey(kwargs, :co2i)
+            theco2 = kwargs[:co2i]
+        else
+            theco2 = CO2Ref
+        end
     end
     return theco2
 end
@@ -2427,11 +2431,11 @@ function stress_biomass_relationship_for_tnxreference!(co2tnxreferenceyear, refc
 end
 
 """
-    reference_ccx_salt_stress_relationship!(outputs, gvars)
+    reference_ccx_salt_stress_relationship!(outputs, gvars; kwargs...)
 
 preparefertilitysalinity.f90:ReferenceCCxSaltStressRelationship:925
 """
-function reference_ccx_salt_stress_relationship!(outputs, gvars)
+function reference_ccx_salt_stress_relationship!(outputs, gvars; kwargs...)
 
     cropdnr1 = gvars[:crop].Day1
 
@@ -2467,7 +2471,7 @@ function reference_ccx_salt_stress_relationship!(outputs, gvars)
     else
         tnxreferenceyear = gvars[:integer_parameters][:tnxreferenceyear]
         co2_file = gvars[:string_parameters][:CO2_file]
-        co2tnxreferenceyear = co2_for_tnxreferenceyear(tnxreferenceyear, co2_file)
+        co2tnxreferenceyear = co2_for_tnxreferenceyear(tnxreferenceyear, co2_file; kwargs...)
     end 
 
     # 5. Stress Biomass relationship for salinity
