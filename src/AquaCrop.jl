@@ -37,6 +37,8 @@ export AquaCropField,
        season_run!,
        start_cropfield,
        setup_cropfield!,
-       change_climate_data!
+       change_climate_data!,
+       isharvestable,
+       timetoharvest
 end
 

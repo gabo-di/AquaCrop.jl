@@ -147,12 +147,12 @@ function _season_run!(status::SetupCropField, cropfield::AquaCropField)
 end
 
 """
-    harvest!(cropfield::AquaCropField)
+    harvest!(cropfield::AquaCropField) 
 
 Indicates to make a harvest on the `cropfield` 
 it also makes a daily update along with the harvest
 """
-function harvest!(cropfield::AquaCropField)
+function harvest!(cropfield::AquaCropField) 
     _harvest!(cropfield.status[1], cropfield)
 end
 
@@ -162,6 +162,16 @@ function _harvest!(status::T, cropfield::AquaCropField) where T<:AbstractCropFie
 end
 
 function _harvest!(status::SetupCropField, cropfield::AquaCropField)
+    th, logi = _timetoharvest(status, cropfield)
+
+    if !logi
+        # the crop is not harvestable only do a dailyupdate
+        _dailyupdate!(status, cropfield)
+        return nothing
+    end 
+
+
+
     # the status is correct then do something
     gvars = cropfield.gvars
 
@@ -763,4 +773,68 @@ function _change_climate_data!(status::SetupCropField, cropfield::AquaCropField,
     end
 
     return nothing
+end
+
+
+"""
+    logi = isharvestable(cropfield::AquaCropField)
+
+If a crop is harvestable returns `true` 
+
+See also [`timetoharvest`](@ref)
+"""
+function isharvestable(cropfield::AquaCropField)
+    return _timetoharvest(cropfield.status[1], cropfield)[2] 
+end
+
+"""
+    th = timetoharvest(cropfield::AquaCropField)
+
+If a crop is not harvestable returns the minimum amount of simulation days until is harvestable.
+
+If a crop is already harvestable returns how many simulations days until crop reaches maturity.
+
+See also [`isharvestable`](@ref)
+"""
+function timetoharvest(cropfield::AquaCropField)
+    return _timetoharvest(cropfield.status[1], cropfield)[1]
+end
+
+function _timetoharvest(status::T, cropfield::AquaCropField) where T<:AbstractCropFieldStatus
+    # by default do nothing
+    return nothing, nothing 
+end
+
+
+function _timetoharvest(status::T, cropfield::AquaCropField) where {T<:Union{SetupCropField, FinishCropField}}
+    # this function relies in determine_growth_stage
+    crop = cropfield.gvars[:crop]
+    simulation = cropfield.gvars[:simulation]
+    dayi = cropfield.gvars[:integer_parameters][:daynri]
+
+    virtualday = dayi - simulation.DelayedDays - crop.Day1
+    
+    dm = sum(crop.Length[1:4]) # virtual days until crop maturity
+
+    # virtual day is further than crop maturity 
+    if virtualday >= dm
+        th = -1 # allready reached crop maturity
+        logi = true # maybe should be harvestable
+    else
+        if crop.subkind == :Grain 
+            dy = (crop.DaysToFlowering + crop.LengthFlowering) - virtualday # remaining days until yield formation
+        elseif crop.subkind == :Tubber
+            dy = crop.DaysToFlowering - virtualday # remaining days until yield formation
+        else
+            dy = crop.DaysToGermination - virtualday # remaining days until vegetative formation
+        end
+        if dy > 0
+            th = dy  # missing time until yield formation
+            logi = false # not harvestable yet
+        else
+            th = dm - virtualday  # missing time until crop maturity
+            logi = true # harvestable
+        end
+    end
+    return th, logi
 end
