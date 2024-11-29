@@ -109,7 +109,7 @@ biomass(cropfield)
 # output
 1.9197377309729786 ton ha⁻¹
 ```
-note that the result is in `ton/ha`, metric tonelades per hectare. The amount of dry yield
+note that the result is in `ton/ha`, metric tons per hectare. The amount of dry yield
 of the current day is given by the [`dryyield`](@ref) function
 ```jldoctest intermediate_run_example
 dryyield(cropfield)

@@ -37,7 +37,7 @@ the files, for this example we use the files in the test directory
 
 ```jldoctest basic_run_example; output = false
 parentdir = AquaCrop.test_dir #".../AquaCrop.jl/test/testcase"
-endswith(parentdir, "/AquaCrop.jl/test/testcase")
+endswith(parentdir, "test/testcase")
 
 # output
 true
