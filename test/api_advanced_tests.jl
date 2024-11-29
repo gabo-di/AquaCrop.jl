@@ -53,7 +53,7 @@ end
         # project input
         Simulation_DayNr1 = start_date,
         Simulation_DayNrN = end_date,
-        Crop_Day1 = start_date,
+        Crop_Day1 = start_date + Week(1),
         Crop_DayN = end_date,
 
         # soil
@@ -104,12 +104,31 @@ end
         @test isequal(size(cropfield.dayout), (ndays, 89))
     end
 
+    # check if harvestable
+    logi = isharvestable(cropfield)
+    th = timetoharvest(cropfield)
+    @testset "non harvestable yet" begin
+        @test isequal(logi, false)
+        @test isequal(th, 56)
+    end
+
+    for i in 1:th
+        dailyupdate!(cropfield)
+    end
+    logi = isharvestable(cropfield)
+    @testset "harvestable" begin
+        @test isequal(logi, true)
+    end
+
+
     # harvest cropfield
     harvest!(cropfield)
     @testset "harvest cropfield" begin
-        @test isequal(size(cropfield.dayout), (ndays+1, 89))
+        @test isequal(size(cropfield.dayout), (ndays+1+th, 89))
         @test isequal(size(cropfield.harvestsout), (2, 11))
     end
+
+
 
     # change climate data
     daynri_now = cropfield.gvars[:integer_parameters][:daynri]
