@@ -1434,14 +1434,6 @@ function checkpoint4()
     AquaCrop.setparameter!(gvars[:float_parameters], :gddcdctotal, 0.006)
     AquaCrop.setparameter!(gvars[:float_parameters], :ccototal, 0.05)
 
-    open(joinpath(pwd(), "testcase/OUTPUTS/TCropsim_1")) do file
-        for line in eachline(file)
-            splitedline = split(line)
-            tlow = parse(Float64, popfirst!(splitedline))
-            thigh = parse(Float64, popfirst!(splitedline))
-            AquaCrop.add_output_in_tcropsim!(outputs, tlow, thigh)
-        end
-    end
 
     open(joinpath(pwd(), "testcase/OUTPUTS/EToDatasim_1")) do file
         for line in eachline(file)
@@ -2602,14 +2594,6 @@ function checkpoint10()
     outputs[:tempdatasim] = Dict(
                     :tlow => Float64[],
                     :thigh => Float64[])
-    open(joinpath(pwd(), "testcase/OUTPUTS/TCropsim_2")) do file
-        for line in eachline(file)
-            splitedline = split(line)
-            tlow = parse(Float64, popfirst!(splitedline))
-            thigh = parse(Float64, popfirst!(splitedline))
-            AquaCrop.add_output_in_tcropsim!(outputs, tlow, thigh)
-        end
-    end
 
     open(joinpath(pwd(), "testcase/OUTPUTS/EToDatasim_2")) do file
         for line in eachline(file)
@@ -3151,14 +3135,6 @@ function checkpoint12()
                     :tlow => Float64[],
                     :thigh => Float64[])
 
-    open(joinpath(pwd(), "testcase/OUTPUTS/TCropsim_3")) do file
-        for line in eachline(file)
-            splitedline = split(line)
-            tlow = parse(Float64, popfirst!(splitedline))
-            thigh = parse(Float64, popfirst!(splitedline))
-            AquaCrop.add_output_in_tcropsim!(outputs, tlow, thigh)
-        end
-    end
 
     open(joinpath(pwd(), "testcase/OUTPUTS/EToDatasim_3")) do file
         for line in eachline(file)
