@@ -2844,7 +2844,7 @@ end
 """
 function load_resultsparameters_from_vardict(; kwargs...)
     aggregationresultsparameters = ParametersContainer(Int)
-    setparameter!(aggregationresultsparameters, :outputaggregate, 1)# :daily)
+    setparameter!(aggregationresultsparameters, :outputaggregate, 0) # only print at the end of seasonout 
 
     dailyresultsparameters = ParametersContainer(Bool)
     setparameter!(dailyresultsparameters, :out1Wabal, true)
