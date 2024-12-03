@@ -484,11 +484,11 @@ cropfield.harvestsout
 
 # output
 2×11 DataFrame
- Row │ RunNr  Nr     Date        DAP    Interval   Biomass           Sum(B)    ⋯
-     │ Int64  Int64  Date        Int64  Quantity…  Quantity…         Quantity… ⋯
+ Row │ RunNr  Nr     Date        DAP    Interval   Biomass          Sum(B)     ⋯
+     │ Int64  Int64  Date        Int64  Quantity…  Quantity…        Quantity…  ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │     1      0  2023-01-08      0      0.0 d      0.0 ton ha⁻¹      0.0 t ⋯
-   2 │     1      1  2023-03-28     80      1.0 d  2.34877 ton ha⁻¹  2.34877 t
+   1 │     1      0  2023-01-08      0      0.0 d     0.0 ton ha⁻¹     0.0 ton ⋯
+   2 │     1      1  2023-03-28     80      1.0 d  2.3493 ton ha⁻¹  2.3493 ton
                                                                5 columns omitted
 ```
 
