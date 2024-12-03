@@ -447,6 +447,12 @@ true
 """
 function check_nofilerun(outputs; kwargs...)
     all_ok = AllOk(true, "") 
+    # sanity check
+    if !(haskey(kwargs, :runtype)) || !(typeof(kwargs[:runtype]) <: NoFileRun)
+        all_ok.logi = false
+        all_ok.msg = "need kwargs[:runtype] == NoFileRun()"
+        return kwargs, all_ok 
+    end
 
     ## These are keys for starting the cropfield
     # project input
@@ -615,12 +621,12 @@ function start_cropfield(; kwargs...)
 
     # run all previouss simulations
     for i in 1:(nrrun-1)
-        initialize_run_part1!(outputs, gvars, nrrun; kwargs...)
-        initialize_climate!(outputs, gvars, nrrun; kwargs...)
-        initialize_run_part2!(outputs, gvars, nrrun; kwargs...)
-        file_management!(outputs, gvars, nrrun; kwargs...)
-        finalize_run1!(outputs, gvars, nrrun; kwargs...)
-        finalize_run2!(outputs, gvars, nrrun; kwargs...)
+        initialize_run_part1!(outputs, gvars, i; kwargs...)
+        initialize_climate!(outputs, gvars, i; kwargs...)
+        initialize_run_part2!(outputs, gvars, i; kwargs...)
+        file_management!(outputs, gvars, i; kwargs...)
+        finalize_run1!(outputs, gvars, i; kwargs...)
+        finalize_run2!(outputs, gvars, i; kwargs...)
     end
 
     add_output_in_logger!(outputs, "cropfield started")
@@ -809,7 +815,6 @@ function _timetoharvest(status::T, cropfield::AquaCropField) where T<:AbstractCr
     return nothing, nothing 
 end
 
-
 function _timetoharvest(status::T, cropfield::AquaCropField) where {T<:Union{SetupCropField, FinishCropField}}
     # this function relies in determine_growth_stage
     crop = cropfield.gvars[:crop]
@@ -841,48 +846,4 @@ function _timetoharvest(status::T, cropfield::AquaCropField) where {T<:Union{Set
         end
     end
     return th, logi
-end
-
-"""
-    reset_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
-
-resets a cropfield using `kwargs`
-
-After calling this function check if `all_ok.logi == true`
-"""
-function reset_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
-    _reset_cropfield!(cropfield.status[1], cropfield, all_ok; kwargs...)
-end
-
-function _reset_cropfield!(status::T, cropfield::AquaCropField, all_ok::AllOk; kwargs...) where T<:AquaCropField
-    # by default do nothing
-    return nothing
-end
-
-function _reset_cropfield!(status::T, cropfield::AquaCropField, all_ok::AllOk; kwargs...) where {T<:Union{StartCropField, SetupCropField, FinishCropField}}
-    # maybe not necessary but we assume a NoFileRun for this reset_cropfield
-    @assert kwargs[:runtype] == NoFileRun
-    kwargs, _all_ok = check_kwargs(cropfield.outputs; kwargs...)
-    if !_all_ok.logi
-        all_ok.logi = _all_ok.logi
-        all_ok.msg = _all_ok.msg
-        add_output_in_logger!(cropfield.outputs, all_ok.msg)
-        finalize_outputs!(cropfield.outputs)
-        cropfield.status[1] = BadCropField()
-        return nothing
-    end
-
-
-    # flush all the outputs
-    flush_output_all!(cropfield.outputs)
-    add_output_in_logger!(cropfield.outputs, "reseting the cropfield")
-
-    # start_cropfield
-
-    ## initialize_the_program() do nothing
-    ## initialize_project_filenames() do nothing 
-    
-
-
-    return nothing
 end
