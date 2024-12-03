@@ -2627,7 +2627,7 @@ function determine_cci!(gvars, ccxtotal, ccototal, fracassim,
 
     ccdormant = 0.05
     # DetermineCCi
-    if (virtualtimecc < gvars[:crop].DaysToGermination) &
+    if (virtualtimecc < gvars[:crop].DaysToGermination) |
        (virtualtimecc > (gvars[:crop].DayN - gvars[:crop].Day1))
         cciactual = 0
     else
@@ -3105,7 +3105,7 @@ function determine_cci!(gvars, ccxtotal, ccototal, fracassim,
     setparameter!(gvars[:float_parameters], :stressleaf, stressleaf)
     setparameter!(gvars[:float_parameters], :stresssenescence, stresssenescence)
     setparameter!(gvars[:float_parameters], :timesenescence, timesenescence)
-    setparameter!(gvars[:float_parameters], :nomorecrop, nomorecrop)
+    setparameter!(gvars[:bool_parameters], :nomorecrop, nomorecrop)
     setparameter!(gvars[:float_parameters], :cciactual, cciactual)
     setparameter!(gvars[:float_parameters], :cciprev, cciprev)
     setparameter!(gvars[:float_parameters], :ccitopearlysen, ccitopearlysen)
