@@ -533,7 +533,7 @@ function check_kwargs(outputs; kwargs...)
         return kwargs, all_ok
     end
 
-    if kwargs[:runtype] == NoFileRun
+    if typeof(kwargs[:runtype]) <: NoFileRun
         kwargs, all_ok = check_nofilerun(outputs; kwargs...)
         if !all_ok.logi
             return kwargs, all_ok
@@ -841,4 +841,48 @@ function _timetoharvest(status::T, cropfield::AquaCropField) where {T<:Union{Set
         end
     end
     return th, logi
+end
+
+"""
+    reset_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
+
+resets a cropfield using `kwargs`
+
+After calling this function check if `all_ok.logi == true`
+"""
+function reset_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
+    _reset_cropfield!(cropfield.status[1], cropfield, all_ok; kwargs...)
+end
+
+function _reset_cropfield!(status::T, cropfield::AquaCropField, all_ok::AllOk; kwargs...) where T<:AquaCropField
+    # by default do nothing
+    return nothing
+end
+
+function _reset_cropfield!(status::T, cropfield::AquaCropField, all_ok::AllOk; kwargs...) where {T<:Union{StartCropField, SetupCropField, FinishCropField}}
+    # maybe not necessary but we assume a NoFileRun for this reset_cropfield
+    @assert kwargs[:runtype] == NoFileRun
+    kwargs, _all_ok = check_kwargs(cropfield.outputs; kwargs...)
+    if !_all_ok.logi
+        all_ok.logi = _all_ok.logi
+        all_ok.msg = _all_ok.msg
+        add_output_in_logger!(cropfield.outputs, all_ok.msg)
+        finalize_outputs!(cropfield.outputs)
+        cropfield.status[1] = BadCropField()
+        return nothing
+    end
+
+
+    # flush all the outputs
+    flush_output_all!(cropfield.outputs)
+    add_output_in_logger!(cropfield.outputs, "reseting the cropfield")
+
+    # start_cropfield
+
+    ## initialize_the_program() do nothing
+    ## initialize_project_filenames() do nothing 
+    
+
+
+    return nothing
 end

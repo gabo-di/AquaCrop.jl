@@ -354,9 +354,6 @@ end
 gets the initial settings.
 
 initialsettings.f90:InitializeSettings:204
-# CHECK LATER
-# might need more parameters
-# this will also change checkpoint1
 """
 function initialize_settings(outputs, filepaths; kwargs...)
     # 1. Program settings
