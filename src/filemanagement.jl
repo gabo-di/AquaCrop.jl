@@ -887,8 +887,38 @@ function determine_root_zone_wc!(gvars, rootingdepth)
     simulation = gvars[:simulation]
 
     # calculate SWC in root zone
+    _calculate_SWC_in_root_zone!(root_zone_wc, compartments, soil_layers, crop, rootingdepth)
+
+    # calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
+    _calculate_SWC_in_top_soil!(root_zone_wc, compartments, soil_layers, crop, simulparam, rootingdepth)
+
+    # Relative depletion in rootzone and in top soil
+    if round(Int, 1000*(root_zone_wc.FC - root_zone_wc.WP)) > 0
+        drrel = (root_zone_wc.FC - root_zone_wc.Actual) / 
+                (root_zone_wc.FC - root_zone_wc.WP)
+    else
+        drrel = 0
+    end 
+    if round(Int, 1000*(root_zone_wc.ZtopFC - root_zone_wc.ZtopWP)) > 0
+        dztoprel = (root_zone_wc.ZtopFC - root_zone_wc.ZtopAct) / 
+                   (root_zone_wc.ZtopFC - root_zone_wc.ZtopWP)
+    else
+        dztoprel = 0
+    end 
+
+    # Zone in soil profile considered for determining stress response
+    if dztoprel < drrel
+        ztopswcconsidered = true  # top soil is relative wetter than root zone
+    else
+        ztopswcconsidered = false
+    end 
+
+    simulation.SWCtopSoilConsidered = ztopswcconsidered
+    return nothing
+end
+
+function _calculate_SWC_in_root_zone!(root_zone_wc::RepRootZoneWC, compartments::Vector{CompartmentIndividual}, soil_layers::Vector{SoilLayerIndividual}, crop::RepCrop, rootingdepth) 
     cumdepth = 0
-    compi = 0
     root_zone_wc.Actual = 0 
     root_zone_wc.FC = 0
     root_zone_wc.WP = 0
@@ -897,9 +927,7 @@ function determine_root_zone_wc!(gvars, rootingdepth)
     root_zone_wc.Thresh = 0
     root_zone_wc.Sen = 0
 
-    loopi = true
-    while loopi
-        compi = compi + 1
+    for compi in eachindex(compartments)
         cumdepth = cumdepth + compartments[compi].Thickness
         if cumdepth <= rootingdepth
             factor = 1
@@ -940,11 +968,14 @@ function determine_root_zone_wc!(gvars, rootingdepth)
                            soil_layers[compartments[compi].Layer].SAT * 
                            compartments[compi].Thickness *
                            (1 - soil_layers[compartments[compi].Layer].GravelVol/100)
-        if (cumdepth >= rootingdepth) | (compi == length(compartments))
-            loopi = false
+        if cumdepth >= rootingdepth 
+            break
         end
     end
-    # calculate SWC in top soil (top soil in meter = SimulParam.ThicknessTopSWC/100)
+    return nothing
+end
+
+function _calculate_SWC_in_top_soil!(root_zone_wc::RepRootZoneWC, compartments::Vector{CompartmentIndividual}, soil_layers::Vector{SoilLayerIndividual}, crop::RepCrop, simulparam::RepParam, rootingdepth)
     if (rootingdepth*100) <= simulparam.ThicknessTopSWC
         root_zone_wc.ZtopAct = root_zone_wc.Actual
         root_zone_wc.ZtopFC = root_zone_wc.FC
@@ -952,15 +983,12 @@ function determine_root_zone_wc!(gvars, rootingdepth)
         root_zone_wc.ZtopThresh = root_zone_wc.Thresh
     else
         cumdepth = 0
-        compi = 0
         root_zone_wc.ZtopAct = 0
         root_zone_wc.ZtopFC = 0
         root_zone_wc.ZtopWP = 0
         root_zone_wc.ZtopThresh = 0
         topsoilinmeter = simulparam.ThicknessTopSWC/100
-        loopi = true
-        while loopi
-            compi = compi + 1
+        for compi in eachindex(compartments)
             cumdepth = cumdepth + compartments[compi].Thickness
             if (cumdepth*100) <= simulparam.ThicknessTopSWC
                 factor = 1
@@ -989,34 +1017,12 @@ function determine_root_zone_wc!(gvars, rootingdepth)
                                        (soil_layers[compartments[compi].Layer].FC -
                                         soil_layers[compartments[compi].Layer].WP)) *
                                       (1 - soil_layers[compartments[compi].Layer].GravelVol/100)
-            if (cumdepth >= topsoilinmeter) | (compi == length(compartments))
-                loopi = false
+            if cumdepth >= topsoilinmeter 
+                break
             end
         end 
     end 
 
-    # Relative depletion in rootzone and in top soil
-    if round(Int, 1000*(root_zone_wc.FC - root_zone_wc.WP)) > 0
-        drrel = (root_zone_wc.FC - root_zone_wc.Actual) / 
-                (root_zone_wc.FC - root_zone_wc.WP)
-    else
-        drrel = 0
-    end 
-    if round(Int, 1000*(root_zone_wc.ZtopFC - root_zone_wc.ZtopWP)) > 0
-        dztoprel = (root_zone_wc.ZtopFC - root_zone_wc.ZtopAct) / 
-                   (root_zone_wc.ZtopFC - root_zone_wc.ZtopWP)
-    else
-        dztoprel = 0
-    end 
-
-    # Zone in soil profile considered for determining stress response
-    if dztoprel < drrel
-        ztopswcconsidered = true  # top soil is relative wetter than root zone
-    else
-        ztopswcconsidered = false
-    end 
-
-    simulation.SWCtopSoilConsidered = ztopswcconsidered
     return nothing
 end
 
@@ -2625,7 +2631,7 @@ function write_daily_results!(outputs, gvars, dap, wpi, nrrun)
 
     # 6. Compartmens - Electrical conductivity of the saturated soil-paste extract
     for compartment in gvars[:compartments]
-        push!(arr, ececomp(compartment, gvars)) # ECe_i
+        push!(arr, ececomp(compartment, gvars[:soil_layers], gvars[:simulparam])) # ECe_i
     end
 
     # 7. Climate input parameters

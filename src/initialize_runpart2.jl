@@ -1924,6 +1924,9 @@ global.f90:DetermineRootZoneSaltContent:4105
 """
 function determine_root_zone_salt_content!(gvars, rootingdepth)
     compartments = gvars[:compartments]
+    soil_layers = gvars[:soil_layers]
+    simulparam = gvars[:simulparam]
+    crop = gvars[:crop]
 
     cumdepth = 0
     compi = 0
@@ -1947,18 +1950,18 @@ function determine_root_zone_salt_content!(gvars, rootingdepth)
                 end
             end
             factor = factor * (compartments[compi].Thickness) / rootingdepth # weighting factor
-            zrece = zrece + factor * ececomp(compartments[compi], gvars)
-            zrecsw = zrecsw + factor * ecswcomp(compartments[compi], false, gvars) # not at FC
-            zrecswfc = zrecswfc + factor * ecswcomp(compartments[compi], true, gvars) # at FC
+            zrece = zrece + factor * ececomp(compartments[compi], soil_layers, simulparam)
+            zrecsw = zrecsw + factor * ecswcomp(compartments[compi], soil_layers, simulparam, false) # not at FC
+            zrecswfc = zrecswfc + factor * ecswcomp(compartments[compi], soil_layers, simulparam, true) # at FC
             if (cumdepth >= rootingdepth) | (compi == length(compartments))
                 loopi = false
             end
         end
-        if (gvars[:crop].ECemin != undef_int) & (gvars[:crop].ECemax != undef_int) &
+        if (crop.ECemin != undef_int) & (crop.ECemax != undef_int) &
            (gvars[:crop].ECemin < gvars[:crop].ECemax)
-            zrkssalt = ks_salinity(true, gvars[:crop].ECemin, gvars[:crop].ECemax, zrece, 0)
+            zrkssalt = ks_salinity(true, crop.ECemin, crop.ECemax, zrece, 0)
         else
-            zrkssalt = ks_salinity(false, gvars[:crop].ECemin, gvars[:crop].ECemax, zrece, 0)
+            zrkssalt = ks_salinity(false, crop.ECemin, crop.ECemax, zrece, 0)
         end
     else
         zrece = undef_double
@@ -1977,13 +1980,11 @@ end
 
 
 """
-    ecs = ecswcomp(compartment::CompartmentIndividual, atfc, gvars)
+    ecs = ecswcomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam, atfc)
 
 global.f90:ECswComp:2564
 """
-function ecswcomp(compartment::CompartmentIndividual, atfc, gvars)
-    soil_layers = gvars[:soil_layers]
-    simulparam = gvars[:simulparam]
+function ecswcomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam, atfc)
     totsalt = 0
     for i in 1:soil_layers[compartment.Layer].SCP1
         totsalt = totsalt + compartment.Salt[i] + compartment.Depo[i] # g/m2

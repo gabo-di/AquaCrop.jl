@@ -287,7 +287,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
             # to reset SWC and SALT at end of simulation run
             for i in eachindex(gvars[:compartments])
                 gvars[:simulation].ThetaIni[i] = gvars[:compartments][i].Theta
-                gvars[:simulation].ECeIni[i] = ececomp(gvars[:compartments][i], gvars)
+                gvars[:simulation].ECeIni[i] = ececomp(gvars[:compartments][i], gvars[:soil_layers], gvars[:simulparam])
             end 
             # ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN -
             # CHECK LATER
@@ -3397,14 +3397,11 @@ function load_initial_conditions!(gvars, swcinifilefull)
 end 
 
 """
-    ece = ececomp(compartment::CompartmentIndividual, gvars)
+    ece = ececomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
 
 global.f90:ECeComp:2540
 """
-function ececomp(compartment::CompartmentIndividual, gvars)
-    soil_layers = gvars[:soil_layers]
-    simulparam = gvars[:simulparam]
-
+function ececomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
     volsat = soil_layers[compartment.Layer].SAT
     totsalt = 0
     for i in 1:soil_layers[compartment.Layer].SCP1

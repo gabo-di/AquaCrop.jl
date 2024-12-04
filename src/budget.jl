@@ -246,17 +246,19 @@ function check_water_salt_balance!(gvars, lvars, dayi, control)
 
 
     if control == :begin_day
-        gvars[:total_water_content].BeginDay = 0 # mm
-        gvars[:total_salt_content].BeginDay = 0  # Mg/ha
         surf0 = gvars[:float_parameters][:surfacestorage] # mm
-        for compi in 1:length(compartments)
-            gvars[:total_water_content].BeginDay += compartments[compi].Theta * 1000 * compartments[compi].Thickness * 
+        water_sum = 0
+        salt_sum = 0
+        for compi in eachindex(compartments) 
+            water_sum += compartments[compi].Theta * 1000 * compartments[compi].Thickness * 
                                                     ( 1 - soil_layers[compartments[compi].Layer].GravelVol/100)
             compartments[compi].Fluxout = 0
             for celli in 1:soil_layers[compartments[compi].Layer].SCP1  
-                gvars[:total_salt_content].BeginDay += (compartments[compi].Salt[celli] + compartments[compi].Depo[celli])/100 # Mg/ha
+                salt_sum += (compartments[compi].Salt[celli] + compartments[compi].Depo[celli])/100 # Mg/ha
             end 
         end 
+        gvars[:total_water_content].BeginDay = water_sum # mm
+        gvars[:total_salt_content].BeginDay = salt_sum  # Mg/ha
         setparameter!(gvars[:float_parameters], :drain, 0.0)
         setparameter!(gvars[:float_parameters], :runoff, 0.0)
         # Eact is set to 0 at the beginning of the evaporation process
@@ -272,11 +274,9 @@ function check_water_salt_balance!(gvars, lvars, dayi, control)
 
     elseif control == :end_day
         setparameter!(gvars[:float_parameters], :infiltrated, infiltratedrain + infiltratedirrigation + infiltratedstorage)
-        for layeri in 1:length(soil_layers)
+        for layeri in eachindex(soil_layers) 
             soil_layers[layeri].WaterContent = 0
         end 
-        gvars[:total_water_content].EndDay = 0 # mm
-        gvars[:total_salt_content].EndDay = 0  # Mg/ha
         surf1 = gvars[:float_parameters][:surfacestorage] # mm
 
         # quality of irrigation water
@@ -289,16 +289,21 @@ function check_water_salt_balance!(gvars, lvars, dayi, control)
             end 
         end 
 
-        for compi in 1:length(compartments)
-            gvars[:total_water_content].EndDay += compartments[compi].Theta * 1000 * compartments[compi].Thickness * 
+        water_sum = 0
+        salt_sum = 0
+        for compi in eachindex(compartments) 
+            water_sum += compartments[compi].Theta * 1000 * compartments[compi].Thickness * 
                                                     ( 1 - soil_layers[compartments[compi].Layer].GravelVol/100)
             # OJO, maybe we need compartment.Thickness instead of two times compartments.Theta
             soil_layers[compartments[compi].Layer].WaterContent += compartments[compi].Theta * 1000 * compartments[compi].Theta * 
                                                     ( 1 - soil_layers[compartments[compi].Layer].GravelVol/100)
             for celli in 1:soil_layers[compartments[compi].Layer].SCP1  
-                gvars[:total_salt_content].EndDay += (compartments[compi].Salt[celli] + compartments[compi].Depo[celli])/100 # Mg/ha
+                salt_sum += (compartments[compi].Salt[celli] + compartments[compi].Depo[celli])/100 # Mg/ha
             end 
         end 
+
+        gvars[:total_water_content].EndDay = water_sum # mm
+        gvars[:total_salt_content].EndDay = salt_sum  # Mg/ha
 
         drain = gvars[:float_parameters][:drain]
         runoff = gvars[:float_parameters][:runoff]
@@ -375,7 +380,7 @@ function calculate_drainage!(gvars)
     soil_layers = gvars[:soil_layers]
 
     drainsum = 0
-    for compi in 1:length(compartments)
+    for compi in eachindex(compartments)
         # 1. Calculate drainage of compartment
         # ====================================
         layeri = compartments[compi].Layer
@@ -1301,7 +1306,7 @@ function calculate_capillary_rise!(gvars)
     crsalt = gvars[:float_parameters][:crsalt]
 
     zbottom = 0
-    for compi in 1:length(compartments) 
+    for compi in eachindex(compartments) 
         zbottom = zbottom + compartments[compi].Thickness
     end 
 
@@ -1450,7 +1455,7 @@ function calculate_salt_content!(gvars, lvars, dayi)
     saltout= 0
 
 
-    for compi in 1:length(compartments) 
+    for compi in eachindex(compartments) 
         # 0. Set compartment parameters
         layeri = compartments[compi].Layer
         sat = soil_layers[layeri].SAT/100  # m3/m3
@@ -1558,7 +1563,7 @@ function calculate_salt_content!(gvars, lvars, dayi)
     celi = active_cells(compartments[1], soil_layers)
     layeri = compartments[1].Layer
     sm2 = soil_layers[layeri].SaltMobility[celi]/4
-    ecsw2 = ecswcomp(compartments[1], false, gvars)
+    ecsw2 = ecswcomp(compartments[1], soil_layers, simulparam, false)
     mm2 = compartments[1].Theta * 1000 * compartments[1].Thickness *
           (1 - soil_layers[layeri].GravelVol/100)
     for compi in 2:length(compartments) 
@@ -1569,7 +1574,7 @@ function calculate_salt_content!(gvars, lvars, dayi)
         mm1 = mm2
         celi = active_cells(compartments[compi], soil_layers)
         sm2 = soil_layers[layeri].SaltMobility[celi]/4
-        ecsw2 = ecswcomp(compartments[compi], false, gvars) # not at fc
+        ecsw2 = ecswcomp(compartments[compi], soil_layers, simulparam, false) # not at fc
         mm2 = compartments[compi].Theta * 1000 * compartments[compi].Thickness *
               (1 - soil_layers[layeri].GravelVol/100)
         ecsw = (ecsw1*mm1+ecsw2*mm2)/(mm1+mm2)
@@ -1602,9 +1607,9 @@ function calculate_salt_content!(gvars, lvars, dayi)
         ecsubdrain = 0
 
         # extract
-        loopi = true
-        while loopi
-            compi = compi + 1
+        compi_lo = 0
+        for compi in eachindex(compartments)
+            compi_lo = compi_lo + 1
             layeri = compartments[compi].Layer
             depthi = depthi + compartments[compi].Thickness
             if depthi <= zr
@@ -1626,10 +1631,11 @@ function calculate_salt_content!(gvars, lvars, dayi)
             compartments[compi].Salt[celi] = (1 - (deltaz/compartments[compi].Thickness)) * compartments[compi].Salt[celi] +
                                              (deltaz/compartments[compi].Thickness)*ecsubdrain*mm1*equiv
             salt_solution_deposit!(compartments[compi], simulparam, celi, mm1)
-            if (depthi >= zr) | (compi >= length(compartments))
-                loopi = false
+            if depthi >= zr  
+                break
             end
         end
+        compi = compi_lo
 
         # dump
         drain = gvars[:float_parameters][:drain]
@@ -3508,13 +3514,25 @@ function extract_water_from_evap_layer!(gvars, evaptolose, zact, stg1)
     compartments = gvars[:compartments]
     soil_layers = gvars[:soil_layers]
     simulation = gvars[:simulation]
+    eact = gvars[:float_parameters][:eact]
 
+    eact, evaplost = _extract_water_from_evap_layer(compartments, soil_layers, evaptolose, zact, eact)
+
+    if stg1
+        simulation.EvapWCsurf -= evaplost
+        if abs(evaptolose-evaplost) > 0.0001
+            # not enough water left in the compartment to store WCsurf
+            simulation.EvapWCsurf = 0  
+        end 
+    end 
+    setparameter!(gvars[:float_parameters], :eact, eact)
+    return nothing
+end
+
+function _extract_water_from_evap_layer(compartments::Vector{CompartmentIndividual}, soil_layers::Vector{SoilLayerIndividual}, evaptolose, zact, eact)
     evaplost = 0
-    compi = 0
     ztot = 0
-    loopi = true
-    while loopi
-        compi = compi + 1
+    for compi in eachindex(compartments)
         layeri = compartments[compi].Layer
         if (ztot + compartments[compi].Thickness) > zact
             fracz = (zact-ztot)/compartments[compi].Thickness
@@ -3532,13 +3550,11 @@ function extract_water_from_evap_layer!(gvars, evaptolose, zact, stg1)
         stilltoextract = (evaptolose-evaplost)
         if availablew > 0
             if availablew > stilltoextract
-                eact = gvars[:float_parameters][:eact]
-                setparameter!(gvars[:float_parameters], :eact, eact + stilltoextract)
+                eact += stilltoextract
                 evaplost = evaplost + stilltoextract
                 wx = wx - stilltoextract
             else
-                eact = gvars[:float_parameters][:eact]
-                setparameter!(gvars[:float_parameters], :eact, eact + availablew)
+                eact += availablew
                 evaplost = evaplost + availablew
                 wx = wx - availablew
             end 
@@ -3546,20 +3562,12 @@ function extract_water_from_evap_layer!(gvars, evaptolose, zact, stg1)
                                          (1 - soil_layers[layeri].GravelVol/100))
         end 
         ztot = ztot + fracz * (compartments[compi].Thickness)
-        if (compi >= length(compartments)) |
-           (abs(stilltoextract) < ac_zero_threshold) |
+        if (abs(stilltoextract) < ac_zero_threshold) |
            (ztot >= 0.999999*zact)
-           loopi = false
+           break
         end
     end
-    if stg1
-        simulation.EvapWCsurf -= evaplost
-        if abs(evaptolose-evaplost) > 0.0001
-            # not enough water left in the compartment to store WCsurf
-            simulation.EvapWCsurf = 0  
-        end 
-    end 
-    return nothing
+    return eact, evaplost
 end
 
 """
@@ -3733,7 +3741,7 @@ function surface_transpiration!(gvars, coeffb0salt, coeffb1salt, coeffb2salt)
     crop = gvars[:crop]
 
     daysubmerged = daysubmerged + 1
-    for compi in 1:length(compartments)
+    for compi in eachindex(compartments)
         compartments[compi].DayAnaero += 1 
         if compartments[compi].DayAnaero > simulparam.DelayLowOxygen
             compartments[compi].DayAnaero = simulparam.DelayLowOxygen
@@ -3868,10 +3876,8 @@ function calculate_transpiration!(gvars, tpot, coeffb0salt, coeffb1salt, coeffb2
         calculate_sink_values!(compartments, rooting_depth, irrimode, crop, simulation)
         compi = 0
         pre_layer = 0
-        loopi = true
         theta_critical = 0
-        while loopi
-            compi = compi + 1
+        for compi in eachindex(compartments)
             layeri = compartments[compi].Layer
             if layeri > pre_layer
                 theta_critical = calculate_theta_critical(layeri, soil_layers, crop)
@@ -3901,9 +3907,9 @@ function calculate_transpiration!(gvars, tpot, coeffb0salt, coeffb1salt, coeffb2
                 if simulation.SalinityConsidered
                     wrelsalt = (soil_layers[layeri].FC/100 - compartments[compi].Theta) /
                                     (soil_layers[layeri].FC/100 - soil_layers[layeri].WP/100)
-                    compiece = ececomp(compartments[compi], gvars)
-                    compiecsw = ecswcomp(compartments[compi], false, gvars)
-                    compiecswfc = ecswcomp(compartments[compi], true, gvars)
+                    compiece = ececomp(compartments[compi], soil_layers, simulparam)
+                    compiecsw = ecswcomp(compartments[compi], soil_layers, simulparam, false)
+                    compiecswfc = ecswcomp(compartments[compi], soil_layers, simulparam, true)
                     redfactecsw = adjusted_ks_sto_to_ecsw(crop.ECemin, 
                                   crop.ECemax, crop.ResponseECsw, 
                                   compiece, compiecsw, compiecswfc, wrelsalt, 
@@ -3927,8 +3933,8 @@ function calculate_transpiration!(gvars, tpot, coeffb0salt, coeffb1salt, coeffb2
                                             (1 - soil_layers[layeri].GravelVol/100))
             wtoextract = wtoextract - sinkmm
             tact += sinkmm
-            if (wtoextract < eps()) | (compi == length(compartments))
-                loopi = false
+            if wtoextract < eps() 
+                break
             end
         end
 
@@ -3940,7 +3946,7 @@ function calculate_transpiration!(gvars, tpot, coeffb0salt, coeffb1salt, coeffb2
             inetthreshold = root_zone_wc.FC - simulparam.PercRAW/100 *(root_zone_wc.FC - root_zone_wc.Thresh)
             if root_zone_wc.Actual < inetthreshold
                 pre_layer = 0
-                for compi in 1:length(compartments)
+                for compi in eachindex(compartments) 
                     layeri = compartments[compi].Layer
                     if layeri > pre_layer
                         theta_critical = calculate_theta_critical(layeri, soil_layers, crop)
@@ -4187,7 +4193,7 @@ function horizontal_inflow_gwtable!(gvars, lvars, depthgwtmeter)
     eciaqua = gvars[:float_parameters][:eciaqua]
 
     ztot = 0
-    for compi in 1:length(compartments)
+    for compi in eachindex(compartments) 
         ztot = ztot + compartments[compi].Thickness
         zi = ztot - compartments[compi].Thickness/2
         layeri = compartments[compi].Layer
@@ -4200,7 +4206,7 @@ function horizontal_inflow_gwtable!(gvars, lvars, depthgwtmeter)
                                       compartments[compi].Thickness * (1 - soil_layers[layeri].GravelVol/100)
             end 
             # ECe is equal to the EC of the groundwater table
-            if abs(ececomp(compartments[compi], gvars) - eciaqua) > 0.0001
+            if abs(ececomp(compartments[compi], soil_layers, simulparam) - eciaqua) > 0.0001
                 saltact = 0
                 for celli in 1:soil_layers[layeri].SCP1
                     saltact = saltact + (compartments[compi].Salt[celli] + compartments[compi].Depo[celli])/100 # Mg/ha
