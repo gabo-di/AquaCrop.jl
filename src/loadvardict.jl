@@ -312,9 +312,8 @@ possible crop_type are
 ["maize", "wheat", "cotton", "alfalfaGDD", "barley", "barleyGDD", "cottonGDD", "drybean", "drybeanGDD",
 "maizeGDD", "wheatGDD", "sugarbeet", "sugarbeetGDD", "sunflower", "sunflowerGDD", "sugarcane",
 "tomato", "tomatoGDD", "potato", "potatoGDD", "quinoa", "tef", "soybean", "soybeanGDD",
-"sorghum", "sorghumGDD", "paddyrice", "paddyriceGDD"]
+"sorghum", "sorghumGDD", "paddyrice", "paddyriceGDD", "rapeseed", "oat"]
 """
-
 function set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{AbstractDict,Nothing}=nothing)
     if crop_type == "maize"
         # Default Maize, Calendar (Davis, 1Jun96)
@@ -2909,7 +2908,7 @@ possible crop_type are
 ["maize", "wheat", "cotton", "alfalfaGDD", "barley", "barleyGDD", "cottonGDD", "drybean", "drybeanGDD",
 "maizeGDD", "wheatGDD", "sugarbeet", "sugarbeetGDD", "sunflower", "sunflowerGDD", "sugarcane",
 "tomato", "tomatoGDD", "potato", "potatoGDD", "quinoa", "tef", "soybean", "soybeanGDD",
-"sorghum", "sorghumGDD", "paddyrice", "paddyriceGDD"]
+"sorghum", "sorghumGDD", "paddyrice", "paddyriceGDD", "rapeseed", "oat"]
 """
 function set_perennial_period!(perennial_period::RepPerennialPeriod, crop_type::AbstractString; aux::Union{AbstractDict,Nothing}=nothing)
     if crop_type == "alfalfaGDD"
