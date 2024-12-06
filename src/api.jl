@@ -675,7 +675,15 @@ function _setup_cropfield!(status::StartCropField, cropfield::AquaCropField, all
         initialize_run_part2!(cropfield.outputs, cropfield.gvars, nrrun; kwargs...)
     catch e
         all_ok.logi = false
-        all_ok.msg = "error when settingup the cropfield "*e.msg
+        s = "error when settingup the cropfield "
+        if hasfield(typeof(e), :msg)
+            s *= e.msg
+        else
+            io = IOBuffer()
+            print(io, e)
+            s *= String(take!(io))
+        end
+        all_ok.msg = s
         add_output_in_logger!(cropfield.outputs, all_ok.msg)
         finalize_outputs!(cropfield.outputs)
         cropfield.status[1] = BadCropField()
