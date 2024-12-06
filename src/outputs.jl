@@ -703,3 +703,42 @@ function flush_output_irriinfoout!(outputs)
     empty!(outputs[:irriinfoout])
     return nothing
 end
+
+"""
+    flush_output_dfs!(outputs)
+
+Flushes all the data frames from outputs
+"""
+function flush_output_dfs!(outputs)
+    flush_output_seasonout!(outputs)
+    flush_output_harvestsout!(outputs)
+    flush_output_dayout!(outputs)
+    flush_output_evaldataout!(outputs)
+    flush_output_irriinfoout!(outputs)
+    return nothing
+end
+
+"""
+    flush_output_arrays!(outputs)
+
+Flushes all the arrays from outputs
+"""
+function flush_output_arrays!(outputs)
+    flush_output_tcropsim!(outputs)
+    flush_output_etodatasim!(outputs)
+    flush_output_raindatasim!(outputs)
+    flush_output_tempdatasim!(outputs)
+    flush_output_tnxreference12months!(outputs)
+    flush_output_tnxreference365days!(outputs)
+    flush_output_tcropreferencesim!(outputs)
+    return nothing
+end
+
+"""
+    flush_output_all!(outputs)
+"""
+function flush_output_all!(outputs)
+    flush_output_dfs!(outputs)
+    flush_output_arrays!(outputs)
+    flush_output_logger!(outputs)
+end

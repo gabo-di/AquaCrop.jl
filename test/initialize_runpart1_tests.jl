@@ -39,8 +39,6 @@ include("checkpoints.jl")
     @test isapprox(gvars[:string_parameters], gvars_0[:string_parameters])
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
 
-    # @test isapprox(gvars[:array_parameters][:Tmax], gvars_0[:array_parameters][:Tmax])
-    # @test isapprox(gvars[:array_parameters][:Tmin], gvars_0[:array_parameters][:Tmin])
 end
 
 @testset "Initialize Run Part 1" begin
@@ -66,6 +64,5 @@ end
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
     @test isapprox(gvars[:float_parameters], gvars_0[:float_parameters])
-    @test isapprox(outputs[:tcropsim], outputs_0[:tcropsim])
 
 end

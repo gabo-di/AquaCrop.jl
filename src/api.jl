@@ -147,12 +147,12 @@ function _season_run!(status::SetupCropField, cropfield::AquaCropField)
 end
 
 """
-    harvest!(cropfield::AquaCropField)
+    harvest!(cropfield::AquaCropField) 
 
 Indicates to make a harvest on the `cropfield` 
 it also makes a daily update along with the harvest
 """
-function harvest!(cropfield::AquaCropField)
+function harvest!(cropfield::AquaCropField) 
     _harvest!(cropfield.status[1], cropfield)
 end
 
@@ -162,6 +162,16 @@ function _harvest!(status::T, cropfield::AquaCropField) where T<:AbstractCropFie
 end
 
 function _harvest!(status::SetupCropField, cropfield::AquaCropField)
+    th, logi = _timetoharvest(status, cropfield)
+
+    if !logi
+        # the crop is not harvestable only do a dailyupdate
+        _dailyupdate!(status, cropfield)
+        return nothing
+    end 
+
+
+
     # the status is correct then do something
     gvars = cropfield.gvars
 
@@ -401,10 +411,14 @@ each one of them must be a `Date` type.
 
 
 The `soil_type` must be one of these strings indicating the soil type:
-`["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay"]`
+`["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay",
+"sandy clay loam", "sandy loam", "silty clay loam", "paddy"]`
 
 The `crop_type` must be one of these  strings indicating the crop type:
-`["maize", "wheat", "cotton", "alfalfaGDD"]`
+`["maize", "wheat", "cotton", "alfalfaGDD", "barley", "barleyGDD", "cottonGDD", "drybean", "drybeanGDD",
+"maizeGDD", "wheatGDD", "sugarbeet", "sugarbeetGDD", "sunflower", "sunflowerGDD", "sugarcane",
+"tomato", "tomatoGDD", "potato", "potatoGDD", "quinoa", "tef", "soybean", "soybeanGDD",
+"sorghum", "sorghumGDD", "paddyrice", "paddyriceGDD", "rapeseed", "oat"]`
 
 We also have the optional keys:
 `[:co2i, :crop, :perennial_period, :soil, :soil_layers, :simulparam,
@@ -433,6 +447,12 @@ true
 """
 function check_nofilerun(outputs; kwargs...)
     all_ok = AllOk(true, "") 
+    # sanity check
+    if !(haskey(kwargs, :runtype)) || !(typeof(kwargs[:runtype]) <: NoFileRun)
+        all_ok.logi = false
+        all_ok.msg = "need kwargs[:runtype] == NoFileRun()"
+        return kwargs, all_ok 
+    end
 
     ## These are keys for starting the cropfield
     # project input
@@ -446,7 +466,8 @@ function check_nofilerun(outputs; kwargs...)
     end
 
     # soil
-    soil_types = ["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay"]
+    soil_types = ["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay",
+                  "sandy clay loam", "sandy loam", "silty clay loam", "paddy"]
     if !haskey(kwargs, :soil_type) 
         all_ok.logi = false
         all_ok.msg = "missing  necessary keyword :soil_type"
@@ -460,7 +481,10 @@ function check_nofilerun(outputs; kwargs...)
 
     ## These are keys for making a setup of the cropfield althoug soil_type also can be changed here
     # crop
-    crop_types = ["maize", "wheat", "cotton", "alfalfaGDD"]
+    crop_types = ["maize", "wheat", "cotton", "alfalfaGDD", "barley", "barleyGDD", "cottonGDD", "drybean", "drybeanGDD",
+                    "maizeGDD", "wheatGDD", "sugarbeet", "sugarbeetGDD", "sunflower", "sunflowerGDD", "sugarcane",
+                    "tomato", "tomatoGDD", "potato", "potatoGDD", "quinoa", "tef", "soybean", "soybeanGDD",
+                    "sorghum", "sorghumGDD", "paddyrice", "paddyriceGDD", "rapeseed", "oat"]
     if !haskey(kwargs, :crop_type) 
         all_ok.logi = false
         all_ok.msg = "missing  necessary keyword :crop_type"
@@ -515,7 +539,7 @@ function check_kwargs(outputs; kwargs...)
         return kwargs, all_ok
     end
 
-    if kwargs[:runtype] == NoFileRun
+    if typeof(kwargs[:runtype]) <: NoFileRun
         kwargs, all_ok = check_nofilerun(outputs; kwargs...)
         if !all_ok.logi
             return kwargs, all_ok
@@ -597,12 +621,12 @@ function start_cropfield(; kwargs...)
 
     # run all previouss simulations
     for i in 1:(nrrun-1)
-        initialize_run_part1!(outputs, gvars, nrrun; kwargs...)
-        initialize_climate!(outputs, gvars, nrrun; kwargs...)
-        initialize_run_part2!(outputs, gvars, nrrun; kwargs...)
-        file_management!(outputs, gvars, nrrun; kwargs...)
-        finalize_run1!(outputs, gvars, nrrun; kwargs...)
-        finalize_run2!(outputs, gvars, nrrun; kwargs...)
+        initialize_run_part1!(outputs, gvars, i; kwargs...)
+        initialize_climate!(outputs, gvars, i; kwargs...)
+        initialize_run_part2!(outputs, gvars, i; kwargs...)
+        file_management!(outputs, gvars, i; kwargs...)
+        finalize_run1!(outputs, gvars, i; kwargs...)
+        finalize_run2!(outputs, gvars, i; kwargs...)
     end
 
     add_output_in_logger!(outputs, "cropfield started")
@@ -651,7 +675,15 @@ function _setup_cropfield!(status::StartCropField, cropfield::AquaCropField, all
         initialize_run_part2!(cropfield.outputs, cropfield.gvars, nrrun; kwargs...)
     catch e
         all_ok.logi = false
-        all_ok.msg = "error when settingup the cropfield "*e.msg
+        s = "error when settingup the cropfield "
+        if hasfield(typeof(e), :msg)
+            s *= e.msg
+        else
+            io = IOBuffer()
+            print(io, e)
+            s *= String(take!(io))
+        end
+        all_ok.msg = s
         add_output_in_logger!(cropfield.outputs, all_ok.msg)
         finalize_outputs!(cropfield.outputs)
         cropfield.status[1] = BadCropField()
@@ -759,4 +791,67 @@ function _change_climate_data!(status::SetupCropField, cropfield::AquaCropField,
     end
 
     return nothing
+end
+
+
+"""
+    logi = isharvestable(cropfield::AquaCropField)
+
+If a crop is harvestable returns `true` 
+
+See also [`timetoharvest`](@ref)
+"""
+function isharvestable(cropfield::AquaCropField)
+    return _timetoharvest(cropfield.status[1], cropfield)[2] 
+end
+
+"""
+    th = timetoharvest(cropfield::AquaCropField)
+
+If a crop is not harvestable returns the minimum amount of simulation days until is harvestable.
+
+If a crop is already harvestable returns how many simulations days until crop reaches maturity.
+
+See also [`isharvestable`](@ref)
+"""
+function timetoharvest(cropfield::AquaCropField)
+    return _timetoharvest(cropfield.status[1], cropfield)[1]
+end
+
+function _timetoharvest(status::T, cropfield::AquaCropField) where T<:AbstractCropFieldStatus
+    # by default do nothing
+    return nothing, nothing 
+end
+
+function _timetoharvest(status::T, cropfield::AquaCropField) where {T<:Union{SetupCropField, FinishCropField}}
+    # this function relies in determine_growth_stage
+    crop = cropfield.gvars[:crop]
+    simulation = cropfield.gvars[:simulation]
+    dayi = cropfield.gvars[:integer_parameters][:daynri]
+
+    virtualday = dayi - simulation.DelayedDays - crop.Day1
+    
+    dm = sum(crop.Length[1:4]) # virtual days until crop maturity
+
+    # virtual day is further than crop maturity 
+    if virtualday >= dm
+        th = -1 # allready reached crop maturity
+        logi = true # maybe should be harvestable
+    else
+        if crop.subkind == :Grain 
+            dy = (crop.DaysToFlowering + crop.LengthFlowering) - virtualday # remaining days until yield formation
+        elseif crop.subkind == :Tubber
+            dy = crop.DaysToFlowering - virtualday # remaining days until yield formation
+        else
+            dy = crop.DaysToGermination - virtualday # remaining days until vegetative formation
+        end
+        if dy > 0
+            th = dy  # missing time until yield formation
+            logi = false # not harvestable yet
+        else
+            th = dm - virtualday  # missing time until crop maturity
+            logi = true # harvestable
+        end
+    end
+    return th, logi
 end

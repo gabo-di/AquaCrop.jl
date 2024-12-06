@@ -328,7 +328,7 @@ kwargs = (
     # project input
     Simulation_DayNr1 = start_date,
     Simulation_DayNrN = end_date,
-    Crop_Day1 = start_date,
+    Crop_Day1 = start_date + Week(1),
     Crop_DayN = end_date,
 
     # soil
@@ -444,8 +444,37 @@ isequal(size(cropfield.dayout), (ndays, 89))
 true
 ```
 
+we can ask wheter a crop is harvestable or not with the [`isharvestable`](@ref) function 
+```jldoctest advanced_run_example
+logi = isharvestable(cropfield)
+
+# output
+false
+```
+
+and the amount of days until is harvestable with the [`timetoharvest`](@ref) function
+
+```jldoctest advanced_run_example
+th = timetoharvest(cropfield)
+
+# output
+56
+```
+
+run until is harvestable
+```jldoctest advanced_run_example
+for i in 1:th
+    dailyupdate!(cropfield)
+end
+
+logi = isharvestable(cropfield)
+
+# output
+true
+```
+
 similarly to [Intermediate Run](@ref), 
-if we want to make a harvest in the current day use [`harvest!`](@ref) function 
+if we want to make a harvest in the current day use [`harvest!`](@ref) function,
 
 ```jldoctest advanced_run_example
 # harvest cropfield
@@ -455,13 +484,15 @@ cropfield.harvestsout
 
 # output
 2×11 DataFrame
- Row │ RunNr  Nr     Date        DAP    Interval   Biomass           Sum(B)    ⋯
-     │ Int64  Int64  Date        Int64  Quantity…  Quantity…         Quantity… ⋯
+ Row │ RunNr  Nr     Date        DAP    Interval   Biomass          Sum(B)     ⋯
+     │ Int64  Int64  Date        Int64  Quantity…  Quantity…        Quantity…  ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
-   1 │     1      0  2023-01-01      0      0.0 d      0.0 ton ha⁻¹      0.0 t ⋯
-   2 │     1      1  2023-01-31     31      1.0 d  0.23564 ton ha⁻¹  0.23564 t
+   1 │     1      0  2023-01-08      0      0.0 d     0.0 ton ha⁻¹     0.0 ton ⋯
+   2 │     1      1  2023-03-28     80      1.0 d  2.3493 ton ha⁻¹  2.3493 ton
                                                                5 columns omitted
 ```
+
+note that we can use the `harvest!` function even if `isharvestable(cropfield) = false`
 
 We can also change the climate data in the middle of the run, first we create 
 a new mockup climate with the current simulation date of the `cropfield`
@@ -474,27 +505,27 @@ date_now = Date(year_now, month_now, day_now)
 df_new = create_mock_climate_dataframe(date_now, end_date, tmin, delta_t, eto, rain)
 
 # output
-121×5 DataFrame
+65×5 DataFrame
  Row │ Date        Tmin     Tmax     ETo        Rain
      │ Date        Float64  Float64  Float64    Float64
-─────┼────────────────────────────────────────────────────
-   1 │ 2023-02-01  15.6869  26.5836  1.71291    1.8238
-   2 │ 2023-02-02  15.9483  26.2946  0.100485   0.979034
-   3 │ 2023-02-03  15.2689  26.0057  0.482743   0.704698
-   4 │ 2023-02-04  15.7582  26.7011  0.503668   1.39689
-   5 │ 2023-02-05  15.4462  25.5794  1.34735    1.70537
-   6 │ 2023-02-06  15.1402  25.4986  0.49967    0.403604
-   7 │ 2023-02-07  15.0549  25.8906  0.225304   1.40783
-   8 │ 2023-02-08  15.715   26.1469  0.0636065  0.909276
+─────┼─────────────────────────────────────────────────────
+   1 │ 2023-03-29  15.6869  26.6467  0.768085   1.10762
+   2 │ 2023-03-30  15.9483  26.269   0.83741    0.958011
+   3 │ 2023-03-31  15.2689  25.3166  0.621509   0.118426
+   4 │ 2023-04-01  15.7582  26.5199  0.481912   0.423281
+   5 │ 2023-04-02  15.4462  25.9803  0.204325   0.285356
+   6 │ 2023-04-03  15.1402  25.5491  0.0294312  0.725632
+   7 │ 2023-04-04  15.0549  25.2621  0.247941   1.23419
+   8 │ 2023-04-05  15.715   25.837   1.29638    1.37908
   ⋮  │     ⋮          ⋮        ⋮         ⋮          ⋮
- 115 │ 2023-05-26  15.5075  25.8814  1.00945    0.741913
- 116 │ 2023-05-27  15.6137  26.5237  0.9474     0.0554669
- 117 │ 2023-05-28  15.7396  25.877   0.684951   0.179529
- 118 │ 2023-05-29  15.8959  26.1849  1.82466    1.01259
- 119 │ 2023-05-30  15.1694  26.0627  1.5105     0.31451
- 120 │ 2023-05-31  15.2946  25.4924  2.04355    1.40788
- 121 │ 2023-06-01  15.9661  26.0386  0.835019   0.0228998
-                                          106 rows omitted
+  59 │ 2023-05-26  15.204   25.9407  0.183608   0.157345
+  60 │ 2023-05-27  15.5289  26.4718  0.455157   2.31394
+  61 │ 2023-05-28  15.4316  25.5648  1.76768    1.02026
+  62 │ 2023-05-29  15.7017  26.0601  0.964421   1.09466
+  63 │ 2023-05-30  15.9557  26.7914  0.320716   0.609482
+  64 │ 2023-05-31  15.9225  26.3544  1.73078    0.00585092
+  65 │ 2023-06-01  15.1585  25.8627  2.5861     0.725034
+                                            50 rows omitted
 ```
 
 and change the climate using [`change_climate_data!`](@ref) function

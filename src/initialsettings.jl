@@ -354,9 +354,6 @@ end
 gets the initial settings.
 
 initialsettings.f90:InitializeSettings:204
-# CHECK LATER
-# might need more parameters
-# this will also change checkpoint1
 """
 function initialize_settings(outputs, filepaths; kwargs...)
     # 1. Program settings
@@ -1607,8 +1604,15 @@ function _initialize_project_filenames(runtype::NormalFileRun, outputs, filepath
                     add_output_in_logger!(outputs, "Failed to create "*listprojectsfile)
                 end
             catch e
-                add_output_in_logger!(outputs,
-                            "Something went wrong when trying to find the projects list "*e.msg)
+                s = "Something went wrong when trying to find the projects list "
+                if hasfield(typeof(e), :msg)
+                    s *= e.msg
+                else
+                    io = IOBuffer()
+                    print(io, e)
+                    s *= String(take!(io))
+                end
+                add_output_in_logger!(outputs, s)
             end
         end
     else
