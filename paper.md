@@ -2,8 +2,8 @@
 title: 'AquaCrop.jl: A Process-Based Model of Crop Growth'
 tags:
   - agriculture
-  - agronomy
   - plant growth
+  - yield forecast
 authors:
   - name: Gabriel Díaz Iturry
     corresponding: true
@@ -29,19 +29,29 @@ date: 01 February 2025
 bibliography: paper.bib
 ---
 
+<!-- first content copied from https://joss.readthedocs.io/en/latest/example_paper.html -->
+
+<!-- set up a Github Action to auto-compile to PDF: https://github.com/marketplace/actions/open-journals-pdf-generator -->
+
 # Summary
 
-The forces on stars, galaxies, and dark matter under external gravitational
-fields lead to the dynamical evolution of structures in the universe. The orbits
-of these bodies are therefore key to understanding the formation, history, and
-future state of galaxies. The field of "galactic dynamics," which aims to model
-the gravitating components of galaxies to study their structure and evolution,
-is now well-established, commonly taught, and frequently used in astronomy.
-Aside from toy problems and demonstrations, the majority of problems require
-efficient numerical tools, many of which require the same base code (e.g., for
-performing numerical orbit integration).
+All agriculture is dependent on the growth of plants. Crop plants provide food
+for humans, fodder for domestic animals, and fibre and other resources for our
+manufacturing economy. Therefore, understanding how plants grow under different
+conditions is important not just for farmers themselves, but also for the rest
+of society. Crop models based on physical and physiological processes use information
+about environmental parameters (e.g. temperature, rainfall, soil quality) and
+knowledge of plant biology to simulate how crop plants grow over time and estimate
+the resulting yield. Such models can be used to optimise farm management, 
+forecast national or regional yields, or study climate change impacts.
 
 # Statement of need
+
+`AquaCrop.jl` is an independent Julia translation of the `AquaCrop` model, originally 
+developed by the FAO [@Steduto2009]. This is a well-established crop growth model that 
+has been used to model numerous crops worldwide [@Mialyk2024] and is known to produce 
+reliable estimates of crop phenology and yield [@Kostkova2021].
+
 
 `Gala` is an Astropy-affiliated Python package for galactic dynamics. Python
 enables wrapping low-level languages (e.g., C) for speed without losing
