@@ -58,19 +58,18 @@ also Matlab and Python reimplementations available [@Foster2017; @Kelly2021]. Wi
 `AquaCrop.jl`, we want to expand this portfolio to make the model more easily 
 accessible to the growing of environmental modellers working with Julia.
 
-Specifically, we developed the package to use it as a component within `Persefone.jl`,
-a model of agricultural ecosystems [@Vedder2024a]. The aim of this model is to study
-the impact that agricultural processes have on biodiversity, for which the growth of
-crop plants is an important mediating factor. More generally, environmental modellers
-have perceived a need for more interdisciplinary models that can integrate the
-physical, biological, and social processes inherent in global challenges such as
-climate change or biodiversity loss [@Cabral2023]. This will require the use of
-model coupling, and the adaptation of existing models to be usable as components in
-integrated models [@Vedder2024].
+Beyond just adding another language, our purpose is also to provide a package that
+can be readily integrated into other scientific software. Recent research has 
+emphasised the need for the creation of interdisciplinary models that consider
+the multiple processes inherent in global challenges such as climate change or 
+biodiversity loss [@Cabral2023]. This will require the use of model coupling, and the
+adaptation of existing models to be usable as components in integrated models 
+[@Vedder2024]. The new API we developed for `AquaCrop.jl` is intended to do just that.
 
-Thus, beyond making AquaCrop available in another language, our purpose with
-`AquaCrop.jl` is also to create a package that can be readily integrated into other
-scientific software.
+<!-- Specifically, we developed the package to use it as a component within 
+`Persefone.jl`, a model of agricultural ecosystems [@Vedder2024a]. The aim of this 
+model is to study the impact that agricultural processes have on biodiversity, for 
+which the growth of crop plants is an important mediating factor. -->
 
 <!-- the following content was copied from 
 https://joss.readthedocs.io/en/latest/example_paper.html -->
