@@ -19,7 +19,7 @@ affiliations:
  - name: Helmholtz Centre for Environmental Research - UFZ
    index: 1
    ror: 000h6jb29
- - name: German Centre for Integrative Biodiversity Research (iDiv) Halle, Jena, Leipzig
+ - name: German Centre for Integrative Biodiversity Research (iDiv) Halle-Jena-Leipzig
    index: 2
    ror: 01jty7g66
  - name: Friedrich-Schiller-Universität Jena
@@ -29,7 +29,7 @@ date: 01 February 2025
 bibliography: paper.bib
 ---
 
-<!-- first content copied from https://joss.readthedocs.io/en/latest/example_paper.html -->
+<!-- see documentation here: https://joss.readthedocs.io/en/latest/paper.html -->
 
 <!-- set up a Github Action to auto-compile to PDF: https://github.com/marketplace/actions/open-journals-pdf-generator -->
 
@@ -49,29 +49,31 @@ forecast national or regional yields, or study climate change impacts.
 
 `AquaCrop.jl` is an independent Julia translation of the `AquaCrop` model, originally 
 developed by the FAO [@Steduto2009]. This is a well-established crop growth model that 
-has been used to model numerous crops worldwide [@Mialyk2024] and is known to produce 
+has been used to model numerous crops worldwide [@Mialyk2024], and is known to produce 
 reliable estimates of crop phenology and yield [@Kostkova2021].
 
+AquaCrop is already available in multiple languages. First implemented in Pascal,
+it was later open-sourced in a Fortran version [@deRoos2021; @RSDA2024]. There are
+also Matlab and Python reimplementations available [@Foster2017; @Kelly2021]. With
+`AquaCrop.jl`, we want to expand this portfolio to make the model more easily 
+accessible to the growing of environmental modellers working with Julia.
 
-`Gala` is an Astropy-affiliated Python package for galactic dynamics. Python
-enables wrapping low-level languages (e.g., C) for speed without losing
-flexibility or ease-of-use in the user-interface. The API for `Gala` was
-designed to provide a class-based and user-friendly interface to fast (C or
-Cython-optimized) implementations of common operations such as gravitational
-potential and force evaluation, orbit integration, dynamical transformations,
-and chaos indicators for nonlinear dynamics. `Gala` also relies heavily on and
-interfaces well with the implementations of physical units and astronomical
-coordinate systems in the `Astropy` package [@astropy] (`astropy.units` and
-`astropy.coordinates`).
+Specifically, we developed the package to use it as a component within `Persefone.jl`,
+a model of agricultural ecosystems [@Vedder2024a]. The aim of this model is to study
+the impact that agricultural processes have on biodiversity, for which the growth of
+crop plants is an important mediating factor. More generally, environmental modellers
+have perceived a need for more interdisciplinary models that can integrate the
+physical, biological, and social processes inherent in global challenges such as
+climate change or biodiversity loss [@Cabral2023]. This will require the use of
+model coupling, and the adaptation of existing models to be usable as components in
+integrated models [@Vedder2024].
 
-`Gala` was designed to be used by both astronomical researchers and by
-students in courses on gravitational dynamics or astronomy. It has already been
-used in a number of scientific publications [@Pearson:2017] and has also been
-used in graduate courses on Galactic dynamics to, e.g., provide interactive
-visualizations of textbook material [@Binney:2008]. The combination of speed,
-design, and support for Astropy functionality in `Gala` will enable exciting
-scientific explorations of forthcoming data releases from the *Gaia* mission
-[@gaia] by students and experts alike.
+Thus, beyond making AquaCrop available in another language, our purpose with
+`AquaCrop.jl` is also to create a package that can be readily integrated into other
+scientific software.
+
+<!-- the following content was copied from 
+https://joss.readthedocs.io/en/latest/example_paper.html -->
 
 # Mathematics
 
