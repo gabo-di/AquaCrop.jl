@@ -105,7 +105,7 @@ parentdir = AquaCrop.test_dir;  #".../AquaCrop.jl/test/testcase"
 outputs = basic_run(; runtype=runtype, parentdir=parentdir);
 
 f = Figure();
-ax = Axis(f[1],
+ax = Axis(f[1,1],
     title = "Day vs Biomass",
     xlabel = "Day",
     ylabel = "Biomass",
