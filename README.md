@@ -5,7 +5,7 @@
 [![Build Status](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
 Welcome to `AquaCrop.jl`! This package is a julia implementation of FAO's [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/), 
-originaly written in Fortran, currently corresponds to AquaCrop version 7.1, older or newer version can have 
+originaly written in Fortran, currently corresponds to AquaCrop version 7.2, older or newer version can have 
 compatibility issues
 
 ## Install
@@ -243,7 +243,7 @@ isequal(cropfield.soil_layers[1].Thickness, 5.0)
 
 
 # daily update cropfield
-ndays = 30
+ndays = 90
 for _ in 1:ndays
     dailyupdate!(cropfield)
 end
