@@ -114,7 +114,7 @@ lines!(ax, 1:size(outputs[:dayout], 1) , ustrip.(outputs[:dayout][!, "Biomass"])
 ```
 
 
-![Biomass of crop as the days passes.\label{fig:biomass}](example.pdf)
+![Biomass of crop as the days passes.\label{fig:biomass}](example.png)
 
 # Acknowledgements
 
