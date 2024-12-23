@@ -66,6 +66,19 @@ biodiversity loss [@Cabral2023]. This will require the use of model coupling, an
 adaptation of existing models to be usable as components in integrated models 
 [@Vedder2024]. The new API we developed for `AquaCrop.jl` is intended to do just that.
 
+In this repository the core code follows very closely the FAO's Fortran original implementation, this 
+allows us to follow up easily the updates of the original `AquaCrop` code, which, to our knowledge,
+it is not so straigtforward on the Matlab or Python implementations where they  OOP .
+
+On top of the core code, we have an API that makes it easy to upload data and
+run the simulations in several ways. We can also explore and interact with the variables
+at run time, which leaves open the possibility of model coupling.
+All this is a difficult task for non experts using the original `AquaCrop` Fortran implementation.
+
+Finally, we have the possibility to complement the code with other libraries from the julia
+ecosystem, like DataFrames.jl, Makie.jl, StatsModels.jl, Optimisers.jl, etc. Making `AquaCrop.jl`
+a reliable and versatil tool for simulating crop growth.
+
 <!-- Specifically, we developed the package to use it as a component within 
 `Persefone.jl`, a model of agricultural ecosystems [@Vedder2024a]. The aim of this 
 model is to study the impact that agricultural processes have on biodiversity, for 
@@ -74,45 +87,34 @@ which the growth of crop plants is an important mediating factor. -->
 <!-- the following content was copied from 
 https://joss.readthedocs.io/en/latest/example_paper.html -->
 
-# Mathematics
+# Example 
 
-Single dollars ($) are required for inline mathematics e.g. $f(x) = e^{\pi/x}$
+We show an example using the data from the `AquaCrop.jl/test/testcase` directory, figure \autoref{fig:biomass}
+shows how grows the Biomass as the days passes. Note that in this test case is for 3 seasons. The code for 
+generating the image is the following:
 
-Double dollars make self-standing equations:
 
-$$\Theta(x) = \left\{\begin{array}{l}
-0\textrm{ if } x < 0\cr
-1\textrm{ else}
-\end{array}\right.$$
+```julia
+using AquaCrop
+using CairoMakie
+using Unitful
 
-You can also use plain \LaTeX for equations
-\begin{equation}\label{eq:fourier}
-\hat f(\omega) = \int_{-\infty}^{\infty} f(x) e^{i\omega x} dx
-\end{equation}
-and refer to \autoref{eq:fourier} from text.
+runtype = NormalFileRun();
+parentdir = AquaCrop.test_dir;  #".../AquaCrop.jl/test/testcase"
 
-# Citations
+outputs = basic_run(; runtype=runtype, parentdir=parentdir);
 
-Citations to entries in paper.bib should be in
-[rMarkdown](http://rmarkdown.rstudio.com/authoring_bibliographies_and_citations.html)
-format.
+f = Figure();
+ax = Axis(f[1],
+    title = "Day vs Biomass",
+    xlabel = "Day",
+    ylabel = "Biomass",
+)
+lines!(ax, 1:size(outputs[:dayout], 1) , ustrip.(outputs[:dayout][!, "Biomass"]))
+```
 
-If you want to cite a software repository URL (e.g. something on GitHub without a preferred
-citation) then you can do it with the example BibTeX entry below for @fidgit.
 
-For a quick reference, the following citation commands can be used:
-- `@author:2001`  ->  "Author et al. (2001)"
-- `[@author:2001]` -> "(Author et al., 2001)"
-- `[@author1:2001; @author2:2001]` -> "(Author1 et al., 2001; Author2 et al., 2002)"
-
-# Figures
-
-Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
-
-Figure sizes can be customized by adding an optional second parameter:
-![Caption for example figure.](figure.png){ width=20% }
+![Biomass of crop as the days passes.\label{fig:biomass}](example.pdf)
 
 # Acknowledgements
 
