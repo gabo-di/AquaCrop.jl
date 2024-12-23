@@ -47,14 +47,16 @@ forecast national or regional yields, or study climate change impacts.
 
 # Statement of need
 
-`AquaCrop.jl` is an independent Julia translation of the `AquaCrop` model, originally 
+`AquaCrop.jl` is an independent Julia translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
+ model, originally 
 developed by the FAO [@Steduto2009]. This is a well-established crop growth model that 
 has been used to model numerous crops worldwide [@Mialyk2024], and is known to produce 
 reliable estimates of crop phenology and yield [@Kostkova2021].
 
 AquaCrop is already available in multiple languages. First implemented in Pascal,
 it was later open-sourced in a Fortran version [@deRoos2021; @RSDA2024]. There are
-also Matlab and Python reimplementations available [@Foster2017; @Kelly2021]. With
+also [Matlab](https://github.com/aquacropos/aquacrop-matlab) and [Python](https://github.com/aquacropos/aquacrop) 
+reimplementations available [@Foster2017; @Kelly2021]. With
 `AquaCrop.jl`, we want to expand this portfolio to make the model more easily 
 accessible to the growing of environmental modellers working with Julia.
 
@@ -65,6 +67,11 @@ the multiple processes inherent in global challenges such as climate change or
 biodiversity loss [@Cabral2023]. This will require the use of model coupling, and the
 adaptation of existing models to be usable as components in integrated models 
 [@Vedder2024]. The new API we developed for `AquaCrop.jl` is intended to do just that.
+
+Specifically, we developed the package to use it as a component within 
+[Persefone.jl](https://persefone-model.eu), a model of agricultural ecosystems [@Vedder2024a]. The aim of this 
+model is to study the impact that agricultural processes have on biodiversity, for 
+which the growth of crop plants is an important mediating factor.
 
 In this repository the core code follows very closely the FAO's Fortran original implementation, this 
 allows us to follow up easily the updates of the original `AquaCrop` code, which, to our knowledge,
@@ -77,15 +84,7 @@ All this is a difficult task for non experts using the original `AquaCrop` Fortr
 
 Finally, we have the possibility to complement the code with other libraries from the julia
 ecosystem, like DataFrames.jl, Makie.jl, StatsModels.jl, Optimisers.jl, etc. Making `AquaCrop.jl`
-a reliable and versatil tool for simulating crop growth.
-
-<!-- Specifically, we developed the package to use it as a component within 
-`Persefone.jl`, a model of agricultural ecosystems [@Vedder2024a]. The aim of this 
-model is to study the impact that agricultural processes have on biodiversity, for 
-which the growth of crop plants is an important mediating factor. -->
-
-<!-- the following content was copied from 
-https://joss.readthedocs.io/en/latest/example_paper.html -->
+a reliable and versatil tool for simulating and studying crop growth.
 
 # Example 
 
