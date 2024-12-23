@@ -68,7 +68,7 @@ adaptation of existing models to be usable as components in integrated models
 
 In this repository the core code follows very closely the FAO's Fortran original implementation, this 
 allows us to follow up easily the updates of the original `AquaCrop` code, which, to our knowledge,
-it is not so straigtforward on the Matlab or Python implementations where they  OOP .
+it is not so straigtforward on the Matlab or Python implementations.
 
 On top of the core code, we have an API that makes it easy to upload data and
 run the simulations in several ways. We can also explore and interact with the variables
