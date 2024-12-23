@@ -7,14 +7,14 @@ tags:
 authors:
   - name: Gabriel Díaz Iturry
     corresponding: true
-	affiliation: "1,2"
+    affiliation: "1,2"
   - name: Marco Matthies
     affiliation: "1,2"
   - name: Guy Pe'er
-	affiliation: "1,2"
+    affiliation: "1,2"
   - name: Daniel Vedder
     corresponding: true
-	affiliation: "1,2,3"
+    affiliation: "1,2,3"
 affiliations:
  - name: Helmholtz Centre for Environmental Research - UFZ
    index: 1
