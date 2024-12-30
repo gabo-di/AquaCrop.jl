@@ -88,9 +88,13 @@ a reliable and versatil tool for simulating and studying crop growth.
 
 # Example 
 
-We show an example using the data from the `AquaCrop.jl/test/testcase` directory, figure \autoref{fig:biomass}
-shows how grows the Biomass as the days passes. Note that in this test case is for 3 seasons. The code for 
-generating the image is the following:
+The following tutorials are provided in the documentation:
+
+- [Basic run](https://gabo-di.github.io/AquaCrop.jl/dev/gettingstarted/#basic_run_section) provides how to upload the data using `AquaCrop` Fortran like configuration files, it runs all the seasons at once.
+- [Intermediate run](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Intermediate-Run) provides how to upload the data using TOML and csv files, it also shows how to make the simulation day by day, and how to get some variables of the cropfield at run time.
+- [Advanced run](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Advanced-Run) provides how to upload the data using Julia variables, it also shows how to update changes in the variables at run time. 
+
+A simple demonstration of the basic run using the data from the `AquaCrop.jl/test/testcase` directory is shown here:,
 
 
 ```julia
@@ -114,6 +118,9 @@ lines!(ax, 1:size(outputs[:dayout], 1) , ustrip.(outputs[:dayout][!, "Biomass"])
 
 
 ![Biomass of crop as the days passes.\label{fig:biomass}](example.png)
+
+Figure \autoref{fig:biomass}
+shows how grows the Biomass as the simulation days passes. Note that in this test case is for 3 seasons.
 
 # Acknowledgements
 
