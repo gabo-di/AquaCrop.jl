@@ -105,7 +105,7 @@ outputs = basic_run(; runtype=runtype, parentdir=parentdir);
 
 f = Figure();
 ax = Axis(f[1,1],
-    title = "Day vs Biomass",
+    title = "Biomass vs Day",
     xlabel = "Day",
     ylabel = "Biomass",
 )
