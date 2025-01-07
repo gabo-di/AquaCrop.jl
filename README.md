@@ -270,3 +270,23 @@ season_run!(cropfield)
 total_days = length(collect(start_date:end_date))
 isequal(size(cropfield.dayout), (total_days, 89))
 ```
+
+## Documentation
+
+The [documentation](https://gabo-di.github.io/AquaCrop.jl/dev/) gives examples of how to use the package, and 
+describes the API functions.
+
+## Community and contributions
+
+We welcome any questions, suggestions, bug reports, issues, requests of enhancement or contributions.
+
+- You can file issues/bugs/questions/enhancement-requests by posting in the [Github issue tracker](https://github.com/gabo-di/AquaCrop.jl/issues). 
+For bugs, please include as much information possible, including operating system, julia version, version of `AquaCrop.jl`,
+and all the data needed to reproduce the bug.
+
+- To contribute with the core code or API, make a pull request. 
+Contributions should include tests and a description of the problem you solve. 
+If necessary also update the documentation describing the new API functionality.
+
+- To contribure with the documentation or tutorials, make a pull request. 
+Make sure is possible to get all the necessary data if needed. 
