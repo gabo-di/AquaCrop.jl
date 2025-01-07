@@ -43,22 +43,22 @@ of society. Crop models based on physical and physiological processes use inform
 about environmental parameters (e.g. temperature, rainfall, soil quality) and
 knowledge of plant biology to simulate how crop plants grow over time and estimate
 the resulting yield. Such models can be used to optimise farm management, 
-forecast national or regional yields, or study climate change impacts.
+forecast regional or national yields, or study climate change impacts.
 
 # Statement of need
 
 `AquaCrop.jl` is an independent Julia translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
- model, originally 
-developed by the FAO [@Steduto2009]. This is a well-established crop growth model that 
-has been used to model numerous crops worldwide [@Mialyk2024], and is known to produce 
-reliable estimates of crop phenology and yield [@Kostkova2021].
+model (version 7.2), originally developed by the FAO [@Steduto2009]. This is a well-established 
+crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
+and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].
 
-AquaCrop is already available in multiple languages. First implemented in Pascal,
+`AquaCrop` is already available in multiple languages. First implemented in Delphi,
 it was later open-sourced in a Fortran version [@deRoos2021; @RSDA2024]. There are
-also [Matlab](https://github.com/aquacropos/aquacrop-matlab) and [Python](https://github.com/aquacropos/aquacrop) 
-reimplementations available [@Foster2017; @Kelly2021]. With
-`AquaCrop.jl`, we want to expand this portfolio to make the model more easily 
-accessible to the growing of environmental modellers working with Julia.
+also versions available in [Matlab](https://github.com/aquacropos/aquacrop-matlab), 
+[Python](https://github.com/aquacropos/aquacrop), and R, although these are not 
+up-to-date with the most recent version of the original model [@Foster2017; @Kelly2021; @CamargoRodriguez2019]. 
+With `AquaCrop.jl`, we want to expand this portfolio to make the model more easily 
+accessible to the growing number of environmental modellers working with Julia.
 
 Beyond just adding another language, our purpose is also to provide a package that
 can be readily integrated into other scientific software. Recent research has 
@@ -69,29 +69,31 @@ adaptation of existing models to be usable as components in integrated models
 [@Vedder2024]. The new API we developed for `AquaCrop.jl` is intended to do just that.
 
 Specifically, we developed the package to use it as a component within 
-[Persefone.jl](https://persefone-model.eu), a model of agricultural ecosystems [@Vedder2024a]. The aim of this 
-model is to study the impact that agricultural processes have on biodiversity, for 
-which the growth of crop plants is an important mediating factor.
+[Persefone.jl](https://persefone-model.eu), a model of agricultural ecosystems 
+[@Vedder2024a]. The aim of this model is to study the impact that agricultural 
+processes have on biodiversity, for which the growth of crop plants is an important 
+mediating factor.
 
-In this repository the core code follows very closely the FAO's Fortran original implementation, this 
-allows us to follow up easily the updates of the original `AquaCrop` code, which, to our knowledge,
-it is not so straigtforward on the Matlab or Python implementations.
-
-On top of the core code, we have an API that makes it easy to upload data and
-run the simulations in several ways. We can also explore and interact with the variables
-at run time, which leaves open the possibility of model coupling.
-All this is a difficult task for non experts using the original `AquaCrop` Fortran implementation.
-
-Finally, we have the possibility to complement the code with other libraries from the julia
-ecosystem, like DataFrames.jl, Makie.jl, StatsModels.jl, Optimisers.jl, etc. Making `AquaCrop.jl`
-a reliable and versatil tool for simulating and studying crop growth.
+The core code of `AquaCrop.jl` closely follows the FAO's Fortran implementation, 
+which allows us to quickly integrate changes and updates to the original `AquaCrop` 
+code. On top of the core code, we have an API that makes it easy to upload data and 
+run the simulations in several ways. This also enables exploring and interacting 
+with state variables at run time, opening up the possibility of dynamic, bidirectional
+model coupling. These new features increase the interoperability of the model compared
+to its original implementation. In addition, they allow complementing the code with 
+other libraries from the Julia ecosystem, like `DataFrames.jl`, `Makie.jl`, 
+`StatsModels.jl`, or `Optimisers.jl`. All of this makes `AquaCrop.jl` a reliable 
+and versatile tool for simulating and studying crop growth.
 
 # Example 
 
 The following tutorials are provided in the documentation:
 
-- [Basic run](https://gabo-di.github.io/AquaCrop.jl/dev/gettingstarted/#basic_run_section) provides how to upload the data using `AquaCrop` Fortran like configuration files, it runs all the seasons at once.
-- [Intermediate run](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Intermediate-Run) provides how to upload the data using TOML and csv files, it also shows how to make the simulation day by day, and how to get some variables of the cropfield at run time.
+- [Basic run](https://gabo-di.github.io/AquaCrop.jl/dev/gettingstarted/#basic_run_section) 
+shows how to set up a model run using the original `AquaCrop` configuration file format, 
+simulating a complete vegetation period.
+- [Intermediate run](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Intermediate-Run) 
+shows how to use TOML and CSV files for the input data, how to make the simulation day by day, and how to get some variables of the cropfield at run time.
 - [Advanced run](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Advanced-Run) provides how to upload the data using Julia variables, it also shows how to update changes in the variables at run time. 
 
 A simple demonstration of the basic run using the data from the `AquaCrop.jl/test/testcase` directory is shown here:,
