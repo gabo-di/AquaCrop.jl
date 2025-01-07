@@ -1200,7 +1200,7 @@ loads data from filepath.
 global.f90:LoadProfile:7627
 """
 function load_profile(outputs, filepath, simulparam::RepParam; kwargs...)
-    # note that we only consider version 7.1 parsing style
+    # note that we only consider version 7.2 parsing style
     soil, soil_layers = _load_profile(kwargs[:runtype], outputs, filepath; kwargs...)
 
     compartments = CompartmentIndividual[]

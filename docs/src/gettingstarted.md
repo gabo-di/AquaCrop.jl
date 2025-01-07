@@ -21,7 +21,7 @@ Pkg.add(url="https://github.com/gabo-di/AquaCrop.jl")
 ## [Basic Run](@id basic_run_section)
 
 AquaCrop.jl is based on FAO's [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/), to mantain
-compatibility we allow to upload the same configurations files that AquaCrop v7.1 allows, 
+compatibility we allow to upload the same configurations files that AquaCrop v7.2 allows, 
 this can be done using the [`NormalFileRun`](@ref) function
 
 ```jldoctest basic_run_example; output = false
