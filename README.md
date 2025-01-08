@@ -4,24 +4,36 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gabo-di.github.io/AquaCrop.jl/dev/)
 [![Build Status](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
-Welcome to `AquaCrop.jl`! This package is a julia implementation of FAO's [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/), 
-originaly written in Fortran, currently corresponds to AquaCrop version 7.2, older or newer version can have 
-compatibility issues
+Welcome to `AquaCrop.jl`! This package is an independent Julia implementation of FAO's 
+[AquaCrop](https://github.com/KUL-RSDA/AquaCrop/), a process-based crop growth model.
+The package currently corresponds to AquaCrop version 7.2.
 
-## Install
+AquaCrop is a well-established crop growth model that uses environmental parameters
+(e.g. precipitation, temperature, and soil quality) to predict plant growth and yield
+of a large range of crop species. It was first published in three papers by
+[Steduto et al. (2009)](https://doi.org/10.2134/agronj2008.0139s),
+[Raes et al. (2009)](https://doi.org/10.2134/agronj2008.0140s), and
+[Hsiao et al. (2009)](https://doi.org/10.2134/agronj2008.0218s).
 
-Since the package is not yet registered, you can install it via
+## Installing
+
+Since the package is not yet registered, you can install it straight from Github:
 
 ```julia
 using Pkg
 Pkg.add(url="https://github.com/gabo-di/AquaCrop.jl")
 ```
 
+## Documentation
 
-## Basic Run
+The [documentation](https://gabo-di.github.io/AquaCrop.jl/dev/) gives examples of how 
+to [use the package](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/), and 
+describes the [API functions](https://gabo-di.github.io/AquaCrop.jl/dev/api/).
 
-For the basic run, first you need to specify the directory where that has all the 
-required input for a common AquaCrop Fortran run and call the `basic_run` function
+## Basic Usage
+
+`AquaCrop.jl` can be used with the same input files as the original model. You must
+specify the directory that includes these files and then call the `basic_run` function:
 
 ```julia
 using AquaCrop
@@ -34,13 +46,14 @@ outputs = basic_run(; runtype=runtype, parentdir=parentdir)
 isequal(size(outputs[:dayout]), (892, 89)) # true
 ```
 
-you can see the daily result in `outputs[:dayout]` 
-the result of each harvest in `outputs[:harvestsout]`
-the result of the whole season in `outputs[:seasonout]`
-the information for the evaluation in `outputs[:evaldataout]`
-and the logger information in `outputs[:logger]`
+you can see the daily result in `outputs[:dayout]`, 
+the result of each harvest in `outputs[:harvestsout]`,
+the result of the whole season in `outputs[:seasonout]`,
+the information for the evaluation in `outputs[:evaldataout]`,
+and the logger information in `outputs[:logger]`.
 
-If you prefer to use TOML and csv files as input, you can choose to run like
+You can also choose to format your input data as TOML and CSV files:
+
 ```julia
 runtype = TomlFileRun()
 parentdir = AquaCrop.test_toml_dir  #".../AquaCrop.jl/test/testcase/TOML_FILES"
@@ -50,243 +63,36 @@ outputs = basic_run(; runtype=runtype, parentdir=parentdir)
 isequal(size(outputs[:dayout]), (892, 89)) # true
 ```
 
-
-## Intermediate Run
-
-To start a crop field you have to provide the runtype and the directory data 
-
-```julia
-using AquaCrop
-
-runtype = TomlFileRun()
-parentdir = AquaCrop.test_toml_dir #".../AquaCrop/test/testcase/TOML_FILES"
-
-cropfield, all_ok = start_cropfield(;runtype=runtype, parentdir=parentdir)
-
-dump(all_ok)
-```
-
-where `cropfield` is an struct of type `AquaCropField` with all the information of 
-the crop field, and `all_ok` tell us if the paramers have been loaded correctly 
-`all_ok.logi == true` or not `all_ok.logi == false`, in this case you can see 
-the error kind in `all_ok.msg`. (Note that we do not raise exceptions in case you
-want to inspect the `cropfield` variable, like `cropfield.outputs[:logger]`) 
-
-To setup a cropfield you have to provide the runtype 
-```julia
-setup_cropfield!(cropfield, all_ok; runtype=runtype)
-
-dump(all_ok)
-```
+Finally, you can pass all variables and data using the API
+([tutorial here](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Advanced-Run)).
 
 
+## Contributing
 
-To make a daily update you can use
-```julia
-ndays = 30
-for _ in 1:ndays
-    dailyupdate!(cropfield)
-end
+We welcome questions, suggestions, bug reports, or other contributions.
 
-isequal(size(cropfield.dayout), (ndays, 89))
-cropfield.dayout
-```
+- You can file issues/bugs/questions/requests using the 
+[Github issue tracker](https://github.com/gabo-di/AquaCrop.jl/issues). 
+For bugs, please include as much information possible, including operating system, 
+Julia version, version of `AquaCrop.jl`, and all the data needed to reproduce the bug.
 
-To get biomass in `ton/ha` you can use
-```julia
-biomass(cropfield)
-```
+- To contribute to the core code or API, make a pull request. Contributions should 
+include tests and a description of the problem you solve. Tests should ensure that 
+new features are backwards-compatible with the original Fortran model. If necessary, 
+also update the documentation describing new API functionality.
 
-To get the amount of dry yield in `ton/ha` you can use
-```julia
-dryyield(cropfield)
-```
+- To contribute to the documentation or tutorials, make a pull request. 
+Make sure it is possible to get any necessary data.
 
-To get the amount of fresh yield in `ton/ha` you can use
-```julia
-freshyield(cropfield)
-```
-
-To get the canopy cover in % of terrain covered by the crop you can use
-```julia
-canopycover(cropfield)
-```
-
-To harvest you can use
-```julia
-harvest!(cropfield)
-
-cropfield.harvestsout
-
-isequal(size(cropfield.dayout), (ndays+1, 89))
-cropfield.dayout
-
-biomass(cropfield) # biomass is zero after a harvest day
-canopycover(cropfield) # canopy cover just before harvesting
-canopycover(cropfield, actual=false) # canopy cover just after harvesting
-```
-note that now we have two days, the function `harvest!` also makes a `dailyupdate!`, 
-and the harvesting is done at the end of the day, that is why we have two values of 
-canopy cover
-
-If we make another daily update the canopy cover is actualized
-```julia
-dailyupdate!(cropfield)
-canopycover(cropfield) 
-canopycover(cropfield, actual=false) # since it was not a harvesting day it does not matter if we set `actual=false`
-```
-
-To run until the end of the season you can use
-```julia
-season_run!(cropfield)
-
-isequal(size(cropfield.dayout), (164, 89))
-cropfield.seasonout
-```
-
-## Advanced Run
-
-The advanced run is still experimental, the idea is to:
-1. Provide more control of the variables.
-1. Not use files for faster upload of values.
-1. To be easy to integrate with [Persefone.jl](https://persefone-model.eu) and other julia libraries.
-
-We can also upload the default project like this
-```julia
-using AquaCrop
-
-using DataFrames
-using Dates
-using StableRNGs
-
-rng = StableRNG(42)
-
-# Function to create a mockup climate DataFrame
-function create_mock_climate_dataframe(start_date::Date, end_date::Date, tmin, delta_t, eto, rain)
-    # Generate the date range
-    dates = collect(start_date:end_date)
-    
-    # Generate random climate columns (each column has the same number of rows as the date range)
-    Tmin = tmin .+ rand(rng, length(dates))
-    Tmax = Tmin .+ delta_t .+ rand(rng, length(dates))
-    ETo = eto .* abs.(randn(rng, length(dates)))
-    Rain = rain .* abs.(randn(rng, length(dates)))
-    
-    # Create the DataFrame
-    df = DataFrame(
-        Date = dates,
-        Tmin = Tmin,
-        Tmax = Tmax,
-        ETo = ETo,
-        Rain = Rain
-    )
-    
-    return df
-end
-
-# Generate ficticius climate data
-start_date = Date(2023, 1, 1) # January 1 2023
-end_date = Date(2023, 6, 1) # June 1 2023
-tmin = 15
-delta_t = 10
-eto = 1
-rain = 1
-
-df = create_mock_climate_dataframe(start_date, end_date, tmin, delta_t, eto, rain)
-
-# Generate the keyword object for the simulation
-kwargs = (
-
-    ## Necessary keywords
-
-    # runtype
-    runtype = NoFileRun(),
-
-    # project input
-    Simulation_DayNr1 = start_date,
-    Simulation_DayNrN = end_date,
-    Crop_Day1 = start_date,
-    Crop_DayN = end_date,
-
-    # soil
-    soil_type = "clay",
-
-    # crop
-    crop_type = "maize",
-
-    # Climate
-    InitialClimDate = start_date,
+*Please note: Questions or change requests regarding the scientific functioning 
+of the model (rather than the technical details of this particular implementation) 
+should be addressed to the original model developers.*
 
 
+## Citing
 
-    ## Optional keyworkds
-    
-    # Climate
-    Tmin = df.Tmin,
-    Tmax = df.Tmax,
-    ETo = df.ETo,
-    Rain = df.Rain,
+If you use `AquaCrop.jl` in your scientific work, please cite the following paper 
+once it is published:
 
-    # change soil properties
-    soil_layers = Dict("Thickness" => 5.0)
-
-)
-
-# start cropfield
-cropfield, all_ok = start_cropfield(; kwargs...)
-dump(all_ok)
-
-# setup cropfield
-setup_cropfield!(cropfield, all_ok; kwargs...)
-dump(all_ok)
-isequal(cropfield.soil_layers[1].Thickness, 5.0)
-
-
-# daily update cropfield
-ndays = 90
-for _ in 1:ndays
-    dailyupdate!(cropfield)
-end
-isequal(size(cropfield.dayout), (ndays, 89))
-
-# harvest cropfield
-harvest!(cropfield)
-isequal(size(cropfield.dayout), (ndays+1, 89))
-isequal(size(cropfield.harvestsout), (2, 11))
-
-# change climate data
-daynri_now = cropfield.gvars[:integer_parameters][:daynri]
-day_now, month_now, year_now = AquaCrop.determine_date(daynri_now)
-date_now = Date(year_now, month_now, day_now)
-df_new = create_mock_climate_dataframe(date_now, end_date, tmin, delta_t, eto, rain)
-change_climate_data!(cropfield, df_new; kwargs...)
-isapprox(cropfield.gvars[:float_parameters][:eto], df_new.ETo[1]) 
-isapprox(cropfield.gvars[:float_parameters][:rain], df_new.Rain[1]) 
-isapprox(cropfield.gvars[:float_parameters][:tmin], df_new.Tmin[1]) 
-isapprox(cropfield.gvars[:float_parameters][:tmax], df_new.Tmax[1]) 
-
-# run until end of season
-season_run!(cropfield)
-total_days = length(collect(start_date:end_date))
-isequal(size(cropfield.dayout), (total_days, 89))
-```
-
-## Documentation
-
-The [documentation](https://gabo-di.github.io/AquaCrop.jl/dev/) gives examples of how to use the package, and 
-describes the API functions.
-
-## Community and contributions
-
-We welcome any questions, suggestions, bug reports, issues, requests of enhancement or contributions.
-
-- You can file issues/bugs/questions/enhancement-requests by posting in the [Github issue tracker](https://github.com/gabo-di/AquaCrop.jl/issues). 
-For bugs, please include as much information possible, including operating system, julia version, version of `AquaCrop.jl`,
-and all the data needed to reproduce the bug.
-
-- To contribute with the core code or API, make a pull request. 
-Contributions should include tests and a description of the problem you solve. 
-If necessary also update the documentation describing the new API functionality.
-
-- To contribure with the documentation or tutorials, make a pull request. 
-Make sure is possible to get all the necessary data if needed. 
+	Díaz Iturry, Matthies, Pe'er, Vedder (in prep) "AquaCrop.jl: A Process-Based 
+	Model of Crop Growth"

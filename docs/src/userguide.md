@@ -10,13 +10,15 @@ Pages = ["userguide.md"]
 ```
 
 ## Basic Run
-For an example of a basic run using the function [`basic_run`](@ref) see the section [Basic Run](@ref basic_run_section)
-in [Getting Started](@ref Install)
 
+For a very simple example, see the section [Basic Run](@ref basic_run_section) 
+in [Getting Started](@ref Install).
 
 ## Intermediate Run
 
-We start a crop field, to do this we need to set a runtype and the data directory 
+To simulate crops growing on an agricultural field, we must first set a runtype
+(which defines the input file format) and the data directory:
+
 ```jldoctest intermediate_run_example; output = false
 using AquaCrop
 
@@ -27,7 +29,10 @@ runtype = TomlFileRun()
 TomlFileRun()
 ```
 
-The crop field is started using the function [`start_cropfield`](@ref)
+Next we can create an [`AquaCropField`](@ref) object, which is the core struct that 
+stores all parameters and variables for one simulation run. This is initialised using
+the function [`start_cropfield`](@ref):
+
 ```jldoctest intermediate_run_example
 cropfield, all_ok = start_cropfield(;runtype=runtype, parentdir=parentdir);
 dump(all_ok)
@@ -38,17 +43,16 @@ AquaCrop.AllOk
   msg: String ""
 ```
 
-where `cropfield` is an struct of type `AquaCropField` with all the information of 
-the crop field, and `all_ok` tell us if the paramers have been loaded correctly 
-`all_ok.logi == true`, or not `all_ok.logi == false`. When this happens, you can see 
-the error kind in `all_ok.msg`. (Note that we do not raise exceptions in case you
-want to inspect the `cropfield` variable, like `cropfield.outputs[:logger]`). 
+Here, `all_ok` tell us whether the parameters have been loaded correctly 
+(if `all_ok.logi` is `true`). If there was a problem, the error type is specified
+in `all_ok.msg`. (Note that we do not raise exceptions, so that the `cropfield` 
+variable can still be inspected, such as `cropfield.outputs[:logger]`).
 In out example we see that `all_ok.logi == true`, so all went well up to now. 
 
-We have a `cropfield::AquaCropField` variable with the soil and crop data, 
-and we have checked that the config files exist. Now we have to setup the `cropfield` 
-using the function [`setup_cropfield!`](@ref),
-this will read the climate data, setup the cropfield, among other things.
+We now have a `cropfield::AquaCropField` variable with the soil and crop data loaded,
+and have checked that the config files exist. Now we have to add further data
+(such as the climate) and carry out other initialisation tasks using the function 
+[`setup_cropfield!`](@ref):
 
 ```jldoctest intermediate_run_example
 setup_cropfield!(cropfield, all_ok; runtype=runtype);
@@ -59,9 +63,9 @@ AquaCrop.AllOk
   logi: Bool true
   msg: String ""
 ```
-We see that `all_ok.logi == true` so we have read all the data. We can update the cropfield day by day, this is done 
-using the [`dailyupdate!`](@ref) function
 
+We see that `all_ok.logi == true` so we have read all the data. We can update the 
+crop field one day at a time, this is done using the [`dailyupdate!`](@ref) function:
 
 ```jldoctest intermediate_run_example
 ndays = 30
@@ -75,7 +79,8 @@ isequal(size(cropfield.dayout), (ndays, 89))
 true
 ```
 
-we can see the daily output DataFrame in the field
+We can see the daily output DataFrame in the field `cropfield.dayout`:
+
 ```jldoctest intermediate_run_example
 cropfield.dayout
 
@@ -102,22 +107,28 @@ cropfield.dayout
   30 │     1  2014-06-19     30      2  863.843 mm     0.2 mm     0.0 mm     0
                                                   82 columns and 15 rows omitted
 ```
-if we want to know the biomass of the current day we use [`biomass`](@ref) function
+
+If we want to know the biomass of the current day we use [`biomass`](@ref) function:
+
 ```jldoctest intermediate_run_example
 biomass(cropfield)
 
 # output
 1.9197377309729786 ton ha⁻¹
 ```
-note that the result is in `ton/ha`, metric tons per hectare. The amount of dry yield
-of the current day is given by the [`dryyield`](@ref) function
+
+Note that the result is in `ton/ha`, metric tons per hectare. The amount of dry yield
+of the current day is given by the [`dryyield`](@ref) function:
+
 ```jldoctest intermediate_run_example
 dryyield(cropfield)
 
 # output
 1.7616862576301124 ton ha⁻¹
 ```
-and the fresh yield by the [`freshyield`](@ref) function
+
+And the fresh yield by the [`freshyield`](@ref) function:
+
 ```jldoctest intermediate_run_example
 freshyield(cropfield)
 
@@ -126,7 +137,8 @@ freshyield(cropfield)
 ```
 
 The canopy cover is given by the percentage of terrain covered by the crop, 
-for this use the function [`canopycover`](@ref)
+for this use the function [`canopycover`](@ref):
+
 ```jldoctest intermediate_run_example
 canopycover(cropfield)
 
@@ -134,7 +146,7 @@ canopycover(cropfield)
 49.26884621144958
 ```
 
-If we want to make a harvest in the current day use [`harvest!`](@ref) function 
+If we want to initiate a harvest on the current day, use [`harvest!`](@ref):
 
 ```jldoctest intermediate_run_example
 harvest!(cropfield)
@@ -151,7 +163,7 @@ cropfield.harvestsout
                                                                5 columns omitted
 ```
 
-note that [`harvest!`](@ref) also makes a daily update,
+Note that calling [`harvest!`](@ref) also includes a daily update,
 now we have `ndays+1` days
 
 ```jldoctest intermediate_run_example
@@ -161,8 +173,8 @@ isequal(size(cropfield.dayout), (ndays+1, 89))
 true
 ```
 
-another effect of the [`harvest!`](@ref) function is that
-changes the biomass
+Another effect of the [`harvest!`](@ref) function is to change the biomass (obviously):
+
 ```jldoctest intermediate_run_example
 biomass(cropfield) # biomass is zero after a harvest day
 
@@ -170,8 +182,8 @@ biomass(cropfield) # biomass is zero after a harvest day
 0.0 ton ha⁻¹
 ```
 
-it also changes the canopy cover, we can see the value of it just
-before harvesting
+It also changes the canopy cover, we can see the value of it just before harvesting:
+
 ```jldoctest intermediate_run_example
 canopycover(cropfield) # canopy cover just before harvesting
 
@@ -179,7 +191,8 @@ canopycover(cropfield) # canopy cover just before harvesting
 49.9040070260628
 ```
 
-and just after harvesting
+...and just after harvesting:
+
 ```jldoctest intermediate_run_example
 canopycover(cropfield, actual=false) # canopy cover just after harvesting
 
@@ -187,10 +200,8 @@ canopycover(cropfield, actual=false) # canopy cover just after harvesting
 25.0
 ```
 
-the harvesting is done at the end of the day, that is why we have two values
-of canopy cover.
-
-If we make another daily update the canopy cover is actualized
+(Harvesting is done at the end of the day, that is why we have two values of 
+canopy cover.) If we do another daily update we see that the canopy cover is updated:
 
 ```jldoctest intermediate_run_example
 dailyupdate!(cropfield)
@@ -200,7 +211,8 @@ canopycover(cropfield)
 27.827808455159015
 ```
 
-since it was not a harvesting day it does not matter if we set `actual=false`
+Since it was not a harvesting day it does not matter if we set `actual=false`
+
 ```jldoctest intermediate_run_example
 canopycover(cropfield, actual=false) 
 
@@ -208,7 +220,8 @@ canopycover(cropfield, actual=false)
 27.827808455159015
 ```
 
-finally we can run until the end of the season using [`season_run!`](@ref) function
+Finally we can run until the end of the season using [`season_run!`](@ref):
+
 ```jldoctest intermediate_run_example
 season_run!(cropfield)
 
@@ -218,7 +231,7 @@ isequal(size(cropfield.dayout), (164, 89))
 true
 ```
 
-and check the output dataframe of the season using
+And check the output dataframe of the season using:
 
 ```jldoctest intermediate_run_example
 cropfield.seasonout
@@ -234,12 +247,14 @@ cropfield.seasonout
 
 ## Advanced Run
 
-The advanced run is still experimental, the idea is to:
-1. Provide more control of the variables.
-1. Not use files for faster upload of values.
-1. To be easy to integrate with [Persefone.jl](https://persefone-model.eu) and other julia libraries.
+Beyond simply setting up and running a simulation, the `AquaCrop.jl` API gives you
+more fine-grained control over what is going on. This allows one to:
+1. Have more control of state variables,
+1. Use input data stored in memory (faster, as it avoids disk I/O),
+1. Integrate with other Julia libraries and software.
 
-Let's start calling some libraries and creating some variables
+Let's start by calling some libraries and creating some variables:
+
 ```jldoctest advanced_run_example; output=false
 using AquaCrop
 using DataFrames
@@ -260,8 +275,7 @@ rain = 1 # daily rain will be around this
 1
 ```
 
-Now we will create a function to mockup some climate DataFrame
-
+Now we will create a function to mockup some climate DataFrame:
 
 ```jldoctest advanced_run_example
 # Function to create a mockup climate DataFrame
@@ -313,8 +327,7 @@ df = create_mock_climate_dataframe(start_date, end_date, tmin, delta_t, eto, rai
                                           137 rows omitted
 ```
 
-this advanced run depends on sending all the configuration
-via a keyword variable 
+This advanced run depends on sending all the configuration via a keyword variable:
 
 ```jldoctest advanced_run_example; output=false
 # Generate the keyword object for the simulation
@@ -360,14 +373,15 @@ nothing # ignore this line
 
 ```
 
-the variable `kwargs` has some necessary keywords, like the runtype 
-where we specify that we will not use files to make the configuration 
-`runtype = NoFileRun()`, see [`NoFileRun`](@ref),
-and some optional keywords, to pass the climate data, like temperature `Tmin = df.Tmin`,
-or additional information to change some properties of the variables, like `soil_layers = Dict("Thickness" => 5.0)`
-To know more about the keywords see [`AquaCrop.check_nofilerun`](@ref).
+The variable `kwargs` has some necessary keywords, like the runtype, where we 
+specify that we will not use files to make the configuration (see [`NoFileRun`](@ref)),
+and some optional keywords to pass the climate data, like temperature `Tmin = df.Tmin`,
+or additional information to change some properties of the variables, like 
+`soil_layers = Dict("Thickness" => 5.0)`. To know more about the keywords, see 
+[`AquaCrop.check_nofilerun`](@ref).
 
-Once that we have created the `kwargs` we can start a cropfield
+Once we have created the `kwargs` we can start a crop field:
+
 ```jldoctest advanced_run_example
 # start cropfield
 cropfield, all_ok = start_cropfield(; kwargs...)
@@ -379,7 +393,7 @@ AquaCrop.AllOk
   msg: String ""
 ```
 
-see that the climate is empty
+At the moment, the climate is still empty:
 
 ```jldoctest advanced_run_example
 cropfield.raindatasim
@@ -388,7 +402,8 @@ cropfield.raindatasim
 Float64[]
 ```
 
-now we setup the `cropfield`
+Now we setup the `cropfield`:
+
 ```jldoctest advanced_run_example
 setup_cropfield!(cropfield, all_ok; kwargs...)
 dump(all_ok)
@@ -399,7 +414,7 @@ AquaCrop.AllOk
   msg: String ""
 ```
 
-and the climate is no longer empty
+and the climate is no longer empty:
 
 ```jldoctest advanced_run_example
 cropfield.raindatasim
@@ -428,9 +443,8 @@ cropfield.raindatasim
  2.9177565288611698
 ```
 
-Now that we have finished setting up the `cropfield`, we
-can update the cropfield day by day, this is done 
-using the [`dailyupdate!`](@ref) function
+Now that we have finished setting up the `cropfield`, we can update the cropfield 
+one day at a time, this is done using the [`dailyupdate!`](@ref) function:
 
 ```jldoctest advanced_run_example
 # daily update cropfield
@@ -444,7 +458,9 @@ isequal(size(cropfield.dayout), (ndays, 89))
 true
 ```
 
-we can ask wheter a crop is harvestable or not with the [`isharvestable`](@ref) function 
+We can ask wheter a crop is harvestable or not with the [`isharvestable`](@ref) 
+function:
+
 ```jldoctest advanced_run_example
 logi = isharvestable(cropfield)
 
@@ -452,7 +468,7 @@ logi = isharvestable(cropfield)
 false
 ```
 
-and the amount of days until is harvestable with the [`timetoharvest`](@ref) function
+and the amount of days until is harvestable with [`timetoharvest`](@ref):
 
 ```jldoctest advanced_run_example
 th = timetoharvest(cropfield)
@@ -461,7 +477,8 @@ th = timetoharvest(cropfield)
 56
 ```
 
-run until is harvestable
+So, we run until our crop is harvestable:
+
 ```jldoctest advanced_run_example
 for i in 1:th
     dailyupdate!(cropfield)
@@ -473,8 +490,8 @@ logi = isharvestable(cropfield)
 true
 ```
 
-similarly to [Intermediate Run](@ref), 
-if we want to make a harvest in the current day use [`harvest!`](@ref) function,
+Similarly to the [Intermediate Run](@ref) tutorial, if we want to conduct a harvest 
+on the current day, we use [`harvest!`](@ref):
 
 ```jldoctest advanced_run_example
 # harvest cropfield
@@ -492,10 +509,10 @@ cropfield.harvestsout
                                                                5 columns omitted
 ```
 
-note that we can use the `harvest!` function even if `isharvestable(cropfield) = false`
+**Note:** we can use the `harvest!` function even if `isharvestable(cropfield) = false`
 
-We can also change the climate data in the middle of the run, first we create 
-a new mockup climate with the current simulation date of the `cropfield`
+We can also change the climate data during the course of a run. First we create 
+a new mockup climate with the current simulation date of the `cropfield`:
 
 ```jldoctest advanced_run_example
 # change climate data
@@ -528,7 +545,8 @@ df_new = create_mock_climate_dataframe(date_now, end_date, tmin, delta_t, eto, r
                                             50 rows omitted
 ```
 
-and change the climate using [`change_climate_data!`](@ref) function
+and change the climate using [`change_climate_data!`](@ref) function:
+
 ```jldoctest advanced_run_example
 change_climate_data!(cropfield, df_new; kwargs...)
 
@@ -538,7 +556,8 @@ isapprox(cropfield.gvars[:float_parameters][:rain], df_new.Rain[1])
 true
 ```
 
-finally we can run until the end of the season using [`season_run!`](@ref) function
+Finally we can run until the end of the season using [`season_run!`](@ref) function:
+
 ```jldoctest advanced_run_example
 season_run!(cropfield)
 total_days = length(collect(start_date:end_date))
