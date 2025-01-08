@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>User Guide · AquaCrop.jl</title><meta name="title" content="User Guide · AquaCrop.jl"/><meta property="og:title" content="User Guide · AquaCrop.jl"/><meta property="twitter:title" content="User Guide · AquaCrop.jl"/><meta name="description" content="Documentation for AquaCrop.jl."/><meta property="og:description" content="Documentation for AquaCrop.jl."/><meta property="twitter:description" content="Documentation for AquaCrop.jl."/><meta property="og:url" content="https://gabo-di.github.io/AquaCrop.jl/userguide/"/><meta property="twitter:url" content="https://gabo-di.github.io/AquaCrop.jl/userguide/"/><link rel="canonical" href="https://gabo-di.github.io/AquaCrop.jl/userguide/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">AquaCrop.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li><a class="tocitem" href="../gettingstarted/">Getting Started</a></li><li class="is-active"><a class="tocitem" href>User Guide</a><ul class="internal"><li><a class="tocitem" href="#Basic-Run"><span>Basic Run</span></a></li><li><a class="tocitem" href="#Intermediate-Run"><span>Intermediate Run</span></a></li><li><a class="tocitem" href="#Advanced-Run"><span>Advanced Run</span></a></li></ul></li><li><a class="tocitem" href="../api/">API</a></li><li><a class="tocitem" href="../license/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>User Guide</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>User Guide</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/gabo-di/AquaCrop.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/gabo-di/AquaCrop.jl/blob/main/docs/src/userguide.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><ul><li class="no-marker"><ul><li><a href="#Basic-Run">Basic Run</a></li><li><a href="#Intermediate-Run">Intermediate Run</a></li><li><a href="#Advanced-Run">Advanced Run</a></li></ul></li></ul><h2 id="Basic-Run"><a class="docs-heading-anchor" href="#Basic-Run">Basic Run</a><a id="Basic-Run-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Run" title="Permalink"></a></h2><p>For an example of a basic run using the function <a href="../api/#AquaCrop.basic_run-Tuple{}"><code>basic_run</code></a> see the section <a href="../gettingstarted/#basic_run_section">Basic Run</a> in <a href="../gettingstarted/#Install">Getting Started</a></p><h2 id="Intermediate-Run"><a class="docs-heading-anchor" href="#Intermediate-Run">Intermediate Run</a><a id="Intermediate-Run-1"></a><a class="docs-heading-anchor-permalink" href="#Intermediate-Run" title="Permalink"></a></h2><p>We start a crop field, to do this we need to set a runtype and the data directory </p><pre><code class="language-julia hljs">using AquaCrop
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>User Guide · AquaCrop.jl</title><meta name="title" content="User Guide · AquaCrop.jl"/><meta property="og:title" content="User Guide · AquaCrop.jl"/><meta property="twitter:title" content="User Guide · AquaCrop.jl"/><meta name="description" content="Documentation for AquaCrop.jl."/><meta property="og:description" content="Documentation for AquaCrop.jl."/><meta property="twitter:description" content="Documentation for AquaCrop.jl."/><meta property="og:url" content="https://gabo-di.github.io/AquaCrop.jl/userguide/"/><meta property="twitter:url" content="https://gabo-di.github.io/AquaCrop.jl/userguide/"/><link rel="canonical" href="https://gabo-di.github.io/AquaCrop.jl/userguide/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../">AquaCrop.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Introduction</a></li><li><a class="tocitem" href="../gettingstarted/">Getting Started</a></li><li class="is-active"><a class="tocitem" href>User Guide</a><ul class="internal"><li><a class="tocitem" href="#Basic-Run"><span>Basic Run</span></a></li><li><a class="tocitem" href="#Intermediate-Run"><span>Intermediate Run</span></a></li><li><a class="tocitem" href="#Advanced-Run"><span>Advanced Run</span></a></li></ul></li><li><a class="tocitem" href="../api/">API</a></li><li><a class="tocitem" href="../license/">License</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>User Guide</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>User Guide</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/gabo-di/AquaCrop.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/gabo-di/AquaCrop.jl/blob/main/docs/src/userguide.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><ul><li class="no-marker"><ul><li><a href="#Basic-Run">Basic Run</a></li><li><a href="#Intermediate-Run">Intermediate Run</a></li><li><a href="#Advanced-Run">Advanced Run</a></li></ul></li></ul><h2 id="Basic-Run"><a class="docs-heading-anchor" href="#Basic-Run">Basic Run</a><a id="Basic-Run-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Run" title="Permalink"></a></h2><p>For a very simple example, see the section <a href="../gettingstarted/#basic_run_section">Basic Run</a>  in <a href="../gettingstarted/#Install">Getting Started</a>.</p><h2 id="Intermediate-Run"><a class="docs-heading-anchor" href="#Intermediate-Run">Intermediate Run</a><a id="Intermediate-Run-1"></a><a class="docs-heading-anchor-permalink" href="#Intermediate-Run" title="Permalink"></a></h2><p>To simulate crops growing on an agricultural field, we must first set a runtype (which defines the input file format) and the data directory:</p><pre><code class="language-julia hljs">using AquaCrop
 
 parentdir = AquaCrop.test_toml_dir #&quot;.../AquaCrop.jl/test/testcase/TOML_FILES&quot;
-runtype = TomlFileRun()</code></pre><p>The crop field is started using the function <a href="../api/#AquaCrop.start_cropfield-Tuple{}"><code>start_cropfield</code></a></p><pre><code class="language-julia hljs">cropfield, all_ok = start_cropfield(;runtype=runtype, parentdir=parentdir);
+runtype = TomlFileRun()</code></pre><p>Next we can create an <a href="../api/#AquaCrop.AquaCropField"><code>AquaCropField</code></a> object, which is the core struct that  stores all parameters and variables for one simulation run. This is initialised using the function <a href="../api/#AquaCrop.start_cropfield-Tuple{}"><code>start_cropfield</code></a>:</p><pre><code class="language-julia hljs">cropfield, all_ok = start_cropfield(;runtype=runtype, parentdir=parentdir);
 dump(all_ok)
 
 # output
 AquaCrop.AllOk
   logi: Bool true
-  msg: String &quot;&quot;</code></pre><p>where <code>cropfield</code> is an struct of type <code>AquaCropField</code> with all the information of  the crop field, and <code>all_ok</code> tell us if the paramers have been loaded correctly  <code>all_ok.logi == true</code>, or not <code>all_ok.logi == false</code>. When this happens, you can see  the error kind in <code>all_ok.msg</code>. (Note that we do not raise exceptions in case you want to inspect the <code>cropfield</code> variable, like <code>cropfield.outputs[:logger]</code>).  In out example we see that <code>all_ok.logi == true</code>, so all went well up to now. </p><p>We have a <code>cropfield::AquaCropField</code> variable with the soil and crop data,  and we have checked that the config files exist. Now we have to setup the <code>cropfield</code>  using the function <a href="../api/#AquaCrop.setup_cropfield!-Tuple{AquaCropField, AquaCrop.AllOk}"><code>setup_cropfield!</code></a>, this will read the climate data, setup the cropfield, among other things.</p><pre><code class="language-julia hljs">setup_cropfield!(cropfield, all_ok; runtype=runtype);
+  msg: String &quot;&quot;</code></pre><p>Here, <code>all_ok</code> tell us whether the parameters have been loaded correctly  (if <code>all_ok.logi</code> is <code>true</code>). If there was a problem, the error type is specified in <code>all_ok.msg</code>. (Note that we do not raise exceptions, so that the <code>cropfield</code>  variable can still be inspected, such as <code>cropfield.outputs[:logger]</code>). In out example we see that <code>all_ok.logi == true</code>, so all went well up to now. </p><p>We now have a <code>cropfield::AquaCropField</code> variable with the soil and crop data loaded, and have checked that the config files exist. Now we have to add further data (such as the climate) and carry out other initialisation tasks using the function  <a href="../api/#AquaCrop.setup_cropfield!-Tuple{AquaCropField, AquaCrop.AllOk}"><code>setup_cropfield!</code></a>:</p><pre><code class="language-julia hljs">setup_cropfield!(cropfield, all_ok; runtype=runtype);
 dump(all_ok)
 
 # output
 AquaCrop.AllOk
   logi: Bool true
-  msg: String &quot;&quot;</code></pre><p>We see that <code>all_ok.logi == true</code> so we have read all the data. We can update the cropfield day by day, this is done  using the <a href="../api/#AquaCrop.dailyupdate!-Tuple{AquaCropField}"><code>dailyupdate!</code></a> function</p><pre><code class="language-julia hljs">ndays = 30
+  msg: String &quot;&quot;</code></pre><p>We see that <code>all_ok.logi == true</code> so we have read all the data. We can update the  crop field one day at a time, this is done using the <a href="../api/#AquaCrop.dailyupdate!-Tuple{AquaCropField}"><code>dailyupdate!</code></a> function:</p><pre><code class="language-julia hljs">ndays = 30
 for _ in 1:ndays
     dailyupdate!(cropfield)
 end
@@ -22,7 +22,7 @@ end
 isequal(size(cropfield.dayout), (ndays, 89))
 
 # output
-true</code></pre><p>we can see the daily output DataFrame in the field</p><pre><code class="language-julia hljs">cropfield.dayout
+true</code></pre><p>We can see the daily output DataFrame in the field <code>cropfield.dayout</code>:</p><pre><code class="language-julia hljs">cropfield.dayout
 
 # output
 30×89 DataFrame
@@ -45,19 +45,19 @@ true</code></pre><p>we can see the daily output DataFrame in the field</p><pre><
   28 │     1  2014-06-17     28      2  868.995 mm    11.0 mm     0.0 mm     0 ⋯
   29 │     1  2014-06-18     29      2  868.812 mm     4.1 mm     0.0 mm     0
   30 │     1  2014-06-19     30      2  863.843 mm     0.2 mm     0.0 mm     0
-                                                  82 columns and 15 rows omitted</code></pre><p>if we want to know the biomass of the current day we use <a href="../api/#AquaCrop.biomass-Tuple{AquaCropField}"><code>biomass</code></a> function</p><pre><code class="language-julia hljs">biomass(cropfield)
+                                                  82 columns and 15 rows omitted</code></pre><p>If we want to know the biomass of the current day we use <a href="../api/#AquaCrop.biomass-Tuple{AquaCropField}"><code>biomass</code></a> function:</p><pre><code class="language-julia hljs">biomass(cropfield)
 
 # output
-1.9197377309729786 ton ha⁻¹</code></pre><p>note that the result is in <code>ton/ha</code>, metric tons per hectare. The amount of dry yield of the current day is given by the <a href="../api/#AquaCrop.dryyield-Tuple{AquaCropField}"><code>dryyield</code></a> function</p><pre><code class="language-julia hljs">dryyield(cropfield)
+1.9197377309729786 ton ha⁻¹</code></pre><p>Note that the result is in <code>ton/ha</code>, metric tons per hectare. The amount of dry yield of the current day is given by the <a href="../api/#AquaCrop.dryyield-Tuple{AquaCropField}"><code>dryyield</code></a> function:</p><pre><code class="language-julia hljs">dryyield(cropfield)
 
 # output
-1.7616862576301124 ton ha⁻¹</code></pre><p>and the fresh yield by the <a href="../api/#AquaCrop.freshyield-Tuple{AquaCropField}"><code>freshyield</code></a> function</p><pre><code class="language-julia hljs">freshyield(cropfield)
+1.7616862576301124 ton ha⁻¹</code></pre><p>And the fresh yield by the <a href="../api/#AquaCrop.freshyield-Tuple{AquaCropField}"><code>freshyield</code></a> function:</p><pre><code class="language-julia hljs">freshyield(cropfield)
 
 # output
-8.808431288150562 ton ha⁻¹</code></pre><p>The canopy cover is given by the percentage of terrain covered by the crop,  for this use the function <a href="../api/#AquaCrop.canopycover-Tuple{AquaCropField}"><code>canopycover</code></a></p><pre><code class="language-julia hljs">canopycover(cropfield)
+8.808431288150562 ton ha⁻¹</code></pre><p>The canopy cover is given by the percentage of terrain covered by the crop,  for this use the function <a href="../api/#AquaCrop.canopycover-Tuple{AquaCropField}"><code>canopycover</code></a>:</p><pre><code class="language-julia hljs">canopycover(cropfield)
 
 # output
-49.26884621144958</code></pre><p>If we want to make a harvest in the current day use <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a> function </p><pre><code class="language-julia hljs">harvest!(cropfield)
+49.26884621144958</code></pre><p>If we want to initiate a harvest on the current day, use <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a>:</p><pre><code class="language-julia hljs">harvest!(cropfield)
 
 cropfield.harvestsout
 
@@ -68,31 +68,31 @@ cropfield.harvestsout
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │     1      0  2014-05-21      0      0.0 d      0.0 ton ha⁻¹      0.0 t ⋯
    2 │     1      1  2014-06-20     31     31.0 d  2.03624 ton ha⁻¹  2.03624 t
-                                                               5 columns omitted</code></pre><p>note that <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a> also makes a daily update, now we have <code>ndays+1</code> days</p><pre><code class="language-julia hljs">isequal(size(cropfield.dayout), (ndays+1, 89))
+                                                               5 columns omitted</code></pre><p>Note that calling <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a> also includes a daily update, now we have <code>ndays+1</code> days</p><pre><code class="language-julia hljs">isequal(size(cropfield.dayout), (ndays+1, 89))
 
 # output
-true</code></pre><p>another effect of the <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a> function is that changes the biomass</p><pre><code class="language-julia hljs">biomass(cropfield) # biomass is zero after a harvest day
+true</code></pre><p>Another effect of the <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a> function is to change the biomass (obviously):</p><pre><code class="language-julia hljs">biomass(cropfield) # biomass is zero after a harvest day
 
 # output
-0.0 ton ha⁻¹</code></pre><p>it also changes the canopy cover, we can see the value of it just before harvesting</p><pre><code class="language-julia hljs">canopycover(cropfield) # canopy cover just before harvesting
+0.0 ton ha⁻¹</code></pre><p>It also changes the canopy cover, we can see the value of it just before harvesting:</p><pre><code class="language-julia hljs">canopycover(cropfield) # canopy cover just before harvesting
 
 # output
-49.9040070260628</code></pre><p>and just after harvesting</p><pre><code class="language-julia hljs">canopycover(cropfield, actual=false) # canopy cover just after harvesting
+49.9040070260628</code></pre><p>...and just after harvesting:</p><pre><code class="language-julia hljs">canopycover(cropfield, actual=false) # canopy cover just after harvesting
 
 # output
-25.0</code></pre><p>the harvesting is done at the end of the day, that is why we have two values of canopy cover.</p><p>If we make another daily update the canopy cover is actualized</p><pre><code class="language-julia hljs">dailyupdate!(cropfield)
+25.0</code></pre><p>(Harvesting is done at the end of the day, that is why we have two values of  canopy cover.) If we do another daily update we see that the canopy cover is updated:</p><pre><code class="language-julia hljs">dailyupdate!(cropfield)
 canopycover(cropfield) 
 
 # output
-27.827808455159015</code></pre><p>since it was not a harvesting day it does not matter if we set <code>actual=false</code></p><pre><code class="language-julia hljs">canopycover(cropfield, actual=false) 
+27.827808455159015</code></pre><p>Since it was not a harvesting day it does not matter if we set <code>actual=false</code></p><pre><code class="language-julia hljs">canopycover(cropfield, actual=false) 
 
 # output
-27.827808455159015</code></pre><p>finally we can run until the end of the season using <a href="../api/#AquaCrop.season_run!-Tuple{AquaCropField}"><code>season_run!</code></a> function</p><pre><code class="language-julia hljs">season_run!(cropfield)
+27.827808455159015</code></pre><p>Finally we can run until the end of the season using <a href="../api/#AquaCrop.season_run!-Tuple{AquaCropField}"><code>season_run!</code></a>:</p><pre><code class="language-julia hljs">season_run!(cropfield)
 
 isequal(size(cropfield.dayout), (164, 89))
 
 # output
-true</code></pre><p>and check the output dataframe of the season using</p><pre><code class="language-julia hljs">cropfield.seasonout
+true</code></pre><p>And check the output dataframe of the season using:</p><pre><code class="language-julia hljs">cropfield.seasonout
 
 # output
 1×36 DataFrame
@@ -100,7 +100,7 @@ true</code></pre><p>and check the output dataframe of the season using</p><pre><
      │ Int64  Date        Quantity…  Quantity…  Float64  Quantity…   Quantity… ⋯
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │     1  2014-05-21   487.5 mm   431.0 mm   1802.6  398.82 ppm     0.0 mm ⋯
-                                                              29 columns omitted</code></pre><h2 id="Advanced-Run"><a class="docs-heading-anchor" href="#Advanced-Run">Advanced Run</a><a id="Advanced-Run-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Run" title="Permalink"></a></h2><p>The advanced run is still experimental, the idea is to:</p><ol><li>Provide more control of the variables.</li><li>Not use files for faster upload of values.</li><li>To be easy to integrate with <a href="https://persefone-model.eu">Persefone.jl</a> and other julia libraries.</li></ol><p>Let&#39;s start calling some libraries and creating some variables</p><pre><code class="language-julia hljs">using AquaCrop
+                                                              29 columns omitted</code></pre><h2 id="Advanced-Run"><a class="docs-heading-anchor" href="#Advanced-Run">Advanced Run</a><a id="Advanced-Run-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Run" title="Permalink"></a></h2><p>Beyond simply setting up and running a simulation, the <code>AquaCrop.jl</code> API gives you more fine-grained control over what is going on. This allows one to:</p><ol><li>Have more control of state variables,</li><li>Use input data stored in memory (faster, as it avoids disk I/O),</li><li>Integrate with other Julia libraries and software.</li></ol><p>Let&#39;s start by calling some libraries and creating some variables:</p><pre><code class="language-julia hljs">using AquaCrop
 using DataFrames
 using Dates
 using StableRNGs
@@ -113,7 +113,7 @@ end_date = Date(2023, 6, 1) # June 1 2023
 tmin = 15 # daily minimum temperature will be around this
 delta_t = 10 # daily maximum temperature will be around tmin + delta_t
 eto = 1 # daily ETo will be around this 
-rain = 1 # daily rain will be around this</code></pre><p>Now we will create a function to mockup some climate DataFrame</p><pre><code class="language-julia hljs"># Function to create a mockup climate DataFrame
+rain = 1 # daily rain will be around this</code></pre><p>Now we will create a function to mockup some climate DataFrame:</p><pre><code class="language-julia hljs"># Function to create a mockup climate DataFrame
 function create_mock_climate_dataframe(start_date::Date, end_date::Date, tmin, delta_t, eto, rain)
     # Generate the date range
     dates = collect(start_date:end_date)
@@ -159,7 +159,7 @@ df = create_mock_climate_dataframe(start_date, end_date, tmin, delta_t, eto, rai
  150 │ 2023-05-30  15.8692  26.2971  0.142944   0.235242
  151 │ 2023-05-31  15.6776  26.629   0.331443   0.851964
  152 │ 2023-06-01  15.9877  26.9083  0.160163   1.67827
-                                          137 rows omitted</code></pre><p>this advanced run depends on sending all the configuration via a keyword variable </p><pre><code class="language-julia hljs"># Generate the keyword object for the simulation
+                                          137 rows omitted</code></pre><p>This advanced run depends on sending all the configuration via a keyword variable:</p><pre><code class="language-julia hljs"># Generate the keyword object for the simulation
 kwargs = (
 
     ## Necessary keywords
@@ -196,23 +196,23 @@ kwargs = (
     soil_layers = Dict(&quot;Thickness&quot; =&gt; 5.0)
 
 )
-nothing # ignore this line</code></pre><p>the variable <code>kwargs</code> has some necessary keywords, like the runtype  where we specify that we will not use files to make the configuration  <code>runtype = NoFileRun()</code>, see <a href="../api/#AquaCrop.NoFileRun"><code>NoFileRun</code></a>, and some optional keywords, to pass the climate data, like temperature <code>Tmin = df.Tmin</code>, or additional information to change some properties of the variables, like <code>soil_layers = Dict(&quot;Thickness&quot; =&gt; 5.0)</code> To know more about the keywords see <a href="../api/#AquaCrop.check_nofilerun"><code>AquaCrop.check_nofilerun</code></a>.</p><p>Once that we have created the <code>kwargs</code> we can start a cropfield</p><pre><code class="language-julia hljs"># start cropfield
+nothing # ignore this line</code></pre><p>The variable <code>kwargs</code> has some necessary keywords, like the runtype, where we  specify that we will not use files to make the configuration (see <a href="../api/#AquaCrop.NoFileRun"><code>NoFileRun</code></a>), and some optional keywords to pass the climate data, like temperature <code>Tmin = df.Tmin</code>, or additional information to change some properties of the variables, like  <code>soil_layers = Dict(&quot;Thickness&quot; =&gt; 5.0)</code>. To know more about the keywords, see  <a href="../api/#AquaCrop.check_nofilerun"><code>AquaCrop.check_nofilerun</code></a>.</p><p>Once we have created the <code>kwargs</code> we can start a crop field:</p><pre><code class="language-julia hljs"># start cropfield
 cropfield, all_ok = start_cropfield(; kwargs...)
 dump(all_ok)
 
 # output
 AquaCrop.AllOk
   logi: Bool true
-  msg: String &quot;&quot;</code></pre><p>see that the climate is empty</p><pre><code class="language-julia hljs">cropfield.raindatasim
+  msg: String &quot;&quot;</code></pre><p>At the moment, the climate is still empty:</p><pre><code class="language-julia hljs">cropfield.raindatasim
 
 # output
-Float64[]</code></pre><p>now we setup the <code>cropfield</code></p><pre><code class="language-julia hljs">setup_cropfield!(cropfield, all_ok; kwargs...)
+Float64[]</code></pre><p>Now we setup the <code>cropfield</code>:</p><pre><code class="language-julia hljs">setup_cropfield!(cropfield, all_ok; kwargs...)
 dump(all_ok)
 
 # output
 AquaCrop.AllOk
   logi: Bool true
-  msg: String &quot;&quot;</code></pre><p>and the climate is no longer empty</p><pre><code class="language-julia hljs">cropfield.raindatasim
+  msg: String &quot;&quot;</code></pre><p>and the climate is no longer empty:</p><pre><code class="language-julia hljs">cropfield.raindatasim
 
 # output
 152-element Vector{Float64}:
@@ -235,7 +235,7 @@ AquaCrop.AllOk
  0.8874604322470359
  0.23524192561168275
  0.8519635419668649
- 2.9177565288611698</code></pre><p>Now that we have finished setting up the <code>cropfield</code>, we can update the cropfield day by day, this is done  using the <a href="../api/#AquaCrop.dailyupdate!-Tuple{AquaCropField}"><code>dailyupdate!</code></a> function</p><pre><code class="language-julia hljs"># daily update cropfield
+ 2.9177565288611698</code></pre><p>Now that we have finished setting up the <code>cropfield</code>, we can update the cropfield  one day at a time, this is done using the <a href="../api/#AquaCrop.dailyupdate!-Tuple{AquaCropField}"><code>dailyupdate!</code></a> function:</p><pre><code class="language-julia hljs"># daily update cropfield
 ndays = 30
 for _ in 1:ndays
     dailyupdate!(cropfield)
@@ -243,20 +243,20 @@ end
 isequal(size(cropfield.dayout), (ndays, 89))
 
 # output
-true</code></pre><p>we can ask wheter a crop is harvestable or not with the <a href="../api/#AquaCrop.isharvestable-Tuple{AquaCropField}"><code>isharvestable</code></a> function </p><pre><code class="language-julia hljs">logi = isharvestable(cropfield)
+true</code></pre><p>We can ask wheter a crop is harvestable or not with the <a href="../api/#AquaCrop.isharvestable-Tuple{AquaCropField}"><code>isharvestable</code></a>  function:</p><pre><code class="language-julia hljs">logi = isharvestable(cropfield)
 
 # output
-false</code></pre><p>and the amount of days until is harvestable with the <a href="../api/#AquaCrop.timetoharvest-Tuple{AquaCropField}"><code>timetoharvest</code></a> function</p><pre><code class="language-julia hljs">th = timetoharvest(cropfield)
+false</code></pre><p>and the amount of days until is harvestable with <a href="../api/#AquaCrop.timetoharvest-Tuple{AquaCropField}"><code>timetoharvest</code></a>:</p><pre><code class="language-julia hljs">th = timetoharvest(cropfield)
 
 # output
-56</code></pre><p>run until is harvestable</p><pre><code class="language-julia hljs">for i in 1:th
+56</code></pre><p>So, we run until our crop is harvestable:</p><pre><code class="language-julia hljs">for i in 1:th
     dailyupdate!(cropfield)
 end
 
 logi = isharvestable(cropfield)
 
 # output
-true</code></pre><p>similarly to <a href="#Intermediate-Run">Intermediate Run</a>,  if we want to make a harvest in the current day use <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a> function,</p><pre><code class="language-julia hljs"># harvest cropfield
+true</code></pre><p>Similarly to the <a href="#Intermediate-Run">Intermediate Run</a> tutorial, if we want to conduct a harvest  on the current day, we use <a href="../api/#AquaCrop.harvest!-Tuple{AquaCropField}"><code>harvest!</code></a>:</p><pre><code class="language-julia hljs"># harvest cropfield
 harvest!(cropfield)
 
 cropfield.harvestsout
@@ -268,7 +268,7 @@ cropfield.harvestsout
 ─────┼──────────────────────────────────────────────────────────────────────────
    1 │     1      0  2023-01-08      0      0.0 d     0.0 ton ha⁻¹     0.0 ton ⋯
    2 │     1      1  2023-03-28     80      1.0 d  2.3493 ton ha⁻¹  2.3493 ton
-                                                               5 columns omitted</code></pre><p>note that we can use the <code>harvest!</code> function even if <code>isharvestable(cropfield) = false</code></p><p>We can also change the climate data in the middle of the run, first we create  a new mockup climate with the current simulation date of the <code>cropfield</code></p><pre><code class="language-julia hljs"># change climate data
+                                                               5 columns omitted</code></pre><p><strong>Note:</strong> we can use the <code>harvest!</code> function even if <code>isharvestable(cropfield) = false</code></p><p>We can also change the climate data during the course of a run. First we create  a new mockup climate with the current simulation date of the <code>cropfield</code>:</p><pre><code class="language-julia hljs"># change climate data
 daynri_now = cropfield.gvars[:integer_parameters][:daynri]
 day_now, month_now, year_now = AquaCrop.determine_date(daynri_now)
 date_now = Date(year_now, month_now, day_now)
@@ -295,14 +295,14 @@ df_new = create_mock_climate_dataframe(date_now, end_date, tmin, delta_t, eto, r
   63 │ 2023-05-30  15.9557  26.7914  0.320716   0.609482
   64 │ 2023-05-31  15.9225  26.3544  1.73078    0.00585092
   65 │ 2023-06-01  15.1585  25.8627  2.5861     0.725034
-                                            50 rows omitted</code></pre><p>and change the climate using <a href="../api/#AquaCrop.change_climate_data!-Tuple{AquaCropField, DataFrames.DataFrame}"><code>change_climate_data!</code></a> function</p><pre><code class="language-julia hljs">change_climate_data!(cropfield, df_new; kwargs...)
+                                            50 rows omitted</code></pre><p>and change the climate using <a href="../api/#AquaCrop.change_climate_data!-Tuple{AquaCropField, DataFrames.DataFrame}"><code>change_climate_data!</code></a> function:</p><pre><code class="language-julia hljs">change_climate_data!(cropfield, df_new; kwargs...)
 
 isapprox(cropfield.gvars[:float_parameters][:rain], df_new.Rain[1]) 
 
 # output
-true</code></pre><p>finally we can run until the end of the season using <a href="../api/#AquaCrop.season_run!-Tuple{AquaCropField}"><code>season_run!</code></a> function</p><pre><code class="language-julia hljs">season_run!(cropfield)
+true</code></pre><p>Finally we can run until the end of the season using <a href="../api/#AquaCrop.season_run!-Tuple{AquaCropField}"><code>season_run!</code></a> function:</p><pre><code class="language-julia hljs">season_run!(cropfield)
 total_days = length(collect(start_date:end_date))
 isequal(size(cropfield.dayout), (total_days, 89))
 
 # output
-true</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gettingstarted/">« Getting Started</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Tuesday 7 January 2025 20:49">Tuesday 7 January 2025</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+true</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gettingstarted/">« Getting Started</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Wednesday 8 January 2025 18:33">Wednesday 8 January 2025</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
