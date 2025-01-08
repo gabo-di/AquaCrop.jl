@@ -24,11 +24,48 @@ using Pkg
 Pkg.add(url="https://github.com/gabo-di/AquaCrop.jl")
 ```
 
-## Usage
+## Documentation
 
 The [documentation](https://gabo-di.github.io/AquaCrop.jl/dev/) gives examples of how 
 to [use the package](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/), and 
 describes the [API functions](https://gabo-di.github.io/AquaCrop.jl/dev/api/).
+
+## Basic Usage
+
+`AquaCrop.jl` can be used with the same input files as the original model. You must
+specify the directory that includes these files and then call the `basic_run` function:
+
+```julia
+using AquaCrop
+
+runtype = NormalFileRun()
+parentdir = AquaCrop.test_dir  #".../AquaCrop.jl/test/testcase"
+
+outputs = basic_run(; runtype=runtype, parentdir=parentdir)
+
+isequal(size(outputs[:dayout]), (892, 89)) # true
+```
+
+you can see the daily result in `outputs[:dayout]`, 
+the result of each harvest in `outputs[:harvestsout]`,
+the result of the whole season in `outputs[:seasonout]`,
+the information for the evaluation in `outputs[:evaldataout]`,
+and the logger information in `outputs[:logger]`.
+
+You can also choose to format your input data as TOML and CSV files:
+
+```julia
+runtype = TomlFileRun()
+parentdir = AquaCrop.test_toml_dir  #".../AquaCrop.jl/test/testcase/TOML_FILES"
+
+outputs = basic_run(; runtype=runtype, parentdir=parentdir)
+
+isequal(size(outputs[:dayout]), (892, 89)) # true
+```
+
+Finally, you can pass all variables and data using the API
+([tutorial here](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Advanced-Run)).
+
 
 ## Contributing
 
