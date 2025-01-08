@@ -1,13 +1,11 @@
 COPYRIGHT
 
-Based on AquaCrop, Copyright © 2024 KU Leuven for Fortran Version v7.2.
-Originally licensed under BSD-3.
-
-Translated and adapted to Julia by Gabriel Díaz for the CAP4GI project.
+AquaCrop Copyright © 2024 KU Leuven for Fortran Version v7.2. Licensed under BSD-3.
+AquaCrop.jl Copyright © 2025 Gabriel Díaz and the Helmholtz Centre for Environmental Research - UFZ for Julia Version v7.2.
 
 All rights reserved.
 
-Based on previous Pascal work under Copyright © FAO, in cooperation with KU Leuven
+Based on previous Pascal work under Copyright © FAO in close cooperation with KU Leuven
 and other universities and research centers.
 
 Redistribution and use in source and binary forms, with or without modification, 
