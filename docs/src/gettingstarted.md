@@ -11,7 +11,7 @@ Pages = ["gettingstarted.md"]
 
 ## Install
 
-To install the package you can do
+To install the package, open Julia and run:
 
 ```julia
 using Pkg
@@ -20,9 +20,9 @@ Pkg.add(url="https://github.com/gabo-di/AquaCrop.jl")
 
 ## [Basic Run](@id basic_run_section)
 
-AquaCrop.jl is based on FAO's [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/), to mantain
-compatibility we allow to upload the same configurations files that AquaCrop v7.2 allows, 
-this can be done using the [`NormalFileRun`](@ref) function
+To maintain compatibility, we support the same input file formats used by the 
+original implementation of [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/) (v7.2).
+To specify that this format should be used, call the [`NormalFileRun`](@ref) function:
 
 ```jldoctest basic_run_example; output = false
 using AquaCrop
@@ -32,8 +32,8 @@ runtype = NormalFileRun()
 NormalFileRun()
 ```
 
-now that we have selected what kind of configuration files we will use, we give the address of
-the files, for this example we use the files in the test directory
+Next we must specify where these input files are found. In this case, we use the
+files in the test directory:
 
 ```jldoctest basic_run_example; output = false
 parentdir = AquaCrop.test_dir #".../AquaCrop.jl/test/testcase"
@@ -43,7 +43,7 @@ endswith(parentdir, "test/testcase")
 true
 ```
 
-now we are ready to use the [`basic_run`](@ref) function
+Now we are ready to use the [`basic_run`](@ref) function:
 
 ```jldoctest basic_run_example
 outputs = basic_run(; runtype=runtype, parentdir=parentdir);
@@ -55,8 +55,8 @@ isequal(size(outputs[:dayout]), (892, 89))
 true
 ```
 
-we can see the harvest dataframe via
-
+All model results are stored in a collection of dataframes. For example, we can 
+see the harvest dataframe via:
 
 ```jldoctest basic_run_example
 outputs[:harvestsout]
@@ -83,17 +83,17 @@ outputs[:harvestsout]
                                                                5 columns omitted
 ```
 
-similarly with the daily output dataframe `outputs[:dayout]`,
+Similarly with the daily output dataframe `outputs[:dayout]`,
 the result of the whole season dataframe `outputs[:seasonout]`,
 the information for the evaluation dataframe `outputs[:evaldataout]`,
 and the logger information in `outputs[:logger]`.
-Note the output's dataframes correspond to output files in
-a run of AquaCrop Fortran.
+Note the output dataframes correspond to output files in a run of AquaCrop Fortran.
 
 ### Using TOML files
 
-If you prefer to use TOML and csv files for configuring the input, then 
-use the function [`TomlFileRun`](@ref) like in the following example
+If you prefer to use TOML and CSV files for configuring the input, then 
+use the function [`TomlFileRun`](@ref), as in the following example:
+
 ```jldoctest 
 runtype = TomlFileRun();
 parentdir = AquaCrop.test_toml_dir  #".../AquaCrop.jl/test/testcase/TOML_FILES"
@@ -107,3 +107,4 @@ isequal(size(outputs[:dayout]), (892, 89))
 true
 ```
 
+For more detailed examples, see the [user guide](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/).

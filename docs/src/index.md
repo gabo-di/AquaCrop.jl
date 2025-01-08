@@ -24,11 +24,11 @@ state variables at run time, opening up the possibility of dynamic, bidirectiona
 model coupling. These new features increase the interoperability of the model 
 compared to its original implementation.
 
-The model is open-source and available on [Github](https://github.com/gabo-di/AquaCrop.jl).
+The model is open-source and available on [Github](https://github.com/gabo-di/AquaCrop.jl) under a BSD-3 license.
 It was developed as a component of the [Persefone.jl](https://persefone-model.eu) model
 of the [Helmholtz Centre for Environmental Research - UFZ](https://www.ufz.de/) and 
 the [German Centre for Integrative Biodiversity Research (iDiv) Halle-Jena-Leipzig](https://www.idiv.de/).
 Development was funded through the project [CAP4GI](https://cap4gi.de/en) by the 
 Federal Ministry of Education and Research (BMBF), within the framework of the 
-Strategy „Research for Sustainability" ([FONA](www.fona.de/en)) as part of its 
+Strategy "Research for Sustainability" ([FONA](www.fona.de/en)) as part of its 
 Social-Ecological Research funding priority, funding no. 01UT2102A.
