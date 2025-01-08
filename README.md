@@ -76,9 +76,10 @@ We welcome questions, suggestions, bug reports, or other contributions.
 For bugs, please include as much information possible, including operating system, 
 Julia version, version of `AquaCrop.jl`, and all the data needed to reproduce the bug.
 
-- To contribute to the core code or API, make a pull request. 
-Contributions should include tests and a description of the problem you solve. 
-If necessary also update the documentation describing the new API functionality.
+- To contribute to the core code or API, make a pull request. Contributions should 
+include tests and a description of the problem you solve. Tests should ensure that 
+new features are backwards-compatible with the original Fortran model. If necessary, 
+also update the documentation describing new API functionality.
 
 - To contribute to the documentation or tutorials, make a pull request. 
 Make sure it is possible to get any necessary data.
@@ -90,7 +91,8 @@ should be addressed to the original model developers.*
 
 ## Citing
 
-If you use `AquaCrop.jl`, please cite this paper once it is published:
+If you use `AquaCrop.jl` in your scientific work, please cite the following paper 
+once it is published:
 
 	Díaz Iturry, Matthies, Pe'er, Vedder (in prep) "AquaCrop.jl: A Process-Based 
 	Model of Crop Growth"
