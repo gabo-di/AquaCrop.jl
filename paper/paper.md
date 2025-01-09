@@ -9,13 +9,16 @@ authors:
 	surname: Díaz Iturry
     corresponding: true
     affiliation: "1,2"
+	orcid: 0000-0001-6011-6097
   - name: Marco Matthies
     affiliation: "1,2"
   - name: Guy Pe'er
     affiliation: "1,2"
+	orcid: 0000-0002-7090-0560
   - name: Daniel Vedder
     corresponding: true
     affiliation: "1,2,3"
+	orcid: 0000-0002-0386-9102
 affiliations:
  - name: Helmholtz Centre for Environmental Research - UFZ
    index: 1
@@ -44,7 +47,9 @@ of society. Crop models based on physical and physiological processes use inform
 about environmental parameters (e.g. temperature, rainfall, soil quality) and
 knowledge of plant biology to simulate how crop plants grow over time and estimate
 the resulting yield. Such models can be used to optimise farm management, 
-forecast regional or national yields, or study climate change impacts.
+forecast regional or national yields, or study climate change impacts. Here we present
+an expanded reimplementation of the AquaCrop model in Julia, in order to make it 
+accessible to a wider group of researchers.
 
 # Statement of need
 
@@ -70,15 +75,15 @@ adaptation of existing models to be usable as components in integrated models
 [@Vedder2024].
 
 Specifically, we developed the package to use it as a component within 
-[Persefone.jl](https://persefone-model.eu), a model of agricultural ecosystems 
-[@Vedder2024a]. The aim of this model is to study the impact that agricultural 
-processes have on biodiversity, for which the growth of crop plants is an important 
-mediating factor.
+[Persefone.jl](https://persefone-model.eu), a process-based model of agricultural 
+ecosystems [@Vedder2024a]. The aim of this model is to study the impact that 
+agricultural management and policy has on biodiversity, for which the growth of 
+crop plants is an important mediating factor.
 
 The core code of `AquaCrop.jl` closely follows the FAO's Fortran implementation, 
 which allows us to quickly integrate changes and updates to the original `AquaCrop` 
 code. On top of the core code, we developed an API that makes it easy to configure and 
-run the simulations in several ways. It enables exploring and interacting 
+run the simulations in several ways. For example, it enables exploring and interacting 
 with state variables at run time, opening up the possibility of dynamic, bidirectional
 model coupling. These new features increase the interoperability of the model compared
 to its original implementation. In addition, they allow complementing the code with 
@@ -86,7 +91,7 @@ other libraries from the Julia ecosystem, like `DataFrames.jl`, `Makie.jl`,
 `StatsModels.jl`, or `Optimisers.jl`. All of this makes `AquaCrop.jl` a reliable 
 and versatile tool for simulating and studying crop growth.
 
-# Example 
+# Examples 
 
 The following tutorials are provided in the documentation:
 
@@ -100,7 +105,7 @@ one day at a time, and how to access crop variables at run time.
 shows how to configure the model via the API (i.e. using Julia variables), and how to
 change variables at run time.
 
-A simple demonstration of the basic run using the data from the `AquaCrop.jl/test/testcase` 
+A simple demonstration of a basic run using the data from the `AquaCrop.jl/test/testcase` 
 directory is shown here:
 
 
@@ -109,9 +114,17 @@ using AquaCrop
 using CairoMakie
 using Unitful
 
-runtype = NormalFileRun();
-parentdir = AquaCrop.test_dir;  #".../AquaCrop.jl/test/testcase"
 
+# First, we specify the input file format:
+# NormalFileRun(): use the original AquaCrop file format
+# TomlFileRun(): use TOML and CSV formatting
+# NoFileRun(): provide input data via the API
+runtype = NormalFileRun();
+
+# Then specify the directory containing the necessary input files
+parentdir = AquaCrop.test_dir;  # ".../AquaCrop.jl/test/testcase"
+
+# Now we can do a simulation run and plot the results
 outputs = basic_run(; runtype=runtype, parentdir=parentdir);
 
 f = Figure();
