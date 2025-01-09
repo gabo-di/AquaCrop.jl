@@ -85,11 +85,10 @@ crop plants is an important mediating factor.
 The core code of `AquaCrop.jl` closely follows the FAO's Fortran implementation, 
 which allows us to quickly integrate changes and updates to the original `AquaCrop` 
 code. The code was translated verbatim as much as possible, leaving all function and
-variable names as they are. To preserve compatibility, we support the original 
-(highly idiosyncratic) input and output file format, so that `AquaCrop.jl` can be
-used as a drop-in replacement for the original implementation, if desired. The
-correctness of our code is tested by comparing its output with that of the original 
-software, to ensure that it produces the same results.
+variable names as they are. To maintain compatibility, we also support the original 
+(highly idiosyncratic) input file formats. The correctness of our code is tested 
+by comparing its output with that of the original software, to ensure that it 
+produces the same results.
 
 Whereas the original software was primarily designed as a stand-alone model, our
 purpose is to use `AquaCrop.jl` as an integrated component. Therefore, we developed
