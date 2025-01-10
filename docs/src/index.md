@@ -30,5 +30,5 @@ of the [Helmholtz Centre for Environmental Research - UFZ](https://www.ufz.de/) 
 the [German Centre for Integrative Biodiversity Research (iDiv) Halle-Jena-Leipzig](https://www.idiv.de/).
 Development was funded through the project [CAP4GI](https://cap4gi.de/en) by the 
 Federal Ministry of Education and Research (BMBF), within the framework of the 
-Strategy "Research for Sustainability" ([FONA](www.fona.de/en)) as part of its 
+Strategy "Research for Sustainability" ([FONA](https://www.fona.de/en/)) as part of its 
 Social-Ecological Research funding priority, funding no. 01UT2102A.

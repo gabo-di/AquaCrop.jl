@@ -44,7 +44,6 @@ function Base.getproperty(b::AquaCropField, s::Symbol)
     end
 end
 
-
 function Base.propertynames(b::AquaCropField, private::Bool=false)
     # TODO: private is currently ignored
     return tuple(union(
@@ -854,4 +853,36 @@ function _timetoharvest(status::T, cropfield::AquaCropField) where {T<:Union{Set
         end
     end
     return th, logi
+end
+
+"""
+    write_out_csv(file, cropfield::AquaCropField, field::Symbol; kwargs...)
+
+Writes the dataframe of `cropfield.outputs[field]` on `file` using csv format.
+
+This is a wraper of `CSV.write` that removes the units, the keywords `kwargs` are passed to `CSV.write`.
+
+If the `digits` keyword argument is provided, it rounds to the specified number of digits after the
+decimal place, otherwise uses default of `digits=4`.
+"""
+function write_out_csv(file, cropfield::AquaCropField, field::Symbol; kwargs...)
+    if !haskey(cropfield.outputs, field)
+        error("cropfield.outputs does not have entry "*string(field))
+    elseif !(typeof(cropfield.outputs[field])<:AbstractDataFrame)
+        error("cropfield.outputs[field] must be a subtype of AbstractDataFrame")
+    end
+    write_out_csv(file, cropfield.outputs[field]; kwargs...)
+end
+
+function write_out_csv(file, cropfield::T; kwargs...) where T<:AbstractDataFrame 
+    if haskey(kwargs, :digits)
+        digits = kwargs[:digits]
+    else
+        digits = 4
+    end
+    
+    CSV.write(file, cropfield;
+            transform = (col,val) -> typeof(val)<:Quantity ? round(ustrip(val), digits=digits) : val,
+            kwargs... )
+    return nothing
 end
