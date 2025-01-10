@@ -44,7 +44,6 @@ function Base.getproperty(b::AquaCropField, s::Symbol)
     end
 end
 
-
 function Base.propertynames(b::AquaCropField, private::Bool=false)
     # TODO: private is currently ignored
     return tuple(union(
@@ -77,7 +76,7 @@ struct SetupCropField <: AbstractCropFieldStatus end
 
 
 """
-    status = SetupCropField()
+    status = FinishCropField()
 
 Indicates the cropfield has finished running
 """
@@ -121,6 +120,11 @@ end
     season_run!(cropfield::AquaCropField)
 
 Updates the `cropfield` for all days in the current season
+
+In case you upload the data using `NormalFileRun` or `TomlFileRun` and you indicate multiple seasons
+it will only run the first season.
+
+In case you upload the data using `NoFileRun` it runs the simulation from `Simulation_DayNr1` up to `Simulation_DayNrN`.
 """
 function season_run!(cropfield::AquaCropField)
     _season_run!(cropfield.status[1], cropfield)
@@ -854,4 +858,36 @@ function _timetoharvest(status::T, cropfield::AquaCropField) where {T<:Union{Set
         end
     end
     return th, logi
+end
+
+"""
+    write_out_csv(file, cropfield::AquaCropField, field::Symbol; kwargs...)
+
+Writes the dataframe of `cropfield.outputs[field]` on `file` using csv format.
+
+This is a wraper of `CSV.write` that removes the units, the keywords `kwargs` are passed to `CSV.write`.
+
+If the `digits` keyword argument is provided, it rounds to the specified number of digits after the
+decimal place, otherwise uses default of `digits=4`.
+"""
+function write_out_csv(file, cropfield::AquaCropField, field::Symbol; kwargs...)
+    if !haskey(cropfield.outputs, field)
+        error("cropfield.outputs does not have entry "*string(field))
+    elseif !(typeof(cropfield.outputs[field])<:AbstractDataFrame)
+        error("cropfield.outputs[field] must be a subtype of AbstractDataFrame")
+    end
+    write_out_csv(file, cropfield.outputs[field]; kwargs...)
+end
+
+function write_out_csv(file, cropfield::T; kwargs...) where T<:AbstractDataFrame 
+    if haskey(kwargs, :digits)
+        digits = kwargs[:digits]
+    else
+        digits = 4
+    end
+    
+    CSV.write(file, cropfield;
+            transform = (col,val) -> typeof(val)<:Quantity ? round(ustrip(val), digits=digits) : val,
+            kwargs... )
+    return nothing
 end

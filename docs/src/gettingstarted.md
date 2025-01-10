@@ -89,6 +89,19 @@ the information for the evaluation dataframe `outputs[:evaldataout]`,
 and the logger information in `outputs[:logger]`.
 Note the output dataframes correspond to output files in a run of AquaCrop Fortran.
 
+You can write the output in csv file using the [`write_out_csv`](@ref) function
+```jldoctest basic_run_example
+io = IOBuffer() 
+
+write_out_csv(io, outputs[:seasonout]) # instead of io  you can use a filename like "example.csv"
+
+io
+
+# output
+IOBuffer(data=UInt8[...], readable=true, writable=true, seekable=true, append=false, size=925, maxsize=Inf, ptr=926, mark=-1)
+```
+
+
 ### Using TOML files
 
 If you prefer to use TOML and CSV files for configuring the input, then 

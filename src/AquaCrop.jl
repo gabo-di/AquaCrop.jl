@@ -5,6 +5,7 @@ using DataFrames
 using Unitful: Quantity, FreeUnits, Unit, 𝐋, 𝚯, 𝐓, 𝐈, 𝐌, NoDims
 using Unitful
 using Dates
+using CSV
 
 
 # ---- includes ----
@@ -39,6 +40,7 @@ export AquaCropField,
        setup_cropfield!,
        change_climate_data!,
        isharvestable,
-       timetoharvest
+       timetoharvest,
+       write_out_csv
 end
 
