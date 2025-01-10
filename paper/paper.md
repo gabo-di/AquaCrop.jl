@@ -148,13 +148,26 @@ parentdir = AquaCrop.test_dir;  # ".../AquaCrop.jl/test/testcase"
 # Now we can do a simulation run and plot the results
 outputs = basic_run(; runtype=runtype, parentdir=parentdir);
 
-f = Figure();
-ax = Axis(f[1,1],
-    title = "Biomass vs Day",
-    xlabel = "Day",
-    ylabel = "Biomass",
-)
-lines!(ax, 1:size(outputs[:dayout], 1) , ustrip.(outputs[:dayout][!, "Biomass"]))
+function plot_basic_out(cropfield, cols)
+   x = cropfield[!,"Date"]
+   aux_sz = round(Int, sqrt(length(cols)))
+   f = Figure()
+   for (i, coli) in enumerate(cols)
+       ii, jj = divrem(i-1, aux_sz)
+       ax = Axis(f[ii, jj],
+               title = coli*" vs Date",
+               xlabel = "Date",
+               ylabel = coli
+               )
+       lines!(ax, x, ustrip.(cropfield[!, coli]))
+       ax.xticklabelrotation = π/4
+       ax.xticklabelsize = 8
+       ax.yticklabelsize = 8
+   end
+   return f
+end
+
+f = plot_basic_out(outputs[:dayout], ["CC", "Tavg", "Biomass", "Rain"])
 ```
 
 ![Biomass of crops over time in a generic simulation run.\label{fig:biomass}](example.png)
