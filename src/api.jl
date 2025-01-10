@@ -76,7 +76,7 @@ struct SetupCropField <: AbstractCropFieldStatus end
 
 
 """
-    status = SetupCropField()
+    status = FinishCropField()
 
 Indicates the cropfield has finished running
 """
@@ -120,6 +120,11 @@ end
     season_run!(cropfield::AquaCropField)
 
 Updates the `cropfield` for all days in the current season
+
+In case you upload the data using `NormalFileRun` or `TomlFileRun` and you indicate multiple seasons
+it will only run the first season.
+
+In case you upload the data using `NoFileRun` it runs the simulation from `Simulation_DayNr1` up to `Simulation_DayNrN`.
 """
 function season_run!(cropfield::AquaCropField)
     _season_run!(cropfield.status[1], cropfield)
