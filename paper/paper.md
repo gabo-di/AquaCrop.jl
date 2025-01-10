@@ -170,7 +170,7 @@ end
 f = plot_basic_out(outputs[:dayout], ["CC", "Tavg", "Biomass", "Rain"])
 ```
 
-![Biomass of crops over time in a generic simulation run.\label{fig:biomass}](example.png)
+![Simulated Canopy Cover (CC) and Biomass of crops over time in a generic simulation run. We also show the average temperature (Tavg) and rain data\label{fig:biomass}](example.png)
 
 The resulting graph is shown in \autoref{fig:biomass}. Biomass increases over the
 growing season, is then reset to 0 with the harvest, and then sown again the
