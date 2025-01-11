@@ -81,20 +81,17 @@ end
     runtype = NormalFileRun()
     parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
-    setup_cropfield!(cropfield, all_ok; runtype=runtype)
     @test isequal(all_ok.logi, true)
 
     # good setup of cropfield using TomlFileRun
     runtype = TomlFileRun()
     parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
-    setup_cropfield!(cropfield, all_ok; runtype=runtype)
     @test isequal(all_ok.logi, true)
 
     # good setup of cropfield not using runtype
     parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
     cropfield, all_ok = start_cropfield(; parentdir=parentdir)
-    setup_cropfield!(cropfield, all_ok) 
     @test isequal(all_ok.logi, true)
 
     # observables start with 0 value
@@ -111,7 +108,6 @@ end
     runtype = NormalFileRun()
     parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
-    setup_cropfield!(cropfield, all_ok; runtype=runtype)
     ndays = 30
     for _ in 1:ndays
         dailyupdate!(cropfield)
@@ -129,7 +125,6 @@ end
     runtype = TomlFileRun()
     parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
-    setup_cropfield!(cropfield, all_ok; runtype=runtype)
     ndays = 30
     for _ in 1:ndays
         dailyupdate!(cropfield)

@@ -121,7 +121,7 @@ end
 
 Updates the `cropfield` for all days in the current season
 
-In case you upload the data using `NormalFileRun` or `TomlFileRun` and you indicate multiple seasons
+In case you upload the data using `NormalFileRun` or `TomlFileRun` and you indicate multiple seasons,
 it will only run the first season.
 
 In case you upload the data using `NoFileRun` it runs the simulation from `Simulation_DayNr1` up to `Simulation_DayNrN`.
@@ -562,12 +562,7 @@ it uses default values for `runtype` and `parentdir` if these
 `kwargs` are missing.
 
 It returns a `cropfield` with default values for crop, soil, etc.
-You need to call the function [`setup_cropfield!`](@ref) to actually
-load the values that you want for these variables.
-
 After calling this function check if `all_ok.logi == true`
-
-See also [`setup_cropfield!`](@ref)
 """
 function start_cropfield(; kwargs...)
     # this variables are here in case later we want to give more control in the season (nrrun)
@@ -635,19 +630,26 @@ function start_cropfield(; kwargs...)
 
     add_output_in_logger!(outputs, "cropfield started")
     lvars = Dict()
-    return AquaCropField(gvars, outputs, lvars, [StartCropField()]), all_ok
+
+    # return AquaCropField(gvars, outputs, lvars, [StartCropField()]), all_ok
+
+    # we do the setup in the same function now
+    cropfield = AquaCropField(gvars, outputs, lvars, [StartCropField()])
+    setup_cropfield!(cropfield, all_ok; kwargs...)
+
+    return cropfield, all_ok
 end
 
-"""
-    setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
-
-Setups the `cropfield` variable,  and reads the configuration files 
-with information about the climate.
-
-After calling this function check if `all_ok.logi == true`
-
-See also [`start_cropfield`](@ref)
-"""
+# """
+#     setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
+#
+# Setups the `cropfield` variable,  and reads the configuration files 
+# with information about the climate.
+#
+# After calling this function check if `all_ok.logi == true`
+#
+# See also [`start_cropfield`](@ref)
+# """
 function setup_cropfield!(cropfield::AquaCropField, all_ok::AllOk; kwargs...)
     _setup_cropfield!(cropfield.status[1], cropfield, all_ok; kwargs...)
 end
