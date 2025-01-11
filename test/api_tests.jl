@@ -46,10 +46,16 @@ end
     @test isequal(all_ok.logi, true)
 
     # missing observables
-    @test ismissing(biomass(cropfield))
-    @test ismissing(canopycover(cropfield))
-    @test ismissing(freshyield(cropfield))
-    @test ismissing(dryyield(cropfield))
+    # @test ismissing(biomass(cropfield))
+    # @test ismissing(canopycover(cropfield))
+    # @test ismissing(freshyield(cropfield))
+    # @test ismissing(dryyield(cropfield))
+
+    # observables start with 0 value
+    @test isapprox( biomass(cropfield).val, 0.0 )
+    @test isapprox( canopycover(cropfield), 0.0 )
+    @test isapprox( freshyield(cropfield).val, 0.0 )
+    @test isapprox( dryyield(cropfield).val, 0.0 )
 
 
     # bad start giving wrong runtype 
@@ -76,42 +82,38 @@ end
     # we can also have "bad projecttype", "did not find the projectfile", "wrong files for project nrrun"
 end
 
-@testset "Setup cropfield intermediate" begin
-    # good setup of cropfield using NormalFileRun 
-    runtype = NormalFileRun()
-    parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
-    cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
-    setup_cropfield!(cropfield, all_ok; runtype=runtype)
-    @test isequal(all_ok.logi, true)
-
-    # good setup of cropfield using TomlFileRun
-    runtype = TomlFileRun()
-    parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
-    cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
-    setup_cropfield!(cropfield, all_ok; runtype=runtype)
-    @test isequal(all_ok.logi, true)
-
-    # good setup of cropfield not using runtype
-    parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
-    cropfield, all_ok = start_cropfield(; parentdir=parentdir)
-    setup_cropfield!(cropfield, all_ok) 
-    @test isequal(all_ok.logi, true)
-
-    # observables start with 0 value
-    @test isapprox( biomass(cropfield).val, 0.0 )
-    @test isapprox( canopycover(cropfield), 0.0 )
-    @test isapprox( freshyield(cropfield).val, 0.0 )
-    @test isapprox( dryyield(cropfield).val, 0.0 )
-
-    # we can have "error when settingup the cropfield"
-end
+# @testset "Setup cropfield intermediate" begin
+#     # good setup of cropfield using NormalFileRun 
+#     runtype = NormalFileRun()
+#     parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
+#     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
+#     @test isequal(all_ok.logi, true)
+#
+#     # good setup of cropfield using TomlFileRun
+#     runtype = TomlFileRun()
+#     parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
+#     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
+#     @test isequal(all_ok.logi, true)
+#
+#     # good setup of cropfield not using runtype
+#     parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
+#     cropfield, all_ok = start_cropfield(; parentdir=parentdir)
+#     @test isequal(all_ok.logi, true)
+#
+#     # observables start with 0 value
+#     @test isapprox( biomass(cropfield).val, 0.0 )
+#     @test isapprox( canopycover(cropfield), 0.0 )
+#     @test isapprox( freshyield(cropfield).val, 0.0 )
+#     @test isapprox( dryyield(cropfield).val, 0.0 )
+#
+#     # we can have "error when settingup the cropfield"
+# end
 
 @testset "Update cropfield intermediate" begin
     # good update of cropfield using NormalFileRun 
     runtype = NormalFileRun()
     parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
-    setup_cropfield!(cropfield, all_ok; runtype=runtype)
     ndays = 30
     for _ in 1:ndays
         dailyupdate!(cropfield)
@@ -129,7 +131,6 @@ end
     runtype = TomlFileRun()
     parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
-    setup_cropfield!(cropfield, all_ok; runtype=runtype)
     ndays = 30
     for _ in 1:ndays
         dailyupdate!(cropfield)
