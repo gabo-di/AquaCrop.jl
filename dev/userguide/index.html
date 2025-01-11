@@ -8,13 +8,7 @@ dump(all_ok)
 # output
 AquaCrop.AllOk
   logi: Bool true
-  msg: String &quot;&quot;</code></pre><p>Here, <code>all_ok</code> tell us whether the parameters have been loaded correctly  (if <code>all_ok.logi</code> is <code>true</code>). If there was a problem, the error type is specified in <code>all_ok.msg</code>. (Note that we do not raise exceptions, so that the <code>cropfield</code>  variable can still be inspected, such as <code>cropfield.outputs[:logger]</code>). In out example we see that <code>all_ok.logi == true</code>, so all went well up to now. </p><p>We now have a <code>cropfield::AquaCropField</code> variable with the soil and crop data loaded, and have checked that the config files exist. Now we have to add further data (such as the climate) and carry out other initialisation tasks using the function  <a href="../api/#AquaCrop.setup_cropfield!-Tuple{AquaCropField, AquaCrop.AllOk}"><code>setup_cropfield!</code></a>:</p><pre><code class="language-julia hljs">setup_cropfield!(cropfield, all_ok; runtype=runtype);
-dump(all_ok)
-
-# output
-AquaCrop.AllOk
-  logi: Bool true
-  msg: String &quot;&quot;</code></pre><p>We see that <code>all_ok.logi == true</code> so we have read all the data. We can update the  crop field one day at a time, this is done using the <a href="../api/#AquaCrop.dailyupdate!-Tuple{AquaCropField}"><code>dailyupdate!</code></a> function:</p><pre><code class="language-julia hljs">ndays = 30
+  msg: String &quot;&quot;</code></pre><p>Here, <code>all_ok</code> tell us whether the parameters have been loaded correctly  (if <code>all_ok.logi</code> is <code>true</code>). If there was a problem, the error type is specified in <code>all_ok.msg</code>. (Note that we do not raise exceptions, so that the <code>cropfield</code>  variable can still be inspected, such as <code>cropfield.outputs[:logger]</code>). In out example we see that <code>all_ok.logi == true</code>, so all went well up to now. We can update the  crop field one day at a time, this is done using the <a href="../api/#AquaCrop.dailyupdate!-Tuple{AquaCropField}"><code>dailyupdate!</code></a> function:</p><pre><code class="language-julia hljs">ndays = 30
 for _ in 1:ndays
     dailyupdate!(cropfield)
 end
@@ -203,16 +197,7 @@ dump(all_ok)
 # output
 AquaCrop.AllOk
   logi: Bool true
-  msg: String &quot;&quot;</code></pre><p>At the moment, the climate is still empty:</p><pre><code class="language-julia hljs">cropfield.raindatasim
-
-# output
-Float64[]</code></pre><p>Now we setup the <code>cropfield</code>:</p><pre><code class="language-julia hljs">setup_cropfield!(cropfield, all_ok; kwargs...)
-dump(all_ok)
-
-# output
-AquaCrop.AllOk
-  logi: Bool true
-  msg: String &quot;&quot;</code></pre><p>and the climate is no longer empty:</p><pre><code class="language-julia hljs">cropfield.raindatasim
+  msg: String &quot;&quot;</code></pre><p>and the climate is loaded:</p><pre><code class="language-julia hljs">cropfield.raindatasim
 
 # output
 152-element Vector{Float64}:
@@ -235,7 +220,7 @@ AquaCrop.AllOk
  0.8874604322470359
  0.23524192561168275
  0.8519635419668649
- 2.9177565288611698</code></pre><p>Now that we have finished setting up the <code>cropfield</code>, we can update the cropfield  one day at a time, this is done using the <a href="../api/#AquaCrop.dailyupdate!-Tuple{AquaCropField}"><code>dailyupdate!</code></a> function:</p><pre><code class="language-julia hljs"># daily update cropfield
+ 2.9177565288611698</code></pre><p>Now that we have finished starting the <code>cropfield</code>, we can update the cropfield  one day at a time, this is done using the <a href="../api/#AquaCrop.dailyupdate!-Tuple{AquaCropField}"><code>dailyupdate!</code></a> function:</p><pre><code class="language-julia hljs"># daily update cropfield
 ndays = 30
 for _ in 1:ndays
     dailyupdate!(cropfield)
@@ -305,4 +290,4 @@ total_days = length(collect(start_date:end_date))
 isequal(size(cropfield.dayout), (total_days, 89))
 
 # output
-true</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gettingstarted/">« Getting Started</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Friday 10 January 2025 22:14">Friday 10 January 2025</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+true</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../gettingstarted/">« Getting Started</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.8.0 on <span class="colophon-date" title="Saturday 11 January 2025 01:21">Saturday 11 January 2025</span>. Using Julia version 1.11.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
