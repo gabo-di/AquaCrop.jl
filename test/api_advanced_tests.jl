@@ -87,14 +87,6 @@ end
         @test isequal(all_ok.logi, true)
     end
 
-    # setup cropfield
-    setup_cropfield!(cropfield, all_ok; kwargs...)
-    @testset "setup cropfield" begin
-        @test isequal(all_ok.logi, true)
-        @test isequal(cropfield.soil_layers[1].Thickness, 5.0)
-    end
-
-
     # daily update cropfield
     ndays = 30
     for _ in 1:ndays

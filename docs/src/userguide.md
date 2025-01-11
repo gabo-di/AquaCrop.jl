@@ -47,24 +47,7 @@ Here, `all_ok` tell us whether the parameters have been loaded correctly
 (if `all_ok.logi` is `true`). If there was a problem, the error type is specified
 in `all_ok.msg`. (Note that we do not raise exceptions, so that the `cropfield` 
 variable can still be inspected, such as `cropfield.outputs[:logger]`).
-In out example we see that `all_ok.logi == true`, so all went well up to now. 
-
-We now have a `cropfield::AquaCropField` variable with the soil and crop data loaded,
-and have checked that the config files exist. Now we have to add further data
-(such as the climate) and carry out other initialisation tasks using the function 
-[`setup_cropfield!`](@ref):
-
-```jldoctest intermediate_run_example
-setup_cropfield!(cropfield, all_ok; runtype=runtype);
-dump(all_ok)
-
-# output
-AquaCrop.AllOk
-  logi: Bool true
-  msg: String ""
-```
-
-We see that `all_ok.logi == true` so we have read all the data. We can update the 
+In out example we see that `all_ok.logi == true`, so all went well up to now. We can update the 
 crop field one day at a time, this is done using the [`dailyupdate!`](@ref) function:
 
 ```jldoctest intermediate_run_example
@@ -393,28 +376,7 @@ AquaCrop.AllOk
   msg: String ""
 ```
 
-At the moment, the climate is still empty:
-
-```jldoctest advanced_run_example
-cropfield.raindatasim
-
-# output
-Float64[]
-```
-
-Now we setup the `cropfield`:
-
-```jldoctest advanced_run_example
-setup_cropfield!(cropfield, all_ok; kwargs...)
-dump(all_ok)
-
-# output
-AquaCrop.AllOk
-  logi: Bool true
-  msg: String ""
-```
-
-and the climate is no longer empty:
+and the climate is loaded:
 
 ```jldoctest advanced_run_example
 cropfield.raindatasim
@@ -443,7 +405,7 @@ cropfield.raindatasim
  2.9177565288611698
 ```
 
-Now that we have finished setting up the `cropfield`, we can update the cropfield 
+Now that we have finished starting the `cropfield`, we can update the cropfield 
 one day at a time, this is done using the [`dailyupdate!`](@ref) function:
 
 ```jldoctest advanced_run_example
