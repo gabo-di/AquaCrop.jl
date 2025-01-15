@@ -10,7 +10,7 @@ authors:
     corresponding: true
     affiliation: "1,2"
 	orcid: 0000-0001-6011-6097
-  - name: Marco Matthies
+  - name: Marco C. Matthies
     affiliation: "1,2"
   - name: Guy Pe'er
     affiliation: "1,2"
@@ -47,16 +47,25 @@ of society. Crop models based on physical and physiological processes use inform
 about environmental parameters (e.g. temperature, rainfall, soil quality) and
 knowledge of plant biology to simulate how crop plants grow over time and estimate
 the resulting yield. Such models can be used to optimise farm management, 
-forecast regional or national yields, or study climate change impacts. Here we present
+forecast regional or national yields, or study climate change impacts. ~~Here we present
 an expanded reimplementation of the AquaCrop model in Julia, in order to make it 
-accessible to a wider group of researchers.
+accessible to a wider group of researchers.~~
+
+**`AquaCrop.jl` is an independent Julia [@Bezanson2017] translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
+model (version 7.2), originally developed by the Food and Agriculture Organization of the 
+United Nations (FAO) [@Steduto2009] in Fortran language. This is a well-established 
+crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
+and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].
+It is the intention, that `AquaCrop.jl` can make crop growth modelling more accessible to a wider
+group of researchers, mixing the reliability of the well-established FAO's AquaCrop with the versatility
+of the Julia ecosystem**
 
 # Statement of need
 
-`AquaCrop.jl` is an independent Julia translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
+~~`AquaCrop.jl` is an independent Julia translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
 model (version 7.2), originally developed by the FAO [@Steduto2009]. This is a well-established 
 crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
-and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].
+and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].~~
 
 `AquaCrop` is already available in multiple languages. First implemented in Delphi,
 it was later open-sourced in a Fortran version [@deRoos2021; @RSDA2024]. There are
@@ -179,17 +188,11 @@ following spring.
 \autoref{fig:beans} displays the results a more realistic use case. Here, 
 `AquaCrop.jl` was used to simulate the growth of beans (*Vicia faba*) based on 
 environmental data from Thuringia, Germany, with historical yield data shown 
-for comparison. This showcases the high predictive accuracy that can be achieved 
-with AquaCrop.
+for comparison. ~~This showcases the high predictive accuracy that can be achieved 
+with AquaCrop.~~ **This showcases that AquaCrop can reproduce high and low seasons of yield in different years.**
 
 ![Simulated yield of beans (*Vicia faba*) compared to observed yields in Thuringia, Germany.\label{fig:beans}](beans.png)
 
-<!--TODO please recreate the beans figure (taken from the first results), changing
-the following:
- - change the title to: "Bean yield over time"
- - remove the simulated biomass
- - remove the reference to the soil type
---->
 
 # Conclusion
 
