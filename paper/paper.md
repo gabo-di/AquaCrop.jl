@@ -51,14 +51,14 @@ forecast regional or national yields, or study climate change impacts. Here we p
 an expanded reimplementation of the AquaCrop model in Julia, in order to make it 
 accessible to a wider group of researchers.~~
 
-**`AquaCrop.jl` is an independent Julia [@Bezanson2017] translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
+`AquaCrop.jl` is an independent Julia [@Bezanson2017] translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
 model (version 7.2), originally developed by the Food and Agriculture Organization of the 
 United Nations ([FAO](https://www.fao.org/home/en/)) [@Steduto2009] in Fortran language. This is a well-established 
 crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
 and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].
 It is the intention, that `AquaCrop.jl` can make crop growth modelling more accessible to a wider
 group of researchers, mixing the reliability of the well-established FAO's AquaCrop with the versatility
-of the Julia ecosystem**
+of the Julia ecosystem
 
 # Statement of need
 
@@ -199,7 +199,7 @@ following spring.
 `AquaCrop.jl` was used to simulate the growth of beans (*Vicia faba*) based on 
 environmental data from Thuringia, Germany, with historical yield data shown 
 for comparison. ~~This showcases the high predictive accuracy that can be achieved 
-with AquaCrop.~~ **This showcases that AquaCrop can reproduce high and low seasons of yield in different years.**
+with AquaCrop.~~ This showcases that AquaCrop can reproduce high and low seasons of yield in different years.
 
 ![Simulated yield of beans (*Vicia faba*) compared to observed yields in Thuringia, Germany.\label{fig:beans}](beans.png)
 
@@ -211,6 +211,7 @@ implementations. To our knowledge, this is the first process-based crop growth
 model available in Julia. By focussing on improving interoperability, we aim to
 contribute to the creation of interdisciplinary, integrated models in the 
 environmental sciences.~~
+
 **Deleted section, not usual on this kind of papers**
 
 # Acknowledgements
