@@ -44,17 +44,17 @@ It is the intention, that `AquaCrop.jl` can make crop growth modelling more acce
 group of researchers, mixing the reliability of the well-established FAO's AquaCrop with the versatility
 of the Julia ecosystem.
 
-~~All agriculture is dependent on the growth of plants. Crop plants provide food
-for humans, fodder for domestic animals, and fibre and other resources for our
-manufacturing economy. Therefore, understanding how plants grow under different
-conditions is important not just for farmers themselves, but also for the rest
-of society. Crop models based on physical and physiological processes use information
-about environmental parameters (e.g. temperature, rainfall, soil quality) and
-knowledge of plant biology to simulate how crop plants grow over time and estimate
-the resulting yield. Such models can be used to optimise farm management, 
-forecast regional or national yields, or study climate change impacts. Here we present
-an expanded reimplementation of the AquaCrop model in Julia, in order to make it 
-accessible to a wider group of researchers.~~
+<!-- ~~All agriculture is dependent on the growth of plants. Crop plants provide food -->
+<!-- for humans, fodder for domestic animals, and fibre and other resources for our -->
+<!-- manufacturing economy. Therefore, understanding how plants grow under different -->
+<!-- conditions is important not just for farmers themselves, but also for the rest -->
+<!-- of society. Crop models based on physical and physiological processes use information -->
+<!-- about environmental parameters (e.g. temperature, rainfall, soil quality) and -->
+<!-- knowledge of plant biology to simulate how crop plants grow over time and estimate -->
+<!-- the resulting yield. Such models can be used to optimise farm management,  -->
+<!-- forecast regional or national yields, or study climate change impacts. Here we present -->
+<!-- an expanded reimplementation of the AquaCrop model in Julia, in order to make it  -->
+<!-- accessible to a wider group of researchers.~~ -->
 
 # Statement of need
 
@@ -68,10 +68,10 @@ knowledge of plant biology to simulate how crop plants grow over time and estima
 the resulting yield. Such models can be used to optimise farm management, 
 forecast regional or national yields, or study climate change impacts. 
 
-~~`AquaCrop.jl` is an independent Julia translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
-model (version 7.2), originally developed by the FAO [@Steduto2009]. This is a well-established 
-crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
-and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].~~
+<!-- ~~`AquaCrop.jl` is an independent Julia translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/) -->
+<!-- model (version 7.2), originally developed by the FAO [@Steduto2009]. This is a well-established  -->
+<!-- crop growth model that has been used to model numerous crops worldwide [@Mialyk2024],  -->
+<!-- and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].~~ -->
 
 `AquaCrop` is a software for crop growth modelling developed by the FAO. First implemented in Delphi,
 it was later open-sourced in a Fortran version [@deRoos2021; @RSDA2024]. There are
@@ -191,22 +191,27 @@ The resulting graph is shown in \autoref{fig:biomass}. Biomass increases over th
 growing season, is then reset to 0 with the harvest, and then sown again the
 following spring.
 
+<!-- ~~\autoref{fig:beans} displays the results a more realistic use case. Here,  -->
+<!-- `AquaCrop.jl` was used to simulate the growth of beans (*Vicia faba*) based on  -->
+<!-- environmental data from Thuringia, Germany, with historical yield data shown  -->
+<!-- for comparison. This showcases the high predictive accuracy that can be achieved  -->
+<!-- with AquaCrop.~~ -->
+
 \autoref{fig:beans} displays the results a more realistic use case. Here, 
 `AquaCrop.jl` was used to simulate the growth of beans (*Vicia faba*) based on 
 environmental data from Thuringia, Germany, with historical yield data shown 
-for comparison. ~~This showcases the high predictive accuracy that can be achieved 
-with AquaCrop.~~ This showcases that AquaCrop can reproduce high and low seasons of yield in different years.
+for comparison. This showcases that AquaCrop can reproduce high and low seasons of yield in different years.
 
 ![Simulated yield of beans (*Vicia faba*) compared to observed yields in Thuringia, Germany.\label{fig:beans}](beans.png)
 
 
 # Conclusion
 
-~~We present `AquaCrop.jl` as an up-to-date addition to the portfolio of AquaCrop 
-implementations. To our knowledge, this is the first process-based crop growth
-model available in Julia. By focussing on improving interoperability, we aim to
-contribute to the creation of interdisciplinary, integrated models in the 
-environmental sciences.~~
+<!-- ~~We present `AquaCrop.jl` as an up-to-date addition to the portfolio of AquaCrop  -->
+<!-- implementations. To our knowledge, this is the first process-based crop growth -->
+<!-- model available in Julia. By focussing on improving interoperability, we aim to -->
+<!-- contribute to the creation of interdisciplinary, integrated models in the  -->
+<!-- environmental sciences.~~ -->
 
 **Deleted section, not usual on this kind of papers**
 
