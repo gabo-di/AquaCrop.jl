@@ -33,11 +33,16 @@ date: 01 February 2025
 bibliography: paper.bib
 ---
 
-<!-- see documentation here: https://joss.readthedocs.io/en/latest/paper.html -->
-
-<!-- set up a Github Action to auto-compile to PDF: https://github.com/marketplace/actions/open-journals-pdf-generator -->
-
 # Summary
+
+`AquaCrop.jl` is an independent Julia [@Bezanson2017] translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
+model (version 7.2), originally developed by the Food and Agriculture Organization of the 
+United Nations ([FAO](https://www.fao.org/home/en/)) [@Steduto2009] in Fortran language. This is a well-established 
+crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
+and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].
+It is the intention, that `AquaCrop.jl` can make crop growth modelling more accessible to a wider
+group of researchers, mixing the reliability of the well-established FAO's AquaCrop with the versatility
+of the Julia ecosystem.
 
 ~~All agriculture is dependent on the growth of plants. Crop plants provide food
 for humans, fodder for domestic animals, and fibre and other resources for our
@@ -51,21 +56,7 @@ forecast regional or national yields, or study climate change impacts. Here we p
 an expanded reimplementation of the AquaCrop model in Julia, in order to make it 
 accessible to a wider group of researchers.~~
 
-`AquaCrop.jl` is an independent Julia [@Bezanson2017] translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
-model (version 7.2), originally developed by the Food and Agriculture Organization of the 
-United Nations ([FAO](https://www.fao.org/home/en/)) [@Steduto2009] in Fortran language. This is a well-established 
-crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
-and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].
-It is the intention, that `AquaCrop.jl` can make crop growth modelling more accessible to a wider
-group of researchers, mixing the reliability of the well-established FAO's AquaCrop with the versatility
-of the Julia ecosystem
-
 # Statement of need
-
-~~`AquaCrop.jl` is an independent Julia translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
-model (version 7.2), originally developed by the FAO [@Steduto2009]. This is a well-established 
-crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
-and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].~~
 
 All agriculture is dependent on the growth of plants. Crop plants provide food
 for humans, fodder for domestic animals, and fibre and other resources for our
@@ -76,6 +67,11 @@ about environmental parameters (e.g. temperature, rainfall, soil quality) and
 knowledge of plant biology to simulate how crop plants grow over time and estimate
 the resulting yield. Such models can be used to optimise farm management, 
 forecast regional or national yields, or study climate change impacts. 
+
+~~`AquaCrop.jl` is an independent Julia translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
+model (version 7.2), originally developed by the FAO [@Steduto2009]. This is a well-established 
+crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
+and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].~~
 
 `AquaCrop` is a software for crop growth modelling developed by the FAO. First implemented in Delphi,
 it was later open-sourced in a Fortran version [@deRoos2021; @RSDA2024]. There are
