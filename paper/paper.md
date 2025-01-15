@@ -154,9 +154,9 @@ function plot_basic_out(cropfield, cols)
     for (i, coli) in enumerate(keys(cols))
         ii, jj = divrem(i-1, aux_sz)
         ax = Axis(f[ii, jj],
-                title = cols[coli],
+                title = cols[coli][1],
                 xlabel = "Date",
-                ylabel = cols[coli]
+                ylabel = cols[coli][2]
                 )
         lines!(ax, x, ustrip.(cropfield[!, coli]))
         ax.xticklabelrotation = π/4
@@ -166,8 +166,8 @@ function plot_basic_out(cropfield, cols)
     return f
 end
 
-f = plot_basic_out(outputs[:dayout], Dict("CC"=>"Canopy Cover", "Tavg"=>"Temperature", "Biom
-ass"=>"Biomass", "Rain"=>"Rainfall"))
+f = plot_basic_out(outputs[:dayout], Dict("CC"=>["Canopy Cover","%"], "Tavg"=>["Temperature","K"],
+"Biomass"=>["Biomass","ton/ha"], "Rain"=>["Rainfall","mm"]))
 ```
 
 ![Simulated Canopy Cover (CC) and Biomass of crops over time in a generic simulation run. We also show the average temperature (Tavg) and rain data\label{fig:biomass}](example.png)
