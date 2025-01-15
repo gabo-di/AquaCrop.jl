@@ -35,7 +35,7 @@ bibliography: paper.bib
 
 # Summary
 
-`AquaCrop.jl` is an independent Julia [@Bezanson2017] translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
+`AquaCrop.jl` is an independent Julia translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
 model (version 7.2), originally developed by the Food and Agriculture Organization of the 
 United Nations [FAO](https://www.fao.org/home/en/)  in Fortran language [@Steduto2009]. This is a well-established 
 crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
