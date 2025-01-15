@@ -6,19 +6,19 @@ tags:
   - yield forecast
 authors:
   - firstname: Gabriel 
-	surname: Díaz Iturry
+    surname: Díaz Iturry
     corresponding: true
     affiliation: "1,2"
-	orcid: 0000-0001-6011-6097
+    orcid: 0000-0001-6011-6097
   - name: Marco C. Matthies
     affiliation: "1,2"
   - name: Guy Pe'er
     affiliation: "1,2"
-	orcid: 0000-0002-7090-0560
+    orcid: 0000-0002-7090-0560
   - name: Daniel Vedder
     corresponding: true
     affiliation: "1,2,3"
-	orcid: 0000-0002-0386-9102
+    orcid: 0000-0002-0386-9102
 affiliations:
  - name: Helmholtz Centre for Environmental Research - UFZ
    index: 1
