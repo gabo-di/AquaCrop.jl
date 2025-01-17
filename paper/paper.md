@@ -35,26 +35,18 @@ bibliography: paper.bib
 
 # Summary
 
-`AquaCrop.jl` is an independent Julia [@Bezanson2017] translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/)
-model (version 7.2), originally developed by the Food and Agriculture Organization of the 
-United Nations [FAO](https://www.fao.org/home/en/)  in Fortran language [@Steduto2009]. This is a well-established 
-crop growth model that has been used to model numerous crops worldwide [@Mialyk2024], 
-and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].
-It is the intention, that `AquaCrop.jl` can make crop growth modelling more accessible to a wider
-group of researchers, mixing the reliability of the well-established FAO's AquaCrop with the versatility
-of the Julia ecosystem.
+[AquaCrop](https://www.fao.org/aquacrop/en/) is a simulation model that forecasts
+the growth and yield of crop plants under different environmental and management
+conditions. Based on physical and physiological processes, it can be used to 
+optimise farm management, forecast regional yields, or study climate change impacts.
+Originally developed by the Food and Agricultural Organization of the United Nations
+(FAO), it has been widely applied in agricultural research.
 
-<!-- ~~All agriculture is dependent on the growth of plants. Crop plants provide food -->
-<!-- for humans, fodder for domestic animals, and fibre and other resources for our -->
-<!-- manufacturing economy. Therefore, understanding how plants grow under different -->
-<!-- conditions is important not just for farmers themselves, but also for the rest -->
-<!-- of society. Crop models based on physical and physiological processes use information -->
-<!-- about environmental parameters (e.g. temperature, rainfall, soil quality) and -->
-<!-- knowledge of plant biology to simulate how crop plants grow over time and estimate -->
-<!-- the resulting yield. Such models can be used to optimise farm management,  -->
-<!-- forecast regional or national yields, or study climate change impacts. Here we present -->
-<!-- an expanded reimplementation of the AquaCrop model in Julia, in order to make it  -->
-<!-- accessible to a wider group of researchers.~~ -->
+Here, we present an expanded reimplementation of the model in Julia [@Bezanson2017], 
+focussing on improving its interoperability with other software and models. With 
+`AquaCrop.jl`, we want to make AquaCrop available to the growing number of environmental
+modellers working in Julia, and contribute to the creation of integrated, 
+interdisciplinary models in the environmental sciences.
 
 # Statement of need
 
@@ -65,28 +57,26 @@ conditions is important not just for farmers themselves, but also for the rest
 of society. Crop models based on physical and physiological processes use information
 about environmental parameters (e.g. temperature, rainfall, soil quality) and
 knowledge of plant biology to simulate how crop plants grow over time and estimate
-the resulting yield. Such models can be used to optimise farm management, 
-forecast regional or national yields, or study climate change impacts. 
+the resulting yield.
 
-<!-- ~~`AquaCrop.jl` is an independent Julia translation of the [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/) -->
-<!-- model (version 7.2), originally developed by the FAO [@Steduto2009]. This is a well-established  -->
-<!-- crop growth model that has been used to model numerous crops worldwide [@Mialyk2024],  -->
-<!-- and is known to produce reliable estimates of crop phenology and yield [@Kostkova2021].~~ -->
+As one such model, AquaCrop was developed with a special emphasis on the role
+of water for crop growth, and intended to be both simple and robust [@Steduto2009].
+It has been used to model numerous crops worldwide [@Mialyk2024], and is known to
+produce reliable estimates of crop phenology and yield [@Kostkova2021]. First
+implemented in Delphi, it was later open-sourced in a Fortran version [@deRoos2021; 
+@RSDA2024]. There are also versions available in [Matlab](https://github.com/aquacropos/aquacrop-matlab),
+[Python](https://github.com/aquacropos/aquacrop), and [R](https://github.com/jrodriguez88/aquacrop-R),
+although these are not up-to-date with the most recent version of the original model 
+[@Foster2017; @Kelly2021; @CamargoRodriguez2019]. 
 
-`AquaCrop` is a software for crop growth modelling developed by the FAO. First implemented in Delphi,
-it was later open-sourced in a Fortran version [@deRoos2021; @RSDA2024]. There are
-also versions available in [Matlab](https://github.com/aquacropos/aquacrop-matlab), 
-[Python](https://github.com/aquacropos/aquacrop), and [R](https://github.com/jrodriguez88/aquacrop-R), although these are not 
-up-to-date with the most recent version of the original model [@Foster2017; @Kelly2021; @CamargoRodriguez2019]. 
-With `AquaCrop.jl`, we want to expand this portfolio to make the model more easily 
-accessible to the growing number of environmental modellers working with Julia.
-
-Beyond just adding another language, our purpose is also to provide a package that
-can be readily integrated into other scientific software. Recent research has 
-emphasised the need for the creation of interdisciplinary models that consider
-the multiple processes inherent in global challenges such as climate change or 
-biodiversity loss [@Cabral2023]. This will require the use of model coupling, and the
-adaptation of existing models to be usable as components in integrated models 
+`AquaCrop.jl` expands this portfolio to contribute to the emerging ecosystem of
+environmental research software in Julia. To our knowledge, this is the first 
+process-based crop model available in the language. In addition, our purpose is also 
+to provide a package that can be readily integrated into other scientific software. 
+Recent research has emphasised the need for the creation of interdisciplinary models 
+that consider the multiple processes inherent in global challenges such as climate 
+change or biodiversity loss [@Cabral2023]. This will require the use of model coupling,
+and the adaptation of existing models to be usable as components in integrated models 
 [@Vedder2024].
 
 Specifically, we developed the package to use it as a component within 
@@ -185,35 +175,19 @@ f = plot_basic_out(outputs[:dayout], Dict("CC"=>["Canopy Cover","%"], "Tavg"=>["
 "Biomass"=>["Biomass","ton/ha"], "Rain"=>["Rainfall","mm"]))
 ```
 
-![Simulated Canopy Cover (CC) and Biomass of crops over time in a generic simulation run. We also show the average temperature (Tavg) and rain data\label{fig:biomass}](example.png)
+![Simulated canopy cover and biomass of crops over time in a generic simulation run. We also show the average daily temperature and rain data.\label{fig:biomass}](example.png)
 
 The resulting graph is shown in \autoref{fig:biomass}. Biomass increases over the
 growing season, is then reset to 0 with the harvest, and then sown again the
 following spring.
 
-<!-- ~~\autoref{fig:beans} displays the results a more realistic use case. Here,  -->
-<!-- `AquaCrop.jl` was used to simulate the growth of beans (*Vicia faba*) based on  -->
-<!-- environmental data from Thuringia, Germany, with historical yield data shown  -->
-<!-- for comparison. This showcases the high predictive accuracy that can be achieved  -->
-<!-- with AquaCrop.~~ -->
-
 \autoref{fig:beans} displays the results a more realistic use case. Here, 
 `AquaCrop.jl` was used to simulate the growth of beans (*Vicia faba*) based on 
 environmental data from Thuringia, Germany, with historical yield data shown 
-for comparison. This showcases that AquaCrop can reproduce high and low seasons of yield in different years.
+for comparison (data not shown). This showcases that when well parameterised, 
+`AquaCrop.jl` forecasts the development of yields over time quite reliably.
 
 ![Simulated yield of beans (*Vicia faba*) compared to observed yields in Thuringia, Germany.\label{fig:beans}](beans.png)
-
-
-# Conclusion
-
-<!-- ~~We present `AquaCrop.jl` as an up-to-date addition to the portfolio of AquaCrop  -->
-<!-- implementations. To our knowledge, this is the first process-based crop growth -->
-<!-- model available in Julia. By focussing on improving interoperability, we aim to -->
-<!-- contribute to the creation of interdisciplinary, integrated models in the  -->
-<!-- environmental sciences.~~ -->
-
-**Deleted section, not usual on this kind of papers**
 
 # Acknowledgements
 
