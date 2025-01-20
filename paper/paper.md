@@ -37,10 +37,10 @@ bibliography: paper.bib
 
 [AquaCrop](https://www.fao.org/aquacrop/en/) is a simulation model that forecasts
 the growth and yield of crop plants under different environmental and management
-conditions. Based on physical and physiological processes, it can be used to 
-optimise farm management, forecast regional yields, or study climate change impacts.
-Originally developed by the Food and Agricultural Organization of the United Nations
-(FAO), it has been widely applied in agricultural research.
+conditions. As a process-based model, it can be used to optimise farm management, 
+forecast regional yields, or study climate change impacts and sustainable farming 
+practices. Originally developed by the Food and Agricultural Organization of the 
+United Nations (FAO), it has been widely applied in agricultural research.
 
 Here, we present an expanded reimplementation of the model in Julia [@Bezanson2017], 
 focussing on improving its interoperability with other software and models. With 
@@ -53,11 +53,14 @@ interdisciplinary models in the environmental sciences.
 All agriculture is dependent on the growth of plants. Crop plants provide food
 for humans, fodder for domestic animals, and fibre and other resources for our
 manufacturing economy. Therefore, understanding how plants grow under different
-conditions is important not just for farmers themselves, but also for the rest
-of society. Crop models based on physical and physiological processes use information
-about environmental parameters (e.g. temperature, rainfall, soil quality) and
-knowledge of plant biology to simulate how crop plants grow over time and estimate
-the resulting yield.
+conditions is important not just for farmers, but also for the rest
+of society. This is particularly true in light of the major challenges associated with
+malnutrition and agriculture-related environmental degradation, both of which require
+wide-ranging changes to our food systems [@Foley2011]. In this context, crop models 
+that are based on physical and physiological processes can be used to inform 
+decision-making. These models use information about environmental parameters (e.g. 
+temperature, rainfall, soil quality) and knowledge of plant biology to simulate how 
+crop plants grow over time and estimate the resulting yield.
 
 As one such model, AquaCrop was developed with a special emphasis on the role
 of water for crop growth, and intended to be both simple and robust [@Steduto2009].
