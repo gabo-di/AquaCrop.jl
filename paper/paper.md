@@ -113,7 +113,9 @@ make it as easy as possible for environmental modellers using Julia to integrate
 into their own software. One side benefit of this is that our package can of course
 be complemented with other libraries from the Julia ecosystem, giving access to other
 high-quality research software such as the EcoJulia collection, and utility packages 
-such as `Makie.jl`, `StatsModels.jl`, or `Optimisers.jl`. Another benefit is that 
+such as [`Makie.jl`](https://makie.org/website/) [@Danish2021], 
+[`StatsModels.jl`](https://juliastats.org/StatsModels.jl/stable/), or 
+[`Optimisers.jl`](https://fluxml.ai/Optimisers.jl/stable/). Another benefit is that 
 modellers who wish to expand or otherwise modify the scientific core of `AquaCrop` 
 can now do so in Julia rather than Fortran, if they are unfamiliar with the latter.
 
