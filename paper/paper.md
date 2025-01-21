@@ -69,16 +69,16 @@ produce reliable estimates of crop phenology and yield [@Kostkova2021]. First
 implemented in Delphi, it was later open-sourced in a Fortran version [@deRoos2021; 
 @RSDA2024]. There are also versions available in [Matlab](https://github.com/aquacropos/aquacrop-matlab),
 [Python](https://github.com/aquacropos/aquacrop), and [R](https://github.com/jrodriguez88/aquacrop-R),
-although these are not up-to-date with the most recent version of the original model 
+although currently these are not up-to-date with the most recent version of the original model 
 [@Foster2017; @Kelly2021; @CamargoRodriguez2019]. 
 
 `AquaCrop.jl` expands this portfolio to contribute to the emerging ecosystem of
 environmental research software in Julia. To our knowledge, this is the first 
-process-based crop model available in the language. In addition, our purpose is also 
+process-based crop model available in this language. In addition, our purpose is also 
 to provide a package that can be readily integrated into other scientific software. 
 Recent research has emphasised the need for the creation of interdisciplinary models 
-that consider the multiple processes inherent in global challenges such as climate 
-change or biodiversity loss [@Cabral2023]. This will require the use of model coupling,
+that address the multifaceted processes underlying global challenges, such as climate 
+change or biodiversity loss [@Cabral2023]. This will require the use of model coupling
 and the adaptation of existing models to be usable as components in integrated models 
 [@Vedder2024].
 
@@ -105,11 +105,12 @@ added support for standardised input and output file formats (TOML and CSV), and
 loading input data from memory rather than disk (for example using output from a
 coupled model). Second, we bundled all state variables for a simulation in one 
 struct (`AquaCropField`), thereby eliminating global state and allowing multiple 
-simulations to be carried out in parallel (as well as making serialisation and data 
-transfer easier). Third, and most importantly, we enabled the model to be run 
-interactively. Rather than simply being executed as a batch job, the simulation can 
-now be advanced one day at a time, and state variable inspected and changed on the go.
-This makes it possible to use the package for dynamic, bidirectional model coupling.
+simulations to be carried out in parallel, as well as making serialisation and data 
+transfer easier. Third, and most importantly, we enabled the model to be run 
+dynamically. Rather than simply being executed as a batch job, the simulation can 
+ be advanced one day at a time, allowing state variables to be inspected and changed on the go.
+This makes it possible to use the package for dynamic, bidirectional model coupling as
+well as interactive use.
 
 Overall, our aim was to leave the scientific core of the model unchanged, but to
 make it as easy as possible for environmental modellers using Julia to integrate
@@ -158,7 +159,7 @@ parentdir = AquaCrop.test_dir;  # ".../AquaCrop.jl/test/testcase"
 # Now we can do a simulation run and plot the results
 outputs = basic_run(; runtype=runtype, parentdir=parentdir);
 function plot_basic_out(cropfield, cols)
-    x = cropfield[!,"Date"]
+    x = cropfield[!, "Date"]
     aux_sz = round(Int, sqrt(length(cols)))
     f = Figure()
     for (i, coli) in enumerate(keys(cols))
@@ -176,8 +177,11 @@ function plot_basic_out(cropfield, cols)
     return f
 end
 
-f = plot_basic_out(outputs[:dayout], Dict("CC"=>["Canopy Cover","%"], "Tavg"=>["Temperature","K"],
-"Biomass"=>["Biomass","ton/ha"], "Rain"=>["Rainfall","mm"]))
+f = plot_basic_out(outputs[:dayout], 
+    Dict("CC"=>["Canopy Cover","%"], 
+         "Tavg"=>["Temperature","K"],
+         "Biomass"=>["Biomass","ton/ha"],
+         "Rain"=>["Rainfall","mm"]))
 ```
 
 ![Simulated canopy cover and biomass of crops over time in a generic simulation run. We also show the average daily temperature and rain data.\label{fig:biomass}](example.png)
