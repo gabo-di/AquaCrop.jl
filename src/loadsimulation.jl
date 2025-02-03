@@ -2175,7 +2175,7 @@ function adjust_calendar_days!(gvars, iscgcgiven)
     notempfiletmax = simulparam.Tmax
     gddl0 = crop.GDDaysToGermination
     gddl12 = crop.GDDaysToFullCanopy
-    gddflor = crop.DaysToFlowering
+    gddflor = crop.GDDaysToFlowering
     gddlengthflor = crop.GDDLengthFlowering
     gddl123 = crop.GDDaysToSenescence
     gddharvest = crop.GDDaysToHarvest

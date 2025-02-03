@@ -73,7 +73,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
         for runningday in (fromsimday+1):tosimday
             if eto_record.Datatype == :Daily
                 i += 1
-                if i == length(ETo)
+                if i > length(ETo)
                     i = 1
                 end
                 eto = ETo[i]
@@ -139,7 +139,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
         for runningday in (fromsimday+1):tosimday
             if rain_record.Datatype == :Daily
                 i += 1
-                if i == length(Rain)
+                if i > length(Rain)
                     i = 1
                 end
                 rain = Rain[i]
@@ -215,7 +215,7 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
         for runningday in (fromsimday + 1):tosimday
             if temperature_record.Datatype == :Daily
                 i += 1
-                if i==length(Tmin)
+                if i > length(Tmin)
                     i = 1
                 end
                 tlow = Tmin[i]
