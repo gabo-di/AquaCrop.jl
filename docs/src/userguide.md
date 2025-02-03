@@ -402,7 +402,7 @@ cropfield.raindatasim
  0.8874604322470359
  0.23524192561168275
  0.8519635419668649
- 2.9177565288611698
+ 1.6782700226385654
 ```
 
 Now that we have finished starting the `cropfield`, we can update the cropfield 
