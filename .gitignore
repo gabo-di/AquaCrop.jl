@@ -12,3 +12,14 @@
 /test/extended_test/fortranrun/libaquacrop.so
 /test/extended_test/fortranrun/Makefile
 /test/extended_test/fortranrun/.bash_history
+/test/extended_test/.DS_Store
+/test/.DS_Store
+/test/extended_test/fortranrun/OUTP/*
+/test/extended_test/fortranrun/SIMUL/RainData.SIM
+/test/extended_test/fortranrun/SIMUL/EToData.SIM
+/test/extended_test/fortranrun/SIMUL/TCrop.SIM
+/test/extended_test/fortranrun/SIMUL/TCropReference.SIM
+/test/extended_test/fortranrun/SIMUL/TempData.SIM
+/test/extended_test/fortranrun/SIMUL/uhkReference.Tnx
+/test/extended_test/fortranrun/SIMUL/TnxReference365Days.SIM
+
