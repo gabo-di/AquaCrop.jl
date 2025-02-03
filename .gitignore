@@ -3,3 +3,12 @@
 /docs/build/
 /test/temp.jl
 /test/Manifest.toml
+/paper/
+/test/extended_test/fortranrun/*.f90
+/test/extended_test/fortranrun/*.F90
+/test/extended_test/fortranrun/*.mod
+/test/extended_test/fortranrun/*.o
+/test/extended_test/fortranrun/aquacrop
+/test/extended_test/fortranrun/libaquacrop.so
+/test/extended_test/fortranrun/Makefile
+/test/extended_test/fortranrun/.bash_history
