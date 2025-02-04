@@ -16,4 +16,4 @@ using SafeTestsets
 #
 # @safetestset "API advanced" begin include("api_advanced_tests.jl") end
 
-@safetestset "Extended Test 1" begin include("./extended_test/extended_test_1.jl") end
+@safetestset "Extended Test Project 1" begin include("./extended_test/project_1.jl") end
