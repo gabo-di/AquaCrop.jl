@@ -86,7 +86,7 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
         dnr1 = gvars[:crop].Day1
     end
     dnr2 = gvars[:simulation].ToDayNr
-    if gvars[:crop].DayN > dnr2
+    if gvars[:crop].DayN < dnr2
         dnr2 = gvars[:crop].DayN
     end
 
@@ -615,7 +615,7 @@ function co2_for_simulation_period(co2_file, fromdaynr, todaynr)
             if (toyi > fromyi) & (toyi > round(Int, yeara)) 
                 if round(Int, yearb) >= toyi 
                     co2to = co2a + (co2b-co2a)*(toyi-round(Int, yeara))/(round(Int, yearb)-round(Int, yeara))
-                elseif eof(file)
+                elseif !eof(file)
                     loop_2 = true
                     while loop_2
                         yeara = yearb
