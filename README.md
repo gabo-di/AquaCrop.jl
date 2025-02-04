@@ -5,6 +5,7 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gabo-di.github.io/AquaCrop.jl/dev/)
 [![Build Status](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
+
 Welcome to `AquaCrop.jl`! This package is an independent Julia implementation of FAO's 
 [AquaCrop](https://github.com/KUL-RSDA/AquaCrop/), a process-based crop growth model.
 The package currently corresponds to AquaCrop version 7.2.
@@ -67,6 +68,9 @@ isequal(size(outputs[:dayout]), (892, 89)) # true
 Finally, you can pass all variables and data using the API
 ([tutorial here](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Advanced-Run)).
 
+
+## Extended Tests Status
+![Extended Tests](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/extended-tests.yml/badge.svg)
 
 ## Contributing
 
