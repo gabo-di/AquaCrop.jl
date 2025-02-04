@@ -1332,3 +1332,34 @@ function checkpoint_project1_3()
     return outputs, gvars
 end
 
+function checkpoint_project1_4()
+    outputs, gvars = checkpoint_project1_3()
+
+    # only check sumwabal since it has info about the final output
+    sumwabal = AquaCrop.RepSum(
+        Epot = 747.05971698428266,
+        Tpot = 288.98065507497904,
+        Rain = 722.90000000000055,
+        Irrigation = 0,
+        Infiltrated = 699.6397698920938,
+        Runoff = 23.260230107906921,
+        Drain = 136.15139188831836,
+        Eact = 282.68593981505745,
+        Tact = 288.98065507497904,
+        TrW = 288.98065507497904,
+        ECropCycle = 102.01291637570041,
+        CRwater = 0,
+        Biomass = 27.989140022304369,
+        YieldPart = 13.442076960538923,
+        BiomassPot = 28.246931690970094,
+        BiomassUnlim = 28.246931690970094,
+        BiomassTot = 27.989140022304369,
+        SaltIn = 0,
+        SaltOut = 0,
+        CRsalt = 0
+    )
+    gvars[:sumwabal] = sumwabal
+
+    return outputs, gvars
+end
+

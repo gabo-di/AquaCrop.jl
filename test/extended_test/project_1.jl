@@ -41,7 +41,6 @@ include("checkpoints.jl")
     @test isapprox(projectinput[1], projectinput_0[1]) 
 end
 
-
 @testset "Initialize Run Project 1" begin
 
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
@@ -86,4 +85,19 @@ end
     @test isapprox(gvars[:root_zone_salt], gvars_0[:root_zone_salt])
     @test isapprox(gvars[:root_zone_wc], gvars_0[:root_zone_wc])
     @test isapprox(gvars[:total_salt_content], gvars_0[:total_salt_content])
+end
+
+@testset "End Project 1" begin
+    kwargs = (runtype = AquaCrop.NormalFileRun(), )
+    outputs = AquaCrop.start_outputs()
+
+    outputs, gvars = checkpoint_project1_3()
+
+    outputs_0, gvars_0 = checkpoint_project1_4()
+
+    i = 1
+    AquaCrop.file_management!(outputs, gvars, i; kwargs...)
+    
+    # only check sumwabal since it has info about the final output
+    @test isapprox(gvars[:sumwabal], gvars_0[:sumwabal])
 end
