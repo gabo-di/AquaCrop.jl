@@ -50,37 +50,32 @@ interdisciplinary models in the environmental sciences.
 
 # Statement of need
 
-All agriculture is dependent on the growth of plants. Crop plants provide food
-for humans, fodder for domestic animals, and fibre and other resources for our
-manufacturing economy. Therefore, understanding how plants grow under different
-conditions is important not just for farmers, but also for the rest
-of society. This is particularly true in light of the major challenges associated with
-malnutrition and agriculture-related environmental degradation, both of which require
-wide-ranging changes to our food systems [@Foley2011]. In this context, crop models 
-that are based on physical and physiological processes can be used to inform 
-decision-making. These models use information about environmental parameters (e.g. 
-temperature, rainfall, soil quality) and knowledge of plant biology to simulate how 
-crop plants grow over time and estimate the resulting yield.
+All agriculture is dependent on the growth of plants, which provide food, fodder, 
+fibre, and other resources. Therefore, a detailed understanding of plant growth is
+vital for farmers, but also necessary to address the major food system challenges
+of our society. These include widespread malnutrition, agriculture-related
+environmental degradation, and global impacts of climate change, and require
+wide-ranging changes to our food systems [@Foley2011]. In this context, process-based 
+crop models can be used to inform decision-making. These models use information about 
+environmental parameters (e.g. temperature, rainfall, soil quality) and knowledge of 
+plant biology to simulate crop growth over time and estimate yield.
 
-As one such model, AquaCrop was developed with a special emphasis on the role
-of water for crop growth, and intended to be both simple and robust [@Steduto2009].
+AquaCrop is one such model. It lays a special emphasis on the role of water for crop 
+growth, and is intended to be both simple and robust [@Steduto2009].
 It has been used to model numerous crops worldwide [@Mialyk2024], and is known to
 produce reliable estimates of crop phenology and yield [@Kostkova2021]. First
 implemented in Delphi, it was later open-sourced in a Fortran version [@deRoos2021; 
 @RSDA2024]. There are also versions available in [Matlab](https://github.com/aquacropos/aquacrop-matlab),
 [Python](https://github.com/aquacropos/aquacrop), and [R](https://github.com/jrodriguez88/aquacrop-R),
-although currently these are not up-to-date with the most recent version of the original model 
-[@Foster2017; @Kelly2021; @CamargoRodriguez2019]. 
+although currently these are not up-to-date with the most recent version of the 
+original model [@Foster2017; @Kelly2021; @CamargoRodriguez2019]. 
 
 `AquaCrop.jl` expands this portfolio to contribute to the emerging ecosystem of
 environmental research software in Julia. To our knowledge, this is the first 
-process-based crop model available in this language. In addition, our purpose is also 
-to provide a package that can be readily integrated into other scientific software. 
-Recent research has emphasised the need for the creation of interdisciplinary models 
-that address the multifaceted processes underlying global challenges, such as climate 
-change or biodiversity loss [@Cabral2023]. This will require the use of model coupling
-and the adaptation of existing models to be usable as components in integrated models 
-[@Vedder2024].
+process-based crop model available in this language. Our purpose is also to provide a 
+package that can be readily integrated into other scientific software, in order to
+facilitate the creation of multidisciplinary models of socio-environmental systems
+[@Cabral2023,@Vedder2024].
 
 Specifically, we developed the package to use it as a component within 
 [`Persefone.jl`](https://persefone-model.eu), a process-based model of agricultural 
@@ -90,62 +85,39 @@ crop plants is an important mediating factor.
 
 # Comparison to original implementation
 
-The core code of `AquaCrop.jl` closely follows the FAO's Fortran implementation, 
-which allows us to quickly integrate changes and updates to the original `AquaCrop` 
-code. The code was translated verbatim as much as possible, leaving all function and
-variable names as they are. To maintain compatibility, we also support the original 
-(highly idiosyncratic) input file formats. The correctness of our code is tested 
-by comparing its output with that of the original software, to ensure that it 
-produces the same results.
+The core code of `AquaCrop.jl` was translated verbatim from the original Fortran 
+implementation, which allows us to quickly integrate changes and updates
+to the original `AquaCrop` code. `AquaCrop.jl` supports the original input file
+formats, and is tested to ensure its output conforms to that of the original software.
 
-Whereas the original software was primarily designed as a stand-alone model, our
-purpose is to use `AquaCrop.jl` as an integrated component. Therefore, we developed
-a wrapper layer with an API that improves the package's interoperability. First, we 
-added support for standardised input and output file formats (TOML and CSV), and for
-loading input data from memory rather than disk (for example using output from a
-coupled model). Second, we bundled all state variables for a simulation in one 
+On top of this core code, we developed a wrapper layer with an API that improves
+the interoperability of `AquaCrop.jl` when used as a package with other software. 
+First, we added support for standardised input and output file formats (TOML and CSV),
+and for loading input data from memory rather than disk (for example using output from
+a coupled model). Second, we bundled all state variables for a simulation in one 
 struct (`AquaCropField`), thereby eliminating global state and allowing multiple 
 simulations to be carried out in parallel, as well as making serialisation and data 
-transfer easier. Third, and most importantly, we enabled the model to be run 
-dynamically. Rather than simply being executed as a batch job, the simulation can 
- be advanced one day at a time, allowing state variables to be inspected and changed on the go.
-This makes it possible to use the package for dynamic, bidirectional model coupling as
-well as interactive use.
+transfer easier. Third, we enabled the model to be updated one day at a time, rather
+than being executed as a singe batch job. This allows state variables to be inspected 
+and changed on the go, which makes it possible to use the package for bidirectional 
+model coupling as well as interactively.
 
-Overall, our aim was to leave the scientific core of the model unchanged, but to
-make it as easy as possible for environmental modellers using Julia to integrate
-into their own software. One side benefit of this is that our package can of course
-be complemented with other libraries from the Julia ecosystem, giving access to other
-high-quality research software such as the EcoJulia collection, and utility packages 
-such as [`Makie.jl`](https://makie.org/website/) [@Danish2021], 
-[`StatsModels.jl`](https://juliastats.org/StatsModels.jl/stable/), or 
-[`Optimisers.jl`](https://fluxml.ai/Optimisers.jl/stable/). Another benefit is that 
-modellers who wish to expand or otherwise modify the scientific core of `AquaCrop` 
-can now do so in Julia rather than Fortran, if they are unfamiliar with the latter.
+Overall, we leave the scientific core of the model unchanged, but make it easier
+for environmental modellers using Julia to integrate the model into their own work,
+interface with other libraries for the Julia ecosystem, or adapt the model to suit
+their needs.
 
 # Examples 
 
-The following tutorials are provided in the documentation:
-
-- [Basic run](https://gabo-di.github.io/AquaCrop.jl/dev/gettingstarted/#basic_run_section) 
-shows how to set up a model run using the original `AquaCrop` configuration file format, 
-simulating a complete vegetation period in one go.
-- [Intermediate run](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Intermediate-Run) 
-shows how to configure the model with TOML and CSV files, how to advance the simulation
-one day at a time, and how to access crop variables at run time.
-- [Advanced run](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Advanced-Run) 
-shows how to configure the model via the API (i.e. using Julia variables), and how to
-change variables at run time.
-
-A simple demonstration of a basic run using the data from the `AquaCrop.jl/test/testcase` 
-directory is shown here:
-
+Multiple tutorials for different use cases are provided in the 
+[documentation](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/).
+A simple demonstration of a basic run using the data from the 
+`AquaCrop.jl/test/testcase` directory is shown here:
 
 ```julia
 using AquaCrop
 using CairoMakie
 using Unitful
-
 
 # First, we specify the input file format:
 # NormalFileRun(): use the original AquaCrop file format
@@ -184,17 +156,16 @@ f = plot_basic_out(outputs[:dayout],
          "Rain"=>["Rainfall","mm"]))
 ```
 
-![Simulated canopy cover and biomass of crops over time in a generic simulation run. We also show the average daily temperature and rain data.\label{fig:biomass}](example.png)
+![Simulated canopy cover and biomass of an alfalfa crop over time, together with daily temperature and rainfall.\label{fig:biomass}](example.png)
 
-The resulting graph is shown in \autoref{fig:biomass}. Biomass increases over the
-growing season, is then reset to 0 with the harvest, and then sown again the
-following spring.
+The resulting graph is shown in \autoref{fig:biomass}. Canopy cover increases during
+the growing season, with regular harvests taking place. Biomass is shown accumulated
+over the whole season.
 
-\autoref{fig:beans} displays the results a more realistic use case. Here, 
-`AquaCrop.jl` was used to simulate the growth of beans (*Vicia faba*) based on 
+\autoref{fig:beans} shows a simulation of the growth of beans (*Vicia faba*) based on 
 environmental data from Thuringia, Germany, with historical yield data shown 
-for comparison (data not shown). This showcases that when well parameterised, 
-`AquaCrop.jl` forecasts the development of yields over time quite reliably.
+for comparison. This showcases that when well parameterised, `AquaCrop.jl` forecasts 
+the development of yields over time quite reliably.
 
 ![Simulated yield of beans (*Vicia faba*) compared to observed yields in Thuringia, Germany.\label{fig:beans}](beans.png)
 
