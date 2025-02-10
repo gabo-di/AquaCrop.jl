@@ -3,7 +3,7 @@ using Test
 
 include("checkpoints.jl")
 
-@testset "Initialize Project 1" begin
+@testset "Initialize Project 2" begin
     parentdir = pwd()*"/extended_test/fortranrun"
     outputs = AquaCrop.start_outputs()
 
@@ -11,13 +11,13 @@ include("checkpoints.jl")
 
     filepaths = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...)
     project_filenames = AquaCrop.initialize_project_filenames(outputs, filepaths; kwargs...)
-    i = 1
+    i = 2
     theprojectfile = project_filenames[i]
     theprojecttype = AquaCrop.get_project_type(theprojectfile; kwargs...)
     gvars, _ = AquaCrop.initialize_project(outputs, theprojectfile, theprojecttype, filepaths; kwargs...)
 
 
-    gvars_0 = checkpoint_project1_1()
+    gvars_0 = checkpoint_project2_1()
 
     projectinput = gvars[:projectinput]
     projectinput_0 = gvars_0[:projectinput]
@@ -44,14 +44,14 @@ include("checkpoints.jl")
     @test isapprox(gvars[:integer_parameters], gvars_0[:integer_parameters])
 end
 
-@testset "Initialize Run Project 1" begin
+@testset "Initialize Run Project 2" begin
 
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
     outputs = AquaCrop.start_outputs()
 
-    gvars = checkpoint_project1_1()
+    gvars = checkpoint_project2_1()
 
-    outputs_0, gvars_0 = checkpoint_project1_2()
+    outputs_0, gvars_0 = checkpoint_project2_2()
 
     i = 1
     AquaCrop.initialize_run_part1!(outputs, gvars, i; kwargs...)
@@ -90,13 +90,13 @@ end
     @test isapprox(gvars[:total_salt_content], gvars_0[:total_salt_content])
 end
 
-@testset "End Project 1" begin
+@testset "End Project 2" begin
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
     outputs = AquaCrop.start_outputs()
 
-    outputs, gvars = checkpoint_project1_2()
+    outputs, gvars = checkpoint_project2_2()
 
-    outputs_0, gvars_0 = checkpoint_project1_3()
+    outputs_0, gvars_0 = checkpoint_project2_3()
 
     i = 1
     AquaCrop.file_management!(outputs, gvars, i; kwargs...)

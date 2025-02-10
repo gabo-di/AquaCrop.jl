@@ -1,6 +1,6 @@
 using AquaCrop 
 
-function checkpoint1()
+function checkpoint0()
     # Local variables
 
     simulparam = AquaCrop.RepParam(
@@ -677,12 +677,12 @@ function checkpoint1()
     )
 end
 
-function checkpoint_project1_2()
-    gvars = checkpoint1()    
+function checkpoint_project1_1()
+    gvars = checkpoint0()    
 
     AquaCrop.setparameter!(gvars[:integer_parameters], :outputaggregate, 0)
 
-    AquaCrop.setparameter!(gvars[:symbol_parameters], :theprojecttype, :typeprm)
+    AquaCrop.setparameter!(gvars[:symbol_parameters], :theprojecttype, :typepro)
 
     AquaCrop.setparameter!(gvars[:bool_parameters], :out1Wabal, true)
     AquaCrop.setparameter!(gvars[:bool_parameters], :out2Crop, true)
@@ -697,20 +697,20 @@ function checkpoint_project1_2()
     AquaCrop.setparameter!(gvars[:bool_parameters], :part2Eval, true)
 
     AquaCrop.setparameter!(gvars[:string_parameters], :man_file, 
-            joinpath(pwd(), "testcase/DATA/Ottawa.MAN"))
+            "(None)")
     AquaCrop.setparameter!(gvars[:string_parameters], :observations_file, 
-            joinpath(pwd(), "testcase/OBS/Ottawa.OBS"))
+            "(None)")
     AquaCrop.setparameter!(gvars[:string_parameters], :rain_file, 
-            joinpath(pwd(), "testcase/DATA/Ottawa.PLU"))
+            "(None)")
     AquaCrop.setparameter!(gvars[:string_parameters], :temperature_file, 
-            joinpath(pwd(), "testcase/DATA/Ottawa.Tnx"))
+            "(None)")
     AquaCrop.setparameter!(gvars[:string_parameters], :eto_file, 
-            joinpath(pwd(), "testcase/DATA/Ottawa.ETo"))
+            "(None)")
     AquaCrop.setparameter!(gvars[:string_parameters], :prof_file, 
-            joinpath(pwd(), "testcase/DATA/Ottawa.SOL"))
+            "DEFAULT.SOL")
     AquaCrop.setparameter!(gvars[:string_parameters], :CO2_file, 
-            joinpath(pwd(), "testcase/SIMUL/MaunaLoa.CO2"))
-    AquaCrop.setparameter!(gvars[:string_parameters], :clim_file,  "EToRainTempFile")
+            "MaunaLoa.CO2")
+    AquaCrop.setparameter!(gvars[:string_parameters], :clim_file,  "(None)")
     AquaCrop.setparameter!(gvars[:string_parameters], :swcini_file,  "(None)")
 
     gvars[:projectinput] = AquaCrop.ProjectInputType[
@@ -771,8 +771,8 @@ function checkpoint_project1_2()
     return gvars 
 end
 
-function checkpoint_project1_3()
-    gvars = checkpoint_project1_2()
+function checkpoint_project1_2()
+    gvars = checkpoint_project1_1()
     outputs = AquaCrop.start_outputs()
 
     gvars[:soil].REW = 9
@@ -1262,6 +1262,17 @@ function checkpoint_project1_3()
     AquaCrop.setparameter!(gvars[:float_parameters], :previoussumgdd, 0) 
     AquaCrop.setparameter!(gvars[:float_parameters], :cdctotal, 0.01442417843464988) 
 
+    AquaCrop.setparameter!(gvars[:string_parameters], :rain_file, 
+            joinpath(pwd(), "extended_test/fortranrun/DATA/uhk.PLU"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :temperature_file, 
+            joinpath(pwd(), "extended_test/fortranrun/DATA/uhk.Tnx"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :eto_file, 
+            joinpath(pwd(), "extended_test/fortranrun/DATA/uhk.ETo"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :prof_file, 
+            joinpath(pwd(), "extended_test/fortranrun/DATA/Loam.SOL"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :CO2_file, 
+            joinpath(pwd(), "extended_test/fortranrun/SIMUL/MaunaLoa.CO2"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :clim_file,  "EToRainTempFile")
 
     Tmin = Float64[]
     Tmax = Float64[]
@@ -1332,8 +1343,8 @@ function checkpoint_project1_3()
     return outputs, gvars
 end
 
-function checkpoint_project1_4()
-    outputs, gvars = checkpoint_project1_3()
+function checkpoint_project1_3()
+    outputs, gvars = checkpoint_project1_2()
 
     # only check sumwabal since it has info about the final output
     sumwabal = AquaCrop.RepSum(
@@ -1363,3 +1374,699 @@ function checkpoint_project1_4()
     return outputs, gvars
 end
 
+function checkpoint_project2_1()
+    gvars = checkpoint0()    
+
+    AquaCrop.setparameter!(gvars[:integer_parameters], :outputaggregate, 0)
+
+    AquaCrop.setparameter!(gvars[:symbol_parameters], :theprojecttype, :typepro)
+
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out1Wabal, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out2Crop, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out3Prof, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out4Salt, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out5CompWC, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out6CompEC, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :out7Clim, true) 
+    AquaCrop.setparameter!(gvars[:bool_parameters], :outdaily, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :part1Mult, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :part2Eval, true)
+    AquaCrop.setparameter!(gvars[:bool_parameters], :part2Eval, true)
+
+    AquaCrop.setparameter!(gvars[:string_parameters], :man_file, 
+            "(None)")
+    AquaCrop.setparameter!(gvars[:string_parameters], :observations_file, 
+            "(None)")
+    AquaCrop.setparameter!(gvars[:string_parameters], :rain_file, 
+            "(None)")
+    AquaCrop.setparameter!(gvars[:string_parameters], :temperature_file, 
+            "(None)")
+    AquaCrop.setparameter!(gvars[:string_parameters], :eto_file, 
+            "(None)")
+    AquaCrop.setparameter!(gvars[:string_parameters], :prof_file, 
+            "DEFAULT.SOL")
+    AquaCrop.setparameter!(gvars[:string_parameters], :CO2_file, 
+            "MaunaLoa.CO2")
+            AquaCrop.setparameter!(gvars[:string_parameters], :clim_file,  "(None)")
+    AquaCrop.setparameter!(gvars[:string_parameters], :swcini_file,  "(None)")
+
+    gvars[:projectinput] = AquaCrop.ProjectInputType[
+        AquaCrop.ProjectInputType(
+            ParentDir=pwd()*"/extended_test/fortranrun",
+            VersionNr=7.1,
+            Description="UHK (Germany)",
+            Simulation_YearSeason=1,
+            Simulation_DayNr1=43736,
+            Simulation_DayNrN=44282,
+            Crop_Day1=43743,
+            Crop_DayN=43976,
+            Climate_Info="-- 1. Climate (CLI) file",
+            Climate_Filename="uhk.CLI",
+            Climate_Directory="DATA",
+            Temperature_Info="1.1 Temperature (Tnx or TMP) file",
+            Temperature_Filename="uhk.Tnx",
+            Temperature_Directory="DATA",
+            ETo_Info="1.2 Reference ET (ETo) file",
+            ETo_Filename="uhk.ETo",
+            ETo_Directory="DATA",
+            Rain_Info="1.3 Rain (PLU) file",
+            Rain_Filename="uhk.PLU",
+            Rain_Directory="DATA",
+            CO2_Info="1.4 Atmospheric CO2 concentration (CO2) file",
+            CO2_Filename="MaunaLoa.CO2",
+            CO2_Directory="SIMUL",
+            Calendar_Info="-- 2. Calendar (CAL) file",
+            Calendar_Filename="(None)",
+            Calendar_Directory="(None)",
+            Crop_Info="-- 3. Crop (CRO) file",
+            Crop_Filename="BarleyGDD.CRO",
+            Crop_Directory="DATA",
+            Irrigation_Info="-- 4. Irrigation management (IRR) file",
+            Irrigation_Filename="(None)",
+            Irrigation_Directory="(None)",
+            Management_Info="-- 5. Field management (MAN) file",
+            Management_Filename="(None)",
+            Management_Directory="(None)",
+            GroundWater_Info="-- 7. Groundwater table (GWT) file",
+            GroundWater_Filename="(None)",
+            GroundWater_Directory="(None)",
+            Soil_Info="-- 6. Soil profile (SOL) file",
+            Soil_Filename="Loam.SOL",
+            Soil_Directory="DATA",
+            SWCIni_Info="-- 8. Initial conditions (SW0) file",
+            SWCIni_Filename="(None)",
+            SWCIni_Directory="(None)",
+            OffSeason_Info="-- 9. Off-season conditions (OFF) file",
+            OffSeason_Filename="(None)",
+            OffSeason_Directory="(None)",
+            Observations_Info="-- 10. Field data (OBS) file",
+            Observations_Filename="(None)",
+            Observations_Directory="(None)"
+        ),
+    ]
+
+    return gvars 
+end
+
+function checkpoint_project2_2()
+    gvars = checkpoint_project2_1()
+    outputs = AquaCrop.start_outputs()
+
+    gvars[:soil].REW = 9
+    gvars[:soil].CNValue = 61
+    gvars[:soil].RootMax = 1.3
+
+
+    soil_layers = AquaCrop.SoilLayerIndividual[
+        AquaCrop.SoilLayerIndividual(
+            Description="loam",
+            Thickness=4.0,
+            SAT=46,
+            FC=31,
+            WP=15,
+            tau=0.76,
+            InfRate=500,
+            Penetrability=100,
+            GravelMass=0,
+            GravelVol=0,
+            WaterContent=403.00000554323196,
+            Macro=31,
+            #OJO note that the last two positions of "1" are set to undef since they seem to be a byproduct from default loading, key variable seems to be SCP1 as length of actuall stuff
+            SaltMobility=[0.009009009009009004, 0.09909909909909906, 0.9999999999999999, 1.0, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double, AquaCrop.undef_double], # [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            SC=3,
+            SCP1=4,
+            UL=0.276,
+            Dx=0.092,
+            SoilClass=2,
+            CRa=-0.4536,
+            CRb=0.83733999999999997
+        )
+    ]
+    gvars[:soil_layers] = soil_layers
+
+
+    compartments = AquaCrop.CompartmentIndividual[
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.1,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        ),
+        AquaCrop.CompartmentIndividual(
+            Thickness=0.2,
+            Theta=0.31,
+            Fluxout=AquaCrop.undef_double,#0,
+            Layer=1,
+            Smax=AquaCrop.undef_double,#0,
+            FCadj=31,
+            DayAnaero=0,
+            WFactor=0,
+            Salt=zeros(Float64, 11),
+            Depo=zeros(Float64, 11),
+        )
+    ]
+    gvars[:compartments] = compartments
+
+
+    gvars[:simulation].FromDayNr = 43736 
+    gvars[:simulation].ToDayNr = 44282
+    gvars[:simulation].IniSWC.Loc[1] = 4.0
+    gvars[:simulation].IniSWC.VolProc[1] = 31
+    gvars[:simulation].ThetaIni = [0.31 for _ in 1:12]
+    gvars[:simulation].LinkCropToSimPeriod = false
+    gvars[:simulation].EffectStress.RedCGC = 0
+    gvars[:simulation].EffectStress.RedCCX = 0
+    gvars[:simulation].EffectStress.RedWP = 0
+    gvars[:simulation].EffectStress.CDecline = 0
+    gvars[:simulation].EvapWCsurf = 0
+    gvars[:simulation].EvapZ = 0.15
+    gvars[:simulation].HIfinal = 33
+    gvars[:simulation].DelayedDays = 0
+    gvars[:simulation].SumEToStress = 0
+    gvars[:simulation].SumGDD = 0
+    gvars[:simulation].SumGDDfromDay1 = 0
+    gvars[:simulation].SCor = 1
+    gvars[:simulation].SalinityConsidered = true
+    gvars[:simulation].RCadj = 0 
+    gvars[:simulation].Storage.Btotal = 0 
+    gvars[:simulation].Storage.CropString = "DEFAULT.CRO" 
+    gvars[:simulation].Storage.Season = 1 
+
+
+    gvars[:total_water_content].BeginDay = 403.00000554323196
+
+
+    crop = AquaCrop.RepCrop(
+        subkind=:Grain, 
+        ModeCycle=:GDDays, 
+        Planting=:Seed, 
+        pMethod=:FAOCorrection, 
+        pdef=0.6,
+        pActStom=0.6, 
+        KsShapeFactorLeaf=3,
+        KsShapeFactorStomata=3,
+        KsShapeFactorSenescence=3,
+        pLeafDefUL=0.2,
+        pLeafDefLL=0.65,
+        pLeafAct=0.2,
+        pSenescence=0.55,
+        pSenAct=0.55, 
+        pPollination=0.85,
+        SumEToDelaySenescence=50,
+        AnaeroPoint=15,
+        StressResponse=AquaCrop.RepShapes(
+            Stress=50,
+            ShapeCGC=25,
+            ShapeCCX=25,
+            ShapeWP=25,
+            ShapeCDecline=25,
+            Calibrated=false
+        ),
+        ECemin=6,
+        ECemax=20,
+        CCsaltDistortion=25,
+        ResponseECsw=100,
+        SmaxTopQuarter=0.048,
+        SmaxBotQuarter=0.012,
+        SmaxTop=0.054, 
+        SmaxBot=0.006, 
+        KcTop=1.1,
+        KcDecline=0.15,
+        CCEffectEvapLate=50,
+        Day1=43743,
+        DayN=43976,
+        Length=[30, 127, 38, 39],
+        RootMin=0.29999999999999999,
+        RootMax=1.3,
+        RootShape=15,
+        Tbase=0,
+        Tupper=15,
+        Tcold=5,
+        Theat=35,
+        GDtranspLow=14,
+        SizeSeedling=1.5,
+        SizePlant=1.5,
+        PlantingDens=3060000,
+        CCo=0.0459,
+        CCini=0.0459,
+        CGC=0.039718146496815286,
+        GDDCGC=0.008697,
+        CCx=0.8,
+        CDC=0.0558,
+        GDDCDC=0.006,
+        CCxAdjusted=0.8,
+        CCxWithered=0,
+        CCoAdjusted=0.0459,
+        DaysToCCini=0,
+        DaysToGermination=10,
+        DaysToFullCanopy=157,
+        DaysToFullCanopySF=157,
+        DaysToFlowering=182,
+        LengthFlowering=27,
+        DaysToSenescence=195,
+        DaysToHarvest=234,
+        DaysToMaxRooting=180,
+        DaysToHIo=45,
+        GDDaysToCCini=0,
+        GDDaysToGermination=98,
+        GDDaysToFullCanopy=717,
+        GDDaysToFullCanopySF=717,
+        GDDaysToFlowering=867,
+        GDDLengthFlowering=160,
+        GDDaysToSenescence=924,
+        GDDaysToHarvest=1296,
+        GDDaysToMaxRooting=854,
+        GDDaysToHIo=351,
+        WP=15,
+        WPy=100,
+        AdaptedToCO2=50,
+        HI=33,
+        dHIdt=0.733333333333,
+        HIincrease=5,
+        aCoeff=10,
+        bCoeff=5,
+        DHImax=15,
+        DeterminancyLinked=true,
+        fExcess=100,
+        DryMatter=90,
+        RootMinYear1=0,
+        SownYear1=false,
+        YearCCx=-9,
+        CCxRoot=-9,
+        Assimilates=AquaCrop.RepAssimilates(
+            On=false,
+            Period=0,
+            Stored=0,
+            Mobilized=0
+        )
+    )
+    gvars[:crop] = crop
+
+    
+    gvars[:management].FertilityStress = 0
+    gvars[:management].WeedShape = -0.01 
+    gvars[:management].Cuttings.Considered = false 
+    gvars[:management].Cuttings.CCcut = 30
+
+    gvars[:onset].StartSearchDayNr = 33238 
+    gvars[:onset].StopSearchDayNr = 33237 
+
+
+    rain_record = AquaCrop.RepClim(
+        Datatype=:Daily, #0
+        FromD=1,
+        FromM=1,
+        FromY=1992,
+        ToD=31,
+        ToM=12,
+        ToY=2023,
+        FromDayNr=33238,
+        ToDayNr=44925,
+        FromString="",
+        ToString="",
+        NrObs=11688
+    )
+    gvars[:rain_record] = rain_record
+
+
+    eto_record = AquaCrop.RepClim(
+        Datatype=:Daily, #0
+        FromD=1,
+        FromM=1,
+        FromY=1992,
+        ToD=31,
+        ToM=12,
+        ToY=2023,
+        FromDayNr=33238,
+        ToDayNr=44925,
+        FromString="",
+        ToString="",
+        NrObs=11688
+    )
+    gvars[:eto_record] = eto_record
+
+
+    clim_record = AquaCrop.RepClim(
+        Datatype=AquaCrop.undef_symbol, #0 note that this is 0 from undefined and not from actuall setting it
+        FromD=1,
+        FromM=1,
+        FromY=1992,
+        ToD=31,
+        ToM=12,
+        ToY=2023,
+        FromDayNr=33238,
+        ToDayNr=44925,
+        FromString="",
+        ToString="",
+        NrObs=11688
+    )
+    gvars[:clim_record] = clim_record
+
+
+    temperature_record = AquaCrop.RepClim(
+        Datatype=:Daily, #0
+        FromD=1,
+        FromM=1,
+        FromY=1992,
+        ToD=31,
+        ToM=12,
+        ToY=2023,
+        FromDayNr=33238,
+        ToDayNr=44925,
+        FromString="",
+        ToString="",
+        NrObs=11688
+    )
+    gvars[:temperature_record] = temperature_record
+
+
+    crop_file_set = AquaCrop.RepCropFileSet(
+        DaysFromSenescenceToEnd=28,
+        DaysToHarvest=93,
+        GDDaysFromSenescenceToEnd=372,
+        GDDaysToHarvest=1296
+    )
+    gvars[:crop_file_set] = crop_file_set
+
+
+    stresstot = AquaCrop.RepStressTot(
+        Salt = 0,
+        Temp = 0,
+        Exp = 0,
+        Sto = 0,
+        Weed = 0,
+        NrD = AquaCrop.undef_int
+    )
+    gvars[:stresstot] = stresstot
+
+
+    gvars[:cut_info_record1].IntervalInfo = 0 
+    gvars[:cut_info_record1].MassInfo = 0 
+
+    gvars[:cut_info_record2].IntervalInfo = 0 
+    gvars[:cut_info_record2].MassInfo = 0 
+
+
+    AquaCrop.setparameter!(gvars[:bool_parameters], :temperature_file_exists, true) 
+    AquaCrop.setparameter!(gvars[:bool_parameters], :eto_file_exists, true) 
+    AquaCrop.setparameter!(gvars[:bool_parameters], :rain_file_exists, true) 
+    AquaCrop.setparameter!(gvars[:bool_parameters], :startmode, true) 
+    AquaCrop.setparameter!(gvars[:bool_parameters], :evapo_entire_soil_surface, true) 
+
+    
+    AquaCrop.setparameter!(gvars[:integer_parameters], :daylastcut, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :last_irri_dap, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :stagecode, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :suminterval, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :stress_sf_adj_new, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :previous_stress_level, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :daynri, 43736) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :nextsim_from_daynr, AquaCrop.undef_int) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :tadj, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :nrcut, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :tnxreferenceyear, 2008) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :gddtadj, 0) 
+    AquaCrop.setparameter!(gvars[:integer_parameters], :irri_interval, 1) 
+
+
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop, 51.596932099090964) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkctop_stress, 51.596932099090964) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :co2i, 415.31) 
+
+    AquaCrop.setparameter!(gvars[:float_parameters], :ccxtotal, 0.8) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :alfa_hi_adj, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :gddayi, 10.55) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumeto, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumgddprev, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumgddcuts, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :ccxwitheredtpotnos, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumgdd, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb0salt, 0.13695130845997028) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :ccxcrop_weednosf_stress, 0.8) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :tmax, 17.3) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb2salt, 0.012057199724797992) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :fweednos, 1) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :yprevsum, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :rain, 0.0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :fracbiomasspotsf, 1) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :tmin, 6.1) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :eto, 1.5) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :scor_at2, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :hi_times_at2, 1) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :scor_at1, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :gddcdctotal, 0.006) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :coeffb1salt, -0.3113610281745832) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciprev, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :previousbmob, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :timesenescence, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :hi_times_at, 1) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :previousbsto, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cciactual, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :ccototal, 0.0459) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :previoussumeto, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cgcref, 0.039718146496815286) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :rooting_depth, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :sumkci, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :bprevsum, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :hi_times_at1, 1) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :gddcgcref, 0.008697) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :previoussumgdd, 0) 
+    AquaCrop.setparameter!(gvars[:float_parameters], :cdctotal, 0.0558) 
+
+    AquaCrop.setparameter!(gvars[:string_parameters], :rain_file, 
+            joinpath(pwd(), "extended_test/fortranrun/DATA/uhk.PLU"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :temperature_file, 
+            joinpath(pwd(), "extended_test/fortranrun/DATA/uhk.Tnx"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :eto_file, 
+            joinpath(pwd(), "extended_test/fortranrun/DATA/uhk.ETo"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :prof_file, 
+            joinpath(pwd(), "extended_test/fortranrun/DATA/Loam.SOL"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :CO2_file, 
+            joinpath(pwd(), "extended_test/fortranrun/SIMUL/MaunaLoa.CO2"))
+    AquaCrop.setparameter!(gvars[:string_parameters], :clim_file,  "EToRainTempFile")
+
+    Tmin = Float64[]
+    Tmax = Float64[]
+    open(joinpath(pwd(), "extended_test/fortranrun/DATA/uhk.Tnx")) do file
+        for _ in 1:8
+            readline(file)
+        end
+        for line in eachline(file)
+            splitedline = split(line)
+            tmin = parse(Float64,popfirst!(splitedline))
+            tmax = parse(Float64,popfirst!(splitedline))
+            push!(Tmin, tmin)
+            push!(Tmax, tmax)
+        end
+    end
+    AquaCrop.setparameter!(gvars[:array_parameters], :Tmin, Tmin)
+    AquaCrop.setparameter!(gvars[:array_parameters], :Tmax, Tmax)
+
+    ETo = Float64[]
+    open(joinpath(pwd(), "extended_test/fortranrun/DATA/uhk.ETo")) do file
+        for _ in 1:8
+            readline(file)
+        end
+        for line in eachline(file)
+            eto = parse(Float64, line)
+            push!(ETo, eto)
+        end
+    end
+    AquaCrop.setparameter!(gvars[:array_parameters], :ETo, ETo)
+
+    Rain = Float64[]
+    open(joinpath(pwd(), "extended_test/fortranrun/DATA/uhk.PLU")) do file
+        for _ in 1:8
+            readline(file)
+        end
+        for line in eachline(file)
+            rain = parse(Float64, line)
+            push!(Rain, rain)
+        end
+    end
+    AquaCrop.setparameter!(gvars[:array_parameters], :Rain, Rain)
+
+
+
+    open(joinpath(pwd(), "extended_test/fortranrun/SIMUL/EToData_proj2.SIM")) do file
+        for line in eachline(file)
+            eto = parse(Float64, line)
+            AquaCrop.add_output_in_etodatasim!(outputs, eto)
+        end
+    end
+
+    open(joinpath(pwd(), "extended_test/fortranrun/SIMUL/RainData_proj2.SIM")) do file
+        for line in eachline(file)
+            rain = parse(Float64, line)
+            AquaCrop.add_output_in_raindatasim!(outputs, rain)
+        end
+    end
+
+    open(joinpath(pwd(), "extended_test/fortranrun/SIMUL/TempData_proj2.SIM")) do file
+        for line in eachline(file)
+            splitedline = split(line)
+            tlow = parse(Float64, popfirst!(splitedline))
+            thigh = parse(Float64, popfirst!(splitedline))
+            AquaCrop.add_output_in_tempdatasim!(outputs, tlow, thigh)
+        end
+    end
+
+    return outputs, gvars
+end
+
+function checkpoint_project2_3()
+    outputs, gvars = checkpoint_project2_2()
+
+    # only check sumwabal since it has info about the final output
+    sumwabal = AquaCrop.RepSum(
+        Epot = 692.65394788789035,
+        Tpot = 98.39191527322285,
+        Rain = 794.20000000000061,
+        Irrigation = 0,
+        Infiltrated = 762.23272384798418,
+        Runoff = 31.967276152016169,
+        Drain = 231.50262666227675,
+        Eact = 451.35833399266699,
+        Tact = 98.107804203579491,
+        TrW = 98.363813899832763,
+        ECropCycle = 73.461128898110786,
+        CRwater = 0,
+        Biomass = 8.7102715544799629,
+        YieldPart = 1.4601586379289293,
+        BiomassPot = 8.7526438570132488,
+        BiomassUnlim = 8.7526438570132488,
+        BiomassTot = 8.7102715544799629,
+        SaltIn = 0,
+        SaltOut = 0,
+        CRsalt = 0
+    )
+    gvars[:sumwabal] = sumwabal
+
+    return outputs, gvars
+end
