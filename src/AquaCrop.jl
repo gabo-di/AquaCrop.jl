@@ -23,6 +23,9 @@ include("budget.jl")
 include("startunit.jl")
 include("api.jl")
 
+# ---- extra utility functions ----
+include("readoutput.jl")
+
 # ---- exports ----
 export AquaCropField,
        NormalFileRun,

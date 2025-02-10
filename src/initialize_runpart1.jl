@@ -98,7 +98,8 @@ function initialize_simulation_run_part1!(outputs, gvars, projectinput::ProjectI
         if haskey(kwargs, :co2i)
             setparameter!(gvars[:float_parameters], :co2i, kwargs[:co2i])
         else
-            setparameter!(gvars[:float_parameters], :co2i, CO2Ref) 
+            co2_file = joinpath(AquaCrop.test_toml_dir, "MaunaLoaCO2.csv")
+            setparameter!(gvars[:float_parameters], :co2i, co2_for_simulation_period(co2_file, dnr1, dnr2))
         end
     end
 

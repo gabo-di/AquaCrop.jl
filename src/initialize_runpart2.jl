@@ -2082,7 +2082,8 @@ function determine_growth_stage!(gvars, dayi, cciprev)
             end
             if (virtualday > crop.DaysToGermination) & (cciprev < eps())
                 # no growth stage
-                setparameter!(gvars[:integer_parameters], :stagecode, undef_int)
+                # setparameter!(gvars[:integer_parameters], :stagecode, undef_int)
+                setparameter!(gvars[:integer_parameters], :stagecode, 0)
             end
             if virtualday >= sum(crop.Length[1:4])
                 # after cropping period
