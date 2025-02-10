@@ -37,10 +37,11 @@ bibliography: paper.bib
 
 [AquaCrop](https://www.fao.org/aquacrop/en/) is a simulation model that forecasts
 the growth and yield of crop plants under different environmental and management
-conditions. As a process-based model, it can be used to optimise farm management, 
-forecast regional yields, or study climate change impacts and sustainable farming 
-practices. Originally developed by the Food and Agricultural Organization of the 
-United Nations (FAO), it has been widely applied in agricultural research.
+conditions [@Steduto2009]. As a process-based model, it can be used to optimise 
+farm management, forecast regional yields, or study climate change impacts and 
+sustainable farming practices. Originally developed by the Food and Agricultural 
+Organization of the United Nations (FAO), it has been widely applied in agricultural 
+research.
 
 Here, we present an expanded reimplementation of the model in Julia [@Bezanson2017], 
 focussing on improving its interoperability with other software and models. With 
@@ -51,22 +52,19 @@ interdisciplinary models in the environmental sciences.
 # Statement of need
 
 All agriculture is dependent on the growth of plants, which provide food, fodder, 
-fibre, and other resources. Therefore, a detailed understanding of plant growth is
-vital for farmers, but also necessary to address the major food system challenges
-of our society. These include widespread malnutrition, agriculture-related
-environmental degradation, and global impacts of climate change, and require
-wide-ranging changes to our food systems [@Foley2011]. In this context, process-based 
-crop models can be used to inform decision-making. These models use information about 
-environmental parameters (e.g. temperature, rainfall, soil quality) and knowledge of 
-plant biology to simulate crop growth over time and estimate yield.
+fibre, and other resources. Forecasting and optimising crop growth is therefore
+vital to address global food system challenges, including widespread malnutrition, 
+agriculture-related environmental degradation, and global impacts of climate change 
+[@Foley2011]. In this context, process-based crop models can be used to inform 
+decision-making. These models use information about environmental parameters (e.g. 
+temperature, rainfall, soil quality) and knowledge of plant biology to simulate 
+crop growth over time and estimate yield.
 
-AquaCrop is one such model. It lays a special emphasis on the role of water for crop 
-growth, and is intended to be both simple and robust [@Steduto2009].
-It has been used to model numerous crops worldwide [@Mialyk2024], and is known to
-produce reliable estimates of crop phenology and yield [@Kostkova2021]. First
-implemented in Delphi, it was later open-sourced in a Fortran version [@deRoos2021; 
-@RSDA2024]. There are also versions available in [Matlab](https://github.com/aquacropos/aquacrop-matlab),
-[Python](https://github.com/aquacropos/aquacrop), and [R](https://github.com/jrodriguez88/aquacrop-R),
+AquaCrop is one such model, which has been used to model numerous crops worldwide 
+[@Mialyk2024], and is known to produce reliable estimates of crop phenology and yield 
+[@Kostkova2021]. First implemented in Delphi, it was later open-sourced in a Fortran 
+version [@deRoos2021; @RSDA2024]. There are also versions available in 
+[Matlab](https://github.com/aquacropos/aquacrop-matlab), [Python](https://github.com/aquacropos/aquacrop), and [R](https://github.com/jrodriguez88/aquacrop-R),
 although currently these are not up-to-date with the most recent version of the 
 original model [@Foster2017; @Kelly2021; @CamargoRodriguez2019]. 
 
@@ -75,7 +73,7 @@ environmental research software in Julia. To our knowledge, this is the first
 process-based crop model available in this language. Our purpose is also to provide a 
 package that can be readily integrated into other scientific software, in order to
 facilitate the creation of multidisciplinary models of socio-environmental systems
-[@Cabral2023,@Vedder2024].
+[@Cabral2023; @Vedder2024].
 
 Specifically, we developed the package to use it as a component within 
 [`Persefone.jl`](https://persefone-model.eu), a process-based model of agricultural 
@@ -126,7 +124,7 @@ using Unitful
 runtype = NormalFileRun();
 
 # Then specify the directory containing the necessary input files
-parentdir = AquaCrop.test_dir;  # ".../AquaCrop.jl/test/testcase"
+parentdir = AquaCrop.test_dir;
 
 # Now we can do a simulation run and plot the results
 outputs = basic_run(; runtype=runtype, parentdir=parentdir);
