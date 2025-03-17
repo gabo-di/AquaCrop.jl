@@ -193,7 +193,7 @@ function start_outputs()
         "IrriInt" => Quantity{Float64, 𝐓, FreeUnits{(d_,), 𝐓, nothing}}[],
     )
 
-    return Dict( 
+    return Dict(
         :logger => logger,
         :tcropsim => tcropsim,
         :etodatasim => etodatasim,
@@ -240,7 +240,7 @@ end
 """
 function add_output_in_tcropsim!(outputs, tlow::T, thigh::T) where T<:Number
     push!(outputs[:tcropsim][:tlow], tlow)
-    push!(outputs[:tcropsim][:thigh], thigh) 
+    push!(outputs[:tcropsim][:thigh], thigh)
     return nothing
 end
 
@@ -315,7 +315,7 @@ end
 """
 function add_output_in_tempdatasim!(outputs, tlow::T, thigh::T) where T<:Number
     push!(outputs[:tempdatasim][:tlow], tlow)
-    push!(outputs[:tempdatasim][:thigh], thigh) 
+    push!(outputs[:tempdatasim][:thigh], thigh)
     return nothing
 end
 
@@ -501,7 +501,7 @@ function add_output_in_dayout!(outputs, arr)
             "SaltZ" => arr[58]*ton*u"ha^-1",
             "ECe" => arr[59]*u"dS/m",
             "ECsw" => arr[60]*u"dS/m",
-            "StSalt_" => arr[61], 
+            "StSalt_" => arr[61],
             "ECgw" => arr[62]*u"dS/m",
             "WC_1" => arr[63],
             "WC_2" => arr[64],
@@ -599,7 +599,7 @@ end
 """
 function add_output_in_tnxreference12months!(outputs, tlow::T, thigh::T) where T<:Number
     push!(outputs[:tnxreference12months][:tlow], tlow)
-    push!(outputs[:tnxreference12months][:thigh], thigh) 
+    push!(outputs[:tnxreference12months][:thigh], thigh)
     return nothing
 end
 
@@ -625,7 +625,7 @@ end
 """
 function add_output_in_tnxreference365days!(outputs, tlow::T, thigh::T) where T<:Number
     push!(outputs[:tnxreference365days][:tlow], tlow)
-    push!(outputs[:tnxreference365days][:thigh], thigh) 
+    push!(outputs[:tnxreference365days][:thigh], thigh)
     return nothing
 end
 
@@ -651,7 +651,7 @@ end
 """
 function add_output_in_tcropreferencesim!(outputs, tlow::T, thigh::T) where T<:Number
     push!(outputs[:tcropreferencesim][:tlow], tlow)
-    push!(outputs[:tcropreferencesim][:thigh], thigh) 
+    push!(outputs[:tcropreferencesim][:thigh], thigh)
     return nothing
 end
 

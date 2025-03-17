@@ -83,7 +83,7 @@ function initialize_project(outputs, theprojectfile, theprojecttype, filepaths; 
                     auxparfile = joinpath(filepaths[:param], theprojectfile[1:end-3] * "PP1")
                 elseif typeof(kwargs[:runtype]) == TomlFileRun
                     auxparfile = testfile
-                elseif typeof(kwargs[:runtype]) == NoFileRun 
+                elseif typeof(kwargs[:runtype]) == NoFileRun
                     auxparfile = ""
                     if haskey(kwargs, :simulparam)
                         actualize_with_dict!(gvars[:simulparam], kwargs[:simulparam])
@@ -196,7 +196,7 @@ end
 
 """
     finalize_run1!(outputs, gvars, nrrun; kwargs...)
-    
+
 run.f90:FinalizeRun1:7376
 """
 function finalize_run1!(outputs, gvars, nrrun; kwargs...)

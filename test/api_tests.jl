@@ -8,13 +8,13 @@ using Test
     outputs = basic_run(; runtype=runtype, parentdir=parentdir)
     @test isequal(size(outputs[:dayout]), (892, 89))
 
-    # basic run with TomlFileRun 
+    # basic run with TomlFileRun
     runtype = TomlFileRun()
     parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
     outputs = basic_run(; runtype=runtype, parentdir=parentdir)
     @test isequal(size(outputs[:dayout]), (892, 89))
 
-    # basic run with no runtype 
+    # basic run with no runtype
     parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
     outputs = basic_run(; parentdir=parentdir)
     @test isequal(size(outputs[:dayout]), (892, 89))
@@ -22,13 +22,13 @@ using Test
 
     # basic run with no parentdir, bad directory so no result
     runtype = TomlFileRun()
-    outputs = basic_run(; runtype=runtype) 
+    outputs = basic_run(; runtype=runtype)
     @test isequal(size(outputs[:dayout]), (0, 89))
     @test isequal(outputs[:logger][2], "using default parentdir pwd()")
 end
 
 @testset "Start cropfield intermediate" begin
-    # good start of cropfield using NormalFileRun 
+    # good start of cropfield using NormalFileRun
     runtype = NormalFileRun()
     parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
@@ -58,23 +58,23 @@ end
     @test isapprox( dryyield(cropfield).val, 0.0 )
 
 
-    # bad start giving wrong runtype 
+    # bad start giving wrong runtype
     runtype = :TomlFileRun  # or other thing
     parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
     @test isequal(all_ok.logi, false)
     @test isequal(all_ok.msg, "invalid runtype "*string(runtype))
 
-    # bad start giving not real parentdir 
-    runtype = TomlFileRun()  
-    parentdir = "/Not/real/directory" 
+    # bad start giving not real parentdir
+    runtype = TomlFileRun()
+    parentdir = "/Not/real/directory"
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
     @test isequal(all_ok.logi, false)
     @test isequal(all_ok.msg, "invalid parentdir")
 
     # bad start giving real parentdir but with bad  data
-    runtype = TomlFileRun()  
-    parentdir = pwd() 
+    runtype = TomlFileRun()
+    parentdir = pwd()
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
     @test isequal(all_ok.logi, false)
     @test isequal(all_ok.msg, "no project loaded")
@@ -83,7 +83,7 @@ end
 end
 
 # @testset "Setup cropfield intermediate" begin
-#     # good setup of cropfield using NormalFileRun 
+#     # good setup of cropfield using NormalFileRun
 #     runtype = NormalFileRun()
 #     parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
 #     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
@@ -110,7 +110,7 @@ end
 # end
 
 @testset "Update cropfield intermediate" begin
-    # good update of cropfield using NormalFileRun 
+    # good update of cropfield using NormalFileRun
     runtype = NormalFileRun()
     parentdir = AquaCrop.test_dir  #".../AquaCrop/test/testcase"
     cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)

@@ -20,13 +20,13 @@ function check_for_keep_swc(outputs, projectinput::Vector{ProjectInputType}, fil
     filename = projectinput[1].Soil_Filename
     has_external = filename == "(External)"
 
-    if (has_external) 
+    if (has_external)
         # Note: here we use the AquaCrop version number and assume that
         # the same version can be used in finalizing the soil settings.
         soil = gvars[:soil]
         soil_layers = gvars[:soil_layers]
         compartments = gvars[:compartments]
-    elseif (filename == "(None)") 
+    elseif (filename == "(None)")
         soil = gvars[:soil]
         soil_layers = gvars[:soil_layers]
         compartments = gvars[:compartments]
@@ -34,21 +34,21 @@ function check_for_keep_swc(outputs, projectinput::Vector{ProjectInputType}, fil
         soil, soil_layers, compartments = load_profile(outputs,
             joinpath([filepaths[:prog], projectinput[1].Soil_Directory, filename]),
             gvars[:simulparam]; kwargs...)
-    end 
+    end
 
     # 3. Check if runs with KeepSWC exist
     runi = 1
     totalnrofruns = length(projectinput)
     while ((runwithkeepswc == false) & (runi <= totalnrofruns))
-        if (projectinput[runi].SWCIni_Filename == "KeepSWC") 
+        if (projectinput[runi].SWCIni_Filename == "KeepSWC")
             runwithkeepswc = true
-        end 
+        end
         runi = runi + 1
-    end 
+    end
 
-    if (runwithkeepswc == false) 
+    if (runwithkeepswc == false)
         constzrxforrun = undef_double # reset
-    end 
+    end
 
     # 4. Look for maximum root zone depth IF RunWithKeepSWC
     if (runwithkeepswc == true)
@@ -56,16 +56,16 @@ function check_for_keep_swc(outputs, projectinput::Vector{ProjectInputType}, fil
         while (runi <= totalnrofruns)
             # Obtain maximum rooting depth from the crop file
             fullfilename = joinpath([filepaths[:prog], projectinput[runi].Crop_Directory, projectinput[runi].Crop_Filename])
-        
+
             constzrxforrun = _check_for_keep_swc(kwargs[:runtype], fullfilename, soil_layers, constzrxforrun)
             runi = runi + 1
-        end 
-    end 
+        end
+    end
 
     # 5. Reload existing soil file is not necessary since we do not change any variables
 
     return runwithkeepswc, constzrxforrun
-end 
+end
 
 function check_for_keep_swc(outputs, projectinput::Vector{AbstractParametersContainer}, filepaths, gvars; kwargs...)
     return check_for_keep_swc(outputs, ProjectInputType[p for p in projectinput], filepaths, gvars; kwargs...)
@@ -77,14 +77,14 @@ function _check_for_keep_swc(runtype::NormalFileRun, fullfilename, soil_layers, 
         readline(file) # description
         versionnr = parse(Float64,strip(readline(file))[1:4])
         for i in 1:34
-            readline(file) 
-        end 
+            readline(file)
+        end
         zrni = parse(Float64,strip(readline(file))[1:6])
         zrxi = parse(Float64,strip(readline(file))[1:6])
         zrsoili = root_max_in_soil_profile(zrxi, soil_layers)
-        if (zrsoili > constzrxforrun) 
+        if (zrsoili > constzrxforrun)
             ret[1] = zrsoili
-        end 
+        end
     end
     return ret[1]
 end
@@ -94,9 +94,9 @@ function _check_for_keep_swc(runtype::T, fullfilename, soil_layers, constzrxforr
     aux = TOML.parsefile(fullfilename)
     zrxi = aux["crop"]["RootMax"]
     zrsoili = root_max_in_soil_profile(zrxi, soil_layers)
-    if (zrsoili > constzrxforrun) 
+    if (zrsoili > constzrxforrun)
         ret[1] = zrsoili
-    end 
+    end
     return ret[1]
 end
 
@@ -129,11 +129,11 @@ function _load_program_parameters_project_plugin!(runtype::NormalFileRun, simulp
         simulparam.EvapZmax = parse(Float64,strip(readline(file))[1:6]) # maximum water extraction depth by soil evaporation [cm] soil
         simulparam.RunoffDepth = parse(Float64,strip(readline(file))[1:6]) # considered depth (m) of soil profile for calculation of mean soil water content
         i = parse(Int,strip(readline(file))[1:6])
-        if i == 1 
+        if i == 1
             simulparam.CNcorrection = true
         else
             simulparam.CNcorrection = false
-        end 
+        end
         simulparam.SaltDiff = parse(Float64,strip(readline(file))[1:6]) # salt diffusion factor (%)
         simulparam.SaltSolub = parse(Float64,strip(readline(file))[1:6]) # salt solubility (g/liter)
         simulparam.RootNrDF = parse(Float64,strip(readline(file))[1:6]) # shape factor capillary rise factor
@@ -143,12 +143,12 @@ function _load_program_parameters_project_plugin!(runtype::NormalFileRun, simulp
         simulparam.Tmin = parse(Float64,strip(readline(file))[1:6]) # Default minimum temperature (degC) if no temperature file is specified
         simulparam.Tmax = parse(Float64,strip(readline(file))[1:6]) # Default maximum temperature (degC) if no temperature file is specified
         simulparam.GDDMethod = parse(Float64,strip(readline(file))[1:6]) # Default method for GDD calculations
-        if simulparam.GDDMethod > 3 
+        if simulparam.GDDMethod > 3
             simulparam.GDDMethod = 3
-        end 
-        if simulparam.GDDMethod < 1 
+        end
+        if simulparam.GDDMethod < 1
             simulparam.GDDMethod = 1
-        end 
+        end
 
         # Rainfall
         i = parse(Int,strip(readline(file))[1:6])
@@ -158,7 +158,7 @@ function _load_program_parameters_project_plugin!(runtype::NormalFileRun, simulp
             simulparam.EffectiveRain.method = :USDA
         elseif i==2
             simulparam.EffectiveRain.method = :Percentage
-        end 
+        end
 
         simulparam.EffectiveRain.PercentEffRain = parse(Float64,strip(readline(file))[1:6]) # IF Method is Percentage
         simulparam.EffectiveRain.ShowersInDecade = parse(Float64,strip(readline(file))[1:6])# For estimation of surface run-off
@@ -168,7 +168,7 @@ function _load_program_parameters_project_plugin!(runtype::NormalFileRun, simulp
 end
 
 function _load_program_parameters_project_plugin!(runtype::T, simulparam::RepParam, auxparfile) where T<:TomlFileRun
-    load_gvars_from_toml!(simulparam, auxparfile) 
+    load_gvars_from_toml!(simulparam, auxparfile)
     return nothing
 end
 
@@ -183,16 +183,16 @@ function check_files_in_project!(fileok::RepFileOK, allok, input::ProjectInputTy
 
     function check_file(directory, filename)
         # sets allok to false if expected file does not exist.
-        if (filename != "(None)") 
-            if !isfile(joinpath([parentdir, directory, filename])) 
+        if (filename != "(None)")
+            if !isfile(joinpath([parentdir, directory, filename]))
                 allok[1] = false
                 fileok_tmp = false
             else
                 fileok_tmp = true
-            end 
+            end
         else
             fileok_tmp = true
-        end 
+        end
         return fileok_tmp
     end
     # Check the 14 files
@@ -219,10 +219,10 @@ function check_files_in_project!(fileok::RepFileOK, allok, input::ProjectInputTy
     fileok_tmp = check_file(input.Soil_Directory, input.Soil_Filename)
     fileok.Soil_Filename = fileok_tmp
 
-    if (input.SWCIni_Filename != "KeepSWC") 
+    if (input.SWCIni_Filename != "KeepSWC")
         fileok_tmp = check_file(input.SWCIni_Directory, input.SWCIni_Filename)
         fileok.SWCIni_Filename = fileok_tmp
-    end 
+    end
 
     fileok_tmp = check_file(input.OffSeason_Directory, input.OffSeason_Filename)
     fileok.OffSeason_Filename = fileok_tmp
@@ -268,7 +268,7 @@ function _initialize_project_input(runtype::NormalFileRun, filename, parentdir; 
             # 1. Climate
             self.Climate_Info = strip(readline(file))
             self.Climate_Filename = strip(readline(file))
-            self.Climate_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.Climate_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 1.1 Temperature
             self.Temperature_Info = strip(readline(file))
@@ -278,61 +278,61 @@ function _initialize_project_input(runtype::NormalFileRun, filename, parentdir; 
             # 1.2 ETo
             self.ETo_Info = strip(readline(file))
             self.ETo_Filename = strip(readline(file))
-            self.ETo_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.ETo_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 1.3 Rain
             self.Rain_Info = strip(readline(file))
             self.Rain_Filename = strip(readline(file))
-            self.Rain_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.Rain_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 1.4 CO2
             self.CO2_Info = strip(readline(file))
             self.CO2_Filename = strip(readline(file))
-            self.CO2_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.CO2_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 2. Calendar
             self.Calendar_Info = strip(readline(file))
             self.Calendar_Filename = strip(readline(file))
-            self.Calendar_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.Calendar_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 3. Crop
             self.Crop_Info = strip(readline(file))
             self.Crop_Filename = strip(readline(file))
-            self.Crop_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.Crop_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             self.Irrigation_Info = strip(readline(file))
             self.Irrigation_Filename = strip(readline(file))
-            self.Irrigation_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.Irrigation_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 5. Field Management
             self.Management_Info = strip(readline(file))
             self.Management_Filename = strip(readline(file))
-            self.Management_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.Management_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 6. Soil Profile
             self.Soil_Info = strip(readline(file))
             self.Soil_Filename = strip(readline(file))
-            self.Soil_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.Soil_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 7. GroundWater
             self.GroundWater_Info = strip(readline(file))
             self.GroundWater_Filename = strip(readline(file))
-            self.GroundWater_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.GroundWater_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 8. Initial conditions
             self.SWCIni_Info = strip(readline(file))
             self.SWCIni_Filename = strip(readline(file))
-            self.SWCIni_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.SWCIni_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 9. Off-season conditions
             self.OffSeason_Info = strip(readline(file))
             self.OffSeason_Filename = strip(readline(file))
-            self.OffSeason_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.OffSeason_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             # 10. Field data
             self.Observations_Info = strip(readline(file))
             self.Observations_Filename = strip(readline(file))
-            self.Observations_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"") 
+            self.Observations_Directory = replace(strip(readline(file)),"'"=>"","."=>"","/"=>"")
 
             push!(projectinput, self)
         end
@@ -366,10 +366,10 @@ function initialize_settings(outputs, filepaths; kwargs...)
     # do not change soil.RootMax like in global.f90:SaveProfile:4045 since it will be taken care later
 
     # if usedefaultsoilfile  (this is always true)
-    if typeof(kwargs[:runtype]) == NormalFileRun 
+    if typeof(kwargs[:runtype]) == NormalFileRun
         filename = joinpath([test_dir, "SIMUL", "DEFAULT.SOL"])
         # filename = joinpath(filepaths[:simul], "DEFAULT.SOL")
-    elseif typeof(kwargs[:runtype]) == TomlFileRun 
+    elseif typeof(kwargs[:runtype]) == TomlFileRun
         filename = joinpath( test_toml_dir, "gvars.toml")
         # filename = joinpath(filepaths[:simul], "gvars.toml")
     elseif typeof(kwargs[:runtype]) == NoFileRun
@@ -383,7 +383,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     #     number_soilclass!(soil_layers[1])
     #     determine_parameters_cr!(soil_layers[1])
     # end
-    
+
     simulation = RepSim()
     total_water_content = RepContent()
     complete_profile_description!(soil_layers, compartments, simulation, total_water_content)
@@ -401,11 +401,11 @@ function initialize_settings(outputs, filepaths; kwargs...)
 
     # 4. Field Management
     management.FertilityStress = 0
-    simulation.EffectStress = crop_stress_parameters_soil_fertility(crop.StressResponse, management.FertilityStress) 
+    simulation.EffectStress = crop_stress_parameters_soil_fertility(crop.StressResponse, management.FertilityStress)
 
     sumwabal = RepSum()
     previoussum = RepSum()
-    
+
     # 5. Climate
     # 5.6 Set Climate and Simulation Period
     crop.DayN = crop.Day1 + crop.DaysToHarvest - 1
@@ -515,12 +515,12 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(float_parameters, :ecdrain, undef_double)
     setparameter!(float_parameters, :eact, 0.0)
     setparameter!(float_parameters, :epot, 0.0)
-    setparameter!(float_parameters, :tactweedinfested, 0.0) 
-    setparameter!(float_parameters, :saltinfiltr, undef_double) 
-    setparameter!(float_parameters, :ccitopearlysen, undef_double) 
-    setparameter!(float_parameters, :weedrci, undef_double) 
-    setparameter!(float_parameters, :cciactualweedinfested, undef_double) 
-    setparameter!(float_parameters, :zeval, undef_double) 
+    setparameter!(float_parameters, :tactweedinfested, 0.0)
+    setparameter!(float_parameters, :saltinfiltr, undef_double)
+    setparameter!(float_parameters, :ccitopearlysen, undef_double)
+    setparameter!(float_parameters, :weedrci, undef_double)
+    setparameter!(float_parameters, :cciactualweedinfested, undef_double)
+    setparameter!(float_parameters, :zeval, undef_double)
 
 
     symbol_parameters = ParametersContainer(Symbol)
@@ -574,7 +574,7 @@ function initialize_settings(outputs, filepaths; kwargs...)
     setparameter!(bool_parameters, :part2Eval, false)
     setparameter!(bool_parameters, :out8Irri, false)
 
-    
+
 
     array_parameters = ParametersContainer(Vector{Float64})
     setparameter!(array_parameters, :Tmin, Float64[])
@@ -606,11 +606,11 @@ function initialize_settings(outputs, filepaths; kwargs...)
         setparameter!(string_parameters, :prof_file, "DEFAULT.SOL")
         setparameter!(string_parameters, :crop_file, "DEFAULT.CRO")
         setparameter!(string_parameters, :CO2_file, "MaunaLoa.CO2")
-    elseif typeof(kwargs[:runtype]) == TomlFileRun 
+    elseif typeof(kwargs[:runtype]) == TomlFileRun
         setparameter!(string_parameters, :prof_file, "gvars.toml")
         setparameter!(string_parameters, :crop_file, "gvars.toml")
         setparameter!(string_parameters, :CO2_file, "MaunaLoaCO2.csv")
-    elseif typeof(kwargs[:runtype]) == NoFileRun 
+    elseif typeof(kwargs[:runtype]) == NoFileRun
         setparameter!(string_parameters, :prof_file, "")
         setparameter!(string_parameters, :crop_file, "")
         setparameter!(string_parameters, :CO2_file, "")
@@ -676,7 +676,7 @@ function crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel
     # decline canopy growth coefficient (cgc)
     pulactual = 0
     ksi = ks_any(stresslevel/100, pulactual, pllactual, cropsresp.ShapeCGC)
-    stressout.RedCGC = round(Int,(1-ksi)*100)      
+    stressout.RedCGC = round(Int,(1-ksi)*100)
     # decline maximum canopy cover (ccx)
     pulactual = 0
     ksi = ks_any(stresslevel/100, pulactual, pllactual, cropsresp.ShapeCCX)
@@ -693,7 +693,7 @@ function crop_stress_parameters_soil_fertility(cropsresp::RepShapes, stresslevel
     ksi = 1
     stressout.RedKsSto = round(Int, (1-ksi)*100)
     return stressout
-end 
+end
 
 """
     ksval = ks_any(wrel, pulactual, pllactual, shapefactor)
@@ -703,29 +703,29 @@ global.f90:KsAny:2628
 function ks_any(wrel, pulactual, pllactual, shapefactor)
     pulactual_local = pulactual
 
-    if (pllactual - pulactual_local) < 0.0001 
+    if (pllactual - pulactual_local) < 0.0001
         pulactual_local = pllactual - 0.0001
-    end 
+    end
 
     prelativellul = (wrel - pulactual_local)/(pllactual - pulactual_local)
 
-    if prelativellul <= 0 
+    if prelativellul <= 0
         ksval = 1
-    elseif prelativellul >= 1 
+    elseif prelativellul >= 1
         ksval = 0
     else
         if round(Int,10*shapefactor) == 0  # straight line
             ksval = 1 - (exp(prelativellul*0.01)-1)/(exp(0.01)-1)
         else
             ksval = 1 - (exp(prelativellul*shapefactor)-1)/(exp(shapefactor)-1)
-        end 
-        if ksval > 1 
+        end
+        if ksval > 1
             ksval = 1
-        end 
-        if ksval < 0 
+        end
+        if ksval < 0
             ksval = 0
-        end 
-    end 
+        end
+    end
     return ksval
 end
 
@@ -736,34 +736,34 @@ global.f90:CompleteCropDescription:5661
 """
 function complete_crop_description!(crop::RepCrop, simulation::RepSim, management::RepManag)
     if ((crop.subkind == :Vegetative) |
-        (crop.subkind == :Forage)) 
-        if (crop.DaysToHIo > 0) 
+        (crop.subkind == :Forage))
+        if (crop.DaysToHIo > 0)
             if (crop.DaysToHIo > crop.DaysToHarvest)
                 crop.dHIdt = crop.HI/crop.DaysToHarvest
             else
                 crop.dHIdt = crop.HI/crop.DaysToHIo
-            end 
-            if (crop.dHIdt > 100) 
+            end
+            if (crop.dHIdt > 100)
                 crop.dHIdt = 100
-            end 
+            end
         else
             crop.dHIdt = 100
-        end 
+        end
     else
         #  grain or tuber crops
-        if (crop.DaysToHIo > 0) 
+        if (crop.DaysToHIo > 0)
             crop.dHIdt = crop.HI/crop.DaysToHIo
         else
             crop.dHIdt = undef_double
         end
     end
 
-    if (crop.ModeCycle == :CalendarDays) 
+    if (crop.ModeCycle == :CalendarDays)
         crop.DaysToCCini = time_to_cc_ini(crop.Planting, crop.PlantingDens, crop.SizeSeedling,
                                        crop.SizePlant, crop.CCx, crop.CGC)
         crop.DaysToFullCanopy = days_to_reach_cc_with_given_cgc(0.98*crop.CCx, crop.CCo, crop.CCx,
                                                           crop.CGC, crop.DaysToGermination)
-        if (management.FertilityStress != 0) 
+        if (management.FertilityStress != 0)
             fertstress = management.FertilityStress
             daystofullcanopy, RedCGC_temp, RedCCX_temp, fertstress = time_to_max_canopy_sf(crop.CCo, crop.CGC, crop.CCx,
                               crop.DaysToGermination,
@@ -782,8 +782,8 @@ function complete_crop_description!(crop::RepCrop, simulation::RepSim, managemen
             simulation.EffectStress.RedCCX = RedCCX_temp
             crop.DaysToFullCanopySF = daystofullcanopy
         else
-            crop.DaysToFullCanopySF = crop.DaysToFullCanopy 
-        end 
+            crop.DaysToFullCanopySF = crop.DaysToFullCanopy
+        end
     else
         crop.GDDaysToCCini = time_to_cc_ini(crop.Planting, crop.PlantingDens, crop.SizeSeedling,
                                          crop.SizePlant, crop.CCx, crop.GDDCGC)
@@ -791,10 +791,10 @@ function complete_crop_description!(crop::RepCrop, simulation::RepSim, managemen
                                          crop.SizePlant, crop.CCx, crop.CGC)
         crop.GDDaysToFullCanopy = days_to_reach_cc_with_given_cgc(0.98*crop.CCx, crop.CCo, crop.CCx,
                                                           crop.GDDCGC, crop.GDDaysToGermination)
-    end 
+    end
 
     cgcisgiven = true # required to adjust crop.daystofullcanopy (does not exist)
-    length123, stlength, length12, cgcval = determine_length_growth_stages(crop.CCo, crop.CCx, 
+    length123, stlength, length12, cgcval = determine_length_growth_stages(crop.CCo, crop.CCx,
                                                             crop.CDC, crop.DaysToGermination,
                                                             crop.DaysToHarvest, cgcisgiven,
                                                             crop.DaysToCCini, crop.Planting,
@@ -808,27 +808,27 @@ function complete_crop_description!(crop::RepCrop, simulation::RepSim, managemen
     crop.CCoAdjusted = crop.CCo
     crop.CCxAdjusted = crop.CCx
     crop.CCxWithered = crop.CCx
-end 
+end
 
 """
-    length123, stlength, length12, cgcval = determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength, 
-                                                                        cgcgiven, thedaystoccini, theplanting, 
+    length123, stlength, length12, cgcval = determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength,
+                                                                        cgcgiven, thedaystoccini, theplanting,
                                                                         length123, stlength, length12, cgcval)
 
 global.f90:DetermineLengthGrowthStages:1661
 """
-function determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength, 
-                                     cgcgiven, thedaystoccini, theplanting, 
+function determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength,
+                                     cgcgiven, thedaystoccini, theplanting,
                                      length123, stlength, length12, cgcval)
     #OJO this function might have problems
-    if (length123 < length12) 
+    if (length123 < length12)
         length123 = length12
-    end 
+    end
 
     # 1. Initial and 2. Crop Development stage
     # CGC is given and Length12 is already adjusted to it
     # OR Length12 is given and CGC has to be determined
-    if ((ccoval >= ccxval) | (length12 <= l0)) 
+    if ((ccoval >= ccxval) | (length12 <= l0))
         length12 = 0
         stlength[1] = 0
         stlength[2] = 0
@@ -837,34 +837,34 @@ function determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength,
         if (!cgcgiven)  # length12 is given and cgc has to be determined
             cgcval = log((0.25*ccxval/ccoval)/(1-0.98))/(length12-l0)
             # check if cgc < maximum value (0.40) and adjust length12 if required
-            if (cgcval > 0.40) 
+            if (cgcval > 0.40)
                 cgcval = 0.40
                 ccxval_scaled = 0.98*ccxval
-                length12 = days_to_reach_cc_with_given_cgc(ccxval_scaled , ccoval, 
+                length12 = days_to_reach_cc_with_given_cgc(ccxval_scaled , ccoval,
                                                              ccxval, cgcval, l0)
-                if (length123 < length12) 
+                if (length123 < length12)
                     length123 = length12
-                end 
-            end 
-        end 
+                end
+            end
+        end
         # find stlength[1]
         cctoreach = 0.10
-        stlength[1] = days_to_reach_cc_with_given_cgc(cctoreach, ccoval, ccxval, 
+        stlength[1] = days_to_reach_cc_with_given_cgc(cctoreach, ccoval, ccxval,
                                                                     cgcval, l0)
         # find stlength[2]
         stlength[2] = length12 - stlength[1]
-    end 
+    end
     l12adj = length12
 
     # adjust Initial and Crop Development stage, in case crop starts as regrowth
-    if (theplanting == :Regrowth) 
-        if (thedaystoccini == undef_int) 
+    if (theplanting == :Regrowth)
+        if (thedaystoccini == undef_int)
             # maximum canopy cover is already reached at start season
             l12adj = 0
             stlength[1] = 0
             stlength[2] = 0
         else
-            if (thedaystoccini == 0) 
+            if (thedaystoccini == 0)
                 # start at germination
                 l12adj = length12 - l0
                 stlength[1] = stlength[1] - l0
@@ -872,13 +872,13 @@ function determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength,
                 # start after germination
                 l12adj = length12 - (l0 + thedaystoccini)
                 stlength[1] = stlength[1] - (l0 + thedaystoccini)
-            end 
-            if (stlength[1] < 0) 
+            end
+            if (stlength[1] < 0)
                 stlength[1] = 0
             end
             stlength[2] = l12adj - stlength[1]
-        end 
-    end 
+        end
+    end
 
     # 3. Mid season stage
     stlength[3] = length123 - l12adj
@@ -887,25 +887,25 @@ function determine_length_growth_stages(ccoval, ccxval, cdcval, l0, totallength,
     stlength[4] = length_canopy_decline(ccxval, cdcval)
 
     # final adjustment
-    if (stlength[1] > totallength) 
+    if (stlength[1] > totallength)
         stlength[1] = totallength
         stlength[2] = 0
         stlength[3] = 0
         stlength[4] = 0
     else
-        if ((stlength[1]+stlength[2]) > totallength) 
+        if ((stlength[1]+stlength[2]) > totallength)
             stlength[2] = totallength - stlength[1]
             stlength[3] = 0
             stlength[4] = 0
         else
-            if ((stlength[1]+stlength[2]+stlength[3]) > totallength) 
+            if ((stlength[1]+stlength[2]+stlength[3]) > totallength)
                 stlength[3] = totallength - stlength[1] - stlength[2]
                 stlength[4] = 0
-            elseif ((stlength[1]+stlength[2]+stlength[3]+stlength[4]) > totallength) 
+            elseif ((stlength[1]+stlength[2]+stlength[3]+stlength[4]) > totallength)
                 stlength[4] = totallength - stlength[1] - stlength[2] - stlength[3]
-            end 
-        end 
-    end 
+            end
+        end
+    end
 
     return length123, stlength, length12, cgcval
 end
@@ -917,14 +917,14 @@ global.f90:LengthCanopyDecline:1856
 """
 function length_canopy_decline(ccx, cdc)
     nd = 0
-    if (ccx > 0) 
-        if (cdc <= eps(1.0)) 
+    if (ccx > 0)
+        if (cdc <= eps(1.0))
             nd = undef_int
         else
             nd = round(Int, (((ccx+2.29)/(cdc*3.33))*log(1 + 1/0.05) + 0.50))
                          # + 0.50 to guarantee that cc is zero
-        end 
-    end 
+        end
+    end
     return nd
 end
 
@@ -934,19 +934,19 @@ end
 global.f90:TimeToMaxCanopySF:2107
 """
 function time_to_max_canopy_sf(cco, cgc, ccx, l0, l12, l123, ltoflor, lflor, determinantcrop, l12sf, redcgc, redccx, classsf)
-    if ((classsf == 0) | ((redccx == 0) & (redcgc == 0))) 
+    if ((classsf == 0) | ((redccx == 0) & (redcgc == 0)))
         l12sf = l12
     else
         cctoreach = 0.98*(1-redccx/100)*ccx
         l12sf = days_to_reach_cc_with_given_cgc(cctoreach, cco, ((1-redccx/100)*ccx), (cgc*(1-(redcgc)/100)), l0)
         # determine l12sfmax
-        if (determinantcrop) 
+        if (determinantcrop)
             l12sfmax = ltoflor + round(Int, lflor/2)
         else
             l12sfmax = l123
         end
         # check for l12sfmax
-        if (l12sf > l12sfmax) 
+        if (l12sf > l12sfmax)
             # full canopy cannot be reached in potential period for vegetative growth
             # classsf := undef_int; ! switch to user defined soil fertility
             # 1. increase cgc(soil fertility)
@@ -960,8 +960,8 @@ function time_to_max_canopy_sf(cco, cgc, ccx, l0, l12, l123, ltoflor, lflor, det
                 cctoreach = 0.98*(1-redccx/100)*ccx
                 l12sf = days_to_reach_cc_with_given_cgc(cctoreach, cco, ((1-redccx/100)*ccx), (cgc*(1-(redcgc)/100)), l0)
             end
-        end 
-    end 
+        end
+    end
     return l12sf, redcgc, redccx, classsf
 end
 
@@ -972,29 +972,29 @@ global.f90:DaysToReachCCWithGivenCGC:1826
 """
 function days_to_reach_cc_with_given_cgc(cctoreach, ccoval, ccxval, cgcval, l0)
     cctoreach_local = cctoreach
-    if ((ccoval > cctoreach_local) | (ccoval >= ccxval)) 
+    if ((ccoval > cctoreach_local) | (ccoval >= ccxval))
         l = 0
     else
-        if (cctoreach_local > (0.98*ccxval)) 
+        if (cctoreach_local > (0.98*ccxval))
             cctoreach_local = 0.98*ccxval
-        end 
-        if (cctoreach_local <= ccxval/2) 
+        end
+        if (cctoreach_local <= ccxval/2)
             l = log(cctoreach_local/ccoval)/cgcval
         else
             l = log((0.25*ccxval*ccxval/ccoval)/(ccxval-cctoreach_local))/cgcval
         end
-    end 
+    end
     daystoresult = l0 + round(Int, l)
     return daystoresult
 end
 
 """
-    elapsedtime = time_to_cc_ini(theplantingtype, thecropplantingdens, 
+    elapsedtime = time_to_cc_ini(theplantingtype, thecropplantingdens,
                           thesizeseedling, thesizeplant, thecropccx, thecropcgc)
 
 global.f90:TimeToCCini:1771
 """
-function time_to_cc_ini(theplantingtype, thecropplantingdens, 
+function time_to_cc_ini(theplantingtype, thecropplantingdens,
                           thesizeseedling, thesizeplant, thecropccx, thecropcgc)
     if ((theplantingtype == :Seed) | (theplantingtype == :Transplant) |
         (thesizeseedling >= thesizeplant))
@@ -1002,13 +1002,13 @@ function time_to_cc_ini(theplantingtype, thecropplantingdens,
     else
         thecropcco = (thecropplantingdens/10000) * (thesizeseedling/10000)
         thecropccini = (thecropplantingdens/10000) * (thesizeplant/10000)
-        if (thecropccini >= (0.98*thecropccx)) 
+        if (thecropccini >= (0.98*thecropccx))
             elapsedtime = undef_int
         else
-            elapsedtime = days_to_reach_cc_with_given_cgc(thecropccini, thecropcco, 
+            elapsedtime = days_to_reach_cc_with_given_cgc(thecropccini, thecropcco,
                                                     thecropccx, thecropcgc, 0)
-        end 
-    end 
+        end
+    end
     return elapsedtime
 end
 
@@ -1027,16 +1027,16 @@ function root_max_in_soil_profile(zmaxcrop, soil_layers::Vector{SoilLayerIndivid
         layi = layi + 1
 
         if ((soil_layers[layi].Penetrability < 100) &
-            (round(Int, zsoil*1000) < round(Int, zmaxcrop*1000))) 
+            (round(Int, zsoil*1000) < round(Int, zmaxcrop*1000)))
             zmax = undef_double
-        end 
+        end
 
         zsoil += soil_layers[layi].Thickness
-    end 
+    end
 
-    if (zmax < 0) 
+    if (zmax < 0)
         zmax = zr_adjusted_to_restrictive_layers(zmaxcrop, soil_layers)
-    end 
+    end
 
     return zmax
 end
@@ -1073,7 +1073,7 @@ function zr_adjusted_to_restrictive_layers(zrin, soil_layers::Vector{SoilLayerIn
 
         if ((layi == nrsoil_layers) |
             (soil_layers[layi].Penetrability == 0) |
-            (round(Int, zrtest*10000) <= round(Int, zsoil*10000))) 
+            (round(Int, zrtest*10000) <= round(Int, zsoil*10000)))
             # no root expansion in layer
             zrout = zrtest
             theend = true
@@ -1084,18 +1084,18 @@ function zr_adjusted_to_restrictive_layers(zrin, soil_layers::Vector{SoilLayerIn
             zsoil += zsoil + soil_layers[layi].Thickness
             deltaz = soil_layers[layi].Thickness
         end
-    end 
+    end
     return zrout
 end
 
 """
-    complete_profile_description!(soil_layers::Vector{SoilLayerIndividual}, 
-            compartments::Vector{CompartmentIndividual}, simulation::RepSim, total_water_content::RepContent)  
+    complete_profile_description!(soil_layers::Vector{SoilLayerIndividual},
+            compartments::Vector{CompartmentIndividual}, simulation::RepSim, total_water_content::RepContent)
 
 global.f90:CompleteProfileDescription:7598
 """
-function complete_profile_description!(soil_layers::Vector{SoilLayerIndividual}, 
-            compartments::Vector{CompartmentIndividual}, simulation::RepSim, total_water_content::RepContent)  
+function complete_profile_description!(soil_layers::Vector{SoilLayerIndividual},
+            compartments::Vector{CompartmentIndividual}, simulation::RepSim, total_water_content::RepContent)
     nrcompartments = length(compartments)
     nrsoil_layers = length(soil_layers)
 
@@ -1104,18 +1104,18 @@ function complete_profile_description!(soil_layers::Vector{SoilLayerIndividual},
 
     for compi in 1:nrcompartments
         compartments[compi].Theta = soil_layers[compartments[compi].Layer].FC/100
-        compartments[compi].FCadj = soil_layers[compartments[compi].Layer].FC 
+        compartments[compi].FCadj = soil_layers[compartments[compi].Layer].FC
 
         simulation.ThetaIni[compi] = compartments[compi].Theta
 
-        soil_layers[compartments[compi].Layer].WaterContent += 
+        soil_layers[compartments[compi].Layer].WaterContent +=
             simulation.ThetaIni[compi]*100 * 10*compartments[compi].Thickness
     end
 
     total = 0
     for layeri in 1:nrsoil_layers
         total += soil_layers[layeri].WaterContent
-    end 
+    end
     total_water_content.BeginDay = total
 
     # global.f90:DeclareInitialCondAtFCandNoSalt:1186
@@ -1126,12 +1126,12 @@ function complete_profile_description!(soil_layers::Vector{SoilLayerIndividual},
         simulation.IniSWC.Loc[layeri] = soil_layers[layeri].Thickness
         simulation.IniSWC.VolProc[layeri] = soil_layers[layeri].FC
         simulation.IniSWC.SaltECe[layeri] = 0
-    end 
+    end
     return nothing
-end 
+end
 
-function complete_profile_description!(soil_layers::Vector{AbstractParametersContainer}, 
-            compartments::Vector{AbstractParametersContainer}, simulation::RepSim, total_water_content::RepContent)  
+function complete_profile_description!(soil_layers::Vector{AbstractParametersContainer},
+            compartments::Vector{AbstractParametersContainer}, simulation::RepSim, total_water_content::RepContent)
     complete_profile_description!(SoilLayerIndividual[s for s in soil_layers], CompartmentIndividual[c for c in compartments], simulation, total_water_content)
     return nothing
 end
@@ -1148,29 +1148,29 @@ function designate_soillayer_to_compartments!(compartments::Vector{CompartmentIn
     depthi = 0
     layeri = 1
     compi = 1
-    
+
     outer_loop = true
-    while outer_loop 
+    while outer_loop
         depth = depth + soil_layers[layeri].Thickness
         inner_loop = true
         finished = false
         while inner_loop
             depthi = depthi + compartments[compi].Thickness/2
 
-            if (depthi <= depth) 
+            if (depthi <= depth)
                 compartments[compi].Layer = layeri
                 nextlayer = false
-                depthi = depthi + compartments[compi].Thickness/2 
+                depthi = depthi + compartments[compi].Thickness/2
                 compi = compi + 1
                 finished = (compi > nrcompartments)
             else
-                depthi = depthi - compartments[compi].Thickness/2 
+                depthi = depthi - compartments[compi].Thickness/2
                 nextlayer = true
                 layeri = layeri + 1
                 finished = (layeri > nrsoil_layers)
-            end 
+            end
 
-            if (finished | nextlayer) 
+            if (finished | nextlayer)
                 inner_loop = false
             end
         end
@@ -1182,12 +1182,12 @@ function designate_soillayer_to_compartments!(compartments::Vector{CompartmentIn
 
     for i in compi:nrcompartments
         compartments[i].Layer = nrsoil_layers
-    end 
+    end
     return nothing
-end 
+end
 
-function designate_soillayer_to_compartments!(compartments::Vector{AbstractParametersContainer}, 
-    soil_layers::Vector{AbstractParametersContainer})  
+function designate_soillayer_to_compartments!(compartments::Vector{AbstractParametersContainer},
+    soil_layers::Vector{AbstractParametersContainer})
     designate_soillayer_to_compartments!( CompartmentIndividual[c for c in compartments], SoilLayerIndividual[s for s in soil_layers])
     return nothing
 end
@@ -1247,14 +1247,14 @@ function _load_profile(runtype::NormalFileRun, outputs, filepath; kwargs...)
             soillayer.CRa = cra_temp
             crb_temp = parse(Float64,popfirst!(splitedline))
             soillayer.CRb = crb_temp
-            description_temp = join(splitedline, " ") 
+            description_temp = join(splitedline, " ")
             soillayer.Description = description_temp
             gravelv_temp = from_gravelmass_to_gravelvol(SAT_temp, gravelm_temp)
             soillayer.GravelVol = gravelv_temp
             push!(soil_layers, soillayer)
         end
     end
-    return soil, soil_layers 
+    return soil, soil_layers
 end
 
 function _load_profile(runtype::T, outputs, filepath; kwargs...) where T<:TomlFileRun
@@ -1290,7 +1290,7 @@ function load_profile_processing!(soil::RepSoil, soil_layers::Vector{SoilLayerIn
 
     for i in eachindex(soil_layers)
         soillayer = soil_layers[i]
-        
+
         # determine drainage coefficient
         tau = tau_from_ksat(soillayer.InfRate)
         soillayer.tau = tau
@@ -1337,7 +1337,7 @@ function determine_nrand_thickness_compartments!(compartments::Vector{Compartmen
     totaldepthl = 0
     for i in eachindex(soil_layers)
         totaldepthl += soil_layers[i].Thickness
-    end 
+    end
     totaldepthc = 0
     nrcompartments = 0
     loopi = true
@@ -1349,7 +1349,7 @@ function determine_nrand_thickness_compartments!(compartments::Vector{Compartmen
             compartment.Thickness = compdefthick
         else
             compartment.Thickness = deltaz
-        end 
+        end
         totaldepthc += compartment.Thickness
         push!(compartments, compartment)
         if ((nrcompartments == max_no_compartments) | (abs(totaldepthc - totaldepthl) < 0.0001))
@@ -1374,52 +1374,52 @@ function calculate_salt_mobility!(soillayer::SoilLayerIndividual, saltdiffusion)
     UL = soillayer.UL * 100 # upper limit in VOL% of SC cell
 
     # 1. convert Macro (vol%) in SaltCelNumber
-    if (Macro > UL) 
-        CelMax = soillayer.SCP1 
+    if (Macro > UL)
+        CelMax = soillayer.SCP1
     else
         CelMax = round(Int, (Macro/UL)*soillayer.SC)
-    end 
+    end
 
-    if (CelMax <= 0) 
+    if (CelMax <= 0)
         CelMax = 1
     end
 
     # 2. find a and b
-    if (Mix < 0.5) 
+    if (Mix < 0.5)
         a = Mix * 2
         b = exp(10*(0.5-Mix)*log(10))
     else
         a = 2 * (1 - Mix)
         b = exp(10*(Mix-0.5)*log(10))
-    end 
+    end
 
     # 3. calculate mobility for cells = 1 to Macro
     for i in 1:CelMax-1
         xi = i/(CelMax-1)
-        if (Mix > 0) 
-            if (Mix < 0.5) 
+        if (Mix > 0)
+            if (Mix < 0.5)
                 yi = exp(log(a)+xi*log(b))
                 Mobil[i] = (yi-a)/(a*b-a)
             elseif ((Mix >= 0.5 - eps(0.0)) & (Mix <= 0.5 + eps(0.0)))
                 Mobil[i] = xi
-            elseif (Mix < 1) 
+            elseif (Mix < 1)
                 yi = exp(log(a)+(1-xi)*log(b))
                 Mobil[i] = 1 - (yi-a)/(a*b-a)
             else
                 Mobil[i] = 1
-            end 
+            end
         else
             Mobil[i] = 0
-        end 
-    end 
+        end
+    end
 
     # 4. Saltmobility between Macro and SAT
-    for i in CelMax:soillayer.SCP1 
+    for i in CelMax:soillayer.SCP1
         Mobil[i] = 1
-    end 
+    end
 
     return nothing
-end 
+end
 
 """
     tau = tau_from_ksat(ksat)
@@ -1427,18 +1427,18 @@ end
 global.f90:TauFromKsat:1906
 """
 function tau_from_ksat(ksat)
-    if (abs(ksat) < eps(1.0)) 
+    if (abs(ksat) < eps(1.0))
         tau = 0
     else
         tautemp = round(Int,100.0*0.0866*exp(0.35*log(ksat)))
-        if (tautemp < 0) 
+        if (tautemp < 0)
             tautemp = 0
-        end 
-        if (tautemp > 100) 
+        end
+        if (tautemp > 100)
             tautemp = 100
-        end 
+        end
         tau = tautemp/100.0
-    end 
+    end
     return tau
 end
 
@@ -1451,7 +1451,7 @@ global.f90:FromGravelMassToGravelVolume:1538
 """
 function from_gravelmass_to_gravelvol(porositypercent, gravelmasspercent)
     mineralbd = 2.65 # mg/m3
-    if (gravelmasspercent > 0) 
+    if (gravelmasspercent > 0)
         matrixbd = mineralbd * (1.0 - porositypercent/100.0)
         soilbd = 100.0/(gravelmasspercent/mineralbd + (100.0-gravelmasspercent)/matrixbd)
         fromgravelmasstogravelvolume = gravelmasspercent * (soilbd/mineralbd)
@@ -1468,13 +1468,13 @@ sets the soil class of soillayer considering its own data.
 
 global.f90:NumberSoilClass:1926
 """
-function number_soilclass!(soillayer::SoilLayerIndividual) 
+function number_soilclass!(soillayer::SoilLayerIndividual)
     satvolpro = soillayer.SAT
     fcvolpro = soillayer.FC
     pwpvolpro = soillayer.WP
     ksatmm = soillayer.InfRate
 
-    if (satvolpro <= 55.0) 
+    if (satvolpro <= 55.0)
         if (pwpvolpro >= 20.0)
             if ((satvolpro >= 49.0) & (fcvolpro >= 40.0))
                 numbersoilclass = 4  # silty clayey soils
@@ -1485,23 +1485,23 @@ function number_soilclass!(soillayer::SoilLayerIndividual)
             if (fcvolpro < 23.0)
                 numbersoilclass = 1 # sandy soils
             else
-                if ((pwpvolpro > 16.0) & (ksatmm < 100.0)) 
+                if ((pwpvolpro > 16.0) & (ksatmm < 100.0))
                     numbersoilclass = 3 # sandy clayey soils
                 else
-                    if ((pwpvolpro < 6.0) & (fcvolpro < 28.0) & (ksatmm >750.0)) 
+                    if ((pwpvolpro < 6.0) & (fcvolpro < 28.0) & (ksatmm >750.0))
                         numbersoilclass = 1 # sandy soils
                     else
                         numbersoilclass = 2  # loamy soils
-                    end 
-                end 
-            end 
-        end 
+                    end
+                end
+            end
+        end
     else
         numbersoilclass = 4 # silty clayey soils
-    end 
+    end
     soillayer.SoilClass = numbersoilclass
     return nothing
-end 
+end
 
 """
     determine_parameters_cr!(soillayer::SoilLayerIndividual)
@@ -1525,7 +1525,7 @@ function determine_parameters_cr!(soillayer::SoilLayerIndividual)
         elseif soilclass == 2
             aparam = -0.4986 + 9.0*ksatmm/100000.0
             bparam = -2.1320 + 0.4778*log(ksatmm)
-        elseif soilclass == 3 
+        elseif soilclass == 3
             aparam = -0.5677 - 4.0*ksatmm/100000.0
             bparam = -3.7189 + 0.5922*log(ksatmm)
         else
@@ -1588,7 +1588,7 @@ function initialize_project_filenames(outputs, filepaths; kwargs...)
     return _initialize_project_filenames(kwargs[:runtype], outputs, filepaths)
 end
 
-function _initialize_project_filenames(runtype::NormalFileRun, outputs, filepaths) 
+function _initialize_project_filenames(runtype::NormalFileRun, outputs, filepaths)
     project_filenames = String[]
 
     listprojectsfile = joinpath(filepaths[:list],"ListProjects.txt")
@@ -1648,7 +1648,7 @@ end
 
 """
     filepaths = initialize_the_program(outputs, parentdir; kwargs...)
-    
+
 Gets the file paths and the simulation parameters.
 
 startunit.f90:InitializeTheProgram:429
@@ -1659,7 +1659,7 @@ function initialize_the_program(outputs, parentdir; kwargs...)
     # the part of get_results_parameters is done when we create gvars
     # resultsparameters = get_results_parameters(outputs, filepaths[:simul]; kwargs...)
 
-    return filepaths#, resultsparameters 
+    return filepaths#, resultsparameters
 end
 
 """
@@ -1715,7 +1715,7 @@ function _get_results_parameters(runtype::NormalFileRun, outputs, path::String; 
     #startunit.f90:GetTimeAggregationResults:291
     aggregationresultsparameters = ParametersContainer(Int)
     filename_a = joinpath(path, "AggregationResults.SIM")
-    if isfile(filename_a) 
+    if isfile(filename_a)
         open(filename_a, "r") do file
             aggregationtype = strip(readline(file))[1]
             if aggregationtype == '1'
@@ -1733,7 +1733,7 @@ function _get_results_parameters(runtype::NormalFileRun, outputs, path::String; 
     #startunit.f90:GetRequestDailyResults:193
     dailyresultsparameters = ParametersContainer(Bool)
     filename_d = joinpath(path, "DailyResults.SIM")
-    if isfile(filename_d) 
+    if isfile(filename_d)
         open(filename_d, "r") do file
             for line in eachline(file)
                 if isempty(line)
@@ -1758,7 +1758,7 @@ function _get_results_parameters(runtype::NormalFileRun, outputs, path::String; 
                     setparameter!(dailyresultsparameters, :out8Irri, true)
                 end
             end
-            if ( dailyresultsparameters[:out1Wabal] | dailyresultsparameters[:out2Crop] 
+            if ( dailyresultsparameters[:out1Wabal] | dailyresultsparameters[:out2Crop]
                 | dailyresultsparameters[:out3Prof] | dailyresultsparameters[:out4Salt]
                 | dailyresultsparameters[:out5CompWC] | dailyresultsparameters[:out6CompEC]
                 | dailyresultsparameters[:out7Clim])
@@ -1772,7 +1772,7 @@ function _get_results_parameters(runtype::NormalFileRun, outputs, path::String; 
     #startunit.f90:GetRequestParticularResults:257
     particularresultsparameters = ParametersContainer(Bool)
     filename_p = joinpath(path, "ParticularResults.SIM")
-    if isfile(filename_p) 
+    if isfile(filename_p)
         open(filename_p, "r") do file
             for line in eachline(file)
                 if isempty(line)
@@ -1797,7 +1797,7 @@ end
 
 function _get_results_parameters(runtype::T, outputs, path::String; kwargs...) where T<:TomlFileRun
     filename = joinpath(path, "resultsparameters.toml")
-    return load_resultsparameters_from_toml(filename) 
+    return load_resultsparameters_from_toml(filename)
 end
 
 function _get_results_parameters(runtype::T, outputs, path::String; kwargs...) where T<:NoFileRun
