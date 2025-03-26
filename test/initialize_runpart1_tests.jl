@@ -14,7 +14,7 @@ include("checkpoints.jl")
 
     i = 1
     AquaCrop.load_simulation_project!(outputs, gvars, gvars[:projectinput][i]; kwargs...)
-     
+
 
     @test isapprox(gvars[:simulparam], gvars_0[:simulparam])
     @test isapprox(gvars[:soil], gvars_0[:soil])
@@ -49,7 +49,7 @@ end
     gvars = checkpoint2()
 
     outputs_0, gvars_0 = checkpoint4()
-    
+
     i = 1
     # AquaCrop.adjust_compartments!(gvars)
     # gvars[:sumwabal] = AquaCrop.RepSum()

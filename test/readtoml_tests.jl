@@ -12,7 +12,7 @@ include("checkpoints.jl")
     outputs_0, gvars_0 = checkpoint4()
 
 
-    filepaths  = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...) 
+    filepaths  = AquaCrop.initialize_the_program(outputs, parentdir; kwargs...)
     project_filenames = AquaCrop.initialize_project_filenames(outputs, filepaths; kwargs...)
 
     i = 1

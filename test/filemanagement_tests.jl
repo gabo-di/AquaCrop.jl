@@ -5,7 +5,7 @@ include("checkpoints.jl")
 
 @testset "Advance one time step" begin
     # break run.f90:FileManagement:7819
-    
+
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
     outputs, gvars = checkpoint5()
@@ -68,7 +68,7 @@ end
 
 @testset "Advance 24 time steps" begin
     # break run.f90:FileManagement:7819
-    
+
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
     outputs, gvars = checkpoint5()
@@ -138,7 +138,7 @@ end
 
 @testset "Advance 120 time steps" begin
     # break run.f90:FileManagement:7819
-    
+
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
     outputs, gvars = checkpoint5()
