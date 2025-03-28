@@ -183,30 +183,30 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
 
         elseif temperature_record.Datatype == :Decadely
             get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, fromsimday,
-                                            (Tmin, Tmax), 
+                                            (Tmin, Tmax),
                                             temperature_record)
             i = 1
             while tmin_dataset[i].DayNr != fromsimday
                 i = i+1
             end
-            tlow = tmin_dataset[i].Param 
-            thigh = tmax_dataset[i].Param 
+            tlow = tmin_dataset[i].Param
+            thigh = tmax_dataset[i].Param
             # setparameter!(gvars[:float_parameters], :tmin, tlow)
             # setparameter!(gvars[:float_parameters], :tmax, thigh)
 
         elseif temperature_record.Datatype == :Monthly
             get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, fromsimday,
-                                            (Tmin, Tmax), 
+                                            (Tmin, Tmax),
                                             temperature_record)
             i = 1
-            while tmin_dataset[1].DayNr != fromsimday 
+            while tmin_dataset[1].DayNr != fromsimday
                 i += 1
             end
-            tlow = tmin_dataset[i].Param 
-            thigh = tmax_dataset[i].Param 
+            tlow = tmin_dataset[i].Param
+            thigh = tmax_dataset[i].Param
             # setparameter!(gvars[:float_parameters], :tmin, tlow)
             # setparameter!(gvars[:float_parameters], :tmax, thigh)
-        end 
+        end
 
         # we do no create TempData.SIM but we use outputs variable
         add_output_in_tempdatasim!(outputs, tlow, thigh)
@@ -224,32 +224,32 @@ function create_daily_climfiles!(outputs, gvars; kwargs...)
             elseif temperature_record.Datatype == :Decadely
                 if runningday>tmin_dataset[31].DayNr
                     get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
-                                                    (Tmin, Tmax), 
+                                                    (Tmin, Tmax),
                                                     temperature_record)
                 end
                 i = 1
                 while tmin_dataset[1].DayNr != runningday
                     i += 1
-                end 
-                tlow = tmin_dataset[i].Param 
-                thigh = tmax_dataset[i].Param 
+                end
+                tlow = tmin_dataset[i].Param
+                thigh = tmax_dataset[i].Param
 
             elseif temperature_record.Datatype == :Monthly
                 if runningday>tmin_dataset[31].DayNr
                     get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, runningday,
-                                                     (Tmin, Tmax), 
+                                                     (Tmin, Tmax),
                                                      temperature_record)
-                end 
-                i = 1 
+                end
+                i = 1
                 while tmin_dataset[1].DayNr != runningday
                     i += 1
                 end
-                tlow = tmin_dataset[i].Param 
-                thigh = tmax_dataset[i].Param 
+                tlow = tmin_dataset[i].Param
+                thigh = tmax_dataset[i].Param
             end
             add_output_in_tempdatasim!(outputs, tlow, thigh)
         end
-    end 
+    end
 
     return nothing
 end
@@ -911,12 +911,12 @@ function open_climfiles_and_get_data_firstday!(outputs, gvars; kwargs...)
     if gvars[:bool_parameters][:temperature_file_exists]
         if firstdaynr == simulation.FromDayNr
             i = 1
-            tlow, thigh = read_output_from_tempdatasim(outputs, i) 
+            tlow, thigh = read_output_from_tempdatasim(outputs, i)
             setparameter!(gvars[:float_parameters], :tmin, tlow)
             setparameter!(gvars[:float_parameters], :tmax, thigh)
         else
             i = firstdaynr - simulation.FromDayNr + 1
-            tlow, thigh = read_output_from_tempdatasim(outputs, i) 
+            tlow, thigh = read_output_from_tempdatasim(outputs, i)
             setparameter!(gvars[:float_parameters], :tmin, tlow)
             setparameter!(gvars[:float_parameters], :tmax, thigh)
         end
@@ -941,12 +941,12 @@ function initialize_run_part2!(outputs, gvars, nrrun; kwargs...)
 
     if gvars[:bool_parameters][:part1Mult]
         write_title_part1_mult_results!(outputs, gvars, nrrun)
-    end 
+    end
 
 
     if gvars[:bool_parameters][:part2Eval] & (gvars[:string_parameters][:observations_file] != "(None)")
         create_eval_data!(gvars)
-    end 
+    end
 
     return nothing
 end
@@ -1231,7 +1231,7 @@ function initialize_simulation_run_part2!(outputs, gvars, projectinput::ProjectI
         if gvars[:integer_parameters][:daynri] > gvars[:crop].DayN
             setparameter!(gvars[:float_parameters], :ziprev, undef_double)
         else
-            #must set simulation.SCor = 1  before calling this function 
+            #must set simulation.SCor = 1  before calling this function
             gvars[:simulation].SCor = 1
             ziprev = actual_rooting_depth(
                 gvars[:integer_parameters][:daynri] - gvars[:crop].Day1,
@@ -1523,7 +1523,7 @@ function get_sumgdd_before_simulation!(gvars)
         dgrd = degrees_day(gvars[:crop].Tbase, gvars[:crop].Tupper,
             tmin, tmax,
             gvars[:simulparam].GDDMethod)
-        sumgddfromday1 = sumgdd - dgrd 
+        sumgddfromday1 = sumgdd - dgrd
         gvars[:simulation].SumGDDfromDay1 = sumgddfromday1
         setparameter!(gvars[:float_parameters], :tmin, tmin)
         setparameter!(gvars[:float_parameters], :tmax, tmax)
@@ -1606,11 +1606,11 @@ end
 
 
 """
-    zr = actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax, 
+    zr = actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax,
                               sumgdd, zmin, zmax, shapefactor, typedays, gvars)
 
 global.f90:ActualRootingDepth:7299
-must set simulation.SCor = 1  before calling this function 
+must set simulation.SCor = 1  before calling this function
 """
 function actual_rooting_depth(dap, l0, lzmax, l1234, gddl0, gddlzmax,
     sumgdd, zmin, zmax, shapefactor, typedays, gvars)
@@ -1736,11 +1736,11 @@ run.f90:OpenHarvestInfo:5908
 """
 function open_harvest_info!(gvars, path; kwargs...)
     if gvars[:string_parameters][:man_file] != "(None)"
-        if typeof(kwargs[:runtype]) == NormalFileRun 
+        if typeof(kwargs[:runtype]) == NormalFileRun
             man_file = gvars[:string_parameters][:man_file]
-        elseif typeof(kwargs[:runtype]) == TomlFileRun 
+        elseif typeof(kwargs[:runtype]) == TomlFileRun
             man_file = gvars[:string_parameters][:man_file][1:end-5] * ".csv"
-        elseif typeof(kwargs[:runtype]) == NoFileRun 
+        elseif typeof(kwargs[:runtype]) == NoFileRun
             # early return for now
             return nothing
         end
@@ -2125,7 +2125,7 @@ function create_eval_data!(gvars)
         for line in eachline(file)
             splitedline = split(line)
             daynreval = parse(Int, popfirst!(splitedline))
-            daynreval += daynr1evaleval - 1  
+            daynreval += daynr1evaleval - 1
             if daynreval >= gvars[:simulation].FromDayNr
                 push!(DaynrEval, daynreval)
                 push!(CCmeanEval, parse(Float64, popfirst!(splitedline)))

@@ -30,7 +30,7 @@ end
     set_soil!(soil::RepSoil, soil_type::AbstractString; aux::Union{AbstractDict, Nothing}=nothing)
 
 sets soil for a given soil_type
-possible soil_type are 
+possible soil_type are
 ["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay",
 "sandy clay loam", "sandy loam", "silty clay loam", "paddy"]
 """
@@ -92,13 +92,13 @@ function set_soil!(soil::RepSoil, soil_type::AbstractString; aux::Union{Abstract
         soil.NrSoilLayers = 1
     elseif soil_type == "silty clay loam"
         # aquacrop version 6.0
-        soil.CNValue = 72  
+        soil.CNValue = 72
         soil.REW = 13
         soil.NrSoilLayers = 1
     elseif soil_type == "paddy"
         # aquacrop version 6.0
         soil.CNValue = 77
-        soil.REW = 10     
+        soil.REW = 10
         soil.NrSoilLayers = 2
     end
 
@@ -115,7 +115,7 @@ end
     set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::AbstractString; aux::Union{AbstractDict, Nothing}=nothing)
 
 sets soil_layers for a given soil_type
-possible soil_type are 
+possible soil_type are
 ["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay",
 "sandy clay loam", "sandy loam", "silty clay loam", "paddy"]
 """
@@ -247,7 +247,7 @@ function set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::Ab
         soil_layers[1].SAT = 41
         soil_layers[1].FC = 22
         soil_layers[1].WP = 10
-        soil_layers[1].InfRate = 1200 
+        soil_layers[1].InfRate = 1200
         soil_layers[1].Penetrability = 100
         soil_layers[1].GravelMass = 0
         soil_layers[1].CRa = -0.323200
@@ -259,7 +259,7 @@ function set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::Ab
         soil_layers[1].SAT = 52
         soil_layers[1].FC = 44
         soil_layers[1].WP = 23
-        soil_layers[1].InfRate = 150 
+        soil_layers[1].InfRate = 150
         soil_layers[1].Penetrability = 100
         soil_layers[1].GravelMass = 0
         soil_layers[1].CRa = -0.516600
@@ -271,7 +271,7 @@ function set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::Ab
         soil_layers[1].SAT = 54
         soil_layers[1].FC = 50
         soil_layers[1].WP = 32
-        soil_layers[1].InfRate = 15 
+        soil_layers[1].InfRate = 15
         soil_layers[1].Penetrability = 100
         soil_layers[1].GravelMass = 0
         soil_layers[1].CRa = -0.624600
@@ -282,7 +282,7 @@ function set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::Ab
         soil_layers[2].SAT = 55
         soil_layers[2].FC = 54
         soil_layers[2].WP = 39
-        soil_layers[2].InfRate = 2 
+        soil_layers[2].InfRate = 2
         soil_layers[2].Penetrability = 100
         soil_layers[2].GravelMass = 0
         soil_layers[2].CRa = -0.635000
@@ -308,7 +308,7 @@ end
     set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{AbstractDict, Nothing}=nothing)
 
 sets crop for a given crop_type
-possible crop_type are 
+possible crop_type are
 ["maize", "wheat", "cotton", "alfalfaGDD", "barley", "barleyGDD", "cottonGDD", "drybean", "drybeanGDD",
 "maizeGDD", "wheatGDD", "sugarbeet", "sugarbeetGDD", "sunflower", "sunflowerGDD", "sugarcane",
 "tomato", "tomatoGDD", "potato", "potatoGDD", "quinoa", "tef", "soybean", "soybeanGDD",
@@ -1505,7 +1505,7 @@ function set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{Abstract
         crop.Assimilates.Period = 0         # Number of days at end of season during which assimilates are stored in root system
         crop.Assimilates.Stored = 0         # Percentage of assimilates transferred to root system at last day of season
         crop.Assimilates.Mobilized = 0         # Percentage of stored assimilates transferred to above ground parts in next season
-    elseif crop_type == "sunflowerGDD"         
+    elseif crop_type == "sunflowerGDD"
         # Default Sunflower, GDD (Cordoba, 15Apr86)
         # 7.0       # AquaCrop Version (June 2021)
         # skip this line 0         # File protected
@@ -2696,7 +2696,7 @@ function set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{Abstract
         crop.Assimilates.Stored = 0         # Percentage of assimilates transferred to root system at last day of season
         crop.Assimilates.Mobilized = 0         # Percentage of stored assimilates transferred to above ground parts in next season
     elseif crop_type == "rapeseed"
-        # based on default Sunflower acea_crops.py and 
+        # based on default Sunflower acea_crops.py and
         # Zeleke, K. T., Luckett, D. & Cowley, R. Calibration and Testing of the FAO AquaCrop Model for Canola. Agronomy Journal 103, 1610–1618 (2011).
         # skip this line 0         # File protected
         crop.subkind = :Grain # 2         #.. fruit/grain producing crop
@@ -2867,7 +2867,7 @@ function set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{Abstract
         crop.Assimilates.Stored = 0         # Percentage of assimilates transferred to root system at last day of season
         crop.Assimilates.Mobilized = 0         # Percentage of stored assimilates transferred to above ground parts in next season
     elseif crop_type == "oat"
-        # Based on Wheat, acea_crops.py and 
+        # Based on Wheat, acea_crops.py and
         # Yuan, M. et al. Assessment of crop growth and water productivity for five C3 species in semi-arid Inner Mongolia. Agricultural Water Management 122, 28–38 (2013).
         # skip this line 0         # File protected
         crop.subkind = :Grain # 2         #.. fruit/grain producing crop
@@ -2990,7 +2990,7 @@ end
     set_perennial_period!(perennial_period::RepPerennialPeriod, crop_type::AbstractString; aux::Union{AbstractDict, Nothing}=nothing)
 
 sets perennial_period for a given crop_type
-possible crop_type are 
+possible crop_type are
 ["maize", "wheat", "cotton", "alfalfaGDD", "barley", "barleyGDD", "cottonGDD", "drybean", "drybeanGDD",
 "maizeGDD", "wheatGDD", "sugarbeet", "sugarbeetGDD", "sunflower", "sunflowerGDD", "sugarcane",
 "tomato", "tomatoGDD", "potato", "potatoGDD", "quinoa", "tef", "soybean", "soybeanGDD",
@@ -3099,7 +3099,7 @@ end
 """
 function load_resultsparameters_from_vardict(; kwargs...)
     aggregationresultsparameters = ParametersContainer(Int)
-    setparameter!(aggregationresultsparameters, :outputaggregate, 0) # only print at the end of seasonout 
+    setparameter!(aggregationresultsparameters, :outputaggregate, 0) # only print at the end of seasonout
 
     dailyresultsparameters = ParametersContainer(Bool)
     setparameter!(dailyresultsparameters, :out1Wabal, true)
@@ -3145,5 +3145,5 @@ function set_clim_record!(record::RepClim; kwargs...)
         actualize_with_dict!(record, kwargs[clim_symbol])
     end
 
-    return nothing 
+    return nothing
 end

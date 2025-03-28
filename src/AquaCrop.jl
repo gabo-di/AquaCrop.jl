@@ -45,4 +45,3 @@ export AquaCropField,
        timetoharvest,
        write_out_csv
 end
-

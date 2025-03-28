@@ -2,7 +2,7 @@ Base.isapprox(a::Symbol, b::Symbol; kwargs...) = isequal(a, b)
 Base.isapprox(a::String, b::String; kwargs...) = isequal(a, b)
 
 """
-    day_nr = determine_day_nr(dayi, monthi, yeari) 
+    day_nr = determine_day_nr(dayi, monthi, yeari)
 
 global.f90:DetermineDayNr:2404
 """
@@ -34,7 +34,7 @@ function determine_date(day_nr::Int)
             break
         end
         monthi = monthi + 1
-    end 
+    end
     dayi = round(Int, sum_day_month - ElapsedDays[monthi] + 0.25 + 0.06)
     return dayi, monthi, yeari
 end
@@ -58,9 +58,9 @@ global.f90:LeapYear:7137
 """
 function isleapyear(year)
     leapyear = false
-    if (year/4 - floor(year/4) <= 0.01) 
+    if (year/4 - floor(year/4) <= 0.01)
         leapyear = true
-    end 
+    end
     return leapyear
 end
 
