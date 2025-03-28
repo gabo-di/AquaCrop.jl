@@ -2781,7 +2781,7 @@ function set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{Abstract
         crop.Assimilates.Stored = 0         # Percentage of assimilates transferred to root system at last day of season
         crop.Assimilates.Mobilized = 0         # Percentage of stored assimilates transferred to above ground parts in next season
     elseif crop_type == "rapeseedGDD"
-        # based on default Sunflower acea_crops.py and 
+        # based on default Sunflower acea_crops.py and
         # Zeleke, K. T., Luckett, D. & Cowley, R. Calibration and Testing of the FAO AquaCrop Model for Canola. Agronomy Journal 103, 1610–1618 (2011).
         # for the GDDays data we used the data from CA4Py stations in rapeseed, and filled GDDCGC GDDCDC GDDaysToHIo with the values from wheatGDD
         # skip this line 0         # File protected
@@ -2814,8 +2814,8 @@ function set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{Abstract
         crop.ECemin = 2         #? Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)
         crop.ECemax = 12         #? Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)
         # skip this line -9         # Dummy - no longer applicable
-        crop.CCsaltDistortion = 25         #? Calibrated distortion (%) of CC due to salinity stress (Range# 0 (none) to +100 (very strong))
-        crop.ResponseECsw = 100         #? Calibrated response (%) of stomata stress to ECsw (Range# 0 (none) to +200 (extreme))
+        crop.CCsaltDistortion = 25         #? Calibrated distortion (%) of CC due to salinity stress (Range# 0 (none) to +100 (very strong)
+        crop.ResponseECsw = 100         #? Calibrated response (%) of stomata stress to ECsw (Range# 0 (none) to +200 (extreme)
         crop.KcTop = 1.1      #..? Crop coefficient when canopy is complete but prior to senescence (KcTr,x)
         crop.KcDecline = 0.300     #.? Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.
         crop.RootMin = 0.30      #.. Minimum effective rooting depth (m)
