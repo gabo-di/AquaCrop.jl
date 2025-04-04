@@ -1,6 +1,6 @@
 using AquaCrop
 using Test
-    
+
 using DataFrames
 using Dates
 using StableRNGs
@@ -11,13 +11,13 @@ rng = StableRNG(42)
 function create_mock_climate_dataframe(start_date::Date, end_date::Date, tmin, delta_t, eto, rain)
     # Generate the date range
     dates = collect(start_date:end_date)
-    
+
     # Generate random climate columns (each column has the same number of rows as the date range)
     Tmin = tmin .+ rand(rng, length(dates))
     Tmax = Tmin .+ delta_t .+ rand(rng, length(dates))
     ETo = eto .* abs.(randn(rng, length(dates)))
     Rain = rain .* abs.(randn(rng, length(dates)))
-    
+
     # Create the DataFrame
     df = DataFrame(
         Date = dates,
@@ -26,7 +26,7 @@ function create_mock_climate_dataframe(start_date::Date, end_date::Date, tmin, d
         ETo = ETo,
         Rain = Rain
     )
-    
+
     return df
 end
 
@@ -68,7 +68,7 @@ end
 
 
         ## Optional keyworkds
-        
+
         # Climate
         Tmin = df.Tmin,
         Tmax = df.Tmax,
@@ -129,10 +129,10 @@ end
     df_new = create_mock_climate_dataframe(date_now, end_date, tmin, delta_t, eto, rain)
     change_climate_data!(cropfield, df_new; kwargs...)
     @testset "change climate date cropfield" begin
-        @test isapprox(cropfield.gvars[:float_parameters][:eto], df_new.ETo[1]) 
-        @test isapprox(cropfield.gvars[:float_parameters][:rain], df_new.Rain[1]) 
-        @test isapprox(cropfield.gvars[:float_parameters][:tmin], df_new.Tmin[1]) 
-        @test isapprox(cropfield.gvars[:float_parameters][:tmax], df_new.Tmax[1]) 
+        @test isapprox(cropfield.gvars[:float_parameters][:eto], df_new.ETo[1])
+        @test isapprox(cropfield.gvars[:float_parameters][:rain], df_new.Rain[1])
+        @test isapprox(cropfield.gvars[:float_parameters][:tmin], df_new.Tmin[1])
+        @test isapprox(cropfield.gvars[:float_parameters][:tmax], df_new.Tmax[1])
     end
 
     # run until end of season

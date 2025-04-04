@@ -13,20 +13,20 @@ function load_gvars_from_toml!(simulparam::RepParam, auxparfile; kwargs...)
     end
 
     i = aux["simulparam"]["EffectiveRain"]["method"]
-    if i == 0 
+    if i == 0
         aux["simulparam"]["EffectiveRain"]["method"] = :Full
-    elseif i == 1 
+    elseif i == 1
         aux["simulparam"]["EffectiveRain"]["method"] = :USDA
-    elseif i == 2 
+    elseif i == 2
         aux["simulparam"]["EffectiveRain"]["method"] = :Percentage
     end
 
     i = aux["simulparam"]["CNcorrection"]
-    if i == 1 
+    if i == 1
         aux["simulparam"]["CNcorrection"] = true
     else
         aux["simulparam"]["CNcorrection"] = false
-    end 
+    end
 
     actualize_with_dict!(simulparam, aux["simulparam"])
     return nothing
@@ -42,7 +42,7 @@ end
 function load_gvars_from_toml!(soil_layers::Vector{SoilLayerIndividual}, auxparfile; kwargs...)
     aux = TOML.parsefile(auxparfile)
 
-    for i in eachindex(aux["soil_layers"]) 
+    for i in eachindex(aux["soil_layers"])
         soillayer = SoilLayerIndividual()
 
         actualize_with_dict!(soillayer, aux["soil_layers"][i])
@@ -63,9 +63,9 @@ function load_gvars_from_toml!(record::RepClim, auxparfile; kwargs...)
 
     ni = aux[key]["Datatype"]
     if ni == 1
-       aux[key]["Datatype"] = :Daily 
+       aux[key]["Datatype"] = :Daily
     elseif ni == 2
-       aux[key]["Datatype"] = :Decadely 
+       aux[key]["Datatype"] = :Decadely
     else
        aux[key]["Datatype"] = :Monthly
     end
@@ -78,7 +78,7 @@ end
 
 function load_gvars_from_toml!(management::RepManag, auxparfile; kwargs...)
     aux = TOML.parsefile(auxparfile)
-    
+
     i = aux["management"]["RunoffOn"]
     if i == 1
         aux["management"]["RunoffOn"] = false
@@ -93,11 +93,11 @@ function load_gvars_from_toml!(management::RepManag, auxparfile; kwargs...)
         aux["management"]["Cuttings"]["Criterion"] = :IntDay
     elseif i==2
         aux["management"]["Cuttings"]["Criterion"] = :IntGDD
-    elseif i==3 
+    elseif i==3
         aux["management"]["Cuttings"]["Criterion"] = :DryB
-    elseif i==4 
+    elseif i==4
         aux["management"]["Cuttings"]["Criterion"] = :DryY
-    elseif i==5 
+    elseif i==5
         aux["management"]["Cuttings"]["Criterion"] = :FreshY
     end
 
@@ -123,9 +123,9 @@ function load_gvars_from_toml!(crop::RepCrop, auxparfile; kwargs...)
     xx = aux["crop"]["Planting"]
     if xx==1
         aux["crop"]["Planting"] = :Seed
-    elseif xx==0 
+    elseif xx==0
         aux["crop"]["Planting"] = :Transplant
-    elseif xx==-9 
+    elseif xx==-9
         aux["crop"]["Planting"] = :Regrowth
     else
         aux["crop"]["Planting"] = :Seed
@@ -149,7 +149,7 @@ function load_gvars_from_toml!(crop::RepCrop, auxparfile; kwargs...)
     if xx==1
         aux["crop"]["Assimilates"]["On"] = true
     else
-        aux["crop"]["Assimilates"]["On"] = false 
+        aux["crop"]["Assimilates"]["On"] = false
     end
 
     xx = aux["crop"]["DeterminancyLinked"]
@@ -175,7 +175,7 @@ function load_gvars_from_toml!(crop::RepCrop, auxparfile; kwargs...)
         (crop.StressResponse.ShapeWP>24.9) & (crop.StressResponse.ShapeCDecline>24.9))
         crop.StressResponse.Calibrated = false
     else
-        crop.StressResponse.Calibrated = true 
+        crop.StressResponse.Calibrated = true
     end
 
     if crop.RootMin > crop.RootMax
@@ -195,7 +195,7 @@ function load_gvars_from_toml!(crop::RepCrop, auxparfile; kwargs...)
         crop.GDDLengthFlowering = 0
     end
 
-    
+
     return nothing
 end
 
@@ -210,7 +210,7 @@ function load_gvars_from_toml!(perennial_period::RepPerennialPeriod, auxparfile;
     if xx==0
         aux["perennial_period"]["GenerateOnset"] = false
     else
-        aux["perennial_period"]["GenerateOnset"] = true 
+        aux["perennial_period"]["GenerateOnset"] = true
         if xx==12
             aux["perennial_period"]["OnsetCriterion"] = :TMeanPeriod
         elseif xx==13
@@ -225,7 +225,7 @@ function load_gvars_from_toml!(perennial_period::RepPerennialPeriod, auxparfile;
     if xx==0
         aux["perennial_period"]["GenerateEnd"] = false
     else
-        aux["perennial_period"]["GenerateEnd"] = true 
+        aux["perennial_period"]["GenerateEnd"] = true
         if xx==62
             aux["perennial_period"]["EndCriterion"] = :TMeanPeriod
         elseif xx==63
@@ -246,20 +246,20 @@ function load_gvars_from_toml!(perennial_period::RepPerennialPeriod, auxparfile;
         perennial_period.EndOccurrence = 3
     end
 
-    return nothing 
+    return nothing
 end
 
 function load_resultsparameters_from_toml(auxparfile)
     aux = TOML.parsefile(auxparfile)
-    
+
     dailyresultsparameters = aux["resultsparameters"]["dailyresultsparameters"]
-    if ( dailyresultsparameters["out1Wabal"] | dailyresultsparameters["out2Crop"] 
+    if ( dailyresultsparameters["out1Wabal"] | dailyresultsparameters["out2Crop"]
         | dailyresultsparameters["out3Prof"] | dailyresultsparameters["out4Salt"]
         | dailyresultsparameters["out5CompWC"] | dailyresultsparameters["out6CompEC"]
         | dailyresultsparameters["out7Clim"])
         aux["resultsparameters"]["dailyresultsparameters"]["outdaily"] = true
     else
-        aux["resultsparameters"]["dailyresultsparameters"]["outdaily"] = false 
+        aux["resultsparameters"]["dailyresultsparameters"]["outdaily"] = false
     end
 
     aggregationresultsparameters = aux["resultsparameters"]["aggregationresultsparameters"]
@@ -296,7 +296,7 @@ function load_projectfilenames_from_toml(auxparfile)
     return aux["project_filenames"]
 end
 
-function load_projectinput_from_toml(auxparfile, parentdir) 
+function load_projectinput_from_toml(auxparfile, parentdir)
     aux = TOML.parsefile(auxparfile)
     projectinput = ProjectInputType[]
     for i in eachindex(aux["projectinput"])

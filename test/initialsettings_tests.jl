@@ -56,12 +56,7 @@ end
     @test isapprox(gvars[:simulparam], gvars_0[:simulparam])
     @test isapprox(gvars[:bool_parameters], gvars_0[:bool_parameters])
     @test isequal(length(projectinput),length(projectinput_0))
-    @test isapprox(projectinput[1], projectinput_0[1]) 
-    @test isapprox(projectinput[2], projectinput_0[2]) 
-    @test isapprox(projectinput[3], projectinput_0[3]) 
+    @test isapprox(projectinput[1], projectinput_0[1])
+    @test isapprox(projectinput[2], projectinput_0[2])
+    @test isapprox(projectinput[3], projectinput_0[3])
 end
-
-
-
-
-
