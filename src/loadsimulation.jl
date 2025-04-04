@@ -1,9 +1,9 @@
 """
-    load_simulation_project!(outputs, gvars, projectinput::ProjectInputType; kwargs...) 
+    load_simulation_project!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
 
 tempprocessing.f90:LoadSimulationRunProject:2057
 """
-function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType; kwargs...) 
+function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType; kwargs...)
     # 0. Year of cultivation and Simulation and Cropping period
     gvars[:simulation].YearSeason = projectinput.Simulation_YearSeason
     gvars[:crop].Day1 = projectinput.Crop_Day1
@@ -13,20 +13,20 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
 
     # 1.1 Temperature
     if (projectinput.Temperature_Filename=="(None)") | (projectinput.Temperature_Filename=="(External)")
-        temperature_file = projectinput.Temperature_Filename 
+        temperature_file = projectinput.Temperature_Filename
         setparameter!(gvars[:bool_parameters], :temperature_file_exists, false)
     else
         _temperature_file = joinpath([projectinput.ParentDir, projectinput.Temperature_Directory, projectinput.Temperature_Filename])
         if typeof(kwargs[:runtype]) == NormalFileRun
             temperature_file = _temperature_file
             setparameter!(gvars[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
-        elseif typeof(kwargs[:runtype]) == TomlFileRun 
+        elseif typeof(kwargs[:runtype]) == TomlFileRun
             temperature_file = _temperature_file[1:end-5]*".csv"
             setparameter!(gvars[:bool_parameters], :temperature_file_exists, isfile(temperature_file))
         elseif typeof(kwargs[:runtype]) == NoFileRun
             temperature_file = ""
             if haskey(kwargs, :Tmin) & haskey(kwargs, :Tmax)
-                setparameter!(gvars[:bool_parameters], :temperature_file_exists, true) 
+                setparameter!(gvars[:bool_parameters], :temperature_file_exists, true)
             end
         end
         if gvars[:bool_parameters][:temperature_file_exists]
@@ -35,32 +35,32 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         load_clim!(gvars[:temperature_record], _temperature_file;
                    nrobs=length(gvars[:array_parameters][:Tmin]),
                    str="temperature_record", kwargs...)
-    end 
+    end
     setparameter!(gvars[:string_parameters], :temperature_file, temperature_file)
 
-    # Create Temperature Reference file 
+    # Create Temperature Reference file
     if temperature_file != "(External)"
-        create_tnxreferencefile!(outputs, gvars; kwargs...) 
-    end 
+        create_tnxreferencefile!(outputs, gvars; kwargs...)
+    end
     create_tnxreference365days!(outputs, gvars; kwargs...)
 
 
     # 1.2 ETo
     if (projectinput.ETo_Filename=="(None)") | (projectinput.ETo_Filename=="(External)")
-        eto_file = projectinput.ETo_Filename 
+        eto_file = projectinput.ETo_Filename
         setparameter!(gvars[:bool_parameters], :eto_file_exists, false)
     else
         _eto_file = joinpath([projectinput.ParentDir, projectinput.ETo_Directory, projectinput.ETo_Filename])
         if typeof(kwargs[:runtype]) == NormalFileRun
             eto_file = _eto_file
             setparameter!(gvars[:bool_parameters], :eto_file_exists, isfile(eto_file))
-        elseif typeof(kwargs[:runtype]) == TomlFileRun 
+        elseif typeof(kwargs[:runtype]) == TomlFileRun
             eto_file = _eto_file[1:end-5]*".csv"
             setparameter!(gvars[:bool_parameters], :eto_file_exists, isfile(eto_file))
         elseif typeof(kwargs[:runtype]) == NoFileRun
             eto_file = ""
-            if haskey(kwargs, :ETo) 
-                setparameter!(gvars[:bool_parameters], :eto_file_exists, true) 
+            if haskey(kwargs, :ETo)
+                setparameter!(gvars[:bool_parameters], :eto_file_exists, true)
             end
         end
         if gvars[:bool_parameters][:eto_file_exists]
@@ -69,7 +69,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         load_clim!(gvars[:eto_record], _eto_file;
                    nrobs=length(gvars[:array_parameters][:ETo]),
                    str="eto_record", kwargs...)
-    end 
+    end
     setparameter!(gvars[:string_parameters], :eto_file, eto_file)
 
     # 1.3 Rain
@@ -81,13 +81,13 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         if typeof(kwargs[:runtype]) == NormalFileRun
             rain_file = _rain_file
             setparameter!(gvars[:bool_parameters], :rain_file_exists, isfile(rain_file))
-        elseif typeof(kwargs[:runtype]) == TomlFileRun 
+        elseif typeof(kwargs[:runtype]) == TomlFileRun
             rain_file = _rain_file[1:end-5]*".csv"
             setparameter!(gvars[:bool_parameters], :rain_file_exists, isfile(rain_file))
         elseif typeof(kwargs[:runtype]) == NoFileRun
             rain_file = ""
-            if haskey(kwargs, :Rain) 
-                setparameter!(gvars[:bool_parameters], :rain_file_exists, true) 
+            if haskey(kwargs, :Rain)
+                setparameter!(gvars[:bool_parameters], :rain_file_exists, true)
             end
         end
         if gvars[:bool_parameters][:rain_file_exists]
@@ -96,9 +96,9 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         load_clim!(gvars[:rain_record], _rain_file;
                    nrobs=length(gvars[:array_parameters][:Rain]),
                    str="rain_record", kwargs...)
-    end 
+    end
     setparameter!(gvars[:string_parameters], :rain_file, rain_file)
-    
+
 
     # 1.4 CO2 and Climate
     if projectinput.CO2_Filename != "(None)"
@@ -122,7 +122,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         gvars[:crop_file_set].GDDaysToHarvest = gvars[:crop].GDDaysToHarvest
     else
         gvars[:crop_file_set].GDDaysFromSenescenceToEnd = undef_int
-        gvars[:crop_file_set].GDDaysToHarvest = undef_int 
+        gvars[:crop_file_set].GDDaysToHarvest = undef_int
     end
     # maximum rooting depth in given soil profile
     gvars[:soil].RootMax = root_max_in_soil_profile(gvars[:crop].RootMax, gvars[:soil_layers])
@@ -135,44 +135,44 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         # adjust length of season
         gvars[:crop].DaysToHarvest = gvars[:crop].DayN - gvars[:crop].Day1 + 1
         adjust_crop_file_parameters!(gvars)
-    end 
+    end
     adjust_calendar_crop!(gvars)
     complete_crop_description!(gvars[:crop], gvars[:simulation], gvars[:management])
     # Onset.Off := true;
     clim_file = gvars[:string_parameters][:clim_file]
-    if clim_file=="(None)" 
+    if clim_file=="(None)"
         # adjusting Crop.Day1 and Crop.DayN to ClimFile
         adjust_crop_year_to_climfile!(gvars[:crop], clim_file, gvars[:clim_record])
     else
         gvars[:crop].DayN = gvars[:crop].Day1 + gvars[:crop].DaysToHarvest - 1
-    end 
+    end
 
     # adjusting ClimRecord.'TO' for undefined year with 365 days
-    if (clim_file != "(None)") & (gvars[:clim_record].FromY == 1901) & (gvars[:clim_record].NrObs==365) 
+    if (clim_file != "(None)") & (gvars[:clim_record].FromY == 1901) & (gvars[:clim_record].NrObs==365)
         adjust_climrecord_to!(gvars[:clim_record], gvars[:crop].DayN)
-    end 
+    end
     # adjusting simulation period
     adjust_simperiod!(gvars, projectinput)
 
     # 4. Irrigation
-    if projectinput.Irrigation_Filename == "(None)" 
+    if projectinput.Irrigation_Filename == "(None)"
         irri_file = projectinput.Irrigation_Filename
         no_irrigation!(gvars)
     else
         irri_file = joinpath([projectinput.ParentDir, projectinput.Irrigation_Directory, projectinput.Irrigation_Filename])
         load_irri_schedule_info!(gvars, irri_file)
-    end 
+    end
     setparameter!(gvars[:string_parameters], :irri_file, irri_file)
 
     # 5. Field Management
-    if projectinput.Management_Filename == "(None)" 
+    if projectinput.Management_Filename == "(None)"
         man_file = projectinput.Management_Filename
     else
         man_file = joinpath([projectinput.ParentDir, projectinput.Management_Directory, projectinput.Management_Filename])
         load_management!(gvars, man_file; kwargs...)
         # reset canopy development to soil fertility
         daystofullcanopy, RedCGC_temp, RedCCX_temp, fertstress = time_to_max_canopy_sf(
-                              gvars[:crop].CCo, 
+                              gvars[:crop].CCo,
                               gvars[:crop].CGC,
                               gvars[:crop].CCx,
                               gvars[:crop].DaysToGermination,
@@ -181,7 +181,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
                               gvars[:crop].DaysToFlowering,
                               gvars[:crop].LengthFlowering,
                               gvars[:crop].DeterminancyLinked,
-                              gvars[:crop].DaysToFullCanopySF, 
+                              gvars[:crop].DaysToFullCanopySF,
                               gvars[:simulation].EffectStress.RedCGC,
                               gvars[:simulation].EffectStress.RedCCX,
                               gvars[:management].FertilityStress)
@@ -189,16 +189,16 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
         gvars[:simulation].EffectStress.RedCGC = RedCGC_temp
         gvars[:simulation].EffectStress.RedCCX = RedCCX_temp
         gvars[:crop].DaysToFullCanopySF = daystofullcanopy
-    end 
+    end
     setparameter!(gvars[:string_parameters], :man_file, man_file)
 
     # 6. Soil Profile
     if projectinput.Soil_Filename=="(External)"
         prof_file = projectinput.Soil_Filename
     elseif projectinput.Soil_Filename=="(None)"
-        if typeof(kwargs[:runtype]) == NormalFileRun 
+        if typeof(kwargs[:runtype]) == NormalFileRun
             prof_file = joinpath([test_dir, "SIMUL", "DEFAULT.SOL"])
-        elseif typeof(kwargs[:runtype]) == TomlFileRun 
+        elseif typeof(kwargs[:runtype]) == TomlFileRun
             prof_file = joinpath( test_toml_dir, "gvars.toml")
         elseif typeof(kwargs[:runtype]) == NoFileRun
             prof_file = joinpath( projectinput.ParentDir, "")
@@ -206,7 +206,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     else
         # The load of profile is delayed to check if soil water profile need to be reset (see 8.)
         prof_file = joinpath([projectinput.ParentDir, projectinput.Soil_Directory, projectinput.Soil_Filename])
-    end 
+    end
     setparameter!(gvars[:string_parameters], :prof_file, prof_file)
 
 
@@ -216,7 +216,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     else
         # Loading the groundwater is done after loading the soil profile (see 9.)
         groundwater_file = joinpath([projectinput.ParentDir, projectinput.GroundWater_Directory, projectinput.GroundWater_Filename])
-    end 
+    end
     setparameter!(gvars[:string_parameters], :groundwater_file, groundwater_file)
 
     # 8. Set simulation period
@@ -224,7 +224,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     gvars[:simulation].ToDayNr = projectinput.Simulation_DayNrN
     if (gvars[:crop].Day1 != gvars[:simulation].FromDayNr) | (gvars[:crop].DayN != gvars[:simulation].ToDayNr)
         gvars[:simulation].LinkCropToSimPeriod = false
-    end 
+    end
 
     # 9. Initial conditions
     if projectinput.SWCIni_Filename=="KeepSWC"
@@ -241,20 +241,20 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
             gvars[:soil] = soil
             gvars[:soil_layers] = soil_layers
             gvars[:compartments] = compartments
-        end 
+        end
         gvars[:soil].RootMax = root_max_in_soil_profile(gvars[:crop].RootMax, gvars[:soil_layers])
-        complete_profile_description!(gvars[:soil_layers], gvars[:compartments], gvars[:simulation], gvars[:total_water_content]) 
+        complete_profile_description!(gvars[:soil_layers], gvars[:compartments], gvars[:simulation], gvars[:total_water_content])
 
         # Adjust size of compartments if required
         totdepth = 0
-        for i in eachindex(gvars[:compartments]) 
+        for i in eachindex(gvars[:compartments])
             totdepth = totdepth + gvars[:compartments][i].Thickness
-        end 
+        end
         if gvars[:simulation].MultipleRunWithKeepSWC
             # Project with a sequence of simulation runs and KeepSWC
-            if round(Int, gvars[:simulation].MultipleRunConstZrx*1000)>round(Int, totdepth*1000) 
+            if round(Int, gvars[:simulation].MultipleRunConstZrx*1000)>round(Int, totdepth*1000)
                 adjust_size_compartments!(gvars, gvars[:simulation].MultipleRunConstZrx)
-            end 
+            end
         else
             if round(Int, gvars[:crop].RootMax*1000)>round(Int, totdepth*1000)
                 if round(Int, gvars[:soil].RootMax*1000)==round(Int, gvars[:crop].RootMax*1000)
@@ -264,17 +264,17 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
                     # restrictive soil layer
                     if round(Int, gvars[:soil].RootMax*1000)>round(Int, totdepth*1000)
                         adjust_size_compartments!(gvars, gvars[:soil].RootMax)
-                    end 
-                end 
+                    end
+                end
             end
-        end 
+        end
 
         if projectinput.SWCIni_Filename=="(None)"
             swcini_file = projectinput.SWCIni_Filename
         else
             swcini_file = projectinput.ParentDir * projectinput.SWCIni_Directory * projectinput.SWCIni_Filename
             load_initial_conditions!(gvars, swcini_file)
-        end 
+        end
         setparameter!(gvars[:string_parameters], :swcini_file, swcini_file)
 
         if gvars[:simulation].IniSWC.AtDepths
@@ -288,15 +288,15 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
             for i in eachindex(gvars[:compartments])
                 gvars[:simulation].ThetaIni[i] = gvars[:compartments][i].Theta
                 gvars[:simulation].ECeIni[i] = ececomp(gvars[:compartments][i], gvars[:soil_layers], gvars[:simulparam])
-            end 
+            end
             # ADDED WHEN DESINGNING 4.0 BECAUSE BELIEVED TO HAVE FORGOTTEN -
             # CHECK LATER
             if gvars[:management].BundHeight>=0.01
                 gvars[:simulation].SurfaceStorageIni = gvars[:float_parameters][:surfacestorage]
                 gvars[:simulation].ECStorageIni = gvars[:float_parameters][:ecstorage]
-            end 
-        end 
-    end 
+            end
+        end
+    end
 
     # 10. load the groundwater file if it exists (only possible for Version 4.0
     # and higher)
@@ -310,7 +310,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     calculate_adjusted_fc!(gvars[:compartments], gvars[:soil_layers], gvars[:integer_parameters][:ziaqua]/100)
     if gvars[:simulation].IniSWC.AtFC & (swcini_file != "KeepSWC")
         reset_swc_to_fc!(gvars[:simulation], gvars[:compartments], gvars[:soil_layers], gvars[:integer_parameters][:ziaqua])
-    end 
+    end
 
     # 11. Off-season conditions
     if projectinput.OffSeason_Filename=="(None)"
@@ -318,7 +318,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     else
         offseason_file = joinpath([projectinput.ParentDir, projectinput.OffSeason_Directory, projectinput.OffSeason_Filename])
         load_offseason!(gvars, offseason_file)
-    end 
+    end
     setparameter!(gvars[:string_parameters], :offseason_file, offseason_file)
 
     # 12. Field data
@@ -330,7 +330,7 @@ function load_simulation_project!(outputs, gvars, projectinput::ProjectInputType
     setparameter!(gvars[:string_parameters], :observations_file, observations_file)
 
     return nothing
-end 
+end
 
 """
     read_temperature_file!(array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
@@ -338,13 +338,13 @@ end
 tempprocessing.f90:ReadTemperatureFilefull:358
 """
 function read_temperature_file!(array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
-    return _read_temperature_file!(kwargs[:runtype], array_parameters, temperature_file; kwargs...) 
+    return _read_temperature_file!(kwargs[:runtype], array_parameters, temperature_file; kwargs...)
 end
 
 function _read_temperature_file!(runtype::NormalFileRun, array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
-    Tmin = Float64[] 
+    Tmin = Float64[]
     Tmax = Float64[]
-    
+
     open(temperature_file, "r") do file
         readline(file)
         readline(file)
@@ -357,7 +357,7 @@ function _read_temperature_file!(runtype::NormalFileRun, array_parameters::Param
 
         for line in eachline(file)
             splitedline = split(line)
-            
+
             tmin = parse(Float64,popfirst!(splitedline))
             tmax = parse(Float64,popfirst!(splitedline))
             push!(Tmin, tmin)
@@ -372,15 +372,15 @@ function _read_temperature_file!(runtype::NormalFileRun, array_parameters::Param
 end
 
 function _read_temperature_file!(runtype::TomlFileRun, array_parameters::ParametersContainer{T}, temperature_file; kwargs...) where T
-    Tmin = Float64[] 
+    Tmin = Float64[]
     Tmax = Float64[]
-    
+
     open(temperature_file, "r") do file
         readline(file)
 
         for line in eachline(file)
             splitedline = split(line)
-            
+
             tmin = parse(Float64,popfirst!(splitedline))
             tmax = parse(Float64,popfirst!(splitedline))
             push!(Tmin, tmin)
@@ -401,12 +401,12 @@ function _read_temperature_file!(runtype::NoFileRun, array_parameters::Parameter
 end
 
 function read_eto_file!(array_parameters::ParametersContainer{T}, eto_file; kwargs...) where T
-    return _read_eto_file!(kwargs[:runtype], array_parameters, eto_file; kwargs...) 
+    return _read_eto_file!(kwargs[:runtype], array_parameters, eto_file; kwargs...)
 end
 
 function _read_eto_file!(runtype::NormalFileRun, array_parameters::ParametersContainer{T}, eto_file; kwargs...) where T
-    ETo = Float64[] 
-    
+    ETo = Float64[]
+
     open(eto_file, "r") do file
         readline(file)
         readline(file)
@@ -428,8 +428,8 @@ function _read_eto_file!(runtype::NormalFileRun, array_parameters::ParametersCon
 end
 
 function _read_eto_file!(runtype::TomlFileRun, array_parameters::ParametersContainer{T}, eto_file; kwargs...) where T
-    ETo = Float64[] 
-    
+    ETo = Float64[]
+
     open(eto_file, "r") do file
         readline(file)
 
@@ -449,12 +449,12 @@ function _read_eto_file!(runtype::NoFileRun, array_parameters::ParametersContain
 end
 
 function read_rain_file!(array_parameters::ParametersContainer{T}, rain_file; kwargs...) where T
-    return _read_rain_file!(kwargs[:runtype], array_parameters, rain_file; kwargs...) 
+    return _read_rain_file!(kwargs[:runtype], array_parameters, rain_file; kwargs...)
 end
 
 function _read_rain_file!(runtype::NormalFileRun, array_parameters::ParametersContainer{T}, rain_file; kwargs...) where T
-    Rain = Float64[] 
-    
+    Rain = Float64[]
+
     open(rain_file, "r") do file
         readline(file)
         readline(file)
@@ -476,8 +476,8 @@ function _read_rain_file!(runtype::NormalFileRun, array_parameters::ParametersCo
 end
 
 function _read_rain_file!(runtype::TomlFileRun, array_parameters::ParametersContainer{T}, rain_file; kwargs...) where T
-    Rain = Float64[] 
-    
+    Rain = Float64[]
+
     open(rain_file, "r") do file
         readline(file)
 
@@ -518,9 +518,9 @@ function _load_clim!(runtype::NormalFileRun, record::RepClim, clim_file; kwargs.
             else
                 record.Datatype = :Monthly
             end
-            record.FromD = parse(Int,split(readline(file))[1]) 
-            record.FromM = parse(Int,split(readline(file))[1]) 
-            record.FromY = parse(Int,split(readline(file))[1]) 
+            record.FromD = parse(Int,split(readline(file))[1])
+            record.FromM = parse(Int,split(readline(file))[1])
+            record.FromY = parse(Int,split(readline(file))[1])
             record.NrObs = kwargs[:nrobs]
         end
         complete_climate_description!(record)
@@ -530,7 +530,7 @@ end
 
 function _load_clim!(runtype::T, record::RepClim, clim_file; kwargs...) where T<:TomlFileRun
     if isfile(clim_file)
-        load_gvars_from_toml!(record, clim_file; kwargs...) 
+        load_gvars_from_toml!(record, clim_file; kwargs...)
         record.NrObs = kwargs[:nrobs]
         complete_climate_description!(record)
     end
@@ -565,17 +565,17 @@ function complete_climate_description!(record::RepClim)
                 record.ToM = 1
                 record.ToY = record.ToY  + 1
             end
-        end 
+        end
         record.ToD = 10
-        if (deci == 2) 
+        if (deci == 2)
             record.ToD = 20
-        end 
-        if (deci == 3) 
+        end
+        if (deci == 3)
             record.ToD = DaysInMonth[record.ToM]
-            if (record.ToM == 2) & isleapyear(record.ToY) 
+            if (record.ToM == 2) & isleapyear(record.ToY)
                 record.ToD = record.ToD + 1
-            end 
-        end 
+            end
+        end
         record.ToDayNr =  determine_day_nr(record.ToD, record.ToM, record.ToY)
     elseif record.Datatype == :Monthly
         record.ToY = record.FromY
@@ -585,11 +585,11 @@ function complete_climate_description!(record::RepClim)
             record.ToM = record.ToM - 12
         end
         record.ToD = DaysInMonth[record.ToM]
-        if (record.ToM == 2) & isleapyear(record.ToY) 
+        if (record.ToM == 2) & isleapyear(record.ToY)
             record.ToD = record.ToD + 1
-        end 
+        end
         record.ToDayNr = determine_day_nr(record.ToD, record.ToM, record.ToY)
-    end 
+    end
     return nothing
 end
 
@@ -609,7 +609,7 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
     temperature_file = projectinput.Temperature_Filename
 
     # Part A - ETo and Rain files --> ClimFile
-    if ((eto_file == "(None)") & (rain_file == "(None)")) 
+    if ((eto_file == "(None)") & (rain_file == "(None)"))
         clim_file = "(None)"
         clim_record.Datatype =:Daily
         clim_record.FromString = "any date"
@@ -617,7 +617,7 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
         clim_record.FromY = 1901
     else
         clim_file = "EToRainTempFile"
-        if (eto_file == "(None)") 
+        if (eto_file == "(None)")
             clim_record.FromY = rain_record.FromY
             clim_record.FromDayNr = rain_record.FromDayNr
             clim_record.ToDayNr = rain_record.ToDayNr
@@ -626,7 +626,7 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
             if full_undefined_record(rain_record)
                 clim_record.NrObs = 365
             end
-        elseif (rain_file == "(None)") 
+        elseif (rain_file == "(None)")
             clim_record.FromY = eto_record.FromY
             clim_record.FromDayNr = eto_record.FromDayNr
             clim_record.ToDayNr = eto_record.ToDayNr
@@ -636,9 +636,9 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
                 clim_record.NrObs = 365
             end
         else
-            if full_undefined_record(eto_record) & full_undefined_record(rain_record) 
+            if full_undefined_record(eto_record) & full_undefined_record(rain_record)
                 clim_record.NrObs = 365
-            end 
+            end
 
             if (eto_record.FromY == 1901) & (rain_record.FromY != 1901)
                 eto_record.FromY = rain_record.FromY
@@ -652,9 +652,9 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
                     eto_record.ToY = rain_record.ToY
                 else
                     eto_record.ToY = eto_record.FromY
-                end 
+                end
                 eto_record.FromDayNr = determine_day_nr(eto_record.FromD, eto_record.FromM, eto_record.FromY)
-            end 
+            end
 
             if (eto_record.FromY != 1901) & (rain_record.FromY == 1901)
                 rain_record.FromY = eto_record.FromY
@@ -668,9 +668,9 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
                     rain_record.ToY = eto_record.ToY
                 else
                     rain_record.ToY = rain_record.FromY
-                end 
+                end
                 rain_record.FromDayNr = determine_day_nr(rain_record.FromD, rain_record.FromM, rain_record.FromY)
-            end 
+            end
             # ! bepaal characteristieken van ClimRecord
             clim_record.FromY = eto_record.FromY
             clim_record.FromDayNr = eto_record.FromDayNr
@@ -681,14 +681,14 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
             clim_record.ToDayNr = eto_record.ToDayNr
             if clim_record.ToDayNr > rain_record.ToDayNr
                 clim_record.ToDayNr = rain_record.ToDayNr
-            end 
+            end
             if clim_record.ToDayNr < clim_record.FromDayNr
                 clim_file = "(None)"
                 clim_record.NrObs = 0
                 clim_record.FromY = 1901
-            end 
-        end 
-    end 
+            end
+        end
+    end
 
     # Part B - ClimFile and Temperature files --> ClimFile
     if (temperature_file != "(None)") & (temperature_file != "(External)")
@@ -709,22 +709,22 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
                 clim_record.NrObs = 365
             else
                 clim_record.NrObs = temperature_record.ToDayNr - temperature_record.FromDayNr + 1
-            end 
-            
+            end
+
             if (clim_record.FromY == 1901) & (temperature_record != 1901)
                 clim_record.FromY = temperature_record.FromY
                 clim_record.FromDayNr = determine_day_nr(clim_record.FromD, clim_record.FromM, clim_record.FromY)
                 if (clim_record.FromDayNr < temperature_record.FromDayNr) & (temperature_record.FromY < temperature_record.ToY)
                     clim_record.FromY = temperature_record.FromY + 1
                     clim_record.FromDayNr = determine_day_nr(clim_record.FromD, clim_record.FromM, clim_record.FromY)
-                end 
+                end
                 if full_undefined_record(clim_record)
                     clim_record.ToY = temperature_record.ToY
                 else
                     clim_record.ToY = clim_record.FromY
                 end
                 clim_record.ToDayNr = determine_day_nr(clim_record.ToD, clim_record.ToM, clim_record.ToY)
-            end 
+            end
 
             if (clim_record.FromY != 1901) & (temperature_record == 1901)
                 temperature_record.FromY = clim_record.FromY
@@ -732,14 +732,14 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
                 if (temperature_record.FromDayNr < clim_record.FromDayNr) & (clim_record.FromY < clim_record.ToY)
                     temperature_record.FromY = clim_record.FromY + 1
                     temperature_record.FromDayNr = determine_day_nr(temperature_record.FromD, temperature_record.FromM, temperature_record.FromY)
-                end 
+                end
                 if full_undefined_record(temperature_record)
                     temperature_record.ToY = clim_record.ToY
                 else
                     temperature_record.ToY = temperature_record.FromY
                 end
                 temperature_record.ToDayNr = determine_day_nr(temperature_record.ToD, temperature_record.ToM, temperature_record.ToY)
-            end 
+            end
 
             # ! bepaal nieuwe characteristieken van ClimRecord
             if clim_record.FromDayNr < temperature_record.FromDayNr
@@ -754,8 +754,8 @@ function set_clim_data!(gvars, projectinput::ProjectInputType)
                 clim_record.NrObs = 0
                 clim_record.FromY = 1901
             end
-        end 
-    end 
+        end
+    end
 
     setparameter!(gvars[:string_parameters], :clim_file, clim_file)
     return nothing
@@ -800,8 +800,8 @@ function adjust_onset_search_period!(gvars)
         if onset.StopSearchDayNr > clim_record.ToDayNr
             onset.StopSearchDayNr = clim_record.ToDayNr
             onset.LengthSearchPeriod = onset.StopSearchDayNr - onset.StartSearchDayNr + 1
-        end 
-    end 
+        end
+    end
 
     return nothing
 end
@@ -828,7 +828,7 @@ function _load_crop!(runtype::NormalFileRun, crop::RepCrop, perennial_period::Re
             crop.subkind = :Vegetative
         elseif xx==2
             crop.subkind = :Grain
-        elseif xx==3 
+        elseif xx==3
             crop.subkind = :Tuber
         elseif xx==4
             crop.subkind = :Forage
@@ -909,7 +909,7 @@ function _load_crop!(runtype::NormalFileRun, crop::RepCrop, perennial_period::Re
             (crop.StressResponse.ShapeWP>24.9) & (crop.StressResponse.ShapeCDecline>24.9))
             crop.StressResponse.Calibrated = false
         else
-            crop.StressResponse.Calibrated = true 
+            crop.StressResponse.Calibrated = true
         end
 
         # temperature stress
@@ -1071,7 +1071,7 @@ function _load_crop!(runtype::NormalFileRun, crop::RepCrop, perennial_period::Re
             # Transfer of assimilates from
             # above ground parts to root
             # system is NOT considered
-            crop.Assimilates.On = false 
+            crop.Assimilates.On = false
         end
         # Number of days at end of season
         # during which assimilates are
@@ -1106,7 +1106,7 @@ function _load_crop!(runtype::NormalFileRun, crop::RepCrop, perennial_period::Re
                     perennial_period.GenerateOnset = false
                 end
             end
-            
+
             perennial_period.OnsetFirstDay = parse(Int, split(readline(file))[1])
             perennial_period.OnsetFirstMonth = parse(Int, split(readline(file))[1])
             perennial_period.OnsetLengthSearchPeriod = parse(Int, split(readline(file))[1])
@@ -1120,7 +1120,7 @@ function _load_crop!(runtype::NormalFileRun, crop::RepCrop, perennial_period::Re
             if perennial_period.OnsetOccurrence > 3
                 perennial_period.OnsetOccurrence = 3
             end
-            
+
             # 3. END of growing period
             xx = parse(Int, split(readline(file))[1])
             if xx==0
@@ -1164,7 +1164,7 @@ function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPe
     load_gvars_from_toml!(crop, crop_file)
     load_gvars_from_toml!(perennial_period, crop_file)
     return nothing
-end 
+end
 
 function _load_crop!(runtype::T, crop::RepCrop, perennial_period::RepPerennialPeriod, crop_file; kwargs...) where T<:NoFileRun
     set_crop!(crop, kwargs[:crop_type]; aux = haskey(kwargs, :crop) ? kwargs[:crop] : nothing)
@@ -1182,30 +1182,30 @@ function derive_smax_top_bottom(crop::RepCrop)
     sxbotq = crop.SmaxBotQuarter
     v1 = sxtopq
     v2 = sxbotq
-    if (abs(v1 - v2) < 1e-12) 
+    if (abs(v1 - v2) < 1e-12)
         sxtop = v1
         sxbot = v2
     else
-        if (sxtopq < sxbotq) 
+        if (sxtopq < sxbotq)
             v1 = sxbotq
             v2 = sxtopq
-        end 
+        end
         x = 3 * v2/(v1-v2)
-        if (x < 0.5) 
+        if (x < 0.5)
             v11 = (4/3.5) * v1
             v22 = 0
         else
             v11 = (x + 3.5) * v1/(x+3)
             v22 = (x - 0.5) * v2/x
-        end 
-        if (sxtopq > sxbotq) 
+        end
+        if (sxtopq > sxbotq)
             sxtop = v11
             sxbot = v22
         else
             sxtop = v22
             sxbot = v11
-        end 
-    end 
+        end
+    end
 
     return sxtop, sxbot
 end
@@ -1229,41 +1229,41 @@ function adjust_year_perennials!(crop::RepCrop, theyearseason)
     theplantingdens  = crop.PlantingDens
     thesizeplant = crop.SizePlant
 
-    if (theyearseason == 1) 
+    if (theyearseason == 1)
         if (sownyear1 == true)  # planting
             typeofplanting = :Seed
         else
             typeofplanting = :Transplant
-        end 
+        end
         zmin = zminyear1  # rooting depth
     else
         typeofplanting = :Regrowth # planting
         zmin = zmax  # rooting depth
         # plant size by regrowth
-        if (round(Int, 100*thesizeplant) < round(100*thesizeseedling)) 
+        if (round(Int, 100*thesizeplant) < round(100*thesizeseedling))
             thesizeplant = 10 * thesizeseedling
-        end 
-        if (round(Int, 100*thesizeplant) > 
-            round(Int, (100*theccx*10000)/(theplantingdens/10000))) 
+        end
+        if (round(Int, 100*thesizeplant) >
+            round(Int, (100*theccx*10000)/(theplantingdens/10000)))
             # adjust size plant to maximum possible
             thesizeplant = (theccx*10000)/(theplantingdens/10000p)
-        end 
-    end 
+        end
+    end
     theccini = (theplantingdens/10000) * (thesizeplant/10000)
-    thedaystoccini = time_to_cc_ini(typeofplanting, theplantingdens, 
+    thedaystoccini = time_to_cc_ini(typeofplanting, theplantingdens,
                        thesizeseedling, thesizeplant, theccx, thecgc)
-    if (thecyclemode == :GDDays) 
-        thegddaystoccini = time_to_cc_ini(typeofplanting, theplantingdens, 
+    if (thecyclemode == :GDDays)
+        thegddaystoccini = time_to_cc_ini(typeofplanting, theplantingdens,
                        thesizeseedling, thesizeplant, theccx, thegddcgc)
     else
         thegddaystoccini = undef_int
-    end 
+    end
 
     crop.Planting = typeofplanting
     crop.RootMin = zmin
     crop.SizePlant = thesizeplant
     crop.CCini = theccini
-    crop.DaysToCCini = thedaystoccini  
+    crop.DaysToCCini = thedaystoccini
     crop.GDDaysToCCini = thegddaystoccini
 
     return nothing
@@ -1289,39 +1289,39 @@ function adjust_crop_file_parameters!(gvars)
     # Adjust some crop parameters (CROP.*) as specified by the generated length
     # season (LseasonDays)
     # time to maturity
-    if (themodecycle == :GDDays) 
-        tmin_tmp = simulparam.Tmin 
-        tmax_tmp = simulparam.Tmax 
-        gdd1234 = growing_degree_days(lseasondays, thecropday1, thetbase, thetupper, gvars, tmin_tmp, tmax_tmp) 
+    if (themodecycle == :GDDays)
+        tmin_tmp = simulparam.Tmin
+        tmax_tmp = simulparam.Tmax
+        gdd1234 = growing_degree_days(lseasondays, thecropday1, thetbase, thetupper, gvars, tmin_tmp, tmax_tmp)
 
     else
         gdd1234 = undef_int
-    end 
+    end
 
     # time to senescence  (reference is given in thecropfileset
-    if (themodecycle == :GDDays) 
+    if (themodecycle == :GDDays)
         gdd123 = gdd1234 - crop_file_set.GDDaysFromSenescenceToEnd
-        if (gdd123 >= gdd1234) 
+        if (gdd123 >= gdd1234)
             gdd123 = gdd1234
             l123 = lseasondays
         else
-            tmin_tmp = simulparam.Tmin 
-            tmax_tmp = simulparam.Tmax 
+            tmin_tmp = simulparam.Tmin
+            tmax_tmp = simulparam.Tmax
             l123 = sum_calendar_days(gdd123, thecropday1, thetbase, thetupper, tmin_tmp, tmax_tmp, gvars)
-        end 
+        end
     else
         l123 = lseasondays - crop_file_set.DaysFromSenescenceToEnd
         if (l123 >= lseasondays)
             l123 = lseasondays
         end
         gdd123 = undef_int
-    end 
+    end
     crop.DaysToSenescence = l123
     crop.GDDaysToSenescence = gdd123
     crop.GDDaysToHarvest = gdd1234
 
     return nothing
-end 
+end
 
 """
     gdd1234 = growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, tdaymin, tdaymax)
@@ -1343,7 +1343,7 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
     tdaymax_local = tdaymax
     gddays = 0
 
-    if (valperiod > 0) 
+    if (valperiod > 0)
         if (temperature_file=="(None)") | (temperature_file=="(External)")
             # OJO this includes temperature_file = "None" and "External" because we never set TminRun
             # given average Tmin and Tmax
@@ -1357,7 +1357,7 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
                 daynri = set_daynr_to_yundef(daynri)
             else
                 adjustdaynri = false
-            end 
+            end
 
             if temperature_file_exists & (temperature_record.ToDayNr>daynri) & (temperature_record.FromDayNr<=daynri)
                 remainingdays = valperiod
@@ -1374,9 +1374,9 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
 
                     while ((remainingdays > 0) & ((daynri < temperature_record.ToDayNr) | adjustdaynri))
                         i = i + 1
-                        if (i == length(Tmin)) 
+                        if (i == length(Tmin))
                             i = 1
-                        end 
+                        end
                         tdaymin_local = Tmin[i]
                         tdaymax_local = Tmax[i]
 
@@ -1385,17 +1385,17 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
                         gddays = gddays + daygdd
                         remainingdays = remainingdays - 1
                         daynri = daynri + 1
-                    end 
+                    end
 
-                    if (remainingdays > 0) 
+                    if (remainingdays > 0)
                         gddays = undef_int
-                    end 
+                    end
                 elseif temperature_record.Datatype == :Decadely
                     get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                     i = 1
                     while (tmin_dataset[i].DayNr != daynri)
                         i = i+1
-                    end 
+                    end
                     tdaymin_local = tmin_dataset[i].Param
                     tdaymax_local = tmax_dataset[i].Param
 
@@ -1419,9 +1419,9 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
                         remainingdays = remainingdays - 1
                         daynri = daynri + 1
                     end
-                    if (remainingdays > 0) 
+                    if (remainingdays > 0)
                         gddays = undef_int
-                    end 
+                    end
                 elseif temperature_record.Datatype == :Monthly
                     get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                     i = 1
@@ -1435,7 +1435,7 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
                     remainingdays = remainingdays - 1
                     daynri = daynri + 1
                     while((remainingdays > 0) & ((daynri < temperature_record.ToDayNr) | adjustdaynri))
-                        if (daynri > tmin_dataset[31].DayNr) 
+                        if (daynri > tmin_dataset[31].DayNr)
                             get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                         end
                         i = 1
@@ -1448,11 +1448,11 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
                         gddays = gddays + daygdd
                         remainingdays = remainingdays - 1
                         daynri = daynri + 1
-                    end 
-                    if (remainingdays > 0) 
+                    end
+                    if (remainingdays > 0)
                         gddays = undef_int
-                    end 
-                end 
+                    end
+                end
             end
         end
     else
@@ -1460,7 +1460,7 @@ function growing_degree_days(valperiod, firstdayperiod, tbase, tupper, gvars, td
     end
     gdd1234 = round(Int, gddays)
     return gdd1234
-end 
+end
 
 """
     dgrd = degrees_day(tbase, tupper, tdaymin, tdaymax, gddselectedmethod)
@@ -1471,50 +1471,50 @@ function degrees_day(tbase, tupper, tdaymin, tdaymax, gddselectedmethod)
     if gddselectedmethod==1
         # method 1. - no adjustemnt of tmax, tmin before calculation of taverage
         tavg = (tdaymax+tdaymin)/2
-        if (tavg > tupper) 
+        if (tavg > tupper)
             tavg = tupper
-        end 
-        if (tavg < tbase) 
+        end
+        if (tavg < tbase)
             tavg = tbase
         end
     elseif gddselectedmethod==2
         # method 2. -  adjustment for tbase before calculation of taverage
         tstarmax = tdaymax
-        if (tdaymax < tbase) 
+        if (tdaymax < tbase)
             tstarmax = tbase
-        end 
-        if (tdaymax > tupper) 
+        end
+        if (tdaymax > tupper)
             tstarmax = tupper
-        end 
+        end
         tstarmin = tdaymin
-        if (tdaymin < tbase) 
+        if (tdaymin < tbase)
             tstarmin = tbase
-        end 
-        if (tdaymin > tupper) 
+        end
+        if (tdaymin > tupper)
             tstarmin = tupper
-        end 
+        end
         tavg = (tstarmax+tstarmin)/2
     else
         # method 3.
         tstarmax = tdaymax
-        if (tdaymax < tbase) 
+        if (tdaymax < tbase)
              tstarmax = tbase
-        end 
-        if (tdaymax > tupper) 
+        end
+        if (tdaymax > tupper)
             tstarmax = tupper
-        end 
+        end
         tstarmin = tdaymin
-        if (tdaymin > tupper) 
+        if (tdaymin > tupper)
             tstarmin = tupper
-        end 
+        end
         tavg = (tstarmax+tstarmin)/2
-        if (tavg < tbase) 
+        if (tavg < tbase)
             tavg = tbase
-        end 
-    end 
+        end
+    end
     dgrd =  tavg - tbase
     return  dgrd
-end 
+end
 
 """
     daynri = set_daynr_to_yundef(daynri)
@@ -1535,15 +1535,15 @@ tempprocessing.f90:GetDecadeTemperatureDataSet:413
 """
 function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, temperature_array, temperature_record::RepClim)
     dayi, monthi, yeari = determine_date(daynri)
-    if (dayi > 20) 
+    if (dayi > 20)
         deci = 3
         dayi = 21
         dayn = DaysInMonth[monthi]
-        if ((monthi == 2) & isleapyear(yeari)) 
+        if ((monthi == 2) & isleapyear(yeari))
             dayn = dayn + 1
-        end 
+        end
         ni = dayn - dayi + 1
-    elseif (dayi > 10) 
+    elseif (dayi > 10)
         deci = 2
         dayi = 11
         dayn = 20
@@ -1553,44 +1553,44 @@ function get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, tem
         dayi = 1
         dayn = 10
         ni = 10
-    end 
+    end
     c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_array, temperature_record)
     dnr = determine_day_nr(dayi, monthi, yeari)
 
     ulmin, llmin, midmin = get_parameters(c1min, c2min, c3min)
     for nri in 1:ni
         tmin_dataset[nri].DayNr = dnr+nri-1
-        if (nri <= (ni/2+0.01)) 
+        if (nri <= (ni/2+0.01))
             tmin_dataset[nri].Param = (2*ulmin + (midmin-ulmin)*(2*nri-1)/(ni/2))/2
         else
-            if ((ni == 11) | (ni == 9)) & (nri < (ni+1.01)/2) 
+            if ((ni == 11) | (ni == 9)) & (nri < (ni+1.01)/2)
                 tmin_dataset[nri].Param = midmin
             else
                 tmin_dataset[nri].Param = (2*midmin + (llmin-midmin)*(2*nri-(ni+1))/(ni/2))/2
-            end 
-        end 
-    end 
+            end
+        end
+    end
 
     ulmax, llmax, midmax = get_parameters(c1max, c2max, c3max)
     for nri in 1:ni
         tmax_dataset[nri].DayNr = dnr+nri-1
-        if (nri <= (ni/2+0.01)) 
+        if (nri <= (ni/2+0.01))
             tmax_dataset[nri].Param = (2*ulmax + (midmax-ulmax)*(2*nri-1)/(ni/2))/2
         else
-            if ((ni == 11) | (ni == 9)) & (nri < (ni+1.01)/2) 
+            if ((ni == 11) | (ni == 9)) & (nri < (ni+1.01)/2)
                 tmax_dataset[nri].Param = midmax
             else
                 tmax_dataset[nri].Param = (2*midmax + (llmax-midmax)*(2*nri-(ni+1))/(ni/2))/2
-            end 
-        end 
-    end 
+            end
+        end
+    end
 
     for nri in (ni+1):31
         tmin_dataset[nri].DayNr = dnr+ni-1
         tmin_dataset[nri].Param = 0
         tmax_dataset[nri].DayNr = dnr+ni-1
         tmax_dataset[nri].Param = 0
-    end 
+    end
 
     return nothing
 end
@@ -1606,7 +1606,7 @@ function get_parameters(c1, c2, c3)
     mid = 2*c2 - (ul+ll)/2
     # --previous decade-->/ul/....... mid ......../ll/<--next decade--
     return ul, ll, mid
-end 
+end
 
 """
     c1min, c1max, c2min, c2max, c3min, c3max = get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_array, temperature_record::RepClim)
@@ -1629,7 +1629,7 @@ function get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_arr
         yfile = temperature_record.FromY
     end
     ok3 = false
-    
+
     cont = 1
     if temperature_record.NrObs<=2
         c1min = temperature_array[1][cont]
@@ -1648,7 +1648,7 @@ function get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_arr
             c3min = temperature_array[1][cont]
             c3max = temperature_array[2][cont]
             cont += 1
-            if (deci == decfile) 
+            if (deci == decfile)
                 c2min = c3min
                 c2max = c3max
                 c3min = c2min+(c2min-c1min)/4
@@ -1658,7 +1658,7 @@ function get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_arr
                 c2max = c1max
                 c1min = c2min + (c2min-c3min)/4
                 c1max = c2max + (c2max-c3max)/4
-            end 
+            end
         end
         ok3 = true
     end
@@ -1675,13 +1675,13 @@ function get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_arr
         c1min = c2min + (c2min-c3min)/4
         c1max = c2max + (c2max-c3max)/4
         ok3 = true
-    end 
+    end
 
     if (!ok3) & (dayn==temperature_record.ToD) & (monthi==temperature_record.ToM)
         if (temperature_record.FromY==1901) | (yeari==temperature_record.ToY)
             for Nri in 1:(temperature_record.NrObs-2)
                 cont += 1
-            end 
+            end
             c1min = temperature_array[1][cont]
             c1max = temperature_array[2][cont]
             cont += 1
@@ -1691,17 +1691,17 @@ function get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_arr
             c3min = c2min+(c2min-c1min)/4
             c3max = c2max+(c2max-c1max)/4
             ok3 = true
-        end 
-    end 
+        end
+    end
 
-    if !ok3 
+    if !ok3
         obsi = 1
         while !ok3
-            if (deci==decfile) & (monthi==mfile) & (yeari == yfile) 
+            if (deci==decfile) & (monthi==mfile) & (yeari == yfile)
                 ok3 = true
             else
                 decfile = decfile + 1
-                if decfile>3 
+                if decfile>3
                     decfile, mfile, yfile = adjust_decade_month_and_year(decfile, mfile, yfile)
                 end
                 obsi = obsi + 1
@@ -1716,7 +1716,7 @@ function get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_arr
         end
         for nri in 1:(obsi-2)
             cont += 1
-        end 
+        end
         c1min = temperature_array[1][cont]
         c1max = temperature_array[2][cont]
         cont += 1
@@ -1726,12 +1726,12 @@ function get_set_of_three_temperature(dayn, deci, monthi, yeari, temperature_arr
         c3min = temperature_array[1][cont]
         c3max = temperature_array[2][cont]
         cont += 1
-    end 
+    end
 
     return c1min, c1max, c2min, c2max, c3min, c3max
-end 
+end
 
-""" 
+"""
     decfile, mfile, yfile = adjust_decade_month_and_year(decfile, mfile, yfile)
 
 tempprocessing.f90:AdjustDecadeMONTHandYEAR:344
@@ -1739,10 +1739,10 @@ tempprocessing.f90:AdjustDecadeMONTHandYEAR:344
 function adjust_decade_month_and_year(decfile, mfile, yfile)
     decfile = 1
     mfile = mfile + 1
-    if (mfile > 12) 
+    if (mfile > 12)
         mfile = 1
         yfile = yfile + 1
-    end 
+    end
     return decfile, mfile, yfile
 end
 
@@ -1770,9 +1770,9 @@ function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, te
     dayi = 1
     dnr = determine_day_nr(dayi, monthi, yeari)
     dayn = DaysInMonth[monthi]
-    if ((monthi == 2) & isleapyear(yeari)) 
+    if ((monthi == 2) & isleapyear(yeari))
         dayn = dayn + 1
-    end 
+    end
 
     aover3min, bover2min, cmin = get_interpolation_parameters(c1min, c2min, c3min)
     aover3max, bover2max, cmax = get_interpolation_parameters(c1max, c2max, c3max)
@@ -1783,15 +1783,15 @@ function get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, te
         tmin_dataset[dayi].Param = aover3min*(t2*t2*t2-t1*t1*t1) + bover2min*(t2*t2-t1*t1) + cmin*(t2-t1)
         tmax_dataset[dayi].Param = aover3max*(t2*t2*t2-t1*t1*t1) + bover2max*(t2*t2-t1*t1) + cmax*(t2-t1)
         t1 = t2
-    end 
+    end
     for dayi in (dayn+1):31
         tmin_dataset[dayi].DayNr = dnr+dayn-1 #OJO maybe is dayi
         tmax_dataset[dayi].DayNr = dnr+dayn-1 #OJO maybe is dayi
         tmin_dataset[dayi].Param = 0
         tmax_dataset[dayi].Param = 0
-    end 
+    end
     return nothing
-end 
+end
 
 """
     c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1 = get_set_of_three_months_temperature(monthi, yeari, temperature_array, temperature_record::RepClim)
@@ -1829,12 +1829,12 @@ function get_set_of_three_months_temperature(monthi, yeari, temperature_array, t
         elseif temperature_record.NrObs==1
             t1 = x1
             mfile = mfile + 1
-            if mfile>12 
+            if mfile>12
                 mfile, yfile = adjust_month_and_year(mfile, yfile)
-            end 
+            end
             c3min, c3max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
             cont += 1
-            if monthi==mfile 
+            if monthi==mfile
                 c2min = c3min
                 c2max = c3max
                 x2 = x1 + n3
@@ -1844,34 +1844,34 @@ function get_set_of_three_months_temperature(monthi, yeari, temperature_array, t
                 c2max = c1max
                 x2 = x1 + n1
                 x3 = x2 + n3
-            end 
+            end
         elseif temperature_record.NrObs==2
-            if monthi==mfile 
+            if monthi==mfile
                 t1 = 0
-            end 
+            end
             mfile = mfile + 1
-            if mfile>12 
+            if mfile>12
                 mfile, yfile = adjust_month_and_year(mfile, yfile)
             end
             c2min, c2max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
             cont += 1
             x2 = x1 + n2
-            if monthi==mfile 
+            if monthi==mfile
                 t1 = x1
-            end 
+            end
             mfile = mfile + 1
-            if mfile>12 
+            if mfile>12
                 mfile, yfile = adjust_month_and_year(mfile, yfile)
             end
             c3min, c3max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
             cont += 1
             x3 = x2 + n3
-            if monthi==mfile 
+            if monthi==mfile
                 t1 = x2
-            end 
+            end
         end
         ok3 = true
-    end 
+    end
 
     # 3. If first observation
     if (!ok3) & (monthi==mfile) & (yeari==yfile)
@@ -1880,21 +1880,21 @@ function get_set_of_three_months_temperature(monthi, yeari, temperature_array, t
         cont += 1
         x1 = n1
         mfile = mfile + 1
-        if mfile>12 
+        if mfile>12
             mfile, yfile = adjust_month_and_year(mfile, yfile)
-        end 
+        end
         c2min, c2max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
         cont += 1
         x2 = x1 + n2
         mfile = mfile + 1
-        if mfile>12 
+        if mfile>12
             mfile, yfile = adjust_month_and_year(mfile, yfile)
-        end 
+        end
         c3min, c3max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
         cont += 1
         x3 = x2 + n3
         ok3 = true
-    end 
+    end
 
     # 4. If last observation
     if (!ok3) & (monthi==temperature_record.ToM)
@@ -1902,51 +1902,51 @@ function get_set_of_three_months_temperature(monthi, yeari, temperature_array, t
             for nri in 1:(temperature_record.NrObs-3)
                 cont += 1
                 mfile = mfile + 1
-                if mfile>12 
+                if mfile>12
                     mfile, yfile = adjust_month_and_year(mfile, yfile)
-                end 
-            end 
+                end
+            end
             c1min, c1max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
             cont += 1
             x1 = n1
             mfile = mfile + 1
-            if mfile>12 
+            if mfile>12
                 mfile, yfile = adjust_month_and_year(mfile, yfile)
-            end 
+            end
             c2min, c2max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
             cont += 1
             x2 = x1 + n2
             t1 = x2
             mfile = mfile + 1
-            if mfile>12 
+            if mfile>12
                 mfile, yfile = adjust_month_and_year(mfile, yfile)
-            end 
+            end
             c3min, c3max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
             cont += 1
             x3 = x2 + n3
             ok3 = true
-        end 
-    end 
+        end
+    end
 
     # 5. IF not previous cases
     if !ok3
         obsi = 1
         while !ok3
-            if ((monthi==mfile) & (yeari==yfile)) 
+            if ((monthi==mfile) & (yeari==yfile))
                ok3 = true
             else
                mfile = mfile + 1
-               if mfile>12 
+               if mfile>12
                    mfile, yfile = adjust_month_and_year(mfile, yfile)
-               end 
+               end
               obsi = obsi + 1
-            end 
-        end 
-        mfile = temperature_record.FromM 
+            end
+        end
+        mfile = temperature_record.FromM
         for nri in 1:(obsi-2)
             cont += 1
             mfile = mfile + 1
-            if (mfile > 12) 
+            if (mfile > 12)
                 mfile, yfile = adjust_month_and_year(mfile, yfile)
             end
         end
@@ -1955,23 +1955,23 @@ function get_set_of_three_months_temperature(monthi, yeari, temperature_array, t
         x1 = n1
         t1 = x1
         mfile = mfile + 1
-        if mfile>12 
+        if mfile>12
             mfile, yfile = adjust_month_and_year(mfile, yfile)
-        end 
+        end
         c2min, c2max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
         cont += 1
         x2 = x1 + n2
         mfile = mfile + 1
-        if mfile>12 
+        if mfile>12
             mfile, yfile = adjust_month_and_year(mfile, yfile)
         end
         c3min, c3max = adjust_month(temperature_array[1][cont], temperature_array[2][cont])
         cont += 1
         x3 = x2 + n3
-    end 
+    end
 
     return c1min, c2min, c3min, c1max, c2max, c3max, x1, x2, x3, t1
-end 
+end
 
 """
     cimin, cimax = adjust_month(tlow, thigh)
@@ -2020,7 +2020,7 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
     tdaymax_loc = tdaymax
 
     nrcdays = 0
-    if valgddays>0 
+    if valgddays>0
         if (temperature_file=="(None)") | (temperature_file=="(External)")
             # OJO this includes temperature_file = "None" and "External" because we never set TminRun
             # given average Tmin and Tmax
@@ -2029,7 +2029,7 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                 nrcdays = undef_int
             else
                 nrcdays = round(Int, valgddays/daygdd)
-            end 
+            end
         else
             daynri = firstdaycrop
             if full_undefined_record(temperature_record)
@@ -2037,7 +2037,7 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                 daynri = set_daynr_to_yundef(daynri)
             else
                 adjustdaynri = false
-            end 
+            end
 
             if temperature_file_exists & (temperature_record.ToDayNr>daynri) & (temperature_record.FromDayNr<=daynri)
                 remaininggddays = valgddays
@@ -2054,9 +2054,9 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
 
                     while ((remaininggddays > 0) & ((daynri < temperature_record.ToDayNr) | adjustdaynri))
                         i = i + 1
-                        if i==length(Tmin) 
+                        if i==length(Tmin)
                             i = 1
-                        end 
+                        end
                         tdaymin_loc = Tmin[i]
                         tdaymax_loc = Tmax[i]
 
@@ -2064,17 +2064,17 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                         nrcdays = nrcdays + 1
                         remaininggddays = remaininggddays - daygdd
                         daynri = daynri + 1
-                    end 
+                    end
 
-                    if remaininggddays>0 
+                    if remaininggddays>0
                         nrcdays = undef_int
-                    end 
+                    end
                 elseif temperature_record.Datatype==:Decadely
                     get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                     i = 1
                     while tmin_dataset[i].DayNr != daynri
                         i = i+1
-                    end 
+                    end
                     tdaymin_loc = tmin_dataset[i].Param
                     tdaymax_loc = tmax_dataset[i].Param
                     daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
@@ -2082,29 +2082,29 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                     remaininggddays = remaininggddays - daygdd
                     daynri = daynri + 1
                     while (remaininggddays>0) & ((daynri<temperature_record.ToDayNr) | (adjustdaynri))
-                        if daynri>tmin_dataset[31].DayNr 
+                        if daynri>tmin_dataset[31].DayNr
                             get_decade_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                         end
                         i = 1
                         while tmin_dataset[i].DayNr != daynri
                             i = i+1
-                        end 
+                        end
                         tdaymin_loc = tmin_dataset[i].Param
                         tdaymax_loc = tmax_dataset[i].Param
                         daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
                         nrcdays = nrcdays + 1
                         remaininggddays = remaininggddays - daygdd
                         daynri = daynri + 1
-                    end 
-                    if remaininggddays>0 
+                    end
+                    if remaininggddays>0
                         nrcdays = undef_int
-                    end 
+                    end
                 elseif  temperature_record.Datatype==:Monthly
                     get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                     i = 1
                     while tmin_dataset[i].DayNr != daynri
                         i = i+1
-                    end 
+                    end
                     tdaymin_loc = tmin_dataset[i].Param
                     tdaymax_loc = tmax_dataset[i].Param
                     daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
@@ -2112,31 +2112,31 @@ function sum_calendar_days(valgddays, firstdaycrop, tbase, tupper, tdaymin, tday
                     remaininggddays = remaininggddays - daygdd
                     daynri = daynri + 1
                     while (remaininggddays>0) & ((daynri<temperature_record.ToDayNr) | adjustdaynri)
-                        if daynri>tmin_dataset[31].DayNr 
+                        if daynri>tmin_dataset[31].DayNr
                             get_monthly_temperature_dataset!(tmin_dataset, tmax_dataset, daynri, (Tmin, Tmax), temperature_record)
                         end
                         i = 1
                         while tmin_dataset[i].DayNr != daynri
                             i = i+1
-                        end 
+                        end
                         tdaymin_loc = tmin_dataset[i].Param
                         tdaymax_loc = tmax_dataset[i].Param
                         daygdd = degrees_day(tbase, tupper, tdaymin_loc, tdaymax_loc, simulparam.GDDMethod)
                         nrcdays = nrcdays + 1
                         remaininggddays = remaininggddays - daygdd
                         daynri = daynri + 1
-                    end 
-                    if remaininggddays>0 
+                    end
+                    if remaininggddays>0
                         nrcdays = undef_int
-                    end 
-                end 
+                    end
+                end
             else
                 nrcdays = undef_int
             end
         end
     end
     return nrcdays
-end 
+end
 
 """
     adjust_calendar_crop!(gvars)
@@ -2150,13 +2150,13 @@ function adjust_calendar_crop!(gvars)
     if crop.ModeCycle==:GDDays
         crop.GDDaysToFullCanopy = crop.GDDaysToGermination +
                 round(Int, log((0.25*crop.CCx^2/crop.CCo)/(crop.CCx-0.98*crop.CCx))/crop.GDDCGC)
-        if crop.GDDaysToFullCanopy>crop.GDDaysToHarvest 
+        if crop.GDDaysToFullCanopy>crop.GDDaysToHarvest
             crop.GDDaysToFullCanopy = crop.GDDaysToHarvest
-        end 
+        end
         adjust_calendar_days!(gvars, cgcisgiven)
-    end 
+    end
     return nothing
-end 
+end
 
 
 """
@@ -2208,74 +2208,74 @@ function adjust_calendar_days!(gvars, iscgcgiven)
     tmp_notempfiletmax = notempfiletmax
 
     succes = true
-    if thedaystoccini==0 
+    if thedaystoccini==0
         # planting/sowing
         d0 = sum_calendar_days(gddl0, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
         d12 = sum_calendar_days(gddl12, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
     else
         # regrowth
-        if thedaystoccini>0 
+        if thedaystoccini>0
            # ccini < ccx
            extragddays = gddl12 - gddl0 - thegddaystoccini
            extradays = sum_calendar_days(extragddays, plantdaynr, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
            d12 = d0 + thedaystoccini + extradays
-        end 
-    end 
+        end
+    end
 
-    if infocroptype != :Forage 
+    if infocroptype != :Forage
         d123 = sum_calendar_days(gddl123, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
         dharvest = sum_calendar_days(gddharvest, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
-    end 
+    end
 
     dlzmax = sum_calendar_days(gddlzmax, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
     if (infocroptype==:Grain) | (infocroptype==:Tuber)
         dflor = sum_calendar_days(gddflor, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
-        if dflor!=undef_int 
-            if infocroptype==:Grain 
+        if dflor!=undef_int
+            if infocroptype==:Grain
                 lengthflor = sum_calendar_days(gddlengthflor, (plantdaynr+dflor), tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
             else
                 lengthflor = 0
-            end 
+            end
             lhimax = sum_calendar_days(gddhimax, (plantdaynr+dflor), tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
-            if (lengthflor==undef_int) | (lhimax==undef_int) 
+            if (lengthflor==undef_int) | (lhimax==undef_int)
                 succes = false
-            end 
+            end
         else
             lengthflor = undef_int
             lhimax = undef_int
             succes = false
-        end 
+        end
     elseif (infocroptype==:Vegetative) | (infocroptype==:Forage)
         lhimax = sum_calendar_days(gddhimax, plantdaynr, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
-    end 
-    if (d0==undef_int) | (d12 == undef_int) | (d123==undef_int) | (dharvest==undef_int) | (dlzmax==undef_int) 
+    end
+    if (d0==undef_int) | (d12 == undef_int) | (d123==undef_int) | (dharvest==undef_int) | (dlzmax==undef_int)
         succes = false
-    end 
+    end
 
-    if succes 
+    if succes
         cgc = gddl12/d12 * gddcgc
         cdc = gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, tmp_notempfiletmin, tmp_notempfiletmax, gvars)
         d123, stlength, d12, cgc = determine_length_growth_stages(cco, ccx, cdc, d0, dharvest, iscgcgiven, thedaystoccini, theplanting, d123, stlength, d12, cgc)
-        if (infocroptype==:Grain) | (infocroptype==:Tuber) 
+        if (infocroptype==:Grain) | (infocroptype==:Tuber)
             dhidt = hindex/lhimax
-        end 
-        if (infocroptype==:Vegetative) | (infocroptype==:Forage) 
-            if (lhimax > 0) 
-                if (lhimax > dharvest) 
+        end
+        if (infocroptype==:Vegetative) | (infocroptype==:Forage)
+            if (lhimax > 0)
+                if (lhimax > dharvest)
                     dhidt = hindex/dharvest
                 else
                     dhidt = hindex/lhimax
-                end 
-                if (dhidt > 100) 
+                end
+                if (dhidt > 100)
                     dhidt = 100 # 100 is maximum tempdhidt (see setdhidt)
                     lhimax = 0
-                end 
+                end
             else
                 dhidt = 100 # 100 is maximum tempdhidt (see setdhidt)
                 lhimax = 0
-            end 
-        end 
-    end 
+            end
+        end
+    end
 
 
     crop.GDDaysToHIo = gddhimax
@@ -2293,7 +2293,7 @@ function adjust_calendar_days!(gvars, iscgcgiven)
     crop.dHIdt = dhidt
 
     return nothing
-end 
+end
 
 
 """
@@ -2303,27 +2303,27 @@ tempprocessing.f90:GDDCDCToCDC:1668
 """
 function gddcdc_to_cdc(plantdaynr, d123, gddl123, gddharvest, ccx, gddcdc, tbase, tupper, notempfiletmin, notempfiletmax, gvars)
     gddi = length_canopy_decline(ccx, gddcdc)
-    if (gddl123+gddi)<=gddharvest 
+    if (gddl123+gddi)<=gddharvest
         cci = 0 # full decline
     else
         # partly decline
-        if gddl123<gddharvest 
+        if gddl123<gddharvest
             gddi = gddharvest - gddl123
         else
             gddi = 5
-        end 
+        end
         # cc at time ti
-        cci = ccx * (1 - 0.05 *(exp(gddi*gddcdc*3.33/(ccx+2.29))-1)) 
-    end 
+        cci = ccx * (1 - 0.05 *(exp(gddi*gddcdc*3.33/(ccx+2.29))-1))
+    end
     ti = sum_calendar_days(gddi, (plantdaynr+d123), tbase, tupper, notempfiletmin, notempfiletmax, gvars)
-    if ti>0 
+    if ti>0
         cdc = ((ccx+2.29)/ti * log(1 + (1-cci/ccx)/0.05))/3.33
     else
         cdc = undef_int
-    end 
+    end
 
     return cdc
-end 
+end
 
 
 """
@@ -2335,23 +2335,23 @@ function adjust_crop_year_to_climfile!(crop::RepCrop, clim_file, clim_record)
     cday1 = crop.Day1
     cdayn = crop.DayN
     dayi, monthi, yeari = determine_date(cday1)
-    if clim_file=="(None)" 
+    if clim_file=="(None)"
         yeari = 1901  # yeari = 1901 if undefined year
     else
         yeari = clim_record.FromY # yeari = 1901 if undefined year
-    end 
+    end
     cday1 = determine_day_nr(dayi, monthi, yeari)
 
     # This function determines Crop.DayN and the string
     cdayn = cday1 + crop.DaysToHarvest - 1
-    if cdayn<cday1 
+    if cdayn<cday1
         cdayn = cday1
     end
 
     crop.Day1 = cday1
     crop.DayN = cdayn
     return nothing
-end 
+end
 
 """
     adjust_climrecord_to!(clim_record::RepClim, cdayn)
@@ -2384,47 +2384,47 @@ function adjust_simperiod!(gvars, projectinput::ProjectInputType)
     inisimfromdaynr = simulation.FromDayNr
     if simulation.LinkCropToSimPeriod
         determine_linked_simday1!(simulation, crop, clim_record, clim_file)
-        if (crop.Day1==simulation.FromDayNr) 
+        if (crop.Day1==simulation.FromDayNr)
             simulation.ToDayNr = crop.DayN
         else
             simulation.ToDayNr = simulation.FromDayNr + 30
-        end 
-        if (clim_file != "(None)") 
-            if (simulation.ToDayNr>clim_record.ToDayNr) 
+        end
+        if (clim_file != "(None)")
+            if (simulation.ToDayNr>clim_record.ToDayNr)
                 simulation.ToDayNr = clim_record.ToDayNr
-            end 
-            if (simulation.ToDayNr<clim_record.FromDayNr) 
+            end
+            if (simulation.ToDayNr<clim_record.FromDayNr)
                 simulation.ToDayNr = clim_record.FromDayNr
-            end 
-        end 
-    else 
-        if (simulation.FromDayNr>crop.Day1) 
+            end
+        end
+    else
+        if (simulation.FromDayNr>crop.Day1)
             simulation.FromDayNr = crop.Day1
-        end 
+        end
         simulation.ToDayNr = crop.DayN
-        if (clim_file != "(None)") & ((simulation.FromDayNr<=clim_record.FromDayNr) | (simulation.FromDayNr>=clim_record.ToDayNr)) 
+        if (clim_file != "(None)") & ((simulation.FromDayNr<=clim_record.FromDayNr) | (simulation.FromDayNr>=clim_record.ToDayNr))
             simulation.FromDayNr = clim_record.FromDayNr
             simulation.ToDayNr = simulation.FromDayNr + 30
-        end 
-    end 
+        end
+    end
 
     # adjust initial depth and quality of the groundwater when required
-    if (!simulparam.ConstGwt) & (inisimfromdaynr != simulation.FromDayNr) 
-        if (groundwater_file != "(None)") 
+    if (!simulparam.ConstGwt) & (inisimfromdaynr != simulation.FromDayNr)
+        if (groundwater_file != "(None)")
             fullfilename = projectinput.ParentDir * "/GroundWater.AqC"
         else
             fullfilename = groundwater_file
-        end 
+        end
         # initialize ZiAqua and ECiAqua
         load_groundwater!(gvars, fullfilename)
         calculate_adjusted_fc!(gvars[:compartments], gvars[:soil_layers], gvars[:integer_parameters][:ziaqua]/100)
-        if gvars[:simulation].IniSWC.AtFC 
+        if gvars[:simulation].IniSWC.AtFC
             reset_swc_to_fc!(gvars[:simulation], gvars[:compartments], gvars[:soil_layers], gvars[:integer_parameters][:ziaqua])
-        end 
-    end 
+        end
+    end
 
     return nothing
-end 
+end
 
 """
     determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_record::RepClim, clim_file)
@@ -2433,11 +2433,11 @@ global.f90:DetermineLinkedSimDay1:4694
 """
 function determine_linked_simday1!(simulation::RepSim, crop::RepCrop, clim_record::RepClim, clim_file)
     simday1 = crop.Day1
-    if clim_file != "(None)" 
-        if (simday1<clim_record.FromDayNr) | (simday1>clim_record.ToDayNr) 
+    if clim_file != "(None)"
+        if (simday1<clim_record.FromDayNr) | (simday1>clim_record.ToDayNr)
             simulation.LinkCropToSimPeriod = false
             simday1 = clim_record.FromDayNr
-        end 
+        end
     end
     simulation.FromDayNr = simday1
     return nothing
@@ -2470,26 +2470,26 @@ function load_groundwater!(gvars, groundwater_file)
             if i==0
                 # no groundwater table
                 zcm = undef_int
-                ecdsm = undef_double 
+                ecdsm = undef_double
                 simulparam.ConstGwt = true
                 theend = true
             elseif i==1
                 # constant groundwater table
                 simulparam.ConstGwt = true
             else
-                simulparam.ConstGwt = false 
+                simulparam.ConstGwt = false
             end
 
             # first day of observations (only for variable groundwater table)
-            if !simulparam.ConstGwt 
+            if !simulparam.ConstGwt
                 dayi = parse(Int, split(readline(file))[1])
                 monthi = parse(Int, split(readline(file))[1])
                 year1gwt = parse(Int, split(readline(file))[1])
                 daynr1gwt = determine_day_nr(dayi, monthi, year1gwt)
-            end 
+            end
 
             # single observation (Constant Gwt) or first observation (Variable Gwt)
-            if i>0 
+            if i>0
                 # groundwater table is present
                 readline(file)
                 readline(file)
@@ -2498,33 +2498,33 @@ function load_groundwater!(gvars, groundwater_file)
                 daydouble = parse(Float64, popfirst!(splitedline))
                 z2 = parse(Float64, popfirst!(splitedline))
                 ec2 = parse(Float64, popfirst!(splitedline))
-                if (i==1) | eof(file) 
+                if (i==1) | eof(file)
                     # Constant groundwater table or single observation
                     Zcm = round(Int,100*z2)
                     ecdsm = ec2
                     theend = true
                 else
                     daynr2 = daynr1gwt + round(Int, daydouble) - 1
-                end 
-            end 
+                end
+            end
 
             # other observations
-            if !theend 
+            if !theend
                 # variable groundwater table with more than 1 observation
                 # adjust AtDayNr
                 dayi, monthi, yeari = determine_date(atdaynr_local)
-                if (yeari==1901) & (year1gwt != 1901) 
+                if (yeari==1901) & (year1gwt != 1901)
                     # Make AtDayNr defined
                     atdaynr_local = determine_day_nr(dayi, monthi, year1gwt)
-                end 
-                if (yeari != 1901) & (year1gwt==1901) 
+                end
+                if (yeari != 1901) & (year1gwt==1901)
                     # Make AtDayNr undefined
                     atdaynr_local = determine_day_nr(dayi, monthi, year1gwt)
-                end 
+                end
                 # get observation at AtDayNr
-                if year1gwt != 1901 
+                if year1gwt != 1901
                     # year is defined
-                    if atdaynr_local<=daynr2 
+                    if atdaynr_local<=daynr2
                         zcm = round(Int,100*z2)
                         ecdsm = ec2
                     else
@@ -2537,20 +2537,20 @@ function load_groundwater!(gvars, groundwater_file)
                             z2 = parse(Float64, popfirst!(splitedline))
                             ec2 = parse(Float64, popfirst!(splitedline))
                             daynr2 = daynr1gwt + round(Int, daydouble) - 1
-                            if (atdaynr_local <= daynr2) 
+                            if (atdaynr_local <= daynr2)
                                 zcm, ecdsm =  find_values(atdaynr_local, daynr1, daynr2, z1, ec1, z2, ec2)
                                 theend = true
-                            end 
+                            end
                             if eof(file) & (!theend)
                                 zcm = round(Int,100*z2)
                                 ecdsm = ec2
                                 theend = true
-                            end 
-                        end 
-                    end 
+                            end
+                        end
+                    end
                 else
                     # year is undefined
-                    if (atdaynr_local <= daynr2) 
+                    if (atdaynr_local <= daynr2)
                         daynr2 = daynr2 + 365
                         atdaynr_local = atdaynr_local + 365
                         while !eof(file)
@@ -2559,7 +2559,7 @@ function load_groundwater!(gvars, groundwater_file)
                             z1 = parse(Float64, popfirst!(splitedline))
                             ec1 = parse(Float64, popfirst!(splitedline))
                             daynr1 = daynr1gwt + round(Int, daydouble) - 1
-                        end 
+                        end
                         zcm, ecdsm =  find_values(atdaynr_local, daynr1, daynr2, z1, ec1, z2, ec2)
                     else
                         daynrn = daynr2 + 365
@@ -2574,26 +2574,26 @@ function load_groundwater!(gvars, groundwater_file)
                             z2 = parse(Float64, popfirst!(splitedline))
                             ec2 = parse(Float64, popfirst!(splitedline))
                             daynr2 = daynr1gwt + round(Int, daydouble) - 1
-                            if (atdaynr_local <= daynr2) 
+                            if (atdaynr_local <= daynr2)
                                 zcm, ecdsm =  find_values(atdaynr_local, daynr1, daynr2, z1, ec1, z2, ec2)
                                 theend = true
-                            end 
+                            end
                             if eof(file) & (!theend)
                                 zcm, ecdsm =  find_values(atdaynr_local, daynr2, daynrn, z2, ec2, zn, ecn)
                                 theend = true
-                            end 
-                        end 
-                    end 
-                end 
+                            end
+                        end
+                    end
+                end
                 # variable groundwater table with more than 1 observation
-            end 
+            end
             gvars[:integer_parameters][:ziaqua] = zcm
             gvars[:float_parameters][:eciaqua] = ecdsm
-        end 
+        end
     end
 
-    return nothing 
-end 
+    return nothing
+end
 
 """
     zcn, ecdsm = find_values(atdaynr, daynr1, daynr2, z1, ec1, z2, ec2)
@@ -2604,7 +2604,7 @@ function find_values(atdaynr, daynr1, daynr2, z1, ec1, z2, ec2)
         zcm = round(Int, 100 * (z1 + (z2-z1) * (atdaynr-daynr1)/(daynr2-daynr1)))
         ecdsm = ec1 + (ec2-ec1) * (atdaynr-daynr1)/(daynr2-daynr1)
         return zcm, ecdsm
-end 
+end
 
 
 """
@@ -2616,7 +2616,7 @@ function calculate_adjusted_fc!(compartadj::Vector{CompartmentIndividual}, soil_
     depth = 0
     for compi in eachindex(compartadj)
         depth = depth + compartadj[compi].Thickness
-    end 
+    end
 
     compi = length(compartadj)
 
@@ -2624,27 +2624,27 @@ function calculate_adjusted_fc!(compartadj::Vector{CompartmentIndividual}, soil_
         zi = depth - compartadj[compi].Thickness/2
         xmax = no_adjustment(soil_layers[compartadj[compi].Layer].FC)
 
-        if (depthaquifer<0) | ((depthaquifer - zi)>=xmax) 
+        if (depthaquifer<0) | ((depthaquifer - zi)>=xmax)
             for ic in 1:compi
                 compartadj[ic].FCadj = soil_layers[compartadj[ic].Layer].FC
-            end 
+            end
             compi = 0
         else
             if (soil_layers[compartadj[compi].Layer].FC>=soil_layers[compartadj[compi].Layer].SAT)
                 compartadj[compi].FCadj = soil_layers[compartadj[compi].Layer].FC
             else
-                if (zi >= depthaquifer) 
+                if (zi >= depthaquifer)
                     compartadj[compi].FCadj = soil_layers[compartadj[compi].Layer].SAT
                 else
                     deltav = soil_layers[compartadj[compi].Layer].SAT - soil_layers[compartadj[compi].Layer].FC
                     deltafc = (deltav/(xmax^2)) * (zi - (depthaquifer - xmax))^2
                     compartadj[compi].FCadj = soil_layers[compartadj[compi].Layer].FC + deltafc
-                end 
-            end 
+                end
+            end
             depth = depth - compartadj[compi].Thickness
             compi = compi - 1
-        end 
-    end 
+        end
+    end
 
     return nothing
 end
@@ -2663,15 +2663,15 @@ function no_adjustment(fcvolpr)
     if fcvolpr<=10
         nadj = 1
     else
-        if fcvolpr>=30 
+        if fcvolpr>=30
             nadj = 2
         else
             pf = 2 + 0.3 * (fcvolpr-10)/20
             nadj = (exp(pf*log(10)))/100
-        end 
-    end 
+        end
+    end
     return nadj
-end 
+end
 
 """
     reset_swc_to_fc!(simulation::RepSim, compartments::Vector{CompartmentIndividual},
@@ -2684,31 +2684,31 @@ function reset_swc_to_fc!(simulation::RepSim, compartments::Vector{CompartmentIn
     simulation.IniSWC.AtDepths = false
     if ziaqua<0  # no ground water table
         simulation.IniSWC.NrLoc = length(soil_layers)
-        for layeri = 1:simulation.IniSWC.NrLoc 
+        for layeri = 1:simulation.IniSWC.NrLoc
             simulation.IniSWC.Loc[layeri] = soil_layers[layeri].Thickness
             simulation.IniSWC.VolProc[layeri] = soil_layers[layeri].FC
-            simulation.IniSWC.SaltECe[layeri] = 0 
-        end 
+            simulation.IniSWC.SaltECe[layeri] = 0
+        end
     else
         simulation.IniSWC.NrLoc = length(compartments)
-        for loci = 1:simulation.IniSWC.NrLoc 
+        for loci = 1:simulation.IniSWC.NrLoc
             simulation.IniSWC.Loc[loci] = compartments[loci].Thickness
             simulation.IniSWC.VolProc[loci] = compartments[loci].FCadj
-            simulation.IniSWC.SaltECe[loci] = 0 
-        end 
-    end 
-    for compi in eachindex(compartments) 
+            simulation.IniSWC.SaltECe[loci] = 0
+        end
+    end
+    for compi in eachindex(compartments)
         compartments[compi].Theta = compartments[compi].FCadj/100
         simulation.ThetaIni[compi] = compartments[compi].Theta
         for celli in 1:soil_layers[compartments[compi].Layer].SCP1
             # salinity in cells
             compartments[compi].Salt[celli] = 0
             compartments[compi].Depo[celli] = 0
-        end 
-    end 
+        end
+    end
 
     return nothing
-end 
+end
 
 function reset_swc_to_fc!(simulation::RepSim, compartments::Vector{AbstractParametersContainer},
                            soil_layers::Vector{AbstractParametersContainer}, ziaqua)
@@ -2733,12 +2733,12 @@ function no_irrigation!(gvars)
         gvars[:irri_before_season][nri].Param = 0
         gvars[:irri_after_season][nri].DayNr = 0
         gvars[:irri_after_season][nri].Param = 0
-    end 
-    gvars[:irri_ecw].PreSeason = 0 
-    gvars[:irri_ecw].PostSeason = 0 
+    end
+    gvars[:irri_ecw].PreSeason = 0
+    gvars[:irri_ecw].PostSeason = 0
 
     return nothing
-end 
+end
 
 """
     load_irri_schedule_info!(gvars, irri_file)
@@ -2759,9 +2759,9 @@ function load_irri_schedule_info!(gvars, irri_file)
         elseif i==3
             gvars[:symbol_parameters][:irrimethod] = :MBorder
         elseif i==4
-            gvars[:symbol_parameters][:irrimethod] = :MFurrow 
+            gvars[:symbol_parameters][:irrimethod] = :MFurrow
         else
-            gvars[:symbol_parameters][:irrimethod] = :MDrip 
+            gvars[:symbol_parameters][:irrimethod] = :MDrip
         end
         # fraction of soil surface wetted
         gvars[:simulparam].IrriFwInSeason = parse(Int, split(readline(file))[1])
@@ -2776,16 +2776,16 @@ function load_irri_schedule_info!(gvars, irri_file)
             gvars[:symbol_parameters][:irrimode] = :Generate
         else
             gvars[:symbol_parameters][:irrimode] = :Inet
-        end 
+        end
 
         # 1. Irrigation schedule
         if i == 1
             gvars[:integer_parameters][:irri_first_daynr] = parse(Int, split(readline(file))[1])
-        end 
+        end
 
 
         # 2. Generate
-        if gvars[:symbol_parameters][:irrimode] == :Generate 
+        if gvars[:symbol_parameters][:irrimode] == :Generate
             i = parse(Int, split(readline(file))[1])
             if i==1
                 gvars[:symbol_parameters][:timemode] = :FixInt
@@ -2803,16 +2803,16 @@ function load_irri_schedule_info!(gvars, irri_file)
                 gvars[:symbol_parameters][:depthmode] = :ToFc
             else
                 gvars[:symbol_parameters][:depthmode] = :FixDepth
-            end 
-        end 
+            end
+        end
 
         # 3. Net irrigation requirement
-        if gvars[:symbol_parameters][:irrimode] == :Inet 
+        if gvars[:symbol_parameters][:irrimode] == :Inet
             gvars[:simulparam].PercRAW = parse(Int, split(readline(file))[1])
-        end 
+        end
 
         # 4. If irigation is :Manual or :Generate we read the rest of the file and save in arrays
-        if gvars[:symbol_parameters][:irrimode] == :Manual 
+        if gvars[:symbol_parameters][:irrimode] == :Manual
             readline(file)
             readline(file)
             Irri_1 = Float64[]
@@ -2832,7 +2832,7 @@ function load_irri_schedule_info!(gvars, irri_file)
             setparameter!(gvars[:array_parameters], :Irri_3, Irri_3)
         end
 
-        if gvars[:symbol_parameters][:irrimode] == :Generate 
+        if gvars[:symbol_parameters][:irrimode] == :Generate
             readline(file)
             readline(file)
             readline(file)
@@ -2859,7 +2859,7 @@ function load_irri_schedule_info!(gvars, irri_file)
     end
 
     return nothing
-end 
+end
 
 """
     load_management!(gvars, man_file; kwargs...)
@@ -2867,7 +2867,7 @@ end
 global.f90:LoadManagement:3366
 """
 function load_management!(gvars, man_file; kwargs...)
-    _load_management!(kwargs[:runtype], gvars, man_file) 
+    _load_management!(kwargs[:runtype], gvars, man_file)
     return nothing
 end
 
@@ -2890,11 +2890,11 @@ function _load_management!(runtype::NormalFileRun, gvars, man_file)
         simulation.ECStorageIni = 0
         # surface run-off
         i = parse(Int, split(readline(file))[1])
-        if i==1 
+        if i==1
             management.RunoffOn = false # prevention of surface runoff
         else
             management.RunoffOn = true # surface runoff is not prevented
-        end 
+        end
         management.CNcorrection = parse(Int, split(readline(file))[1])
         # weed infestation
         management.WeedRC = parse(Int, split(readline(file))[1])# relative cover of weeds (%)
@@ -2905,11 +2905,11 @@ function _load_management!(runtype::NormalFileRun, gvars, man_file)
         management.WeedAdj = parse(Int, split(readline(file))[1])
         # multiple cuttings
         i = parse(Int, split(readline(file))[1])
-        if i==0 
+        if i==0
             management.Cuttings.Considered = false
         else
-            management.Cuttings.Considered = true 
-        end 
+            management.Cuttings.Considered = true
+        end
         # Canopy cover (%) after cutting
         management.Cuttings.CCcut = parse(Int, split(readline(file))[1])
         # Next line is expected to be present in the input file, however
@@ -2922,10 +2922,10 @@ function _load_management!(runtype::NormalFileRun, gvars, man_file)
         # (-9 = total growth cycle)
         management.Cuttings.NrDays = parse(Int, split(readline(file))[1])
         i = parse(Int, split(readline(file))[1])
-        if i==1 
+        if i==1
             management.Cuttings.Generate = true
         else
-            management.Cuttings.Generate = false 
+            management.Cuttings.Generate = false
         end
         # Time criterion for generating cuttings
         i = parse(Int, split(readline(file))[1])
@@ -2947,20 +2947,20 @@ function _load_management!(runtype::NormalFileRun, gvars, man_file)
         elseif i==5
             # produced fresh yield (ton/ha)
             management.Cuttings.Criterion = :FreshY
-        end 
+        end
         # final harvest at crop maturity:
         i = parse(Int, split(readline(file))[1])
-        if i==1 
+        if i==1
             management.Cuttings.HarvestEnd = true
         else
             management.Cuttings.HarvestEnd = false
-        end 
+        end
         # dayNr for Day 1 of list of cuttings
         # (-9 = Day1 is start growing cycle)
         management.Cuttings.FirstDayNr = parse(Int, split(readline(file))[1])
     end
     return nothing
-end 
+end
 
 function _load_management!(runtype::T, gvars, man_file) where T<:TomlFileRun
     load_gvars_from_toml!(gvars[:management], man_file)
@@ -2989,7 +2989,7 @@ function _load_management!(runtype::T, gvars, man_file; kwargs...) where T<:NoFi
     simulation.ECStorageIni = 0
     return nothing
 end
-    
+
 """
     adjust_size_compartments!(gvars, cropzx)
 
@@ -3013,20 +3013,20 @@ function adjust_size_compartments!(gvars, cropzx)
     end
 
     # 3. Increase number of compartments (if less than 12)
-    if (length(compartments) < max_no_compartments) 
+    if (length(compartments) < max_no_compartments)
         logi = true
         while logi
             if (cropzx-totdepthc)>simulparam.CompDefThick
                 push!(compartments, CompartmentIndividual(Thickness=simulparam.CompDefThick))
             else
                 push!(compartments, CompartmentIndividual(Thickness=cropzx-totdepthc))
-            end 
+            end
             totdepthc += compartments[end].Thickness
-            if (length(compartments)==max_no_compartments) | ((totdepthc+0.00001)>=cropzx) 
+            if (length(compartments)==max_no_compartments) | ((totdepthc+0.00001)>=cropzx)
                 logi = false
             end
-        end 
-    end 
+        end
+    end
 
     # 4. Adjust size of compartments (if total depth of compartments < rooting depth)
     if (totdepthc+0.00001)<cropzx
@@ -3035,28 +3035,28 @@ function adjust_size_compartments!(gvars, cropzx)
         for i in eachindex(compartments)
             compartments[i].Thickness = round(Int, 20*0.1 * (1 + i*fadd))*0.05
             totdepthc += compartments[i].Thickness
-        end 
-        if totdepthc<cropzx 
+        end
+        if totdepthc<cropzx
             logi = true
             while logi
                 compartments[12].Thickness += 0.05
                 totdepthc += 0.05
-                if totdepthc>=cropzx 
+                if totdepthc>=cropzx
                     logi = false
                 end
-            end 
+            end
         else
             while (totdepthc - 0.04999999)>=cropzx
                 compartments[12].Thickness -= 0.05
                 totdepthc = totdepthc - 0.05
-            end 
-        end 
-    end 
+            end
+        end
+    end
     # 5. Adjust soil water content and theta initial
     prevecdscomp = zero(prevvolprcomp) #OJO this is not declared in fortran code, but it is implicit value is 0 and that is what we do here
     adjust_theta_initial!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
     return nothing
-end 
+end
 
 """
     adjust_theta_initial!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
@@ -3072,47 +3072,47 @@ function adjust_theta_initial!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, 
     totdepthc = 0
     for compi in eachindex(compartments)
         totdepthc += compartments[compi].Thickness
-    end 
+    end
 
     # 2. Stretch thickness of bottom soil layer if required
     totdepthl = 0
     for layeri in eachindex(soil_layers)
         totdepthl += soil_layers[layeri].Thickness
-    end 
-    if totdepthc>totdepthl 
+    end
+    if totdepthc>totdepthl
         soil_layers[end].Thickness += (totdepthc - totdepthl)
-    end 
+    end
 
     # 3. Assign a soil layer to each soil compartment
     designate_soillayer_to_compartments!(compartments, soil_layers)
 
     # 4. Adjust initial Soil Water Content of soil compartments
-    if simulation.ResetIniSWC 
-        if simulation.IniSWC.AtDepths 
+    if simulation.ResetIniSWC
+        if simulation.IniSWC.AtDepths
             translate_inipoints_to_swprofile!(gvars, simulation.IniSWC.NrLoc, simulation.IniSWC.Loc, simulation.IniSWC.VolProc, simulation.IniSWC.SaltECe)
         else
             translate_inilayers_to_swprofile!(gvars, simulation.IniSWC.NrLoc, simulation.IniSWC.Loc, simulation.IniSWC.VolProc, simulation.IniSWC.SaltECe)
-        end 
+        end
     else
-        translate_inilayers_to_swprofile!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp) 
-    end 
+        translate_inilayers_to_swprofile!(gvars, prevnrcomp, prevthickcomp, prevvolprcomp, prevecdscomp)
+    end
 
     # 5. Adjust watercontent in soil layers and determine ThetaIni
     for layeri in eachindex(soil_layers)
         soil_layers[layeri].WaterContent = 0
-    end 
+    end
     for compi in eachindex(compartments)
         simulation.ThetaIni[compi] = compartments[compi].Theta
         soil_layers[compartments[compi].Layer].WaterContent += simulation.ThetaIni[compi]*100*10*compartments[compi].Thickness
-    end 
+    end
     total = 0
     for layeri in eachindex(soil_layers)
         total += soil_layers[layeri].WaterContent
-    end 
+    end
     gvars[:total_water_content].BeginDay = total
 
     return nothing
-end 
+end
 
 """
     translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, locecds)
@@ -3130,7 +3130,7 @@ function translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, loc
         compartments[compi].Theta = 0
         compartments[compi].WFactor = 0 # used for salt in (10*volsat*dz * ec)
         totd += compartments[compi].Thickness
-    end 
+    end
     compi = 0
     depthi = 0
     addcomp = true
@@ -3143,14 +3143,14 @@ function translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, loc
         d1 = d2
         th1 = th2
         ec1 = ec2
-        if loci<nrloc 
+        if loci<nrloc
             loci += 1
             d2 = locdepth[loci]
             th2 = locvolpr[loci]
             ec2 = locecds[loci]
         else
             d2 = totd
-        end 
+        end
         # transfer water to compartment (swc in mm) and salt in (10*volsat*dz * ec)
         theend = false
         dtopcomp = d1  # depthi is the bottom depth
@@ -3159,20 +3159,20 @@ function translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, loc
         while !theend
             thtopcomp = thbotcomp
             ectopcomp = ecbotcomp
-            if (addcomp) 
+            if (addcomp)
                 compi = compi + 1
                 depthi = depthi + compartments[compi].Thickness
-            end 
-            if depthi<d2 
+            end
+            if depthi<d2
                 thbotcomp = th1 + (th2-th1)*(depthi-d1)/(d2-d1)
                 compartments[compi].Theta = compartments[compi].Theta + 10*(depthi-dtopcomp)*(thtopcomp+thbotcomp)/2
                 ecbotcomp = ec1 + (ec2-ec1)*(depthi-d1)/(d2-d1)
                 compartments[compi].WFactor = compartments[compi].WFactor + 10*(depthi-dtopcomp)*soil_layers[compartments[compi].Layer].SAT*(ectopcomp+ecbotcomp)/2
                 addcomp = true
                 dtopcomp = depthi
-                if compi==nrcomp 
+                if compi==nrcomp
                     theend = true
-                end 
+                end
             else
                 thbotcomp = th2
                 ecbotcomp = ec2
@@ -3182,29 +3182,29 @@ function translate_inipoints_to_swprofile!(gvars, nrloc, locdepth, locvolpr, loc
                     addcomp = true
                 else
                     addcomp = false
-                end 
+                end
                 theend = true
-            end 
-        end 
-    end 
+            end
+        end
+    end
 
     for compi in eachindex(compartments)
         # from mm(water) to theta and final check
         compartments[compi].Theta = compartments[compi].Theta/(1000*compartments[compi].Thickness)
         if (compartments[compi].Theta>soil_layers[compartments[compi].Layer].SAT/100)
             compartments[compi].Theta = soil_layers[compartments[compi].Layer].SAT/100
-        end 
-        if compartments[compi].Theta<0 
+        end
+        if compartments[compi].Theta<0
             compartments[compi].Theta=0
-        end 
+        end
         # from (10*VolSat*dZ * EC) to ECe and distribution in cellls
         compartments[compi].WFactor = compartments[compi].WFactor/(10*compartments[compi].Thickness*soil_layers[compartments[compi].Layer].SAT)
 
         determine_salt_content!(compartments[compi], soil_layers, simulparam)
-    end 
+    end
 
     return nothing
-end 
+end
 
 """
     determine_salt_content!(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
@@ -3224,21 +3224,21 @@ function determine_salt_content!(compartment::CompartmentIndividual, soil_layers
     for i in 1:soil_layers[compartment.Layer].SCP1
         compartment.Salt[i] = 0
         compartment.Depo[i] = 0
-    end 
+    end
     for i in 1:celn
         sumdf += soil_layers[compartment.Layer].SaltMobility[i]
-    end 
+    end
     for i in 1:celn
         compartment.Salt[i] = totsalt * soil_layers[compartment.Layer].SaltMobility[i]/sumdf
         mm = mm1
-        if i==soil_layers[compartment.Layer].SCP1 
+        if i==soil_layers[compartment.Layer].SCP1
             mm = mmn
         end
         salt_solution_deposit!(compartment, simulparam, i, mm)
-    end 
+    end
 
     return nothing
-end 
+end
 
 function determine_salt_content!(compartment::CompartmentIndividual, soil_layers::Vector{AbstractParametersContainer}, simulparam::RepParam)
     determine_salt_content!(compartment, SoilLayerIndividual[s for s in soil_layers], simulparam)
@@ -3251,16 +3251,16 @@ end
 global.f90:ActiveCells:4257
 """
 function active_cells(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual})
-    if compartment.Theta<=soil_layers[compartment.Layer].UL 
+    if compartment.Theta<=soil_layers[compartment.Layer].UL
         celi = 1
         while (compartment.Theta>(soil_layers[compartment.Layer].Dx * celi))
             celi = celi + 1
-        end 
+        end
     else
         celi = soil_layers[compartment.Layer].SCP1
-    end 
+    end
     return celi
-end 
+end
 
 function active_cells(compartment::CompartmentIndividual, soil_layers::Vector{AbstractParametersContainer})
     return active_cells(compartment, SoilLayerIndividual[s for s in soil_layers])
@@ -3276,18 +3276,18 @@ function salt_solution_deposit!(compartment::CompartmentIndividual, simulparam::
     saltdeposit = compartment.Depo[i]
 
     saltsolution = saltsolution + saltdeposit
-    if saltsolution>simulparam.SaltSolub*mm 
+    if saltsolution>simulparam.SaltSolub*mm
         saltdeposit = saltsolution - simulparam.SaltSolub * mm
         saltsolution = simulparam.SaltSolub * mm
     else
         saltdeposit = 0
-    end 
+    end
 
     compartment.Salt[i] = saltsolution
     compartment.Depo[i] = saltdeposit
 
     return nothing
-end 
+end
 
 """
     translate_inilayers_to_swprofile!(gvars, nrlay, laythickness, layvolpr, layecds)
@@ -3304,7 +3304,7 @@ function translate_inilayers_to_swprofile!(gvars, nrlay, laythickness, layvolpr,
     for compi in eachindex(compartments)
         compartments[compi].Theta = 0
         compartments[compi].WFactor = 0  # used for ECe in this procedure
-    end 
+    end
     compi = 0
     sdcomp = 0
     layeri = 1
@@ -3314,7 +3314,7 @@ function translate_inilayers_to_swprofile!(gvars, nrlay, laythickness, layvolpr,
         fracc = 0
         compi = compi + 1
         sdcomp = sdcomp + compartments[compi].Thickness
-        if sdlay>=sdcomp 
+        if sdlay>=sdcomp
             compartments[compi].Theta = compartments[compi].Theta + (1-fracc)*layvolpr[layeri]/100
             compartments[compi].WFactor = compartments[compi].WFactor + (1-fracc)*layecds[layeri]
         else
@@ -3326,36 +3326,36 @@ function translate_inilayers_to_swprofile!(gvars, nrlay, laythickness, layvolpr,
                 compartments[compi].WFactor = compartments[compi].WFactor + fracc*layecds[layeri]
                 fracc = (sdlay - (sdcomp-compartments[compi].Thickness))/(compartments[compi].Thickness)
                 # add next layer
-                if layeri<nrlay 
+                if layeri<nrlay
                     layeri = layeri + 1
                     sdlay = sdlay + laythickness[layeri]
                 else
                     goon = false
-                end 
-            end 
+                end
+            end
             compartments[compi].Theta = compartments[compi].Theta + (1-fracc)*layvolpr[layeri]/100
             compartments[compi].WFactor = compartments[compi].WFactor + (1-fracc)*layecds[layeri]
-        end 
+        end
         # next Compartment
-    end 
+    end
     if  !goon
         for i in (compi+1):length(compartments)
             compartments[i].Theta = layvolpr[nrlay]/100
             compartments[i].WFactor = layecds[nrlay]
-        end 
-    end 
+        end
+    end
 
     # final check of SWC
     for compi in eachindex(compartments)
-        if (compartments[compi].Theta > soil_layers[compartments[compi].Layer].SAT/100) 
+        if (compartments[compi].Theta > soil_layers[compartments[compi].Layer].SAT/100)
             compartments[compi].Theta = soil_layers[compartments[compi].Layer].SAT/100
-        end 
+        end
         # salt distribution in cellls
         determine_salt_content!(compartments[compi], soil_layers, simulparam)
-    end 
+    end
 
     return nothing
-end 
+end
 
 """
      load_initial_conditions!(gvars, swcinifilefull)
@@ -3369,16 +3369,16 @@ function load_initial_conditions!(gvars, swcinifilefull)
     # Keep in mind that this could affect the graphical interface
     open(swcinifilefull, "r") do file
         readline(file)
-        simulation.CCini = parse(Float64, split(readline(file))[1]) 
-        simulation.Bini = parse(Float64, split(readline(file))[1]) 
-        simulation.Zrini = parse(Float64, split(readline(file))[1]) 
+        simulation.CCini = parse(Float64, split(readline(file))[1])
+        simulation.Bini = parse(Float64, split(readline(file))[1])
+        simulation.Zrini = parse(Float64, split(readline(file))[1])
         setparameter!(gvars[:float_parameters], :surfacestorage, parse(Float64, split(readline(file))[1]))
         simulation.ECStorageIni = parse(Float64, split(readline(file))[1])
         i = parse(Int, split(readline(file))[1])
         if i==1
             simulation.IniSWC.AtDepths = true
         else
-            simulation.IniSWC.AtDepths = false 
+            simulation.IniSWC.AtDepths = false
         end
         simulation.IniSWC.NrLoc = parse(Int, split(readline(file))[1])
         readline(file)
@@ -3394,7 +3394,7 @@ function load_initial_conditions!(gvars, swcinifilefull)
     simulation.IniSWC.AtFC = false
 
     return nothing
-end 
+end
 
 """
     ece = ececomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLayerIndividual}, simulparam::RepParam)
@@ -3406,7 +3406,7 @@ function ececomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLay
     totsalt = 0
     for i in 1:soil_layers[compartment.Layer].SCP1
         totsalt = totsalt + compartment.Salt[i] + compartment.Depo[i] # g/m2
-    end 
+    end
 
     denominator = volsat*10 * compartment.Thickness * (1 - soil_layers[compartment.Layer].GravelVol/100)
     totsalt = totsalt / denominator  # g/l
@@ -3415,7 +3415,7 @@ function ececomp(compartment::CompartmentIndividual, soil_layers::Vector{SoilLay
         totsalt = simulparam.SaltSolub
     end
     return totsalt / equiv # ds/m
-end 
+end
 
 """
     load_offseason!(gvars, offseason_file)
@@ -3457,31 +3457,31 @@ function load_offseason!(gvars, offseason_file)
             simulation.IrriFwOffSeason = parse(Int, split(readline(file))[1])
 
             # irrigation events - get events before and after season
-            if (nrevents1>0) | (nrevents2>0) 
+            if (nrevents1>0) | (nrevents2>0)
                 for _ in 1:3
                     readline(file)
                 end
-            end 
-            if nrevents1>0 
+            end
+            if nrevents1>0
                 for nri in 1:nrevents1
                     # events BEFORE growing period
                     splitedline = split(readline(file))
                     irri_before_season.DayNr[nri] = parse(Int, popfirst!(splitedline))
                     irri_before_season.Param[nri] = parse(Int, popfirst!(splitedline))
-                end 
-            end 
-            if nrevents2>0 
+                end
+            end
+            if nrevents2>0
                 for nri in 2:nrevents1
                     # events AFTER growing period
                     splitedline = split(readline(file))
                     irri_after_season.DayNr[nri] = parse(Int, popfirst!(splitedline))
                     irri_after_season.Param[nri] = parse(Int, popfirst!(splitedline))
-                end 
-            end 
+                end
+            end
         end
     end
     return nothing
-end 
+end
 
 """
     adjust_compartments!(gvars)
@@ -3497,39 +3497,39 @@ function adjust_compartments!(gvars)
     ziaqua = gvars[:integer_parameters][:ziaqua]
     # Adjust size of compartments if required
     totdepth = 0
-    for i in eachindex(compartments) 
+    for i in eachindex(compartments)
         totdepth += compartments[i].Thickness
-    end 
-    if simulation.MultipleRunWithKeepSWC 
+    end
+    if simulation.MultipleRunWithKeepSWC
         # Project with a sequence of simulation runs and KeepSWC
         if round(Int, simulation.MultipleRunConstZrx*1000)>round(Int,totdepth*1000)
             adjust_size_compartments!(gvars, simulation.MultipleRunConstZrx)
-        end 
+        end
     else
         if round(Int, crop.RootMax*1000)>round(Int,totdepth*1000)
             if round(Int, soil.RootMax*1000)==round(Int, crop.RootMax*1000)
                 # no restrictive soil layer
                 adjust_size_compartments!(gvars, crop.RootMax)
                 # adjust soil water content
-                calculate_adjusted_fc!(compartments, soil_layers, ziaqua/100) 
+                calculate_adjusted_fc!(compartments, soil_layers, ziaqua/100)
                 if simulation.IniSWC.AtFC
-                    reset_swc_to_fc!(simulation, compartments, soil_layers, ziaqua) 
+                    reset_swc_to_fc!(simulation, compartments, soil_layers, ziaqua)
                 end
             else
                 # restrictive soil layer
                 if round(Int, soil.RootMax*1000)>round(Int,totdepth*1000)
                     adjust_size_compartments!(gvars, soil.RootMax)
                     # adjust soil water content
-                    calculate_adjusted_fc!(compartments, soil_layers, ziaqua/100) 
+                    calculate_adjusted_fc!(compartments, soil_layers, ziaqua/100)
                     if simulation.IniSWC.AtFC
-                        reset_swc_to_fc!(simulation, compartments, soil_layers, ziaqua) 
+                        reset_swc_to_fc!(simulation, compartments, soil_layers, ziaqua)
                     end
-                end 
-            end 
-        end 
-    end 
+                end
+            end
+        end
+    end
     return nothing
-end 
+end
 
 """
     reset_previous_sum!(gvars)
@@ -3538,7 +3538,7 @@ run.f90:ResetPreviousSum:3360
 """
 function reset_previous_sum!(gvars)
     gvars[:previoussum] = RepSum()
-    
+
     setparameter!(gvars[:float_parameters], :sumeto, 0.0)
     setparameter!(gvars[:float_parameters], :sumgdd, 0.0)
     setparameter!(gvars[:float_parameters], :previoussumeto, 0.0)
@@ -3546,7 +3546,7 @@ function reset_previous_sum!(gvars)
     setparameter!(gvars[:float_parameters], :previousbmob, 0.0)
     setparameter!(gvars[:float_parameters], :previousbsto, 0.0)
     return nothing
-end 
+end
 
 """
     create_tnxreferencefile!(outputs, gvars; kwargs...)
@@ -3570,24 +3570,24 @@ function create_tnxreferencefile!(outputs, gvars; kwargs...)
         tnxreferenceyear = round(Int, (temperature_record.FromY+temperature_record.ToY)/2)
         if tnxreferenceyear == 1901
             tnxreferenceyear = 2000
-        end 
+        end
         # check number of years for each month
         for monthi in 1:12
             monthnryears[monthi] = nryears
-        end 
+        end
         if nryears > 1
             if temperature_record.FromM > 1
                 for monthi in 1:(temperature_record.FromM-1)
                     monthnryears[monthi] = monthnryears[monthi] - 1
-                end 
+                end
             end
             if temperature_record.ToM < 12
                 for monthi in 12:-1:(temperature_record.ToM+1)
                     monthnryears[monthi] = monthnryears[monthi] - 1
-                end 
-            end 
-        end 
-                
+                end
+            end
+        end
+
         # initialize
         yeari = temperature_record.FromY
         monthi = temperature_record.FromM
@@ -3604,10 +3604,10 @@ function create_tnxreferencefile!(outputs, gvars; kwargs...)
             dayi = DaysInMonth[monthi]
             if isleapyear(yeari) & (monthi==2)
                 dayi = dayi + 1
-            end 
+            end
             enddaynr = determine_day_nr(dayi, monthi, yeari)
-        end 
-            
+        end
+
         # open temperature file
         Tmin = gvars[:array_parameters][:Tmin]
         Tmax = gvars[:array_parameters][:Tmax]
@@ -3625,28 +3625,28 @@ function create_tnxreferencefile!(outputs, gvars; kwargs...)
                 monthdays = monthdays + 1
                 if daynri == enddaynr
                     endmonth = true
-                end 
+                end
             elseif temperature_record.Datatype == :Decadely
                 monthdecs = monthdecs + 1
                 if deci == 3 # OJO deci is 0 or undef_int, so this is nonsense
                     endmonth = true
-                end 
+                end
             elseif temperature_record.Datatype == :Monthly
                 endmonth = true
-            end 
+            end
             if i==length(Tmin)
                 endmonth = true
-            end 
+            end
             # End of Month
             if endmonth
                 # mean monthly values Tmin and Tmax
                 if temperature_record.Datatype == :Daily
-                    sum1 = sum1/monthdays 
-                    sum2 = sum2/monthdays 
+                    sum1 = sum1/monthdays
+                    sum2 = sum2/monthdays
                 elseif temperature_record.Datatype == :Decadely
-                    sum1 = sum1/monthdecs 
-                    sum2 = sum2/monthdecs 
-                end 
+                    sum1 = sum1/monthdecs
+                    sum2 = sum2/monthdecs
+                end
                 monthval1[monthi] = monthval1[monthi] + sum1/monthnryears[monthi] # Tmin
                 monthval2[monthi] = monthval2[monthi] + sum2/monthnryears[monthi] # Tmax
                 # Next month
@@ -3657,7 +3657,7 @@ function create_tnxreferencefile!(outputs, gvars; kwargs...)
                     yeari = yeari + 1
                 else
                     monthi = monthi + 1
-                end 
+                end
                 endmonth = false
                 if temperature_record.Datatype == :Daily
                     # EndDayNr = DayNr of last day in month
@@ -3665,20 +3665,20 @@ function create_tnxreferencefile!(outputs, gvars; kwargs...)
                     dayi = DaysInMonth[monthi]
                     if isleapyear(yeari) & (monthi==2)
                         dayi = dayi + 1
-                    end 
+                    end
                     enddaynr = determine_day_nr(dayi, monthi, yeari)
                 elseif temperature_record.Datatype == :Decadely
                     monthdecs = 0
                     deci = 0
-                end 
-            end 
+                end
+            end
             # Next day, decade, month
             if temperature_record.Datatype == :Daily
                 daynri = daynri + 1
-            end 
-        end 
-    end 
-    
+            end
+        end
+    end
+
     # 3. Create and Save TnxReference File
     if gvars[:bool_parameters][:temperature_file_exists]
         # Determine Name of TnxReference File
@@ -3687,13 +3687,13 @@ function create_tnxreferencefile!(outputs, gvars; kwargs...)
         for monthi in 1:12
             tlow = round(Int, 100*monthval1[monthi])/100
             thigh = round(Int, 100*monthval2[monthi])/100
-            add_output_in_tnxreference12months!(outputs, tlow, thigh) 
-        end 
-    end 
+            add_output_in_tnxreference12months!(outputs, tlow, thigh)
+        end
+    end
 
     setparameter!(gvars[:integer_parameters], :tnxreferenceyear, tnxreferenceyear)
     return nothing
-end 
+end
 
 """
     create_tnxreference365days!(outputs, gvars; kwargs...)
@@ -3701,32 +3701,32 @@ end
 tempprocessing.f90:CreateTnxReference365Days:3089
 """
 function create_tnxreference365days!(outputs, gvars; kwargs...)
-    if length(outputs[:tnxreference12months][:tlow]) > 0 
+    if length(outputs[:tnxreference12months][:tlow]) > 0
         # get data set for 1st month
         monthi = 1
         tmin_dataset, tmax_dataset = get_monthly_temperature_dataset_from_tnxreferencefile(outputs, monthi)
-        
+
         # Tnx for Day 1 to 365
         for daynri in 1:365
             if daynri > tmin_dataset[31].DayNr
                 # next month
                 monthi = monthi + 1
                 tmin_dataset, tmax_dataset = get_monthly_temperature_dataset_from_tnxreferencefile(outputs, monthi)
-            end 
+            end
             i = 1
             while tmin_dataset[i].DayNr != daynri
                 i = i+1
-            end 
+            end
             tlow = round(Int, 100*tmin_dataset[i].Param)/100
             thigh = round(Int, 100*tmax_dataset[i].Param)/100
             add_output_in_tnxreference365days!(outputs, tlow, thigh)
-        end 
-    end 
+        end
+    end
 
     # after this we do not use tnxreference12months so we flush it
     flush_output_tnxreference12months!(outputs)
     return nothing
-end 
+end
 
 """
     tmin_dataset, tmax_dataset = get_monthly_temperature_dataset_from_tnxreferencefile(monthi)
@@ -3743,13 +3743,13 @@ function get_monthly_temperature_dataset_from_tnxreferencefile(outputs, monthi)
         c1min, c1max = read_output_from_tnxreference12months(outputs, 12)
     else
         c1min, c1max = read_output_from_tnxreference12months(outputs, monthi - 1)
-    end 
+    end
     c2min, c2max = read_output_from_tnxreference12months(outputs, monthi)
     if monthi == 12
         c3min, c3max = read_output_from_tnxreference12months(outputs, 1)
     else
         c3min, c3max = read_output_from_tnxreference12months(outputs, monthi + 1)
-    end 
+    end
 
     c1min = c1min*ni
     c1max = c1max*ni
@@ -3772,13 +3772,13 @@ function get_monthly_temperature_dataset_from_tnxreferencefile(outputs, monthi)
         tmin_dataset[dayi].Param = aover3min*(t2*t2*t2-t1*t1*t1) + bover2min*(t2*t2-t1*t1) + cmin*(t2-t1)
         tmax_dataset[dayi].Param = aover3max*(t2*t2*t2-t1*t1*t1) + bover2max*(t2*t2-t1*t1) + cmax*(t2-t1)
         t1 = t2
-    end 
+    end
     for dayi in (dayn+1):31 # give to remaining days (day 29,30 or 31) the daynr of the last day of the month
         tmin_dataset[dayi].DayNr = dnr+dayn-1
         tmax_dataset[dayi].DayNr = dnr+dayn-1
         tmin_dataset[dayi].Param = 0
         tmax_dataset[dayi].Param = 0
-    end 
+    end
 
     return tmin_dataset, tmax_dataset
-end  
+end

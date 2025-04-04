@@ -62,7 +62,7 @@ abstract type AbstractAllOk <: AbstractInfo end
     all_ok = AllOk(logi::Bool, msg::String)
 
 If the simulation is going well then `all_ok.logi == true`
-otherwise `all_ok.logi = false` and the error message is 
+otherwise `all_ok.logi = false` and the error message is
 stored in `all_ok.msg`
 """
 mutable struct AllOk <: AbstractAllOk
@@ -92,11 +92,11 @@ function Base.isapprox(a::T, b::T; kwargs...) where T<:AbstractParametersContain
             ans = false
         end
     end
-    return ans 
+    return ans
 end
 
 
-function Base.isapprox(a::Vector{T}, b::Vector{T}; kwargs...) where {T<:AbstractParametersContainer} 
+function Base.isapprox(a::Vector{T}, b::Vector{T}; kwargs...) where {T<:AbstractParametersContainer}
     all([Base.isapprox(aa, bb; kwargs...) for (aa, bb) in zip(a, b)])
 end
 
@@ -114,7 +114,7 @@ function ParametersContainer(::Type{T}) where {T}
     ParametersContainer(Dict{Symbol,T}())
 end
 
-Base.isapprox(a::Dict{Symbol, T}, b::Dict{Symbol, T}; kwargs...) where {T} = begin 
+Base.isapprox(a::Dict{Symbol, T}, b::Dict{Symbol, T}; kwargs...) where {T} = begin
     if length(a) != length(b)
         ans = false
         println("\n\n\n")
@@ -136,14 +136,14 @@ Base.isapprox(a::Dict{Symbol, T}, b::Dict{Symbol, T}; kwargs...) where {T} = beg
             ans = false
         end
     end
-    return ans 
+    return ans
 end
 
 
 """
     setparameter!(parameterscontainer::ParametersContainer{T}, parameterkey::Symbol, parameter::T)
 
-sets an entry in parameterscontainer. 
+sets an entry in parameterscontainer.
 """
 function setparameter!(parameterscontainer::ParametersContainer{T}, parameterkey::Symbol, parameter::T1) where {T, T1}
     parameterscontainer.parameters[parameterkey] = T(parameter)
@@ -393,7 +393,7 @@ end
 """
     crop = RepCrop()
 
-set from 
+set from
 defaultcropsoil.f90:ResetDefaultCrop:140
 """
 @kwdef mutable struct RepCrop <: AbstractParametersContainer
@@ -639,9 +639,9 @@ end
 """
 @kwdef mutable struct RepEffectStress <: AbstractParametersContainer
     "Reduction of CGC (%)"
-    RedCGC::Int = 0 
+    RedCGC::Int = 0
     "Reduction of CCx (%)"
-    RedCCX::Int = 0 
+    RedCCX::Int = 0
     "Reduction of WP (%)"
     RedWP::Int = undef_int
     "Average decrease of CCx in mid season (%/day)"
@@ -1253,7 +1253,7 @@ end
 """
     cut_info = RepCutInfoRecord()
 """
-@kwdef mutable struct RepCutInfoRecord <: AbstractParametersContainer 
+@kwdef mutable struct RepCutInfoRecord <: AbstractParametersContainer
     "Undocumented"
     NoMoreInfo::Bool=undef_bool
     "Undocumented"

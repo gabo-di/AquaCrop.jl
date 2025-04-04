@@ -30,7 +30,7 @@ end
     set_soil!(soil::RepSoil, soil_type::AbstractString; aux::Union{AbstractDict, Nothing}=nothing)
 
 sets soil for a given soil_type
-possible soil_type are 
+possible soil_type are
 ["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay",
 "sandy clay loam", "sandy loam", "silty clay loam", "paddy"]
 """
@@ -92,13 +92,13 @@ function set_soil!(soil::RepSoil, soil_type::AbstractString; aux::Union{Abstract
         soil.NrSoilLayers = 1
     elseif soil_type == "silty clay loam"
         # aquacrop version 6.0
-        soil.CNValue = 72  
+        soil.CNValue = 72
         soil.REW = 13
         soil.NrSoilLayers = 1
     elseif soil_type == "paddy"
         # aquacrop version 6.0
         soil.CNValue = 77
-        soil.REW = 10     
+        soil.REW = 10
         soil.NrSoilLayers = 2
     end
 
@@ -115,7 +115,7 @@ end
     set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::AbstractString; aux::Union{AbstractDict, Nothing}=nothing)
 
 sets soil_layers for a given soil_type
-possible soil_type are 
+possible soil_type are
 ["sandy clay", "clay", "clay loam", "loamy sand", "loam", "sand", "silt", "silty loam", "silty clay",
 "sandy clay loam", "sandy loam", "silty clay loam", "paddy"]
 """
@@ -247,7 +247,7 @@ function set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::Ab
         soil_layers[1].SAT = 41
         soil_layers[1].FC = 22
         soil_layers[1].WP = 10
-        soil_layers[1].InfRate = 1200 
+        soil_layers[1].InfRate = 1200
         soil_layers[1].Penetrability = 100
         soil_layers[1].GravelMass = 0
         soil_layers[1].CRa = -0.323200
@@ -259,7 +259,7 @@ function set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::Ab
         soil_layers[1].SAT = 52
         soil_layers[1].FC = 44
         soil_layers[1].WP = 23
-        soil_layers[1].InfRate = 150 
+        soil_layers[1].InfRate = 150
         soil_layers[1].Penetrability = 100
         soil_layers[1].GravelMass = 0
         soil_layers[1].CRa = -0.516600
@@ -271,7 +271,7 @@ function set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::Ab
         soil_layers[1].SAT = 54
         soil_layers[1].FC = 50
         soil_layers[1].WP = 32
-        soil_layers[1].InfRate = 15 
+        soil_layers[1].InfRate = 15
         soil_layers[1].Penetrability = 100
         soil_layers[1].GravelMass = 0
         soil_layers[1].CRa = -0.624600
@@ -282,7 +282,7 @@ function set_soillayers!(soil_layers::Vector{SoilLayerIndividual}, soil_type::Ab
         soil_layers[2].SAT = 55
         soil_layers[2].FC = 54
         soil_layers[2].WP = 39
-        soil_layers[2].InfRate = 2 
+        soil_layers[2].InfRate = 2
         soil_layers[2].Penetrability = 100
         soil_layers[2].GravelMass = 0
         soil_layers[2].CRa = -0.635000
@@ -308,11 +308,11 @@ end
     set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{AbstractDict, Nothing}=nothing)
 
 sets crop for a given crop_type
-possible crop_type are 
+possible crop_type are
 ["maize", "wheat", "cotton", "alfalfaGDD", "barley", "barleyGDD", "cottonGDD", "drybean", "drybeanGDD",
 "maizeGDD", "wheatGDD", "sugarbeet", "sugarbeetGDD", "sunflower", "sunflowerGDD", "sugarcane",
 "tomato", "tomatoGDD", "potato", "potatoGDD", "quinoa", "tef", "soybean", "soybeanGDD",
-"sorghum", "sorghumGDD", "paddyrice", "paddyriceGDD", "rapeseed", "oat"]
+"sorghum", "sorghumGDD", "paddyrice", "paddyriceGDD", "rapeseed", "oat", "rapeseedGDD"]
 """
 function set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{AbstractDict,Nothing}=nothing)
     if crop_type == "maize"
@@ -1505,7 +1505,7 @@ function set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{Abstract
         crop.Assimilates.Period = 0         # Number of days at end of season during which assimilates are stored in root system
         crop.Assimilates.Stored = 0         # Percentage of assimilates transferred to root system at last day of season
         crop.Assimilates.Mobilized = 0         # Percentage of stored assimilates transferred to above ground parts in next season
-    elseif crop_type == "sunflowerGDD"         
+    elseif crop_type == "sunflowerGDD"
         # Default Sunflower, GDD (Cordoba, 15Apr86)
         # 7.0       # AquaCrop Version (June 2021)
         # skip this line 0         # File protected
@@ -2696,7 +2696,7 @@ function set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{Abstract
         crop.Assimilates.Stored = 0         # Percentage of assimilates transferred to root system at last day of season
         crop.Assimilates.Mobilized = 0         # Percentage of stored assimilates transferred to above ground parts in next season
     elseif crop_type == "rapeseed"
-        # based on default Sunflower acea_crops.py and 
+        # based on default Sunflower acea_crops.py and
         # Zeleke, K. T., Luckett, D. & Cowley, R. Calibration and Testing of the FAO AquaCrop Model for Canola. Agronomy Journal 103, 1610–1618 (2011).
         # skip this line 0         # File protected
         crop.subkind = :Grain # 2         #.. fruit/grain producing crop
@@ -2780,8 +2780,94 @@ function set_crop!(crop::RepCrop, crop_type::AbstractString; aux::Union{Abstract
         crop.Assimilates.Period = 0         # Number of days at end of season during which assimilates are stored in root system
         crop.Assimilates.Stored = 0         # Percentage of assimilates transferred to root system at last day of season
         crop.Assimilates.Mobilized = 0         # Percentage of stored assimilates transferred to above ground parts in next season
+    elseif crop_type == "rapeseedGDD"
+        # based on default Sunflower acea_crops.py and
+        # Zeleke, K. T., Luckett, D. & Cowley, R. Calibration and Testing of the FAO AquaCrop Model for Canola. Agronomy Journal 103, 1610–1618 (2011).
+        # for the GDDays data we used the data from CA4Py stations in rapeseed, and filled GDDCGC GDDCDC GDDaysToHIo with the values from wheatGDD
+        # skip this line 0         # File protected
+        crop.subkind = :Grain # 2         #.. fruit/grain producing crop
+        crop.Planting = :Seed # 1         #.. Crop is sown
+        crop.ModeCycle = :GDDays # 0         #.. Determination of crop cycle # by calendar days
+        crop.pMethod = :FAOCorrection # 1         #? Soil water depletion factors (p) are adjusted by ETo
+        crop.Tbase = 0.0       #.. Base temperature (°C) below which crop development does not progress
+        crop.Tupper = 30.0       #.. Upper temperature (°C) above which crop development no longer increases with an increase in temperature
+        # skip this line -9         # Total length of crop cycle in growing degree-days
+        crop.pLeafDefUL = 0.20      #.. Soil water depletion factor for canopy expansion (p-exp) - Upper threshold
+        crop.pLeafDefLL = 0.55      #.. Soil water depletion factor for canopy expansion (p-exp) - Lower threshold
+        crop.KsShapeFactorLeaf = 3.5       #.. Shape factor for water stress coefficient for canopy expansion (0.0 = straight line)
+        crop.pdef = 0.60      #.. Soil water depletion fraction for stomatal control (p - sto) - Upper threshold
+        crop.KsShapeFactorStomata = 5.0       #.. Shape factor for water stress coefficient for stomatal control (0.0 = straight line)
+        crop.pSenescence = 0.70      #.. Soil water depletion factor for canopy senescence (p - sen) - Upper threshold
+        crop.KsShapeFactorSenescence= 3.0       #.. Shape factor for water stress coefficient for canopy senescence (0.0 = straight line)
+        crop.SumEToDelaySenescence = 50         #? Sum(ETo) during dormant period to be exceeded before crop is permanently wilted
+        crop.pPollination = 0.85      #? Soil water depletion factor for pollination (p - pol) - Upper threshold
+        crop.AnaeroPoint = 5         #? Vol% for Anaerobiotic point (* (SAT - [vol%]) at which deficient aeration occurs *)
+        crop.StressResponse.Stress = 50         #? Considered soil fertility stress for calibration of stress response (%)
+        crop.StressResponse.ShapeCGC = 25.00      #? Response of canopy expansion is not considered
+        crop.StressResponse.ShapeCCX = 25.00      #? Response of maximum canopy cover is not considered
+        crop.StressResponse.ShapeWP = 25.00      #? Response of crop Water Productivity is not considered
+        crop.StressResponse.ShapeCDecline = 25.00      #? Response of decline of canopy cover is not considered
+        # skip this line -9         # dummy - Parameter no Longer required
+        crop.Tcold = 10         #. Minimum air temperature below which pollination starts to fail (cold stress) (°C)
+        crop.Theat = 40         #. Maximum air temperature above which pollination starts to fail (heat stress) (°C)
+        crop.GDtranspLow = 12.0       #.? Minimum growing degrees required for full crop transpiration (°C - day)
+        crop.ECemin = 2         #? Electrical Conductivity of soil saturation extract at which crop starts to be affected by soil salinity (dS/m)
+        crop.ECemax = 12         #? Electrical Conductivity of soil saturation extract at which crop can no longer grow (dS/m)
+        # skip this line -9         # Dummy - no longer applicable
+        crop.CCsaltDistortion = 25         #? Calibrated distortion (%) of CC due to salinity stress (Range# 0 (none) to +100 (very strong)
+        crop.ResponseECsw = 100         #? Calibrated response (%) of stomata stress to ECsw (Range# 0 (none) to +200 (extreme)
+        crop.KcTop = 1.1      #..? Crop coefficient when canopy is complete but prior to senescence (KcTr,x)
+        crop.KcDecline = 0.300     #.? Decline of crop coefficient (%/day) as a result of ageing, nitrogen deficiency, etc.
+        crop.RootMin = 0.30      #.. Minimum effective rooting depth (m)
+        crop.RootMax = 1.00      #.. Maximum effective rooting depth (m)
+        crop.RootShape = 15         #? Shape factor describing root zone expansion
+        crop.SmaxTopQuarter = 0.048     #? Maximum root water extraction (m3water/m3soil.day) in top quarter of root zone
+        crop.SmaxBotQuarter = 0.012     #? Maximum root water extraction (m3water/m3soil.day) in bottom quarter of root zone
+        crop.CCEffectEvapLate = 60         #? Effect of canopy cover in reducing soil evaporation in late season stage
+        crop.SizeSeedling = 5.00      #.. Soil surface covered by an individual seedling at 90 % emergence (cm2)
+        crop.SizePlant = 5.00      #? Canopy size of individual plant (re-growth) at 1st day (cm2)
+        crop.PlantingDens = 440000      #.. Number of plants per hectare
+        crop.CGC = 0.089   #.. Canopy growth coefficient (CGC)# Increase in canopy cover (fraction soil cover per day)
+        crop.YearCCx = -9         # Maximum decrease of Canopy Growth Coefficient in and between seasons - Not Applicable
+        crop.CCxRoot = -9         # Number of seasons at which maximum decrease of Canopy Growth Coefficient is reached - Not Applicable
+        # skip this line -9.0       # Shape factor for decrease Canopy Growth Coefficient - Not Applicable
+        crop.CCx = 0.80      #.. Maximum canopy cover (CCx) in fraction soil cover
+        crop.CDC = 0.052   #.. Canopy decline coefficient (CDC)# Decrease in canopy cover (in fraction per day)
+        crop.DaysToGermination = 10         #? Calendar Days# from sowing to emergence
+        crop.DaysToMaxRooting = 130         #? Calendar Days# from sowing to maximum rooting depth
+        crop.DaysToSenescence = 166         #.. Calendar Days# from sowing to start senescence
+        crop.DaysToHarvest = 266         #.. Calendar Days# from sowing to maturity (length of crop cycle)
+        crop.DaysToFlowering = 109         #.. Calendar Days# from sowing to flowering
+        crop.LengthFlowering = 44         #.. Length of the flowering stage (days)
+        crop.DeterminancyLinked = true # 1         #. Crop determinancy linked with flowering
+        crop.fExcess = 100         #.? Excess of potential fruits (%)
+        crop.DaysToHIo = 47         #? Building up of Harvest Index starting at flowering (days)
+        crop.WP = 18.6       #.. Water Productivity normalized for ETo and CO2 (WP*) (gram/m2)
+        crop.WPy = 100         #.. Water Productivity normalized for ETo and CO2 during yield formation (as % WP*)
+        crop.AdaptedToCO2 = 50         #? Crop performance under elevated atmospheric CO2 concentration (%)
+        crop.HI = 25         #.. Reference Harvest Index (HIo) (%)
+        crop.HIincrease = 5         #.? Possible increase (%) of HI due to water stress before flowering
+        crop.aCoeff = -9.0       #.? No impact on HI of restricted vegetative growth during yield formation
+        crop.bCoeff = 3.0       #. Coefficient describing negative impact on HI of stomatal closure during yield formation
+        crop.DHImax = 10         #. Allowable maximum increase (%) of specified HI
+        crop.GDDaysToGermination = 200         # GDDays# from sowing to emergence
+        crop.GDDaysToMaxRooting = 2000         # GDDays# from sowing to maximum rooting depth
+        crop.GDDaysToSenescence = 2780         # GDDays# from sowing to start senescence
+        crop.GDDaysToHarvest = 3370         # GDDays# from sowing to maturity (length of crop cycle)
+        crop.GDDaysToFlowering = 1770         # GDDays# from sowing to flowering
+        crop.GDDLengthFlowering = 430         # Length of the flowering stage (growing degree days)
+        crop.GDDCGC = 0.005001  # CGC for GGDays# Increase in canopy cover (in fraction soil cover per growing-degree day)
+        crop.GDDCDC = 0.004000  # CDC for GGDays# Decrease in canopy cover (in fraction per growing-degree day)
+        crop.GDDaysToHIo = 1100         # GDDays# building-up of Harvest Index during yield formation
+        crop.DryMatter = 90         # dry matter content (%) of fresh yield
+        crop.RootMinYear1 = 0.00      #? Minimum effective rooting depth (m) in first year - required only in case of regrowth
+        crop.SownYear1 = false # 0         # Crop is transplanted in 1st year - required only in case of regrowth
+        crop.Assimilates.On = false # 0         # Transfer of assimilates from above ground parts to root system is NOT considered
+        crop.Assimilates.Period = 0         # Number of days at end of season during which assimilates are stored in root system
+        crop.Assimilates.Stored = 0         # Percentage of assimilates transferred to root system at last day of season
+        crop.Assimilates.Mobilized = 0         # Percentage of stored assimilates transferred to above ground parts in next season
     elseif crop_type == "oat"
-        # Based on Wheat, acea_crops.py and 
+        # Based on Wheat, acea_crops.py and
         # Yuan, M. et al. Assessment of crop growth and water productivity for five C3 species in semi-arid Inner Mongolia. Agricultural Water Management 122, 28–38 (2013).
         # skip this line 0         # File protected
         crop.subkind = :Grain # 2         #.. fruit/grain producing crop
@@ -2904,11 +2990,11 @@ end
     set_perennial_period!(perennial_period::RepPerennialPeriod, crop_type::AbstractString; aux::Union{AbstractDict, Nothing}=nothing)
 
 sets perennial_period for a given crop_type
-possible crop_type are 
+possible crop_type are
 ["maize", "wheat", "cotton", "alfalfaGDD", "barley", "barleyGDD", "cottonGDD", "drybean", "drybeanGDD",
 "maizeGDD", "wheatGDD", "sugarbeet", "sugarbeetGDD", "sunflower", "sunflowerGDD", "sugarcane",
 "tomato", "tomatoGDD", "potato", "potatoGDD", "quinoa", "tef", "soybean", "soybeanGDD",
-"sorghum", "sorghumGDD", "paddyrice", "paddyriceGDD", "rapeseed", "oat"]
+"sorghum", "sorghumGDD", "paddyrice", "paddyriceGDD", "rapeseed", "oat", "rapeseedGDD"]
 """
 function set_perennial_period!(perennial_period::RepPerennialPeriod, crop_type::AbstractString; aux::Union{AbstractDict,Nothing}=nothing)
     if crop_type == "alfalfaGDD"
@@ -3013,7 +3099,7 @@ end
 """
 function load_resultsparameters_from_vardict(; kwargs...)
     aggregationresultsparameters = ParametersContainer(Int)
-    setparameter!(aggregationresultsparameters, :outputaggregate, 0) # only print at the end of seasonout 
+    setparameter!(aggregationresultsparameters, :outputaggregate, 0) # only print at the end of seasonout
 
     dailyresultsparameters = ParametersContainer(Bool)
     setparameter!(dailyresultsparameters, :out1Wabal, true)
@@ -3059,5 +3145,5 @@ function set_clim_record!(record::RepClim; kwargs...)
         actualize_with_dict!(record, kwargs[clim_symbol])
     end
 
-    return nothing 
+    return nothing
 end

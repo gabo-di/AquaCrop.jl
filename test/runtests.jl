@@ -15,3 +15,5 @@ using SafeTestsets
 @safetestset "API" begin include("api_tests.jl") end
 
 @safetestset "API advanced" begin include("api_advanced_tests.jl") end
+
+@safetestset "Output parsing of AquaCrop Fortran" begin include("readoutput_tests.jl") end

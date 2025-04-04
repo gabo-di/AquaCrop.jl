@@ -5,7 +5,7 @@ include("checkpoints.jl")
 
 @testset "Second run initialize" begin
     # break run.f90:RunSimulation:7846
-    
+
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
     outputs, gvars = checkpoint9()
@@ -15,7 +15,7 @@ include("checkpoints.jl")
     i = 2
     AquaCrop.finalize_run1!(outputs, gvars, i; kwargs...)
     AquaCrop.finalize_run2!(outputs, gvars, i; kwargs...)
-    AquaCrop.initialize_run_part1!(outputs, gvars, i; kwargs...) 
+    AquaCrop.initialize_run_part1!(outputs, gvars, i; kwargs...)
     AquaCrop.initialize_climate!(outputs, gvars, i; kwargs...)
     AquaCrop.initialize_run_part2!(outputs, gvars, i; kwargs...)
 
@@ -58,7 +58,7 @@ end
 
 @testset "Second run finalize" begin
     # break run.f90:RunSimulation:7847
-    
+
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
     outputs, gvars = checkpoint10()
@@ -99,7 +99,7 @@ end
 
 @testset "Third run finalize" begin
     # break run.f90:RunSimulation:7847
-    
+
     kwargs = (runtype = AquaCrop.NormalFileRun(), )
 
     outputs, gvars = checkpoint11()
@@ -109,7 +109,7 @@ end
     i = 3
     AquaCrop.finalize_run1!(outputs, gvars, i; kwargs...)
     AquaCrop.finalize_run2!(outputs, gvars, i; kwargs...)
-    AquaCrop.initialize_run_part1!(outputs, gvars, i; kwargs...) 
+    AquaCrop.initialize_run_part1!(outputs, gvars, i; kwargs...)
     AquaCrop.initialize_climate!(outputs, gvars, i; kwargs...)
     AquaCrop.initialize_run_part2!(outputs, gvars, i; kwargs...)
     AquaCrop.file_management!(outputs, gvars, i; kwargs...)
