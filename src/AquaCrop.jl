@@ -25,6 +25,7 @@ include("api.jl")
 
 # ---- extra utility functions ----
 include("readoutput.jl")
+include("writeoutput.jl")
 
 # ---- exports ----
 export AquaCropField,
@@ -43,5 +44,6 @@ export AquaCropField,
        change_climate_data!,
        isharvestable,
        timetoharvest,
-       write_out_csv
+       write_out_csv,
+       save_crop
 end

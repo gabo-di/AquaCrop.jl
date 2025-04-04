@@ -893,3 +893,27 @@ function write_out_csv(file, cropfield::T; kwargs...) where T<:AbstractDataFrame
             kwargs... )
     return nothing
 end
+
+"""
+    save_crop(file, cropfield::AquaCropField, head=nothing; kwargs...)
+
+head          header to describe the file. Defaults to `head = "# Crop saved in "*string(today())`
+
+Writes the crop into a toml file. Useful after tunning a crop
+"""
+function save_crop(file, cropfield::AquaCropField, head=nothing; kwargs...)
+    if isnothing(head)
+        # the default head
+        head_ = "# Crop saved in "*string(today())
+    elseif !(typeof(head) <: AbstractString)
+        head_ = "# "*String(head)
+    else !startswith(head, "#")
+        head_ = "# "*head
+    end
+
+    open(file, "w") do io
+        println(io, head_)
+        write_gvar_in_toml(cropfield.crop, io; kwargs...)
+    end
+    return nothing
+end
