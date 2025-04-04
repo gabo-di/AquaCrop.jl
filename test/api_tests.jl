@@ -148,3 +148,23 @@ end
     @test propertynames(cropfield) isa Tuple
     @test all(x -> x isa Symbol, propertynames(cropfield))
 end
+
+@testset "save_crop in TOML" begin
+    # create a cropfield
+    runtype = TomlFileRun()
+    parentdir = AquaCrop.test_toml_dir  #".../AquaCrop/test/testcase/TOML_FILES"
+    cropfield, all_ok = start_cropfield(; runtype=runtype, parentdir=parentdir)
+
+    # write the crop in a new file
+    mktemp() do path, io
+        flush(io)
+        save_crop(path, cropfield)
+
+        # create empty crop and read the file
+        c = AquaCrop.RepCrop()
+        AquaCrop.load_gvars_from_toml!(c, path)
+
+        # compare the crops
+        @test isapprox(cropfield.crop, c)
+    end
+end
