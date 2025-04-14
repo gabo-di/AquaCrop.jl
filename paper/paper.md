@@ -55,18 +55,26 @@ All agriculture is dependent on the growth of plants, which provide food, fodder
 fibre, and other resources. Forecasting and optimising crop growth is therefore
 vital to address global food system challenges, including widespread malnutrition, 
 agriculture-related environmental degradation, and global impacts of climate change 
-[@Foley2011]. In this context, process-based crop models can be used to inform 
+[@Foley2011]. In this context, predictive crop models can be used to inform 
 decision-making. These models use information about environmental parameters (e.g. 
 temperature, rainfall, soil quality) and knowledge of plant biology to simulate 
 crop growth over time and estimate yield.
 
-AquaCrop is one such model, which has been used to model numerous crops worldwide 
-[@Mialyk2024], and is known to produce reliable estimates of crop phenology and yield 
-[@Kostkova2021]. First implemented in Delphi, it was later open-sourced in a Fortran 
-version [@deRoos2021; @RSDA2024]. There are also versions available in 
+Crop models range from simple statistical regression approaches to highly complex 
+numerical simulations [@Pan2021]. Some concentrate on modelling the growth of the
+plant itself [e.g. EPIC, @Williams1989], while other provide submodels for many
+different aspects of agricultural systems, such as farm management, livestock, soil
+processes, or water quality [e.g. APSIM, @Holzworth2014].
+
+AquaCrop is an intermediate-complexity crop model. Its aim is to be complex enough
+to be accurate but simple enough to be widely usable [@Steduto2009]. Indeed, over the 
+past years, it has been used to model numerous crops worldwide [@Mialyk2024], and 
+shown to produce reliable estimates of crop phenology and yield for multiple crop
+species [@Kostkova2021]. First implemented in Delphi, it was later open-sourced in a 
+Fortran version [@deRoos2021; @RSDA2024]. There are also versions available in 
 [Matlab](https://github.com/aquacropos/aquacrop-matlab), [Python](https://github.com/aquacropos/aquacrop), and [R](https://github.com/jrodriguez88/aquacrop-R),
-although currently these are not up-to-date with the most recent version of the 
-original model [@Foster2017; @Kelly2021; @CamargoRodriguez2019]. 
+although currently these are not up-to-date with the most recent version (7.2) of the 
+original Fortran model [@Foster2017; @Kelly2021; @CamargoRodriguez2019]. 
 
 `AquaCrop.jl` expands this portfolio to contribute to the emerging ecosystem of
 environmental research software in Julia. To our knowledge, this is the first 
