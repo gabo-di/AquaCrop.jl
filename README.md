@@ -70,7 +70,7 @@ Finally, you can pass all variables and data using the API
 
 
 ## Extended Tests Status
-![Extended Tests](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/extended-tests.yml/badge.svg)
+[![Extended Tests](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/extended-tests.yml/badge.svg)](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/extended-tests.yml?query=branch%3Amain)
 
 ## Contributing
 
