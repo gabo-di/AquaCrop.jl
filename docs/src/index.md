@@ -22,7 +22,8 @@ On top of the core code, we developed an API that makes it easy to configure and
 run the simulations in several ways. It enables exploring and interacting with 
 state variables at run time, opening up the possibility of dynamic, bidirectional 
 model coupling. These new features increase the interoperability of the model 
-compared to its original implementation.
+compared to its original implementation, making it more easily accesible to growing number of
+interdisciplinary environmental modellers working with Julia.
 
 The model is open-source and available on [Github](https://github.com/gabo-di/AquaCrop.jl) under a BSD-3 license.
 It was developed as a component of the [Persefone.jl](https://persefone-model.eu) model
