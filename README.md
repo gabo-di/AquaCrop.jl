@@ -15,7 +15,15 @@ AquaCrop is a well-established crop growth model that uses environmental paramet
 of a large range of crop species. It was first published in three papers by
 [Steduto et al. (2009)](https://doi.org/10.2134/agronj2008.0139s),
 [Raes et al. (2009)](https://doi.org/10.2134/agronj2008.0140s), and
-[Hsiao et al. (2009)](https://doi.org/10.2134/agronj2008.0218s).
+[Hsiao et al. (2009)](https://doi.org/10.2134/agronj2008.0218s). 
+
+The core code of this package closely follows the original Fortran implementation. 
+On top of the core code, we developed an API that makes it easy to configure and 
+run the simulations in several ways. It enables exploring and interacting with 
+state variables at run time, opening up the possibility of dynamic, bidirectional 
+model coupling. These new features increase the interoperability of the model 
+compared to its original implementation, making it more easily accesible to growing number of
+interdisciplinary environmental modellers working with Julia.
 
 ## Installing
 
