@@ -107,5 +107,5 @@ should be addressed to the original model developers.*
 If you use `AquaCrop.jl` in your scientific work, please cite the following paper 
 once it is published:
 
-	Díaz Iturry, Matthies, Pe'er, Vedder (in prep) "AquaCrop.jl: A Process-Based 
-	Model of Crop Growth"
+	Díaz Iturry, Matthies, Pe'er, Vedder (in review) "AquaCrop.jl: A Process-Based 
+	Model of Crop Growth" Journal of Open Source Software
