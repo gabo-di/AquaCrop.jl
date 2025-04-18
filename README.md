@@ -76,8 +76,17 @@ isequal(size(outputs[:dayout]), (892, 89)) # true
 Finally, you can pass all variables and data using the API
 ([tutorial here](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Advanced-Run)).
 
+## Tests
 
-## Extended Tests Status
+This package constains tests used for CI, but can also be used to check if the package is working properly when installed. To run the tests, after adding the package, activate the package manager, by typing `]`, and write
+```
+pkg> test AeroAcoustics
+```
+Otherwise check the CI badge status at the beggining of this README.md
+
+### Extended Tests
+We have an additional branch named [extended-tests](https://github.com/gabo-di/AquaCrop.jl/tree/extended-tests) where we compare more results between the FAO's AquaCrop implementation and ours. The status of these tests can be seen here: 
+
 [![Extended Tests](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/extended-tests.yml/badge.svg)](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/extended-tests.yml?query=branch%3Amain)
 
 ## Contributing
