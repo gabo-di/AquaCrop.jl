@@ -15,7 +15,15 @@ AquaCrop is a well-established crop growth model that uses environmental paramet
 of a large range of crop species. It was first published in three papers by
 [Steduto et al. (2009)](https://doi.org/10.2134/agronj2008.0139s),
 [Raes et al. (2009)](https://doi.org/10.2134/agronj2008.0140s), and
-[Hsiao et al. (2009)](https://doi.org/10.2134/agronj2008.0218s).
+[Hsiao et al. (2009)](https://doi.org/10.2134/agronj2008.0218s). 
+
+The core code of this package closely follows the original Fortran implementation. 
+On top of the core code, we developed an API that makes it easy to configure and 
+run the simulations in several ways. It enables exploring and interacting with 
+state variables at run time, opening up the possibility of dynamic, bidirectional 
+model coupling. These new features increase the interoperability of the model 
+compared to its original implementation, making it more easily accesible to growing number of
+interdisciplinary environmental modellers working with Julia.
 
 ## Installing
 
@@ -68,9 +76,18 @@ isequal(size(outputs[:dayout]), (892, 89)) # true
 Finally, you can pass all variables and data using the API
 ([tutorial here](https://gabo-di.github.io/AquaCrop.jl/dev/userguide/#Advanced-Run)).
 
+## Tests
 
-## Extended Tests Status
-![Extended Tests](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/extended-tests.yml/badge.svg)
+This package constains tests used for CI, but can also be used to check if the package is working properly when installed. To run the tests, after adding the package, activate the package manager, by typing `]`, and write
+```
+pkg> test AquaCrop
+```
+Otherwise check the CI badge status at the beggining of this README.md
+
+### Extended Tests
+We have an additional branch named [extended-tests](https://github.com/gabo-di/AquaCrop.jl/tree/extended-tests) where we compare more results between the FAO's AquaCrop implementation and ours. The status of these tests can be seen here: 
+
+[![Extended Tests](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/extended-tests.yml/badge.svg)](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/extended-tests.yml?query=branch%3Amain)
 
 ## Contributing
 
@@ -99,5 +116,5 @@ should be addressed to the original model developers.*
 If you use `AquaCrop.jl` in your scientific work, please cite the following paper 
 once it is published:
 
-	Díaz Iturry, Matthies, Pe'er, Vedder (in prep) "AquaCrop.jl: A Process-Based 
-	Model of Crop Growth"
+	Díaz Iturry, Matthies, Pe'er, Vedder (in review) "AquaCrop.jl: A Process-Based 
+	Model of Crop Growth" Journal of Open Source Software
