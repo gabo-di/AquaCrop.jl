@@ -80,7 +80,7 @@ Finally, you can pass all variables and data using the API
 
 This package constains tests used for CI, but can also be used to check if the package is working properly when installed. To run the tests, after adding the package, activate the package manager, by typing `]`, and write
 ```
-pkg> test AeroAcoustics
+pkg> test AquaCrop
 ```
 Otherwise check the CI badge status at the beggining of this README.md
 
