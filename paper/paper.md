@@ -43,11 +43,11 @@ sustainable farming practices. Originally developed by the Food and Agricultural
 Organization of the United Nations (FAO), it has been widely applied in agricultural 
 research.
 
-Here, we present an expanded reimplementation of the model in Julia [@Bezanson2017], 
-focussing on improving its interoperability with other software and models. With 
-`AquaCrop.jl`, we want to make AquaCrop available to the growing number of environmental
-modellers working in Julia, and contribute to the creation of integrated, 
-interdisciplinary models in the environmental sciences.
+Here, we present an expanded reimplementation of the model, translating it from
+Fortran to Julia [@Bezanson2017] and focussing on improving its interoperability 
+with other software and models. With `AquaCrop.jl`, we want to make AquaCrop available 
+to the growing number of environmental modellers working in Julia, and contribute to 
+the creation of integrated, interdisciplinary models in the environmental sciences.
 
 # Statement of need
 
@@ -91,10 +91,19 @@ crop plants is an important mediating factor.
 
 # Comparison to original implementation
 
+We decided to reimplement the full source code of the model rather than simply 
+providing a wrapper to the original software (though we do this too, see below). 
+The most important reason was that we needed to modify the structure to enable better 
+interoperability when coupling the model to other software. In addition, a native 
+Julia implementation allows a better integration with other Julia libraries, as well 
+as allowing researchers who are familiar with Julia but not with Fortran to work with 
+the model code. In our reimplementation, we followed a two-layered approach:
+
 The core code of `AquaCrop.jl` was translated verbatim from the original Fortran 
 implementation, which allows us to quickly integrate changes and updates
 to the original `AquaCrop` code. `AquaCrop.jl` supports the original input file
-formats, and is tested to ensure its output conforms to that of the original software.
+formats, and is tested to ensure its output conforms to that of the original software
+(using the data files in the `extended-tests` branch).
 
 On top of this core code, we developed a wrapper layer with an API that improves
 the interoperability of `AquaCrop.jl` when used as a package with other software. 
@@ -171,9 +180,25 @@ over the whole season.
 \autoref{fig:beans} shows a simulation of the growth of beans (*Vicia faba*) based on 
 environmental data from Thuringia, Germany, with historical yield data shown 
 for comparison. This showcases that when well parameterised, `AquaCrop.jl` forecasts 
-the development of yields over time quite reliably.
+the development of yields over time quite reliably [cf. @Kostkova2021]. As the issue 
+of parameterisation is a complex one, we provide a separate tutorial for this
+[here](https://github.com/gabo-di/CropGrowthTutorial), using publicly available
+crop data from Germany as an example.
 
 ![Simulated yield of beans (*Vicia faba*) compared to observed yields in Thuringia, Germany.\label{fig:beans}](beans.png)
+
+To facilitate comparisons between the Fortran and Julia versions, we made the original
+version available as a compiled binary using a Julia library package (JLL). This can
+be called as follows:
+
+```
+import Pkg
+Pkg.add("AquaCrop_jll")
+import AquaCrop_jll
+# setup AquaCrop Fortran code input directories and files
+run(AquaCrop_jll.aquacrop())
+```
+
 
 # Acknowledgements
 
