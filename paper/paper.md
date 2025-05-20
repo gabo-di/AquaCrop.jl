@@ -12,6 +12,7 @@ authors:
     orcid: 0000-0001-6011-6097
   - name: Marco C. Matthies
     affiliation: "1,2"
+	orcid: 0009-0006-9456-6786
   - name: Guy Pe'er
     affiliation: "1,2"
     orcid: 0000-0002-7090-0560
@@ -62,16 +63,16 @@ crop growth over time and estimate yield.
 
 Crop models range from simple statistical regression approaches to highly complex 
 numerical simulations [@Pan2021]. Some concentrate on modelling the growth of the
-plant itself [e.g. EPIC, @Williams1989], while other provide submodels for many
+plant itself [e.g. EPIC, @Williams1989], while others provide submodels for many
 different aspects of agricultural systems, such as farm management, livestock, soil
 processes, or water quality [e.g. APSIM, @Holzworth2014].
 
 AquaCrop is an intermediate-complexity crop model. Its aim is to be complex enough
 to be accurate but simple enough to be widely usable [@Steduto2009]. Indeed, over the 
 past years, it has been used to model numerous crops worldwide [@Mialyk2024], and 
-shown to produce reliable estimates of crop phenology and yield for multiple crop
-species [@Kostkova2021]. First implemented in Delphi, it was later open-sourced in a 
-Fortran version [@deRoos2021; @RSDA2024]. There are also versions available in 
+has been shown to produce reliable estimates of crop phenology and yield for multiple 
+crop species [@Kostkova2021]. First implemented in Delphi, it was later open-sourced 
+in a Fortran version [@deRoos2021; @RSDA2024]. There are also versions available in 
 [Matlab](https://github.com/aquacropos/aquacrop-matlab), [Python](https://github.com/aquacropos/aquacrop), and [R](https://github.com/jrodriguez88/aquacrop-R),
 although currently these are not up-to-date with the most recent version (7.2) of the 
 original Fortran model [@Foster2017; @Kelly2021; @CamargoRodriguez2019]. 
@@ -81,13 +82,11 @@ environmental research software in Julia. To our knowledge, this is the first
 process-based crop model available in this language. Our purpose is also to provide a 
 package that can be readily integrated into other scientific software, in order to
 facilitate the creation of multidisciplinary models of socio-environmental systems
-[@Cabral2023; @Vedder2024].
-
-Specifically, we developed the package to use it as a component within 
-[`Persefone.jl`](https://persefone-model.eu), a process-based model of agricultural 
-ecosystems [@Vedder2024a]. The aim of this model is to study the impact that 
-agricultural management and policy has on biodiversity, for which the growth of 
-crop plants is an important mediating factor.
+[@Cabral2023; @Vedder2024]. Specifically, we developed the package to use it as a 
+component within [`Persefone.jl`](https://persefone-model.eu), a process-based model 
+of agricultural ecosystems [@Vedder2024a]. The aim of this model is to study the 
+impact that agricultural management and policy has on biodiversity, for which the 
+growth of crop plants is an important mediating factor.
 
 # Comparison to original implementation
 
@@ -191,7 +190,7 @@ To facilitate comparisons between the Fortran and Julia versions, we made the or
 version available as a compiled binary using a Julia library package (JLL). This can
 be called as follows:
 
-```
+```julia
 import Pkg
 Pkg.add("AquaCrop_jll")
 import AquaCrop_jll
