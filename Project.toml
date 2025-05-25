@@ -1,7 +1,7 @@
 name = "AquaCrop"
 uuid = "8f16cebd-c0b4-44a3-857f-c101f083256c"
 authors = ["Gabriel Diaz <gabriel.diaz.iturry@gmail.com>"]
-version = "0.1.0-DEV"
+version = "1.0.0"
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"

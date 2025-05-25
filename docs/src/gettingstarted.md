@@ -15,7 +15,7 @@ To install the package, open Julia and run:
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/gabo-di/AquaCrop.jl")
+Pkg.add("AquaCrop")
 ```
 
 ## [Basic Run](@id basic_run_section)
