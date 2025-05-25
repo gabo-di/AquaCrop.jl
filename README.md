@@ -4,6 +4,7 @@
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gabo-di.github.io/AquaCrop.jl/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gabo-di.github.io/AquaCrop.jl/dev/)
 [![Build Status](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/gabo-di/AquaCrop.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![DOI](https://zenodo.org/badge/781757300.svg)](https://doi.org/10.5281/zenodo.15511844)
 
 
 Welcome to `AquaCrop.jl`! This package is an independent Julia implementation of FAO's 
@@ -31,7 +32,7 @@ Since the package is not yet registered, you can install it straight from Github
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/gabo-di/AquaCrop.jl")
+Pkg.add("AquaCrop")
 ```
 
 ## Documentation

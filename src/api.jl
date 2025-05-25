@@ -902,6 +902,10 @@ head          header to describe the file. Defaults to `head = "# Crop saved in 
 Writes the crop into a toml file. Useful after tunning a crop
 """
 function save_crop(file, cropfield::AquaCropField, head=nothing; kwargs...)
+    save_crop(file, cropfield.crop, head; kwargs...)
+end
+
+function save_crop(file, cropfield::RepCrop, head=nothing; kwargs...)
     if isnothing(head)
         # the default head
         head_ = "# Crop saved in "*string(today())
@@ -913,7 +917,7 @@ function save_crop(file, cropfield::AquaCropField, head=nothing; kwargs...)
 
     open(file, "w") do io
         println(io, head_)
-        write_gvar_in_toml(cropfield.crop, io; kwargs...)
+        write_gvar_in_toml(cropfield, io; kwargs...)
     end
     return nothing
 end
