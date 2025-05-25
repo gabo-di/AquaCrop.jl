@@ -31,7 +31,7 @@ Since the package is not yet registered, you can install it straight from Github
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/gabo-di/AquaCrop.jl")
+Pkg.add("AquaCrop")
 ```
 
 ## Documentation
