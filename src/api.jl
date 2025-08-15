@@ -681,15 +681,12 @@ function _setup_cropfield!(status::StartCropField, cropfield::AquaCropField, all
         initialize_run_part2!(cropfield.outputs, cropfield.gvars, nrrun; kwargs...)
     catch e
         all_ok.logi = false
-        s = "error when settingup the cropfield "
+        s = "error when setting up the cropfield:\n\n"
         if hasfield(typeof(e), :msg)
             s *= e.msg
         else
-            io = IOBuffer()
-            print(io, e)
-            s *= String(take!(io))
+            s *= sprint(io -> showerror(io, e))
         end
-
         # append stack trace to message
         s *= "\n\n" * sprint(io -> Base.show_backtrace(io, stacktrace(catch_backtrace())))
 
