@@ -689,6 +689,10 @@ function _setup_cropfield!(status::StartCropField, cropfield::AquaCropField, all
             print(io, e)
             s *= String(take!(io))
         end
+
+        # append stack trace to message
+        s *= "\n\n" * sprint(io -> Base.show_backtrace(io, stacktrace(catch_backtrace())))
+
         all_ok.msg = s
         add_output_in_logger!(cropfield.outputs, all_ok.msg)
         finalize_outputs!(cropfield.outputs)
