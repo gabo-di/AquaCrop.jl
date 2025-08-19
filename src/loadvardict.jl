@@ -8,12 +8,7 @@ function actualize_with_dict!(obj::T, aux::AbstractDict) where {T<:AbstractParam
             if typeof(aux[key]) <: AbstractDict
                 actualize_with_dict!(getfield(obj, Symbol(key)), aux[key])
             else
-                try
-                    setfield!(obj, Symbol(key), aux[key])
-                catch e
-                    println("Error while calling `setfield!(obj, Symbol($(repr(key))), $(aux[key]))`")
-                    rethrow()
-                end
+                setfield!(obj, Symbol(key), aux[key])
             end
         else
             if !startswith(key, "aux_")
